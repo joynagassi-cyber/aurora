@@ -611,7 +611,7 @@ AD-7). La **matrice d'état par composant** est en annexe A (un tableau par comp
   pas le sens, a11y §6) en bas. Fond `surface`, `shadow.1`, radius `md`, padding `space.3`.
 - **Règle AD-14** : les StatTiles ne vivent **pas** sur le Home (le Home n'a pas de
   KPI, il a une question — AD-14/§11 ; les StatTiles vivent dans `progress-dashboard`
-  §4.31 et `analytics` §4.30). **Grille** : max **4** StatTiles par écran (2×2),
+  §4.5.2 et `analytics` §4.5.2). **Grille** : max **4** StatTiles par écran (2×2),
   jamais une grille 3×3 (règle §12 « simple en surface »).
 - **États** : `loading` = valeur → `Skeleton` (8px × 64px) sous le label (le label
   reste, la valeur pulse) ; `empty` = valeur `—` (tiret `text-muted`, **pas** `0` —
@@ -678,7 +678,7 @@ AD-7). La **matrice d'état par composant** est en annexe A (un tableau par comp
   (ic-learn), `Progression` (ic-progress), `Coach` (ic-coach). **Interdit** : un
   6ᵉ item ; l'accès au 6ᵉ niveau (ex. `Inbox`, `Calendrier`) passe par les
   5 existants (Inbox = FAB du Home §3.1 ; Calendrier = un mode de la Tâches,
-  §4.15 Pager jour/semaine/mois).
+  §4.4.1 Pager jour/semaine/mois).
 - **Hauteur 56px + safe-area**. Item = icône 24px + label `xs`. **Sélectionné** =
   icône `fill` `primary` + label `text-primary` + un **pill tonal** `primary-surface`
   derrière l'icône (pas un soulignement — le pill = cohérent avec les `Chip`, §3.3).
@@ -710,8 +710,8 @@ AD-7). La **matrice d'état par composant** est en annexe A (un tableau par comp
 
 #### `SegmentedControl`
 - **Rôle** : un **choix exclusif binaire/ternaire** à l'intérieur d'un écran
-  (ex. le mode `Jour | Semaine | Mois` du `Pager` §4.15 ; le mode de révision
-  « Fiches / QCM / Explication » dans `fiches-detail` §4.22). Rendu : un
+  (ex. le mode `Jour | Semaine | Mois` du `Pager` §4.4.1 ; le mode de révision
+  « Fiches / QCM / Explication » dans `fiches-detail` §4.8.1). Rendu : un
   **track** `bg-subtle` radius `full`, le segment sélectionné = fond
   `surface` + `shadow.1` + texte `text-primary` (la « pilule qui glisse » =
   `anim.fast`, interdite en reduced-motion §2.6). **Max 3 segments** — au-delà,
@@ -725,7 +725,7 @@ AD-7). La **matrice d'état par composant** est en annexe A (un tableau par comp
 #### `Breadcrumb`
 - **Rôle** : le **chemin d'un élément** dans la hiérarchie (ex.
   `Électrotechnique › Machines › Moteur asynchrone` dans `cours-detail`
-  §4.19 ; `Projet › Jalon › Tâche` dans `taches-detail` §4.6). Rendu mobile :
+  §4.6.2 ; `Projet › Jalon › Tâche` dans `taches-detail` §4.7.1). Rendu mobile :
   une **ligne** `xs` `text-muted` scrollable horizontalement, séparée par
   `›` ; le **dernier** élément = `text-primary` 600 (on est **ici**).
   **Règle mobile** : le Breadcrumb est **compact** (max 2 niveaux visibles,
@@ -735,7 +735,7 @@ AD-7). La **matrice d'état par composant** est en annexe A (un tableau par comp
   d'Ariane décoratif).
 
 #### `Pager` (jour / semaine / mois)
-- **Rôle** : le **navigateur temporel** des écrans calendrier (§4.15–§4.17,
+- **Rôle** : le **navigateur temporel** des écrans calendrier (§4.4.1–§4.4.1,
   pack 02 §6.1). Composition normative : un `SegmentedControl`
   `Jour | Semaine | Mois` + une **ligne de navigation** (icône « précédent »,
   le label central « 8 – 14 sept. 2026 » en `sm` 600 `JetBrains Mono` pour
@@ -894,7 +894,7 @@ AD-7). La **matrice d'état par composant** est en annexe A (un tableau par comp
 
 #### 3.6.2 `KeyValueList`
 - **Rôle** : les **méta-données** d'un objet (les détails d'un
-  `Artifact` §4.34 : source, date, taille, `jobKind` ; l'aperçu
+  `Artifact` §4.6.1 : source, date, taille, `jobKind` ; l'aperçu
   d'un `SemanticNode` : domaine, prérequis, `SourceRef`). Rendu :
   lignes `key` (`sm`, `text-muted`) + `value` (`sm`, `text-primary`,
   **mono si valeur technique**, `JetBrains Mono`) + un **divider**
@@ -935,7 +935,7 @@ AD-7). La **matrice d'état par composant** est en annexe A (un tableau par comp
   à faire) positionnée **proportionnellement** sur un axe de dates
   **partagé** (l'axe = le `Pager` §3.4, `JetBrains Mono` `xs`) +
   le pourcent de complétion en `xs` `JetBrains Mono` à droite.
-  L'écran `timeline-gantt` §4.12 = une **liste** de `GanttRow`
+  L'écran `timeline-gantt` §4.3.3 = une **liste** de `GanttRow`
   (pas une grille 2D — la grille 2D est le **desktop Phase 2**,
   doc §23 ; le mobile **liste**, règle §12 « simple en surface »).
 - **États** : `loading` = les barres en Skeleton (l'axe de dates
@@ -950,7 +950,7 @@ AD-7). La **matrice d'état par composant** est en annexe A (un tableau par comp
   concentration dans un `StatTile`, la fraîcheur FSRS d'une
   matière). Rendu : un **polygone/ligne** G2 minimal, hauteur 24px,
   `stroke` `primary` 2px, **pas** de grille ni d'axe (la sparkline
-  **tendance**, le `DataChart` complet a les axes, §4.30).
+  **tendance**, le `DataChart` complet a les axes, §4.5.2).
   **Règle donnée scientifique (§2.6 règle 1)** : la sparkline
   **n'animé pas** (pas de trace qui se « dessine ») — elle
   **apparaît**. `hover` (Phase 2 desktop uniquement) = un
@@ -1059,7 +1059,7 @@ AD-7). La **matrice d'état par composant** est en annexe A (un tableau par comp
 - **Rôle** : le **timer de session de concentration** (doc §2.8
   « Minuteur/Pomodoro », pack 04 §4 Focus Controller). Le timer
   **est un `ProgressRing`** (§3.3) au mode « temps restant » :
-  diamètre `160px` (l'écran `focus-mode` §4.11), au centre le
+  diamètre `160px` (l'écran `focus-mode` §4.4.2), au centre le
   temps restant en `3xl` `JetBrains Mono` (le seul endroit où le
   DS autorise `3xl` sur mobile — le Focus est l'écran « temps ») +
   le label de l'activité sous (`sm`, `text-secondary`).
@@ -1304,9 +1304,9 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   `SkillStateBadge` : l'élément Progress le plus urgent, doc
   §18.1) ; 5. `Révisions à effectuer` (un `Chip` compteur
   « 12 révisions dues » `primary` + un CTA ghost « Réviser »
-  qui ouvre `flashcards` §4.22) ; 6. `Accès Focus` (un
+  qui ouvre `flashcards` §4.8.1) ; 6. `Accès Focus` (un
   `Button primary` **large** (lg), un accès **immédiat** au
-  `focus-mode` §4.11 — **le 6ᵉ bloc est un bouton, pas une
+  `focus-mode` §4.4.2 — **le 6ᵉ bloc est un bouton, pas une
   liste** : le Focus est une **action**, pas une info, AD-14)
   ; 7. `Suggestions Coach` (1–2 **max**, courtes, orientées
   action, doc §13 « dialogue bref et orienté action » — un
@@ -1339,11 +1339,11 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   (ceux qui dépendent de l'analyse serveur) affichent leur
   **dernière valeur syncée** + un `Badge info` « valeur
   d'avant la coupure » (jamais de bloc qui disparaît).
-- **Transitions** : bloc 1 → `calendrier-jour` §4.15 ; bloc
-  2 → `taches-detail` §4.2.3 ; bloc 5 → `flashcards` §4.22 ;
-  bloc 6 → `focus-mode` §4.11 ; bloc 7 → le CTA de la
+- **Transitions** : bloc 1 → `calendrier-jour` §4.4.1 ; bloc
+  2 → `taches-detail` §4.3.1 ; bloc 5 → `flashcards` §4.8.1 ;
+  bloc 6 → `focus-mode` §4.4.2 ; bloc 7 → le CTA de la
   suggestion (varie : `taches-liste`, `fiches-liste`,
-  `decouverte-feed` §4.27).
+  `decouverte-feed` §4.5.2).
 - **Notes responsive (Phase 2)** : desktop = les 7 blocs
   passent en **2 colonnes** (la liste d'agenda à gauche, les
   5 blocs restants à droite) — l'ordre **logique** reste
@@ -1431,7 +1431,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   en `JetBrains Mono` `xs`) ; Tâches =
   une liste `ListItem` (les tâches du
   projet, **sans** le `Tabs` de vue
-  global §4.2.2 — ici les tâches sont
+  global §4.3.1 — ici les tâches sont
   **filtrées** par projet, le switch de
   vue = un `SegmentedControl` « Liste /
   Kanban » (2 options, §3.4) si
@@ -1442,7 +1442,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   checkbox + date `DateField`
   inline) ; Documents = une liste
   `ListItem` qui **pousse**
-  `artefacts-detail` §4.34 ; Notes =
+  `artefacts-detail` §4.6.1 ; Notes =
   une liste `ListItem` (les notes, doc
   §2.5 « notes ») ; footer (le
   `BottomNav` n'est **pas** présent —
@@ -1476,10 +1476,10 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   **scan/upload** de documents est
   désactivé (pack 02 §7 `offline`).
 - **Transitions** : un jalon →
-  `taches-detail` §4.2.3 (si le jalon
+  `taches-detail` §4.3.1 (si le jalon
   est **lié** à une tâche, doc §2.5) ;
   un document → `artefacts-detail`
-  §4.34 ; le Breadcrumb « Objectif » →
+  §4.6.1 ; le Breadcrumb « Objectif » →
   `objectifs-detail` §4.3.4 (l'objectif
   parent, doc §2.6).
 - **Notes responsive (Phase 2)** :
@@ -1537,7 +1537,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   re-sync), seul le **scan** est
   désactivé.
 - **Transitions** : une `KanbanCard` →
-  `taches-detail` §4.2.3 (le détail
+  `taches-detail` §4.3.1 (le détail
   est une `BottomSheet full` §3.5,
   **par-dessus** le Kanban — le
   Kanban **reste** visible en
@@ -1719,7 +1719,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   (`RoutineStep` §3.6.12), pas
   une liste de to-do (les to-do
   vivent dans `taches-liste`
-  §4.2.2, la routine est une
+  §4.3.1, la routine est une
   **séquence**, le §2.7 « Routines
   matin/soir et routines d'étude »).
 - **Zones** : header (`TopBar`
@@ -1928,7 +1928,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   → un `ListItem` qui **pousse**
   le détail (si l'événement
   **est** une tâche →
-  `taches-detail` §4.2.3 ; si
+  `taches-detail` §4.3.1 ; si
   c'est un événement **pur**
   (doc §2.4 « réunion ») → une
   `BottomSheet` de détail
@@ -1936,7 +1936,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   `Callout warning` de conflit →
   un `Button ghost` «
   Replanifier » qui ouvre
-  l'`agent` §4.40 (la
+  l'`agent` §4.9.1 (la
   replanification est une
   capacité du kernel, doc §2.4
   « Replanification assistée par
@@ -2306,7 +2306,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   un `Callout` de retard → un
   `Button ghost` « Suggérer
   un ajustement » qui ouvre
-  l'`agent` §4.40 (la
+  l'`agent` §4.9.1 (la
   suggestion est une capacité
   du kernel, AD-12/F-09,
   doc §2.9 « Suggestions
@@ -2358,7 +2358,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   vs réelle, un `StatTile` (§3.3) pour le taux de réalisation, un
   `SkillStateBadge` (§3.6.11) pour la progression par compétence) ;
   actions flottantes : un `Button ghost` « Partager » (export du bloc
-  sélectionné vers `Artifact Hub` §4.34, doc §16 : l'artefact est
+  sélectionné vers `Artifact Hub` §4.6.1, doc §16 : l'artefact est
   généré **et** stocké, AD-8 Job persisté, `ArtifactGenerated` AD-9
   émis **post-upload-R2** par le module Artifact, F-06) + un `Button
   ghost` « Ajouter au journal » (la décision importante, doc §2.9
@@ -2409,7 +2409,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   compétence, projet, objectif ou session, avec **recherche** universelle dans les
   ressources et **récupération de contexte par l'agent** (le kernel, AD-12, §6.4 du
   pack 02, interroge la bibliothèque pour répondre à une question de l'utilisatrice).
-  L'Artifact Hub (ADR §16, pack 05 §4.34) **stocke** les artefacts produits par
+  L'Artifact Hub (ADR §16, pack 05 §4.6.1) **stocke** les artefacts produits par
   Aurora ou par des services externes (doc §2.11 « Stockage des artefacts produits
   par Aurora ou des services externes »).
 - **Zones** : header (`TopBar` « Bibliothèque » + `SearchBar` plein largeur,
@@ -2434,9 +2434,9 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   SQLite, la recherche est locale) ; les artefacts non encore synchronisés
   portent un `Badge info` « synchronisera à la connexion ».
 - **Transitions** : entrée depuis `welcome/home` (bloc 4, « Révisions à
-  effectuer », §4.1.2) ou depuis `cours-liste` (§4.6.2) ; sortie vers
-  `cours-detail` (ouvers un cours) ou vers l'aperçu d'un artefact
-  (l'écran de visualisation AD-10, §4.34) ; retour arrière conserve la
+  effectuer », §4.1.2) ou depuis `cours-liste` (§4.7.1.2) ; sortie vers
+  `cours-detail` (ouvre un cours) ou vers l'aperçu d'un artefact
+  (l'écran de visualisation AD-10, §4.6.1) ; retour arrière conserve la
   sélection (store UI pack 02 §3.2, AD-7 persist).
 - **Notes responsive (Phase 2)** : desktop = la bibliothèque passe en
   vue 2 colonnes (liste à gauche, aperçu d'artefact à droite, 30/70) ;
@@ -2452,12 +2452,12 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   le `SemanticNode` est la vérité, le cours en est une **vue** agrégée
   par matière, doc §14 « Vue par domaine »). Le cours n'est **pas**
   l'arbre sémantique lui-même (l'écran dédié = `arbre-semantique`,
-  §4.6.3) : le cours est **une matière**, l'arbre est le savoir global.
+  §4.7.1.3) : le cours est **une matière**, l'arbre est le savoir global.
 - **Zones** : `cours-liste` = header (`TopBar` « Cours » + `SegmentedControl`
   par semestre / par matière) ; content (`ListItem` d'un cours : titre
   `md`, un `Badge` de matière, une `ProgressRing` `xs` de progression) ;
   actions flottantes : un `FAB` « Importer un cours » (capture documentaire
-  doc v1.5, §4.31) + un `Button ghost` « Organiser » (regroupement par
+  doc v1.5, §4.5.2) + un `Button ghost` « Organiser » (regroupement par
   matière). `cours-detail` = header (`TopBar` retour + titre du cours `lg`) ;
   content : une liste hiérarchique de chapitres (`ListItem` dépliables,
   un `SemanticTreeNode` compact pour chaque concept clé, §3.6.6), chaque
@@ -2475,7 +2475,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   signalé, les autres restent accessibles) ; `offline` = le cours est
   **consultable** (AD-7 local : SQLite, pas de dépendance cloud),
   l'import d'un nouveau cours est différé (`Badge info`).
-- **Transitions** : entrée depuis `bibliotheque-ressources` (§4.6.1) ou
+- **Transitions** : entrée depuis `bibliotheque-ressources` (§4.7.1.1) ou
   depuis `welcome/home` (bloc 5 « Progression critique », §4.1.2) ;
   sortie vers `fiches-liste` (étudier une fiche du cours) ou `qcm`
   (tester la compréhension) ; retour arrière conserve le chapitre ouvert
@@ -2509,7 +2509,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   par concept) ; content (`ListItem` d'une fiche : titre du concept `md`,
   un `Badge` de matière, un `Badge` de type (définitions / formules /
   méthode) ; actions flottantes : un `FAB` « Générer une fiche » (l'agent,
-  AD-12, génère depuis un cours §4.6.2 ou un artefact §4.34). `fiches-detail`
+  AD-12, génère depuis un cours §4.7.1.2 ou un artefact §4.6.1). `fiches-detail`
   = header (retour + titre du concept `lg`) ; content : la fiche **par
   blocs** — un bloc `Card` par type d'élément (définitions, formules,
   méthode, exemples, pièges, relations) ; pour une fiche de **formules**
@@ -2549,10 +2549,10 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   puis stockées) ; la **génération** d'une nouvelle fiche est
   **différée** (l'agent exige le cloud pour l'IA, AD-4) — `Callout info`
   « sera générée à la connexion ».
-- **Transitions** : entrée depuis `cours-detail` (§4.6.2) ou depuis
+- **Transitions** : entrée depuis `cours-detail` (§4.7.1.2) ou depuis
   `qcm` (§4.8.2, après un score faible : « revoir la fiche ») ; sortie
   vers `flashcards` (§4.8.1, via « Envoyer vers FSRS ») ou vers l'écran
-  de visualisation d'un artefact (l'export, §4.34) ; retour arrière
+  de visualisation d'un artefact (l'export, §4.6.1) ; retour arrière
   conserve la version (courte/complète) sélectionnée (store UI, AD-7).
 - **Notes responsive (Phase 2)** : desktop = `fiches-liste` en grille 3
   colonnes ; `fiches-detail` en 2 panneaux (bloc actif à gauche,
@@ -2582,7 +2582,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   révision en cours) ; content : une **carte centrale** — un `FlashcardCard`
   (§3.6.10, AD-10 : le verso de la carte est le contenu de la fiche
   §4.7.1, **fidèle au corpus** AD-11) ; en dessous, une barre de
-  **rétroaction** (3 `Button` de rétrocation, `Callout` `info` :
+  **rétroaction** (3 `Button` de rétroaction, `Callout` `info` :
   « Reconnu » / « À revoir » / « Oublié » — l'auto-évaluation **avant**
   l'automatique de la carte : le `FlashcardCard` se retourne **après**
   que l'utilisatrice a tapé « Voir le verso ») ; actions flottantes :
@@ -2624,7 +2624,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
 #### 4.8.2 `qcm` (doc §3)
 - **Objectif** : **tester** la compréhension (doc §3 « QCM /
   Exercices progressifs / Correction et analyse des erreurs ») :
-  un QCM est **généré** depuis une fiche (§4.7.1) ou un cours (§4.6.2)
+  un QCM est **généré** depuis une fiche (§4.7.1) ou un cours (§4.7.1.2)
   par l'agent (AD-12, §6.4 pack 02 : le `Plan → Retrieve → Tools →
   Verify` step du kernel, **côté serveur**, AD-12/F-09) et **exécuté**
   par l'utilisatrice. Le QCM est un **`ProgressEvidence`** (doc §18.3
@@ -2648,7 +2648,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   correction : « Correction : [la bonne réponse] » et une explication
   de l'erreur, AD-11 : l'explication est **séparée** de la
   correction, jamais fusionnée) ; actions flottantes : un `Button
-  primary` « Relancer le QCM » (regénéré depuis le cours §4.6.2 ou
+  primary` « Relancer le QCM » (regénéré depuis le cours §4.7.1.2 ou
   la fiche §4.7.1) + un `Button ghost` « Réviser les fiches des
   erreurs » (sortie vers `fiches-liste`, §4.7.1).
 - **DS** : `ListItem`, `RadioButton`, `SegmentedControl`, `ProgressBar`,
@@ -2669,7 +2669,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   d'un nouveau QCM est **différée** (`Callout info` « sera généré
   à la connexion »).
 - **Transitions** : entrée depuis `fiches-detail` (§4.7.1) ou
-  depuis `cours-detail` (§4.6.2) via le bouton « Tester » ; sortie
+  depuis `cours-detail` (§4.7.1.2) via le bouton « Tester » ; sortie
   vers `fiches-liste` (§4.7.1, « réviser les fiches des erreurs »)
   ou retour arrière à la fiche/cours ; le résultat du QCM est un
   `ProgressEvidence` persisté (AD-7 local, synchronisé) — la sortie
@@ -2723,7 +2723,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   » (l'horaires de silence, doc §13.1 : « Paramètres de cadence,
   horaires de silence et niveau d'intervention contrôlés par
   l'utilisatrice ») + un `Button ghost` « Réglages du coaching
-  » (ouverture vers `settings` §4.34).
+  » (ouverture vers `settings` §4.6.1).
 - **DS** : `ListItem`, `Badge` (`AgentRunState`), `Callout`
   (info/warning/success), `Button`, `TextField`, `TopBar`.
 - **États** : `loading` = le kernel est **en cours d'analyse**
@@ -2739,7 +2739,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   **échoué** (un provider IA est indisponible, AD-4 : le
   fallback est déclenché, AD-5 — l'UI **ne** change pas de
   thème, elle **affiche** simplement le `Callout danger`
-  « Le coach est momentanément indisponible, réessaier ») ;
+  « Le coach est momentanément indisponible, réessayez ») ;
   `offline` = le coaching est **désactivé** (l'agent est
   **côté serveur**, AD-12/F-09 : le kernel n'est pas exécuté
   sur l'appareil) — l'écran montre un `Callout info` « Le
@@ -2754,7 +2754,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   (§4.5.2, le coaching **alimente** le dashboard : doc §13
   « Le coaching ne doit pas devenir intrusif : l'agent doit
   privilégier la pertinence contextuelle ») ou vers `settings`
-  (réglages du coaching, §4.34) ; retour arrière conserve
+  (réglages du coaching, §4.6.1) ; retour arrière conserve
   le fil de conversation (store UI pack 02 §3.2, AD-7 persist).
 - **Notes responsive (Phase 2)** : desktop = la conversation
   passe en 2 panneaux (check-ins à gauche, actions à droite) ;
@@ -2794,7 +2794,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   doc §17 : fidélité au corpus, AD-11 : **l'explication
   d'Aurora est séparée** de la formule du corpus) ;
   chaque lacune pointe vers une **fiche** (§4.7.1) ou un
-  **cours** (§4.6.2) ; actions flottantes : un `Button
+  **cours** (§4.7.1.2) ; actions flottantes : un `Button
   primary` « Lancer l'analyse » (l'analyse est un `Job`
   asynchrone, AD-8 : le kernel **exécute** le
   `Intent → Context → Plan → Retrieve → Tools → Verify →
@@ -2819,7 +2819,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   la **prochaine action** est proposée (doc §2.3 :
   « l'agent explique sa recommandation » : un `Callout
   info` avec un lien vers la fiche §4.7.1 ou le cours
-  §4.6.2 concerné) ; `error` = le kernel a **échoué**
+  §4.7.1.2 concerné) ; `error` = le kernel a **échoué**
   (un provider IA est indisponible, AD-4 : le fallback
   est déclenché, AD-5) — un `Callout danger` avec un
   `Button` « Réessayer » ; **jamais** de crash silencieux
@@ -2831,9 +2831,9 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   (`Callout info` « l'analyse sera exécutée à la
   reconnexion, la saisie est **archivée** dans le
   store local, AD-7 : le texte de l'explication n'est
-  **pas perdu »).
+  **pas perdu** »).
 - **Transitions** : entrée depuis `fiches-detail` (§4.7.1)
-  ou `cours-detail` (§4.6.2) via le bouton « Vérifier ma
+  ou `cours-detail` (§4.7.1.2) via le bouton « Vérifier ma
   compréhension » ; sortie vers `fiches-liste` (§4.7.1,
   « réviser les lacunes détectées ») ou retour arrière à
   la fiche/cours ; la saisie (texte/voix) est **persistée**
