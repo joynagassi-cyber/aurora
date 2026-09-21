@@ -2,9 +2,9 @@
 name: 'Aurora — SPEC'
 type: spec
 altitude: initiative
-status: assembled-2026-09-21
+status: assembled-2026-09-21 (revised 2026-09-21 : pack 05 §5 v2 — système de thèmes, OQ-14…OQ-16)
 companion-of: ARCHITECTURE-SPINE.md (autorité, read-only)
-sources: [ARCHITECTURE-SPINE.md, adr-extract.md (ADR v1.7 gelé), dimensions/01–04 (packs gelés), reviews/review-adversary.md (F-01…F-10 intégrées)]
+sources: [ARCHITECTURE-SPINE.md (16 ADs gelés), adr-extract.md (ADR v1.7 gelé), dimensions/01–05 (packs 05 v2 en cours), reviews/review-adversary.md (F-01…F-10 intégrées)]
 ---
 
 # SPEC — Aurora (contrat prescriptif de référence)
@@ -25,7 +25,7 @@ Aurora est une suite de productivité + apprentissage + orchestration agentique,
 
 ## Références à l'architecture spine (sans recopie)
 
-- **Spine** = `ARCHITECTURE-SPINE.md` (authoritative, read-only) : AD-1 (isolation fournisseur) · AD-2 (boundaries de modules) · AD-3 (zéro clé sur appareil) · AD-4/AD-5 (pipeline AI multi-provider + fallback/quota) · AD-6 (split de données PostgreSQL/pgvector, ownership Knowledge↔Progress) · AD-7 (local-first + single-writer + owner des scopes PowerSync) · AD-8 (jobs persistés/idempotents) · AD-9 (matrice normative des 9 événements) · AD-10 (5 moteurs figés derrière 5 contrats renderer) · AD-11 (fidélité corpus) · AD-12/F-09 (One Kernel, exécution côté serveur) · AD-13 (Contract Packs + one-writer-per-file + états obligatoires) · AD-14 (invariant de Home) · AD-15 (SSoT des types de domaine) · AD-16 (enveloppe opérationnelle figée : 3 env, owner Model Registry, owner Foundation, duty owner) ; conventions : merge order, évolution de contrat (breaking = dedicated PR + Codex review), test du spine (deux équipes → même contrat).
+- **Spine** = `ARCHITECTURE-SPINE.md` (authoritative, read-only) : **16 ADs gelés** (AD-1…AD-16, statut final 2026-09-21 — AD-15 SSoT des types + AD-16 enveloppe opérationnelle intégrés par l'adversarial review) — AD-1 (isolation fournisseur) · AD-2 (boundaries de modules) · AD-3 (zéro clé sur appareil) · AD-4/AD-5 (pipeline AI multi-provider + fallback/quota) · AD-6 (split de données PostgreSQL/pgvector, ownership Knowledge↔Progress) · AD-7 (local-first + single-writer + owner des scopes PowerSync) · AD-8 (jobs persistés/idempotents) · AD-9 (matrice normative des 9 événements) · AD-10 (5 moteurs figés derrière 5 contrats renderer) · AD-11 (fidélité corpus) · AD-12/F-09 (One Kernel, exécution côté serveur) · AD-13 (Contract Packs + one-writer-per-file + états obligatoires) · AD-14 (invariant de Home) · AD-15 (SSoT des types de domaine) · AD-16 (enveloppe opérationnelle figée : 3 env, owner Model Registry, owner Foundation, duty owner) ; conventions : merge order, évolution de contrat (breaking = dedicated PR + Codex review), test du spine (deux équipes → même contrat).
 - **ADR v1.7** (`adr-extract.md`, gelé) : ADR §1–§26 = sections produit/architecture 1:1 (product §2–§19, stack §25, v1.6/§21–§24 : parallélisation, phases mobile-first, gel).
 - **Trou adversaire** (`reviews/review-adversary.md`, F-01…F-10) : tous intégrés dans le spine final (AD-15/F-01/F-03/F-04/F-05/F-06/F-07/F-08/F-09/F-10) — les packs l'utilisent comme référence de vérification.
 
@@ -61,7 +61,7 @@ Chaque pack est un **Contract Pack** (AD-13) : périmètre, décisions, contrats
 
 ### 05 — Design System (`dimensions/05-design-system.md`)
 - **Objectif** : autorité de définition des 5 contrats AD-10 + inventaire écran par écran (AD-14) + tokens/composants + états de composants + theming (palettes Aurora, AD-10 §25.4) + position sur le state management (consommer le store Zustand de l'app shell, **pas** un own store — gating G1 du pack 02).
-- **Note** : le pack 05 **n'est pas encore produit** (le contexte a été compacté avant sa génération) ; ce SPEC le référence comme **gating de la vague 1 UI** (AD-13 : Contract Pack complet avant coding parallèle). Les 5 signatures AD-10 (§5 du pack 02) sont **figées** par 05 ; l'inventaire des écrans (ex. Home AD-14 = agenda + next action + main priority + critical progress + due reviews + Focus + Coach = 7 items fixes, pack 02 §6.2) est porté par 05 ; le test du spine (deux équipes → même contrat) exige que 05 fige : ownership `packages/ui` (one-writer-per-file, AD-13), tests obligatoires (component/test/token/contract), acceptance criteria (AD-13 DoD). **05 doit exister et être ratifié avant que la vague 1 UI commence** (R8/G1 pack 02).
+- **Note** : le pack 05 est **gating G1 de la vague 1 UI** (AD-13) : la version base le ratifie (frontmatter G1 : signatures CONSO AD-10 §5.1–5.5 du pack 02 + Zustand ratifiés ; les 5 signatures AD-10 = DEF §3.6 ; inventaire des écrans AD-14 = §4 ; matrice d'états AD-13 = §3.7). **Ajout 2026-09-21, en cours d'intégration (agent ds-packer)** : le bloc **Système de thèmes v2** (thèmes-catalogue curated ; 10 thèmes vivants dont **Aurora par défaut** + 3 presets : **Nocturne, Sable, Forêt** ; règle thème/sémantique = un thème ne touche que les skins, **jamais** les tokens sémantiques d'état/erreur/succès ; `packages/ui/src/themes/` SSoT JSON, AD-15). Position du bloc dans le pack final : **section 5** (le ds-packer renumérote l'inventaire des écrans en §6 pour libérer §5 au système v2 ; si une section 5 canonique apparaît dans le pack, c'est le bloc v2 — la référence SPEC suit la section canonique du pack final). Le système v2 est porté par l'**AD-17 candidate au spine** (thèmes vivants + sémantique invariante + presets) ; test du spine : deux équipes consommant le catalogue produisent le même rendu thématique. Les OQ-14…OQ-16 ci-dessous sont tranchées à la ratification du pack 05 (G1).
 
 ## Open questions consolidées
 
@@ -80,6 +80,9 @@ Chaque pack est un **Contract Pack** (AD-13) : périmètre, décisions, contrats
 | OQ-11 | Device de référence Android (G5 pack 02) | **[ASSUMPTION]** (tranchée) | Pixel 4a (CPU mid-range, §9.1 pack 02) ; l'équipe Foundation (AD-16 observation) peut ajuster via ADR si l'observation Sentry/perf montre que le budget (≤300 Ko JS gz, ≤1.5 s TTI, 30 fps) n'est pas atteignable. |
 | OQ-12 | Quotas free-tier (snapshot 21 sept 2026) : point-in-time, le spine les garde hors du `Stack` table volontairement | **[ASSUMPTION]** | Le Model Registry (AD-5/AD-16b) versionne les états ; les valeurs de registres par environnement = données de vague 0 (OQ-03) ; le spine reste silencieux pour que le registry puisse dériver sans changer le spine. |
 | OQ-13 | Électron Phase 2 (spine § Deferred, doc §23.4/§23.5) | **[OPEN]** | Après la stabilisation production mobile (doc §23.1) : **ajouter** un adapter Electron (cœur platform-agnostic, AD-7/doc §23.3), **pas** réécrire ; aucune PR desktop en V1 = violation §23.1 (pack 04 R8). |
+| OQ-14 | Le thème **Aurora** (défaut) est-il le seul thème au lancement de la V1 ? Les 9 autres thèmes vivants (catalogue v2) arrivent-ils en V1.1 ? | **[OPEN]** (pack 05, bloc thèmes v2) | Mécanisme multi-thème V1 (thème par utilisateur, `ThemeSelector` + stockage local du choix) ; catalogue des 10 thèmes **progressif** — si V1.1 retenue, la structure (JSON SSoT, `ThemeContext`) est identique, seuls les fichiers s'ajoutent ; trancher avec la Design System team avant la ratification du pack 05 (G1). |
+| OQ-15 | Les **adaptations locales** (niveau 3 du système de thèmes v2) sont-elles limitées à **Focus Mode** pour la V1, ou s'étendent-elles à d'autres modules (Lecture, Scientific Engine) ? | **[OPEN]** (pack 05, bloc thèmes v2) | V1 = Focus Mode uniquement recommandé (scope minimal, AD-14 invariant de Home non touché) ; extension à Lecture/Scientific Engine = V1.1 derrière le même port `LocalThemeOverride` ; trancher avec la Design System team. |
+| OQ-16 | Le preset **Nocturne** est-il distinct du **Dark** standard ou un alias de Dark avec accents désaturés ? | **[OPEN]** (pack 05, bloc thèmes v2) | Deux lectures : (a) preset autonome (dossier JSON dédié, contrastes + accents propres) ; (b) alias = Dark + désaturation des accents (zéro double-maintenance, mais pas de tuning indépendant) ; la règle thème/sémantique v2 (tokens sémantiques invariants) reste vérifiée dans les deux cas ; trancher avec la Design System team. |
 
 ## Plan de Contract Packs wave 0 (AD-15 + AD-16)
 
@@ -87,7 +90,7 @@ Chaque pack est un **Contract Pack** (AD-13) : périmètre, décisions, contrats
 - **Packages wave 0** (spine § Structural Seed + AD-16) :
   - `packages/domain` (SSoT types AD-15, owner par entité F-01, ratifié avec OQ-01/OQ-02) ;
   - `packages/data` (PowerSync/SQLite, migrations, repositories, owner AD-7/AD-16b : Model Registry + vues PowerSync + bridge RQ §5.8 pack 03) ;
-  - `packages/ui` (Design System, owner 05-design-system, gating G1 vague 1 UI : contrats AD-10 + tokens + inventaire écrans + position Zustand) ;
+  - `packages/ui` (Design System, owner 05-design-system, gating G1 vague 1 UI : contrats AD-10 + tokens + inventaire écrans + position Zustand) — **livrable vague 0 par la Design System team (AD-15 SSoT) : `packages/ui/src/themes/` = fichiers JSON des 10 thèmes vivants + 3 presets (bloc §5 v2 du pack 05)** ;
   - `packages/platform` (Foundation : adapters Capacitor, whitelist §3.1 pack 04, `capacitor.config.ts` — owner exclusif Foundation, AD-16c) ;
   - `packages/agent` (Agent team : surface UI du kernel, F-09 — l'exécution est **côté serveur**, AD-12) ;
   - `packages/scientific-engine`, `packages/integrations` (Foundation / Integrations team) ;

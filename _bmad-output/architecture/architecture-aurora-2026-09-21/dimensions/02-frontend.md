@@ -148,7 +148,15 @@ interface UiState {
   // Deux équipes ne peuvent pas déclarer deux shapes divergentes : la déclaration est une entrée
   // de type dans ce package, pas un ad-hoc par feature. Jamais de type métier ici (IDs + modes).
   views: { taskView: 'list' | 'kanban' | 'timeline' | 'gantt' | 'calendar' };
-  theme: 'light' | 'dark';
+  // AD-17 candidate (pack 05 §5, système v2) : le thème n'est PLUS binaire light/dark.
+  // `AuroraTheme` est une enum SSoT (packages/domain, AD-15) : les 10 thèmes expressifs
+  // (aurora [défaut], lagoon, boreal, sakura, vesper, solara, terra, verdant, citrus,
+  // cosmos) + 3 presets techniques (slate, nocturne, high-contrast). Le style neutre
+  // (light/dark) est un second axe orthogonal : `themeStyle: 'light' | 'dark'`.
+  // Migration : le persist binaire 'light'|'dark' ancien migre vers { theme:'aurora',
+  // themeStyle:<valeur> } au premier boot post-upgrade (port par packages/domain).
+  theme: AuroraTheme;
+  themeStyle: 'light' | 'dark';
   commandPaletteOpen: boolean;
   focusMode: boolean;
 }
@@ -294,7 +302,7 @@ le Design System expose :
 ```ts
 interface InfographicRendererProps {
   spec: InfographicSpec;          // produit & validé par le kernel / ExplainEngine (AD-11 fidélité corpus)
-  theme?: 'aurora-light' | 'aurora-dark';  // palettes Aurora enregistrées (doc §25.4)
+  theme?: AuroraTheme;  // palettes Aurora enregistrées (doc §25.4 ; AD-17 v2 : les 10 thèmes expressifs + 3 presets — pack 05 §5)
   onExport?: (mime: 'image/svg+xml' | 'image/png') => Promise<Blob>; // export SVG/PNG
   fidelityMode?: 'strict' | 'explanatory'; // AD-11 : strict = texte source dominant, pas de paraphrase
 }
@@ -487,8 +495,11 @@ Design System team, AD-13). Règles de consommation pour l'App Shell team :
   (focus visible, ARIA, `prefers-reduced-motion` respecté — voir section 5.5), les écrans de l'app les
   composent sans casser l'a11y. Audit `a11y` (axe/lighthouse) en CI sur les 5 états de chaque écran
   signature (Home, tasks, learn, progress, agent).
-- **Dark mode** : bascule via le `theme` du store UI (section 3.2) + tokens du DS ; l'app ne fait aucun
-  override inline. Le changement de thème est **persisté** (store persist middleware).
+- **Theming (AD-17 v2, pack 05 §5)** : bascule via `theme` (enum `AuroraTheme` — 10 expressifs + 3
+  presets) ET `themeStyle` ('light' | 'dark', axe orthogonal) du store UI (section 3.2) + tokens du DS ;
+  l'app ne fait **aucun** override inline. Le changement est **persisté** (store persist middleware).
+  **Migration** : le persist binaire `'light'|'dark'` ancien migre vers `{ theme:'aurora', themeStyle:<valeur> }`
+  au premier boot post-upgrade — port par `packages/domain` (AD-15 SSoT de l'enum + du migrateur), pas ici.
 
 → **Aucune définition de composant ici.** `05-design-system.md` porte : le token set, le library
   de composants, les états de composants, la theming engine (AD-10 palettes), les contrats des

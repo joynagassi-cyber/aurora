@@ -562,6 +562,15 @@ Ce pack **garantit** la portabilité **sans** écrire le desktop :
   ici, l'outil est interne QA.
 - **O3 (gating, section 3.1)** : **ratifier la whitelist** de plugins Capacitor par Foundation
   (vague 0) ; c'est **additive** (tout ajout = PR), pas une rétro-gradation.
+- **O3b (gating, AD-17 v2 — thème par défaut Android, session nocturne)** : trancher la valeur
+  du thème au boot Android. À valider par Foundation (vague 0) : le thème par défaut **persisté**
+  (le `theme: AuroraTheme` de `UserContext`, pack 01 §4 / AD-15, migré vers l'enum v2)
+  **prévaut** sur le `prefers-color-scheme` du système Android pour la Phase 1 — un utilisateur
+  qui a choisi `Aurora` + `themeStyle: light` au boot voit Light même si Android est en Dark
+  (le Dark n'est pas une surprise au retour foreground, §3.4 : le kill de l'app ne change pas le
+  thème). Alternative (à rejeter en V1) : le thème suit `prefers-color-scheme` Android ; c'est
+  **interdit** en V1 car il violerait la règle de non-surprise du store UI (pack 02 §3.2 : le thème
+  est persisté, il ne change jamais silencieusement au retour foreground).
 - **O4 (section 6.1)** : **trancher** si la sync doit continuer **au-delà** d'un passage
   background (nécessité de `FOREGROUND_SERVICE`) — la mécanique de sync est owner `packages/data`
   (pack 03, §5.7 : le paramètre `minSyncIntervalMs` est défini par le pack 03 ; ce pack impose la

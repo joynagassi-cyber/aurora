@@ -1071,34 +1071,11 @@ AD-7). La **matrice d'état par composant** est en annexe A (un tableau par comp
   **25 min par défaut** (configurable, `Slider` 5–90, §3.2) ;
   la pause (5 min) = le ring repasse en `success` (le break, le
   repos, est vert — le rouge est réservé au danger, §2.1.2).
-- **`FocusSessionBilan` — SSoT (correction H1, AD-15)** : le shape
-  du bilan est **figé dans `packages/domain`** (SSoT, AD-15), consommé
-  par l'écran de bilan (§4.4.2) et par le `ChartSpec` ci-dessous. **Deux
-  équipes ne redéclarent JAMAIS ce shape** (F-01). Shape minimal :
-  ```ts
-  // packages/domain/types (SSoT — AD-15)
-  interface FocusSessionBilan {
-    sessionId: string;
-    plannedMinutes: number;      // durée planifiée
-    actualMinutes: number;       // durée réellement concentrée
-    interruptions: number;       // nb de interruptions
-    score: number;               // score de concentration 0-100 (pack 04 §4.1 pt 4)
-    endedAt: string;            // ISO 8601
-  }
-  ```
-  Le **`ChartSpec` de bilan** (consommé par `DataVisualizationRenderer`,
-  §3.6.1 / moteur G2, AD-10) est un **`chart` dédié** `focusBilan` :
-  une barre horizontale `planned vs actual` + un `StatTile` `score` +
-  un `StatTile` `interruptions` — **jamais** un G2 libre (le pack 05
-  porte le contrat, pas le pack 02 : `apps/mobile` consomme ce `ChartSpec`
-  via `packages/ui`). Le composant DS qui le rend = le `StatTile`
-  (§3.3) + le `DataTable`/`Sparkline` (§3.6.1/§3.6.5) — le pack 05 est
-  le SSoT de ces 2 composants pour la vue de bilan.
 - **États** : `loading` = le timer ne se « charge » **pas** (le
   temps est **connu** immédiatement ; l'unique `loading` = le
   **bilan** de fin de session, `FocusSessionBilan`, qui est une
   lecture : Skeleton du bilan, pack 04 §4.1 point 4 : le bilan
-  **doit** exister dans l'inventaire §4.4.2 avec le G2
+  **doit** exister dans l'inventaire §4.11 avec le G2
   contractuel) ; `error` = `Callout danger`, le timer
   **continue** (une erreur de bilan **ne casse pas** la
   session, AD-7) ; `offline` = le timer est **parfaitement**
@@ -2550,491 +2527,4390 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   doc §23.4 : « réutiliser
   les contrats existants »).
 
-
-### 4.1 Module Onboarding / Écran racine
-
-#### 4.1.1 `onboarding`
-- **Objectif** : l'installatrice choisit **qu'elle est** (étudiante,
-  matière, horaire de silence, thème) — 3 écrans max, **pas** un
-  tour de fonctions (règle §12 : simple en surface).
-- **Zones** : content (carrousel 3 slides, un `Avatar` + titre
-  `2xl` + corps `sm`), footer (un `Button primary` « Continuer » +
-  un `Button ghost` « Passer »).
-- **DS** : `Avatar`, `Button` (primary/ghost), `Toggle` (thème),
-  `Select` (matière), `DateField`/`DurationField` (horaires),
-  `Skeleton` (le fond des slides pendant le chargement de la
-  matrice de cours locale).
-- **États** : `loading` (le fond des slides pendant le chargement
-  de la matière locale) ; `empty` n'existe pas (l'onboarding
-  **précède** les données) ; `error` = le choix de la matière qui
-  **échoue** (upload de cours) → `Callout danger` + retry (la
-  matière **peut** être choisie plus tard, l'onboarding
-  **s'achève** malgré l'échec — on ne bloque pas l'entrée dans
-  l'app, AD-7) ; `offline` = l'onboarding **fonctionne** (les
-  choix sont **locaux**, AD-7 ; l'import de cours est différé,
-  `Badge info` « importera à la connexion »).
-- **Transitions** : → `welcome/home` (fin) ; un `onboarding`
-  interrompu **reprend** au premier choix manquant (store
-  local, AD-7 — l'exit/retour **ne perd rien**).
-- **Notes responsive (Phase 2)** : desktop = l'onboarding passe
-  en **panneau latéral** (le carrousel devient 3 étapes
-  empilées, le CTA reste en bas) — la logique (les 3 choix) est
-  **inchangée** (doc §23.4 : adapter le layout, pas le contenu).
-
-#### 4.1.2 `welcome/home` (AD-14 — invariant, 7 items fixes)
-- **Objectif** : répondre à **une seule** question : « Qu'est-ce
-  qui compte maintenant ? » (AD-14, doc §11 : l'
-
-## 5. Système de thèmes multi-couches (AD-17 candidate)
-
-Ce chapitre **étend** §2.1 (tokens sémantiques light/dark, figés) sans le remplacer : le système de
-thèmes s'ajoute par-dessus, en **3 niveaux de résolution**. Le code ne lit **que** les tokens
-sémantiques (§2.1.2/2.1.3) ; changer de thème change les valeurs, jamais le code.
-
-### 5.1 Règle 1 — Le thème ne définit JAMAIS la sémantique fonctionnelle
-
-C'est la règle la plus importante de tout le pack 05.
-
-Un **thème** définit :
-- les couleurs d'accent (primaire, secondaire, accent ponctuel, highlight, focus)
-- les éléments décoratifs (gradients, formes, illustrations)
-- les traitements de sélection (selected/active) — **pas** success/warning/danger
-
-Un thème **n'a jamais le droit** de redéfinir :
-- `success` / `warning` / `danger` / `info` — qui sont des **tokens sémantiques indépendants**
-  (couche style neutre §2.1.2/2.1.3), avec adaptations de luminosité/contraste pour light/dark
-  uniquement.
-- Le rôle de chaque état : **Danger reste Danger**, quelle que soit la palette du thème.
-
-En thème **Sakura** (rosé), une tâche urgente ne devient **pas** rose. En thème **Verdant**
-(vert), un `warning` ne devient **pas** vert.
-
-Rationnel : séparation *personnalité visuelle* / *signification fonctionnelle* (modèle CMS Design
-System, Material, Fluent). Mélanger les deux = l'utilisateur ne sait plus ce que sa couleur veut
-dire.
-
-```
-THEME            → personnalité visuelle (accent, décor, motion, chart)
-SEMANTIC STATES  → signification fonctionnelle (success/warning/danger/info)
-```
-
-Cette règle est **bloquante en review** : un PR qui redéfinit un token sémantique dans un thème =
-rejet (Codex review, AD-13 / doc §21.6).
-
-### 5.2 Architecture 3 niveaux
-
-```
-                    AURORA THEME SYSTEM
-                           │
-             ┌─────────────┴─────────────┐
-             │                           │
-        NEUTRAL STYLE              VISUAL THEME
-             │                           │
-       ┌─────┴─────┐          ┌─────────┴──────────┐
-       │           │          │                    │
-     Light        Dark     Aurora              Sakura...
-    #F8F9FA      #121212   (10 thèmes)        (10 thèmes)
-                               │
-                          LOCAL ADAPTATION
-                               │
-                          Module / Screen
-```
-
-- **Niveau 1 — Style Neutre** : `Light` (canvas `#F8F9FA` off-white, surfaces `#FFFFFF` surélevées)
-  ou `Dark` (canvas `#121212`). Définit fond, texte, surfaces, bordures, ombres. Ce sont les
-  tokens §2.1.2 / §2.1.3, déjà figés.
-- **Niveau 2 — Thème Expressif** : 1 des 10 thèmes vivants (§5.4) ou 1 des 3 presets
-  spécialisés (§5.5). Définit accent, gradients, formes, motion, chart palette.
-- **Niveau 3 — Adaptation Locale** : un module ou une feature **déclare** des adaptations
-  locales (token → valeur), applicables dans son périmètre seul. Ex. : Focus Mode sur Sakura =
-  même identité Sakura + surfaces secondaires atténuées + focus ring renforcé.
-  **Interdit** : un changement de thème par écran ("Normal=bleu, Focus=vert, Study=orange"
-  → incohérence visuelle, §5.10).
-
-### 5.3 Résolution 3 niveaux (token → valeur)
-
-Pour chaque token, la valeur retenue est :
-
-```
-valeur = theme_accent[token] ?? style_neutre[token] ?? défaut_du_thème_par_défaut
-```
-
-| Token | Résolution | Source |
-|---|---|---|
-| `accent.primary` / `accent.secondary` / `accent.info` / `accent.focus-ring` | thème expressif (§5.4) | couche 2 |
-| `surface.background` / `surface.*` / `text.*` / `border.*` / `shadow.*` | style neutre | §2.1.2 / §2.1.3 (couche 1) |
-| `success` / `warning` / `danger` / `info` | style neutre **uniquement** (règle §5.1) | §2.1.2 / §2.1.3 |
-| `typo.*`, `space.*`, `radius.*`, `duration.*` | primitives figées | §2.2 – §2.6 (couche 0) |
-
-Le **thème par défaut** (`Aurora`) est utilisé quand `theme_accent[token]` n'existe pas — il
-est le seul thème qui a l'obligation de couvrir **tous** les tokens d'accent.
-
-### 5.4 Les 10 thèmes vivants (couche 2 — catalogue extensible)
-
-Chaque thème est un **univers visuel complet**, pas une palette de 3 couleurs. Chaque thème
-définit **10 dimensions** :
-
-```
-Theme
-├── colors (les 4)
-├── gradients (propriétaire du thème)
-├── illustrationMood
-├── iconTreatment (couleur / plein / outline des icônes)
-├── selectionTreatment (comment marquer le sélectionné)
-├── focusTreatment (focus ring)
-├── chartPalette (pour G2 — cohérente avec le thème, AD-10)
-├── decorativeShapes
-├── motionMood (durées / courbes, AD-10)
-└── usageEmotionnelRecommande (contexte où le thème est le plus adapté — pas imposé)
-```
-
-L'objectif : changer de thème ne donne **pas** l'impression que "5 variables CSS ont bougé",
-mais que **l'application change réellement d'atmosphère**.
-
-#### 5.4.1 Tableau récapitulatif
-
-| # | Thème | Univers | 4 couleurs | Impression |
-|---|-------|---------|------------|------------|
-| 1 | **Aurora** (défaut) | ciel à l'aube | `#3678F6` `#22C7D6` `#7B61FF` `#B8DFFF` | intelligent, frais, tech |
-| 2 | **Lagoon** | eau tropicale | `#007C91` `#18B7A0` `#50D8C0` `#D9F5EF` | fluide, respirant |
-| 3 | **Boreal** | paysage nordique | `#2E5C8A` `#4A8C6A` `#8DC7D9` `#DCEAF2` | précis, scientifique |
-| 4 | **Sakura** | fleurs de cerisier | `#D85B86` `#E98EAD` `#9B78C9` `#F8DCE7` | élégant, doux, humain |
-| 5 | **Vesper** | ciel violet du soir | `#6554C0` `#8C5BD6` `#D05AA8` `#E7DDF8` | profond, contemplatif |
-| 6 | **Solara** | lumière dorée | `#D99A24` `#F0B83F` `#E86F42` `#FFF0C2` | ambitieux, énergique |
-| 7 | **Terra** | terre cuite / argile | `#B85C38` `#C9823B` `#D8AE72` `#F2E1C3` | artisanal, créatif |
-| 8 | **Verdant** | végétation vivante | `#247A55` `#42A96B` `#8CCF8A` `#DFF3E3` | naturel, stable |
-| 9 | **Citrus** | agrumes / énergie | `#F28C28` `#F7C948` `#B7D83D` `#FFF0B8` | joyeux, ludique |
-| 10 | **Cosmos** | espace / nébuleuse | `#3B3FA7` `#5964E8` `#18BFD4` `#E95BAA` | futuriste (règle : 1 dom + 1 sec + 1 accent) |
-
-#### 5.4.2 Détail par thème
-
-**01 — Aurora (défaut)**
-- **Univers** : ciel à l'aube. Identité native d'Aurora, premier thème au lancement.
-- **Couleurs** : `#3678F6` (bleu électrique, primaire) / `#22C7D6` (cyan, secondaire) /
-  `#7B61FF` (violet doux, accent) / `#B8DFFF` (ciel pâle, surface de sélection).
-- **Gradient propriétaire** : `cyan → blue → violet`.
-- **Shapes** : courbes orbitales douces.
-- **Motion** : fluide, léger (150–250ms, ease-out, §2.6).
-- **Icons** : outline 1.5px (§2.5), couleur `#3678F6` + accents cyan.
-- **Chart palette** (G2, AD-10) : bleu / cyan / violet / indigo.
-- **Focus** : ring 2px `#3678F6`, offset 2px.
-- **Sélection** : fond `#B8DFFF` + bordure `#3678F6`.
-- **Usage recommandé** : mode par défaut, sessions de travail mixtes.
-
-**02 — Lagoon**
-- **Univers** : eau tropicale.
-- **Couleurs** : `#007C91` (teal profond, primaire) / `#18B7A0` (turquoise, secondaire) /
-  `#50D8C0` (turquoise clair, accent) / `#D9F5EF` (sable-vert, surface).
-- **Gradient** : `teal → turquoise → sable vert`.
-- **Shapes** : vagues, courbes organiques.
-- **Motion** : très fluide, lent (400ms, spring doux).
-- **Chart palette** : teal / turquoise / emeraude.
-- **Usage recommandé** : Focus Mode, lecture, concentration, habitudes/routines
-  (contexte émotionnel, pas imposé — §5.4.1).
-
-**03 — Boreal**
-- **Univers** : paysage nordique.
-- **Couleurs** : `#2E5C8A` (bleu glacier, primaire) / `#4A8C6A` (vert froid, secondaire) /
-  `#8DC7D9` (argent-glace, accent) / `#DCEAF2` (blanc polaire, surface).
-- **Gradient** : `glacier → lichen → argent`.
-- **Shapes** : géométriques, droites (pin, montagne).
-- **Motion** : sobre, précis (150ms, ease-out).
-- **Usage recommandé** : révisions exigeantes, Scientific Engine, calculs.
-
-**04 — Sakura**
-- **Univers** : fleurs de cerisier.
-- **Couleurs** : `#D85B86` (framboise, primaire) / `#E98EAD` (rose poudré, secondaire) /
-  `#9B78C9` (lilas, accent) / `#F8DCE7` (blanc rosé, surface).
-- **Gradient** : `rose → lilas` (doux, vertical).
-- **Shapes** : pétales, formes organiques arrondies.
-- **Motion** : doux, flottant (300ms, spring léger).
-- **Usage recommandé** : personnalisation féminine, créativité, notes manuscrites,
-  "je veux que mon app soit douce" — **sans** devenir une app "tech bleue" (cf. §5.10).
-
-**05 — Vesper**
-- **Univers** : ciel violet du soir.
-- **Couleurs** : `#6554C0` (indigo, primaire) / `#8C5BD6` (violet, secondaire) /
-  `#D05AA8` (magenta, accent) / `#E7DDF8` (lilas clair, surface).
-- **Gradient** : `indigo → violet → magenta` (horizon crépusculaire).
-- **Shapes** : halos, lumières diffuses.
-- **Motion** : lent, contemplatif (400–600ms, ease-in-out).
-- **Usage recommandé** : revues hebdo/mensuelles, Progress dashboard, Journal des décisions.
-
-**06 — Solara**
-- **Univers** : lumière dorée.
-- **Couleurs** : `#D99A24` (ambre profond, primaire) / `#F0B83F` (or clair, secondaire) /
-  `#E86F42` (corail, accent) / `#FFF0C2` (ivoire doré, surface).
-- **Gradient** : `or → ambre → corail` (golden hour).
-- **Shapes** : rayons, cercles lumineux.
-- **Motion** : lumineux, énergique (200ms, ease-out).
-- **Usage recommandé** : objectifs ambitieux, jalons, "Vision de l'excellence internationale"
-  (ADR §13.5).
-
-**07 — Terra**
-- **Univers** : terre cuite / argile.
-- **Couleurs** : `#B85C38` (terracotta, primaire) / `#C9823B` (ocre, secondaire) /
-  `#D8AE72` (sable, accent) / `#F2E1C3` (crème terre, surface).
-- **Gradient** : `sable → ocre → terracotta` (strates de terre).
-- **Shapes** : organiques, architecturales (briques, arcs).
-- **Motion** : sobre, terrestre (150–200ms, ease-out).
-- **Usage recommandé** : projets, construction, disciplines techniques, créativité matière.
-
-**08 — Verdant**
-- **Univers** : végétation vivante.
-- **Couleurs** : `#247A55` (vert profond, primaire) / `#42A96B` (vert vif, secondaire) /
-  `#8CCF8A` (menthe, accent) / `#DFF3E3` (feuillage clair, surface).
-- **Gradient** : `vert profond → menthe` (canopée).
-- **Shapes** : feuilles, courbes naturelles.
-- **Motion** : naturel, vivant mais stable (200ms, ease-out).
-- **Usage recommandé** : habitudes, routines, santé, "travail long" (supporte plusieurs heures
-  sans fatigue).
-
-**09 — Citrus**
-- **Univers** : agrumes / énergie solaire.
-- **Couleurs** : `#F28C28` (orange vif, primaire) / `#F7C948` (citron, secondaire) /
-  `#B7D83D` (lime, accent) / `#FFF0B8` (jaune pâle, surface).
-- **Gradient** : `orange → jaune → lime` (fruits du soleil).
-- **Shapes** : formes rondes, segments d'orange.
-- **Motion** : vif, énergique (100–150ms, ease-out).
-- **Usage recommandé** : "je veux que mon app soit colorée", mode ludique, productivité
-  en rythme rapide.
-
-**10 — Cosmos**
-- **Univers** : espace / nébuleuse.
-- **Couleurs** : `#3B3FA7` (indigo profond, **dominante**) / `#5964E8` (bleu-violet) /
-  `#18BFD4` (cyan, **secondaire**) / `#E95BAA` (fuchsia, **accent ponctuel**).
-- **Règle spécifique** : Cosmos **ne met pas** ses 4 couleurs partout. Sa règle :
-  1 dominante (`#3B3FA7`) + 1 secondaire (`#18BFD4`) + 1 accent ponctuel (`#E95BAA`).
-  Le reste reste neutre (style neutre §5.2 niveau 1).
-- **Gradient** : `indigo → cyan → magenta` (nébuleuse).
-- **Shapes** : étoiles, particules, orbitales.
-- **Motion** : légèrement dynamique (particules douces, 300ms, spring).
-- **Usage recommandé** : découverte, arbre sémantique (les "ponts" inter-domaines),
-  "mode futuriste".
-
-### 5.5 Presets spécialisés (hors des 10 expressifs)
-
-Ces 3 **n'ont pas d'univers** — ce sont des **modes techniques** qui se combinent avec
-n'importe quel thème expressif :
-
-| Preset | Rôle | Valeurs |
-|---|---|---|
-| **Slate** | lecture longue, sobriété pro, faible stimulation | gris-bleu / ardoise (`#4A4A5A` primaire, `#707080` secondaire) |
-| **Nocturne** | dark doux spécifique pour la nuit (moins éblouissant que le Dark standard) | canvas `#0A0E1A`, surfaces plus foncées, accents désaturés |
-| **High Contrast** | accessibilité forcée, contrastes 7:1, tap targets 56px | noir/blanc purs, bordures épaisses, focus ring 3px |
-
-Combinaison : `Dark + Cosmos + High Contrast` = cosmos avec contrastes renforcés. Le preset
-s'applique **en plus** du thème, pas à la place.
-
-### 5.6 Exemple de thème composite (Dark + Vesper)
-
-| Rôle | Valeur | Source |
-|---|---|---|
-| Canvas | `#121212` | style neutre Dark (§2.1.3) |
-| Surfaces | `#1E1E1E` / `#2A2A2A` / `#353535` | Dark |
-| Accent primaire | `#6554C0` | Vesper (§5.4.2) |
-| Accent secondaire | `#8C5BD6` | Vesper |
-| Accent ponctuel | `#D05AA8` | Vesper |
-| Success / Warning / Danger / Info | **Dark standard** (§2.1.3, nuance 400) | style neutre — **pas** Vesper (règle §5.1) |
-| Chart palette | `#6554C0` / `#8C5BD6` / `#D05AA8` | Vesper |
-
-Résultat : "un crépuscule violet sur fond sombre" — l'atmosphère change, les états sémantiques
-restent stables. C'est **ça** qu'un thème doit produire : un changement d'atmosphère, pas un
-changement de signification.
-
-### 5.7 Test des 10 thèmes sur 5 écrans (mécanisme + exemple)
-
-Le livrable de validation du pack 05 : **tester visuellement** les 10 thèmes sur 5 écrans Aurora
-réels pour valider que chaque thème est "vraiment beau" et pas juste joli sur une planche de
-couleurs.
-
-Les 5 écrans testés (issus du §4 du pack 05) :
-- **Écran 1** — Accueil (AD-14, `welcome/home` §4.1.2)
-- **Écran 2** — Focus Mode (§4.4.2)
-- **Écran 3** — Arbre sémantique (`SemanticTreeNode` §3.6.6 + ADR §25.3)
-- **Écran 4** — Progress Dashboard (§4.5.2 + ADR §18.6)
-- **Écran 5** — Discovery Feed (ADR §13.9)
-
-Pour chaque thème × chaque écran (50 paires) :
-- Mockup ASCII (grille) montrant les couleurs sur : bouton primaire, carte, focus ring, badge, chart.
-- Note 2 lignes : ce que le thème fait ressenti sur cet écran.
-- Verdict rapide : **bien** / **à ajuster** / **proposer comme défaut pour X**.
-
-#### 5.7.1 Exemple — Thème Lagoon × Écran 2 (Focus Mode)
-
-```
-┌─────────────────────────────────────┐
-│  LAGOON — Focus Mode                │
-│                                     │
-│   [Timer 12:00]  (ring #18B7A0)    │
-│   Focus: Rapport de sol             │
-│   ██████████████░░░░░░  68%        │
-│   (bar #007C91 → #50D8C0)          │
-│                                     │
-│   [Button "Reprendre"]  (#007C91)  │
-│   [Button "Terminer"]  (ghost)     │
-│                                     │
-│   Surfaces : #D9F5EF (cartes)      │
-│   Fond     : #F8F9FA (off-white)   │
-└─────────────────────────────────────┘
-```
-
-Note : Lagoon sur Focus Mode = **parfait**. Le turquoise profond `#007C91` du timer est
-apaisant, le gradient de la barre de progression (teal → turquoise) est fluide sans être
-bruyant. Le fond off-white `#F8F9FA` (style neutre Light, §5.2) ne se dispute pas à l'accent.
-
-Verdict : **BIEN** — proposer comme **thème contextuel recommandé** pour Focus Mode
-(adaptation locale §5.2 niveau 3, pas un changement de thème).
-
-#### 5.7.2 Les 49 autres combinaisons — livrable de vague 0
-
-Les 49 autres paires (10 × 5 − 1 exemple) seront produites en **vague 0** par l'équipe
-Dyad/UI (ADR §22 : "Dyad : refinement UI/UX et validation des flows"), sur les vrais
-composants React. Ce pack 05 fournit le **mécanisme** (§5.1–§5.6 + §5.8) ; les 49
-mockups restants sont un **livrable de vague 0**, pas du pack 05 (le pack 05 est le
-*design system*, pas le *test d'acceptation UI*).
-
-### 5.8 Contrats techniques (AD-17 candidate)
-
-Le système de thèmes est un **contrat** (spine AD-13 + AD-15) :
-
-- **Live** : les 10 thèmes + 3 presets sont des **fichiers JSON** dans
-  `packages/ui/src/themes/` (AD-15 SSoT, owner = Design System team).
-- **Format** : `aurora.theme.{themeName}.{dimension} = valeur` ; dimensions = les 10 de
-  §5.4 (colors, gradients, illustrationMood, iconTreatment, selectionTreatment,
-  focusTreatment, chartPalette, decorativeShapes, motionMood, usageEmotionnelRecommande).
-- **Résolution** : la couche de résolution (§5.3) est une fonction TypeScript exposée par
-  `packages/ui` :
-  ```ts
-  // packages/ui/src/themes/resolve.ts
-  export function resolveToken(
-    theme: ThemeName,        // ex. "vesper"
-    style: NeutralStyle,     // "light" | "dark"
-    tokenKey: string,        // ex. "accent.primary"
-  ): string {
-    const themeValue = THEMES[theme]?.[tokenKey];
-    if (themeValue !== undefined) return themeValue;
-    const neutralValue = NEUTRAL[style][tokenKey];
-    if (neutralValue !== undefined) return neutralValue;
-    return THEMES["aurora"]![tokenKey]; // fallback = thème par défaut
-  }
-  ```
-  Les composants **n'appellent jamais** `resolveToken` directement — ils lisent les tokens
-  sémantiques §2.1.2 (couche 2), et c'est le **provider React** (`<AuroraThemeProvider theme={…}
-  style={…}>`) qui résout les valeurs à la racine et les injecte en CSS variables.
-- **Ajout d'un thème** = ajout d'un fichier JSON + 1 ligne dans le catalogue `themes.json`,
-  **pas** de changement de code. Un 11ᵉ thème ("Rose", "Indigo") est extensible sans toucher
-  au domaine (AD-13 : additive change = intégration normale).
-- **Adaptations locales** (niveau 3, §5.2) : chaque module/feature **déclare** dans son
-  Contract Pack (AD-13) quelles adaptations il supporte, par ex. :
-  ```yaml
-  # Contract Pack — Focus Module
-  localThemeAdaptations:
-    - token: surface.secondary
-      value: "attenuated"   # surfaces secondaires plus calmes en Focus
-    - token: focus.ring
-      value: "enhanced"     # focus ring renforcé
-  ```
-  L'adaptation est **déclarative** (token → valeur), jamais un code branché.
-- **Règle §5.1 bloquante en review** : un PR qui modifie un des 4 tokens sémantiques
-  (`success`/`warning`/`danger`/`info`) dans un fichier `themes/*.json` = **rejet immédiat**
-  (Codex review, doc §21.6).
-
-### 5.9 Accessibilité (complément du §6 du pack d'origine)
-
-- **Contraste** : chaque `thème × style neutre` doit respecter WCAG AA (4.5:1 texte normal,
-  3:1 texte large) **pour les couleurs d'accent SUR les surfaces du style neutre**. Le thème
-  n'est jamais seul en jeu : c'est `thème × style neutre` qui est testé (ex. accent Vesper
-  `#6554C0` sur surface Dark `#1E1E1E` = ratio à vérifier, pas sur fond clair).
-- **Focus** : le `focusTreatment` de chaque thème (§5.4) doit être visible sur les **deux**
-  styles neutres (test contrastuel light + dark).
-- **Réduction de mouvement** : chaque `motionMood` (§5.4) doit avoir un mode "réduit"
-  (désactivable, AD-10 / §2.6 du pack 05).
-- **High Contrast preset** (§5.5) : pour les utilisateurs qui ont besoin de contrastes
-  renforcés, **indépendamment** du thème choisi.
-- **Tap targets** : 44×44px minimum partout (preset High Contrast : 56×56px).
-
-### 5.10 Ce que ce système **n'est PAS**
-
-- **Pas** un thème qui change de couleurs par module : "Normal=bleu, Focus=vert, Study=orange"
-  = **interdit** (§5.2 niveau 3 : adaptation locale **déclarative**, pas un autre thème).
-- **Pas** une palette aléatoire : chaque thème a une **logique de couleur motivée** (§5.4) —
-  l'univers visuel précède les couleurs, pas l'inverse.
-- **Pas** un système qui brouille la sémantique : `success/warning/danger/info` restent stables
-  (§5.1, règle bloquante en review).
-- **Pas** un changement de code : les 10 thèmes = 10 fichiers JSON + 1 fichier `resolve.ts`,
-  le code des composants reste **identique** quel que soit le thème choisi.
-
----
-
-## 6. Thèmes & Accessibilité (chapitre consolidé)
-
-Ce chapitre consolide : §5 (système multi-couches, 10 thèmes, 3 presets, règle thème/sémantique)
-et le §6 du pack d'origine (accessibilité, contrastes, dark mode).
-
-### 6.1 Résumé des 3 niveaux (rappel §5.2)
-
-```
-Style Neutre (Light #F8F9FA / Dark #121212)
-  × Thème Expressif (10 vivants + 3 presets)
-    × Adaptation Locale (module/écran, déclarative)
-```
-
-### 6.2 Règle bloquante (rappel §5.1)
-
-Un thème ne **redéfinit jamais** `success` / `warning` / `danger` / `info`. Ces tokens sont
-**indépendants** du thème et vivent dans le style neutre (§2.1.2 / §2.1.3). Tout PR qui les
-modifie dans un fichier de thème = rejet.
-
-### 6.3 Accessibilité (consolidé §5.9 + pack d'origine §6)
-
-- WCAG AA minimum (4.5:1 / 3:1) sur `thème × style neutre`.
-- Tap targets ≥ 44px (56px en High Contrast).
-- Focus visible (focus ring thème + style neutre, contraste vérifié sur les 2 styles).
-- Réduction de mouvement (chaque motionMood a un mode réduit).
-- Labels partout (aria-label, test CI).
-- Dark mode : contrastes adaptés (nuances 400 au lieu de 500, §2.1.3).
-
-### 6.4 Thème composite (exemple §5.6)
-
-Un thème complet = `style neutre` + `thème expressif` (+ `adaptation locale` optionnelle).
-C'est ce qui permet à l'utilisatrice de :
-- Choisir **Dark + Sakura** = un rosé doux sur fond sombre.
-- Choisir **Light + Cosmos** = un espace nébuleux sur fond clair.
-- Ajuster **Focus Mode** localement sur n'importe quel thème (surfaces atténuées, focus
-  renforcé) **sans changer de thème**.
-
----
-
-## 7. Livraison finale — ce que le pack 05 **couvre** et ce qui reste **vague 0**
-
-### 7.1 Ce que le pack 05 livre (ce document)
-
-- ✅ §1–§4 : Direction, Fondations, Composants (tous, états AD-13), Écrans (inventaire
-  complet 4.1–4.9).
-- ✅ §5 : Système de thèmes multi-couches (10 thèmes vivants + 3 presets + règle
-  thème/sémantique + architecture 3 niveaux + résolution + contrat AD-17).
-- ✅ §6 : Accessibilité consolidée.
-- ✅ §5.7 : Mécanisme du test sur 5 écrans + 1 exemple concret (Lagoon × Focus Mode).
-
-### 7.2 Ce qui reste vague 0 (livrables des équipes)
-
-- **Mockups des 49 autres paires** (thème × écran) — équipe Dyad/UI (ADR §22), sur les vrais
-  composants React.
-- **Fichiers JSON des 10 thèmes + 3 presets** — Design System team (AD-15 SSoT,
-  `packages/ui/src/themes/`).
-- **Fonction `resolveToken` + Provider React** (`<AuroraThemeProvider>`) — Design System team.
-- **Test d'accessibilité (WCAG AA)** sur chaque `thème × style neutre` — QA (vague 7 QA,
-  doc §21.12).
-
-### 7.3 Open questions (consignées dans le SPEC.md)
-
-- **Q1** : Le thème **Aurora (défaut)** est-il le seul thème au lancement de la V1 ? Les 9
-  autres arrivent en V1.1 ? (Le *mécanisme* multi-thème est V1, le *catalogue* des 10 peut
-  être progressif. À trancher avec l'utilisatrice.)
-- **Q2** : Les adaptations locales (niveau 3, §5.2) sont-elles limitées à **Focus Mode** pour
-  la V1, ou s'étendent-elles à d'autres modules (Lecture, Scientific Engine) ?
-- **Q3** : Le preset **Nocturne** est-il distinct du **Dark standard** ou un alias de Dark avec
-  des accents désaturés ? (§5.5 le définit comme distinct ; à confirmer.)
-
-<!-- Fin du bloc §5–§7 — Système de thèmes multi-couches v2 (10 thèmes vivants). -->
+### 4.6 Module Learning — bibliothèque & cours
+(doc §2.11, §3)
+
+#### 4.6.1 `bibliotheque-ressources` (doc §2.11)
+- **Objectif** : **retrouver**
+  (pas « classer » — les
+  ressources sont **rattachées**
+  aux matières/compétences/
+  projets/objectifs, doc §2.11
+  « Rattachement à matière,
+  compétence, projet, objectif
+  ou session » : la
+  bibliothèque est le **miroir**
+  du rattachement, pas un
+  catalogue libre) ; la
+  recherche universelle
+  (doc §2.1 « Recherche
+  universelle et Command
+  Palette ») **vive** dans
+  l'inbox, pas ici — ici
+  c'est le **listing**, pas
+  la recherche (la
+  recherche est un overlay
+  global, pack 02 §6.3 :
+  l'`IonModal` de
+  `commandPaletteOpen`, pas
+  un écran).
+- **Zones** : header
+  (`TopBar` « Bibliothèque » +
+  un `Menu` de filtre : par
+  matière / par type / par
+  projet — le `Menu` §3.5,
+  max 6 items) ; content
+  (une liste de
+  `ListItem` `subtitle` —
+  chaque ressource = titre +
+  type en `Badge` (PDF /
+  DOCX / PPTX / XLSX / image /
+  audio / vidéo / Markdown /
+  texte / code / LaTeX /
+  autre — les 12 types du
+  doc §16 « Visualisation
+  universelle des fichiers et
+  artefacts », les 12
+  `Badge` couvrent les 12
+  types, **pas** 12 icônes
+  différentes : le `Badge`
+  affiche le type en texte
+  (pas une icône par type —
+  le type est **lisible**,
+  pas reconnu, §1 «
+  lisibilité technique ») +
+  date en `JetBrains Mono`
+  `xs`) + un
+  `ProgressBar` si la
+  ressource a une
+  progression de lecture
+  (un PDF lu à 60%, un cours
+  audio écouté à 30% — la
+  progression est **par
+  ressource**, doc §2.11
+  « cours, PDF, documents,
+  images, vidéos ») ; footer
+  (`BottomNav`).
+- **DS** : `TopBar`,
+  `Menu`, `ListItem`
+  (`subtitle`), `Badge`
+  (le type de ressource),
+  `ProgressBar` (la
+  progression de lecture),
+  `EmptyState`, `Skeleton`,
+  `FAB` (« Importer », §3.1
+  — l'écran de **création**
+  a son FAB : le FAB ouvre
+  le scanner pack 04
+  §3.2.3 ou l'import
+  local, §4.6.1 note).
+- **États** : `loading` =
+  les items en Skeleton (le
+  store local, les
+  ressources sont
+  **lourd** (les PDF, les
+  cours audio) — le
+  `loading` **couvre**
+  l'index local, pas le
+  téléchargement (le
+  téléchargement est un
+  job serveur AD-8,
+  l'index est local
+  AD-7) ; `empty` = un
+  `EmptyState` : icône
+  « bibliothèque »,
+  « Aucune ressource —
+  importez votre premier
+  cours » + CTA « Importer
+  » (le CTA ouvre le
+  scanner pack 04
+  §3.2.3 **ou** un
+  `BottomSheet` de
+  sélection de source
+  (fichier local /
+  scanner / lien web —
+  les 3 sources du
+  doc §16 « tout
+  fichier importé ou
+  généré », §4.6.1) ;
+  `error` = une ressource
+  non syncée = un
+  `Badge danger` « à
+  resync » (la ressource
+  **reste** visible, son
+  type est **connu**
+  localement, AD-7) ;
+  `offline` = la liste
+  **fonctionne** (lecture
+  locale, AD-7),
+  l'**import** reste
+  **possible** si c'est
+  un fichier **local**
+  (l'écriture est
+  locale, pack 03) —
+  l'import **web**
+  (le lien) et le
+  **scanner** (l'OCR,
+  job serveur pack 01)
+  sont **désactivés**
+  avec un `Callout info`
+  (l'action cloud,
+  pack 02 §7
+  `offline`).
+- **Transitions** : une
+  `ListItem` →
+  `artefacts-detail`
+  §4.34 (l'aperçu de
+  la ressource, doc
+  §16 : « tout
+  fichier importé
+  ou généré doit
+  disposer d'un
+  parcours de
+  visualisation ») ;
+  le FAB → le
+  scanner (pack 04
+  §3.2.3) ou la
+  `BottomSheet`
+  d'import ; un
+  `ProgressBar` de
+  lecture qui
+  **toure** (la
+  progression
+  change) = un
+  « dernier lu »
+  en `xs` sous
+  le titre (la
+  date du dernier
+  accès, pas
+  la durée —
+  le §18.2
+  « Oubli et
+  consolidation »
+  lit les dates
+  d'accès, pas
+  la durée de
+  lecture, la
+  durée est un
+  `FocusSession`,
+  pas une
+  ressource).
+- **Notes responsive
+  (Phase 2)** :
+  desktop = la
+  liste passe en
+  **grille 2
+  colonnes** de
+  `ListItem` (le
+  titre + le type
+  + la
+  progression,
+  pas une Card
+  riche — la
+  bibliothèque
+  est une **liste**
+  dense, pas un
+  dashboard, §1
+  « simple en
+  surface ») ;
+  le FAB devient
+  un `Button`
+  dans le
+  header (le
+  FAB est un
+  **mobile-only**
+  pattern,
+  doc §23.2 —
+  desktop = un
+  CTA dans
+  la `TopBar`) ;
+  l'aperçu
+  (`artefacts-detail`
+  §4.34) passe
+  en **fenêtre**
+  latérale
+  (le détail
+  **côte à
+  côte** avec
+  la liste,
+  pas en
+  push, doc
+  §23.4 :
+  « créer des
+  layouts
+  desktop sans
+  modifier la
+  logique
+  métier »).
+
+#### 4.6.2 `cours-liste` + `cours-detail`
+(doc §3, §14)
+- **Objectif**
+  (liste) : **voir**
+  les cours
+  (les cours
+  **importés**
+  par le
+  scanner,
+  doc §3
+  « Suivi
+  des
+  compétences
+  et
+  sujets
+  maîtrisés/non
+  maîtrisés »)
+  ; **Objectif**
+  (détail) :
+  **un** cours,
+  sa
+  progression
+  (les
+  chapitres,
+  les notions,
+  les formules
+  — doc §14
+  « arbre
+  sémantique
+  évolutif du
+  savoir » :
+  le cours
+  est la
+  **racine**
+  d'une
+  branche de
+  l'arbre,
+  pas un
+  objet
+  isolé).
+- **Zones** :
+  liste = une
+  liste de
+  `Card
+  flat`
+  §3.3
+  (un
+  cours par
+  Card :
+  titre
+  `md`
+  600 +
+  `ProgressBar`
+  (la
+  progression
+  du cours,
+  doc §3
+  « Suivi
+  des
+  compétences
+  et sujets
+  maîtrisés/
+  non
+  maîtrisés »)
+  + 2
+  `Badge`
+  (le niveau
+  de
+  maîtrise
+  global
+  (maîtrisé/
+  fragile/
+  oublié,
+  §3.6.11)
+  + le
+  semestre/
+  année en
+  `JetBrains
+  Mono`
+  `xs`) ;
+  détail =
+  un
+  `Breadcrumb`
+  §3.4
+  (`Cours ›
+  Chapitre ›
+  Notion`,
+  le
+  cours est
+  le
+  **niveau
+  1** de
+  l'arbre,
+  le
+  chapitre
+  le
+  niveau 2,
+  la notion
+  le niveau
+  3 —
+  l'arbre
+  sémantique
+  est
+  **hiérarchique**,
+  pas un
+  graphe,
+  doc §14
+  « véritable
+  arbre
+  sémantique
+  de
+  connaissances
+  … hiérarchie
+  lisible du
+  savoir, et
+  non un
+  réseau de
+  notes ou un
+  graphe de
+  type
+  « second
+  brain » »),
+  une liste
+  de
+  `RoutineStep`
+  (les
+  chapitres,
+  les notions
+  — chaque
+  chapitre =
+  une
+  « étape »
+  avec
+  checkbox +
+  `SkillStateBadge`
+  §3.6.11),
+  un
+  `KeyValueList`
+  (les
+  méta :
+  enseignant,
+  semestre,
+  nombre de
+  chapitres,
+  nombre de
+  notions
+  maîtrisées/
+  fragiles/
+  oubliées —
+  les 3
+  compteurs
+  en
+  `JetBrains
+  Mono`
+  `xs`,
+  couleurs
+  des 3
+  familles,
+  §3.6.11),
+  un
+  `Callout
+  info`
+  (le
+  prochain
+  chapitre
+  à
+  travailler,
+  doc §3
+  « Suivi
+  des
+  compétences
+  et sujets
+  maîtrisés/
+  non
+  maîtrisés »
+  : le
+  « prochain »
+  est
+  **calculé**
+  par le
+  module
+  Progress,
+  pas
+  choisi
+  par
+  l'utilisateur
+  — le
+  cours
+  **suit**
+  la
+  progression,
+  pas
+  l'ordre
+  du
+  programme,
+  doc §18.2
+  «
+  Progression
+  académique
+  : suivre
+  les
+  chapitres,
+  concepts,
+  définitions,
+  formules et
+  méthodes
+  selon leur
+  état :
+  découvert,
+  compris,
+  rappelable,
+  fragile,
+  maîtrisé,
+  oublié »).
+- **DS** :
+  `TopBar`,
+  `Card`
+  (flat),
+  `ProgressBar`,
+  `Badge`,
+  `Breadcrumb`
+  (§3.4),
+  `RoutineStep`
+  (les
+  chapitres/
+  notions),
+  `SkillStateBadge`
+  (§3.6.11),
+  `KeyValueList`
+  (§3.6.2),
+  `Callout`
+  (info, le
+  prochain
+  chapitre),
+  `EmptyState`
+  (pas de
+  cours
+  importés),
+  `Skeleton`.
+- **États** :
+  `loading`
+  = les
+  Cards/
+  sections
+  en
+  Skeleton
+  (le
+  store
+  local,
+  court) ;
+  `empty`
+  = pas de
+  cours =
+  un
+  `EmptyState`
+  : icône
+  « cours »,
+  « Aucun
+  cours
+  importé —
+  scannez
+  votre
+  premier
+  PDF » +
+  CTA
+  «
+  Scanner »
+  (le CTA
+  ouvre le
+  scanner
+  pack 04
+  §3.2.3)
+  ;
+  `error`
+  = un
+  cours non
+  syncé
+  = un
+  `Badge
+  danger`
+  sur la
+  Card
+  (le
+  cours
+  **reste**
+  visible,
+  AD-7) ;
+  `offline`
+  = les
+  cours
+  restent
+  **lisibles**
+  (lecture
+  locale,
+  AD-7),
+  le
+  **scanner**
+  reste
+  **possible**
+  si c'est
+  un
+  fichier
+  local
+  (l'OCR
+  est
+  serveur,
+  pack 01
+  — le
+  scan
+  local
+  **fonctionne**,
+  l'OCR
+  est
+  différé,
+  pack 02
+  §7
+  `offline`).
+- **Transitions** :
+  une
+  `Card`
+  →
+  `cours-detail`
+  (un
+  push, le
+  détail
+  est une
+  **route**
+  (le
+  Breadcrumb
+  `Cours ›
+  Chapitre ›
+  Notion`
+  est
+  **persistant**,
+  le cours
+  a sa
+  propre
+  TopBar +
+  sub-navigation,
+  pas une
+  BottomSheet
+  comme
+  `taches-detail`
+  §4.2.3 —
+  le cours
+  est
+  **riche**
+  (5
+  sections :
+  chapitres,
+  notions,
+  formules,
+  progression,
+  méta), pas
+  une entité
+  simple) ;
+  une
+  `RoutineStep`
+  (chapitre)
+  →
+  `arbre-semantique`
+  §4.30
+  (le
+  chapitre
+  **est**
+  une
+  branche de
+  l'arbre,
+  doc §14
+  : le
+  cours
+  **ouvre**
+  l'arbre
+  au
+  niveau du
+  chapitre,
+  pas un
+  écran
+  séparé —
+  le Breadcrumb
+  **monte**
+  dans
+  l'arbre,
+  pas
+  l'inverse) ;
+  un
+  `Callout
+  info`
+  (prochain
+  chapitre)
+  → un
+  `Button
+  ghost`
+  «
+  Travailler »
+  qui ouvre
+  l'`agent`
+  §4.40
+  (le
+  « travailler »
+  est une
+  capacité
+  du
+  kernel,
+  AD-12/F-09,
+  pas un
+  bouton
+  local —
+  l'app
+  **demande**
+  à
+  l'agent,
+  l'agent
+  **suggère**,
+  l'utilisateur
+  **décide**,
+  doc §5
+  « Orchestration
+  agentique
+  »).
+- **Notes
+  responsive
+  (Phase 2)**
+  : desktop
+  = les
+  Cards
+  passent
+  en
+  **grille
+  2
+  colonnes**
+  ; le
+  Breadcrumb
+  du
+  cours
+  s'élargit
+  (les 3
+  niveaux
+  s'affichent
+  en
+  **texte**
+  pas en
+  pastille,
+  le
+  desktop a
+  la
+  **largeur**,
+  §1 «
+  dense
+  progressivement
+  ») ; le
+  FAB
+  devient
+  un
+  `Button`
+  dans le
+  header
+  (le
+  scanner
+  est un
+  **mobile-only**
+  pattern,
+  doc
+  §23.2 —
+  desktop
+  = un
+  CTA
+  dans
+  la
+  `TopBar`).
+
+### 4.7 Module Learning — fiches, QCM, flashcards,
+mode coach & mirror (doc §3, §17)
+
+#### 4.7.1 `fiches-liste` + `fiches-detail`
+(doc §3, §17)
+- **Objectif**
+  (liste) :
+  **retrouver**
+  les fiches
+  de
+  révision
+  (les
+  fiches
+  **générées**
+  par
+  l'agent,
+  doc
+  §17
+  « Fiches
+  de révision
+  intelligentes
+  et
+  fidèles au
+  corpus »)
+  ; **Objectif**
+  (détail)
+  : **une**
+  fiche,
+  son
+  contenu
+  (les
+  définitions,
+  les
+  formules,
+  les
+  méthodes,
+  les
+  exemples
+  — doc
+  §17
+  « Extraction
+  ciblée :
+  définitions,
+  lois,
+  principes,
+  formules,
+  hypothèses,
+  unités,
+  méthodes,
+  étapes,
+  pièges,
+  exemples
+  et
+  relations
+  importantes
+  »).
+- **Zones** :
+  liste =
+  une
+  liste de
+  `Card
+  flat`
+  (une
+  fiche par
+  Card :
+  titre
+  `md`
+  600 +
+  type en
+  `Badge`
+  (les 7
+  types du
+  doc
+  §17
+  « Exemples
+  de
+  structures
+  :
+  fiche de
+  définitions,
+  fiche de
+  formules,
+  fiche
+  méthode,
+  fiche
+  comparative,
+  fiche
+  procédure,
+  fiche de
+  synthèse
+  théorique
+  et
+  fiche
+  d'exercices
+  » = 7
+  `Badge`,
+  le type
+  **guide**
+  la lecture,
+  pas
+  l'aperçu
+  — le
+  contenu
+  est **sous**
+  le type,
+  pas le
+  type
+  lui-même)
+  + un
+  `SkillStateBadge`
+  §3.6.11
+  (l'état
+  de la
+  notion
+  couverte
+  par la
+  fiche,
+  doc
+  §17
+  « Dét
+
+### 4.8 Module Learning — flashcards & QCM (doc §3)
+
+#### 4.8.1 `flashcards` (répétition espacée FSRS, doc §3)
+- **Objectif** : **réviser**
+  (pas « voir » les cartes — la
+  révision est une
+  **action**, la
+  carte est
+  **l'objet**, doc
+  §3 « Fiches
+  de révision
+  IA …
+  Flashcards,
+  Répétition
+  espacée
+  FSRS, Rappel
+  actif » :
+  l'écran
+  est une
+  **session
+  de
+  révision**,
+  pas une
+  liste).
+- **Zones** :
+  header
+  (`TopBar`
+  «
+  Révision »
+  + un
+  `Badge`
+  compteur
+  « 24
+  cartes
+  dues »
+  (le
+  compteur
+  est
+  **statique**,
+  §2.6
+  règle 1 —
+  le chiffre
+  ne
+  s'incrémenté
+  pas « en
+  bougeant
+  »)
+  + un
+  `Menu`
+  (changer
+  de
+  matière /
+  passer
+  la
+  session)
+  ;
+  content
+  (un
+  `FlashcardCard`
+  §3.6.10
+  **centré**
+  — la
+  carte
+  est
+  **plein
+  écran**
+  (pas
+  une liste
+  de
+  cartes,
+  §1 «
+  simple
+  en
+  surface »
+  : une
+  carte
+  à la
+  fois,
+  le
+  focus
+  est
+  sur
+  la
+  carte,
+  pas
+  sur
+  5
+  cartes
+  empilées)
+  + en
+  bas,
+  les 4
+  `Button
+  secondary`
+  (FSRS :
+  « Oublié
+  /
+  Difficile
+  /
+  Bon /
+  Facile »
+  — les
+  4
+  boutons
+  de
+  **qualité
+  de
+  rappel**,
+  pas
+  4
+  boutons
+  qui
+  « jouent
+  » la
+  carte,
+  §3.6.10
+  : le
+  feedback
+  est
+  **séparé**
+  du
+  contenu
+  de la
+  carte,
+  il
+  **suit**
+  la
+  carte,
+  il ne
+  la
+  **précède
+  pas**)
+  ;
+  footer
+  (le
+  `BottomNav`
+  est
+  **masqué**
+  — la
+  session
+  de
+  révision
+  est
+  une
+  **action**,
+  pas une
+  feuille
+  de
+  nav,
+  le
+  retour
+  au
+  `BottomNav`
+  s'effectue
+  par
+  le
+  back
+  Android
+  ou un
+  `IconButton`
+  «
+  Terminer
+  la
+  session
+  »
+  (pas
+  un
+  CTA
+  «
+  Passer
+  à la
+  suivante
+  »
+  — le
+  « Passer
+  »
+  est
+  **dans**
+  la
+  sheet
+  de
+  fin,
+  pas dans
+  le
+  nav)).
+- **DS** :
+  `TopBar`,
+  `Badge`
+  (le
+  compteur
+  «
+  N
+  cartes
+  dues
+  »
+  ,
+  **statique**,
+  §2.6),
+  `Menu`
+  (§3.5,
+  changer
+  de
+  matière
+  ou
+  passer
+  la
+  session),
+  `FlashcardCard`
+  (§3.6.10,
+  le
+  flip
+  recto/verso),
+  `Button`
+  (4
+  ×
+  `secondary`
+  ,
+  les
+  4
+  niveaux
+  de
+  qualité
+  FSRS
+  ),
+  `Callout`
+  (un
+  `Callout
+  info`
+  **posé**
+  en
+  bas
+  si
+  la
+  session
+  est
+  **terminée**
+  :
+  «
+  Session
+  terminée
+  —
+  N
+  cartes
+  revisées
+  »
+  ,
+  le
+  compteur
+  est
+  un
+  **fait**,
+  pas un
+  KPI
+  ,
+  §1
+  «
+  calme
+  »),
+  `EmptyState`
+  (pas
+  de
+  cartes
+  dues
+  =
+  un
+  état
+  **positif**,
+  pas un
+  vide
+  négatif
+  ,
+  §12
+  :
+  «
+  Aucune
+  carte
+  due
+  —
+  tout
+  est
+  maîtrisé
+  »
+  +
+  CTA
+  ghost
+  «
+  Voir
+  les
+  fiches
+  »
+  qui
+  ouvre
+  `fiches-liste`
+  §4.7.1),
+  `Skeleton`
+  (le
+  flip
+  de
+  la
+  carte
+  est
+  **immédiat**
+  ,
+  le
+  `loading`
+  n'existe
+  que
+  si la
+  carte
+  **arrive**
+  du
+  cloud
+  ,
+  cas
+  rare
+  local-first
+  ,
+  AD-7
+  ).
+- **États** :
+  `loading`
+  = la
+  carte
+  en
+  Skeleton
+  (le
+  store
+  local
+  ,
+  la
+  carte
+  est
+  **connue**
+  localement
+  ,
+  le
+  flip
+  est
+  **immédiat**
+  —
+  le
+  `loading`
+  **couvre**
+  le
+  rechargement
+  de la
+  **prochaine**
+  carte
+  si elle
+  n'est
+  pas
+  syncée
+  ,
+  pas la
+  carte
+  courante
+  ) ;
+  `empty`
+  = pas
+  de
+  cartes
+  dues
+  =
+  un
+  `EmptyState`
+  **positif**
+  (le
+  «
+  tout
+  est
+  maîtrisé
+  »
+  est
+  un
+  état
+  **visé**,
+  pas un
+  échec
+  ,
+  §12
+  :
+  «
+  simple
+  en
+  surface
+  »
+  —
+  l'écran
+  **n'affiche
+  pas**
+  un
+  «
+  0
+  cartes
+  dues
+  »
+  en
+  rouge
+  ,
+  il
+  **invite**
+  à
+  la
+  fiche
+  ,
+  pas à
+  la
+  panique
+  ) ;
+  `error`
+  = un
+  échec
+  de
+  sync
+  de
+  la
+  prochaine
+  carte
+  =
+  le
+  compteur
+  de
+  `Badge`
+  **reste**
+  (les
+  cartes
+  locales
+  sont
+  **comptées**,
+  pas le
+  delta
+  cloud
+  ,
+  AD-7
+  )
+  +
+  un
+  `Callout
+  danger`
+  «
+  N
+  cartes
+  à
+  re-synchroniser
+  »
+  en
+  bas
+  (le
+  compteur
+  est
+  **présent**,
+  pas
+  caché
+  —
+  l'état
+  `error`
+  est
+  **affiché**,
+  pas
+  silencieux
+  ,
+  pack 02
+  §7
+  :
+  «
+  l'erreur
+  est
+  lisible
+  »)
+  ;
+  `offline`
+  = la
+  session
+  de
+  révision
+  **fonctionne**
+  (les
+  cartes
+  locales
+  sont
+  lisibles
+  ,
+  AD-7
+  )
+  —
+  le
+  feedback
+  FSRS
+  (les
+  4
+  boutons
+  )
+  est
+  **écrit
+  localement**
+  ,
+  la
+  sync
+  se
+  fait
+  au
+  retour
+  du
+  réseau
+  (pack
+  03
+  §5.5
+  re-sync
+  )
+  —
+  une
+  révision
+  **n'exige
+  jamais**
+  le
+  réseau
+  (c'est
+  une
+  **action
+  personnelle**,
+  pas une
+  requête
+  serveur
+  ,
+  doc
+  §3
+  :
+  «
+  Fiches
+  de
+  révision
+  IA
+  »
+  =
+  la
+  génération
+  est
+  IA
+  (serveur
+  ,
+  AD-12
+  )
+  ,
+  la
+  **révision**
+  est
+  **humaine**
+  (locale
+  ,
+  AD-7
+  )
+  .
+- **Transitions** :
+  un
+  tap
+  sur
+  la
+  carte
+  = le
+  flip
+  (recto
+  →
+  verso
+  ,
+  §3.6.10
+  :
+  le
+  flip
+  est
+  **toujours**
+  un
+  tap
+  au
+  centre
+  ,
+  jamais
+  un
+  swipe
+  latéral
+  —
+  le
+  swipe
+  est
+  réservé
+  à
+  la
+  navigation
+  entre
+  écrans
+  ,
+  doc
+  §23.2
+  )
+  ;
+  un
+  tap
+  sur
+  l'un
+  des
+  4
+  boutons
+  = la
+  carte
+  **avance**
+  (le
+  compteur
+  diminue
+  ,
+  le
+  `Badge`
+  se
+  met
+  à
+  jour
+  **statiquement**
+  ,
+  §2.6
+  :
+  le
+  chiffre
+  **change**,
+  il ne
+  «
+  pulse
+  »
+  pas
+  )
+  +
+  la
+  prochaine
+  carte
+  apparaît
+  (le
+  flip
+  de
+  la
+  nouvelle
+  carte
+  est
+  **immédiat**
+  ,
+  pas
+  de
+  transition
+  entre
+  2
+  cartes
+  si la
+  carte
+  courante
+  est
+  locale
+  —
+  la
+  transition
+  existe
+  **seulement**
+  si la
+  carte
+  **arrive**
+  du
+  cloud
+  ,
+  §3.6.10
+  )
+  ;
+  «
+  Terminer
+  la
+  session
+  »
+  =
+  une
+  `BottomSheet`
+  de
+  **bilan**
+  (le
+  `FlashcardSessionBilan`
+  ,
+  analogue
+  au
+  `FocusSessionBilan`
+  pack 04
+  §4.1
+  )
+  :
+  la
+  durée
+  réelle
+  ,
+  les
+  N
+  cartes
+  revisées
+  ,
+  les
+  N
+  cartes
+  «
+  oubliées
+  »
+  (le
+  niveau
+  FSRS
+  le
+  plus
+  bas
+  ),
+  un
+  CTA
+  «
+  Revoir
+  les
+  oubliées
+  »
+  (le
+  re-passe
+  **immediat**
+  sur
+  les
+  cartes
+  qui
+  ont
+  échoué
+  ,
+  doc
+  §3
+  «
+  Correction
+  et
+  analyse
+  des
+  erreurs
+  »
+  )
+  ;
+  le
+  `Menu`
+  «
+  Changer
+  de
+  matière
+  »
+  =
+  une
+  `Select`
+  (§3.2
+  )
+  qui
+  **recharge**
+  la
+  pile
+  de
+  cartes
+  (le
+  compteur
+  de
+  `Badge`
+  est
+  **par
+  matière**
+  ,
+  pas
+  global
+  —
+  le
+  changement
+  de
+  matière
+  **ne**
+  perd
+  pas
+  le
+  compteur
+  global
+  ,
+  le
+  compteur
+  est
+  **par
+  contexte**
+  ,
+  §1
+  «
+  non-surprise
+  »
+  :
+  l'utilisateur
+  **sait**
+  que
+  le
+  compteur
+  change
+  quand
+  elle
+  change
+  de
+  matière
+  ,
+  elle ne
+  sait
+  pas
+  que
+  le
+  compteur
+  change
+  sans
+  raison
+  ).
+- **Notes
+  responsive
+  (Phase
+  2)** :
+  desktop
+  = la
+  carte
+  reste
+  **centrée**
+  (le
+  desktop
+  n'élargit
+  pas
+  la
+  carte
+  —
+  une
+  carte
+  de
+  révision
+  est
+  une
+  **carte**
+  ,
+  pas un
+  document
+  ,
+  §1
+  «
+  simple
+  en
+  surface
+  »
+  )
+  +
+  les
+  4
+  boutons
+  de
+  qualité
+  FSRS
+  passent
+  en
+  **rangée
+  horizontale**
+  sous
+  la
+  carte
+  (le
+  mobile
+  est
+  2×2
+  ,
+  le
+  desktop
+  est
+  4×1
+  —
+  le
+  layout
+  s'adapte
+  ,
+  la
+  logique
+  (4
+  niveaux
+  de
+  qualité
+  )
+  est
+  **inchangée**
+  ,
+  doc
+  §23.4
+  )
+  ;
+  le
+  `Badge`
+  compteur
+  de
+  cartes
+  dues
+  reste
+  **en
+  haut**
+  (le
+  header
+  est
+  **identique**
+  mobile/desktop
+  ,
+  doc
+  §23.4
+  :
+  «
+  réutiliser
+  les
+  contrats
+  existants
+  »
+  )
+  ;
+  un
+  **second**
+  panneau
+  latéral
+  (desktop
+  )
+  affiche
+  la
+  **pile
+  restante**
+  (les
+  cartes
+  à
+  venir
+  ,
+  en
+  **texte**
+  ,
+  pas en
+  pastille
+  —
+  le
+  desktop
+  a
+  la
+  largeur
+  ,
+  le
+  mobile
+  est
+  **compact**
+  par
+  design
+  ,
+  §1
+  «
+  dense
+  progressivement
+  »
+  ).
+
+#### 4.8.2 `qcm` (doc §3)
+- **Objectif** :
+  **évaluer**
+  (pas
+  «
+  voir
+  »
+  les
+  questions
+  — le
+  QCM
+  est une
+  **session
+  d'évaluation**
+  ,
+  doc
+  §3
+  «
+  QCM
+  ,
+  Rappel
+  actif
+  ,
+  Exercices
+  progressifs
+  ,
+  Correction
+  et
+  analyse
+  des
+  erreurs
+  »
+  )
+  ;
+  l'écran
+  est une
+  **question**
+  à la
+  fois
+  (pas
+  10
+  questions
+  empilées
+  —
+  le
+  QCM
+  est
+  **séquentiel**,
+  la
+  correction
+  vient
+  **après**
+  chaque
+  question
+  si
+  le
+  mode
+  est
+  «
+  correction
+  immédiate
+  »
+  ,
+  ou
+  **après**
+  la
+  session
+  si
+  le
+  mode
+  est
+  «
+  évaluation
+  pure
+  »
+  —
+  les
+  2
+  modes
+  sont
+  **séparés**
+  par
+  un
+  `SegmentedControl`
+  §3.4
+  ,
+  pas
+  mélangés
+  dans
+  le
+  même
+  écran
+  ,
+  §12
+  :
+  «
+  simple
+  en
+  surface
+  ,
+  puissant
+  en
+  profondeur
+  »
+  :
+  le
+  mode
+  «
+  correction
+  immédiate
+  »
+  est
+  le
+  **coaching**
+  (le
+  `mode-coach`
+  §4.9
+  )
+  ,
+  le
+  mode
+  «
+  évaluation
+  pure
+  »
+  est
+  la
+  **mesure**
+  (le
+  Progress
+  §18
+  )
+  —
+  les
+  2
+  modes
+  ont
+  des
+  **finalités
+  différentes**,
+  l'UI
+  les
+  **sépare**.
+- **Zones** :
+  header
+  (`TopBar`
+  «
+  QCM
+  »
+  +
+  un
+  `SegmentedControl`
+  «
+  Correction
+  |
+  Évaluation
+  »
+  §3.4
+  —
+  2
+  segments
+  ,
+  le
+  `SegmentedControl`
+  est
+  **justifié**
+  §3.4
+  (binaire
+  exclusif
+  )
+  +
+  un
+  `Badge`
+  compteur
+  «
+  3/15
+  »
+  (la
+  question
+  courante
+  /
+  le
+  total
+  ,
+  en
+  `JetBrains
+  Mono`
+  `xs`
+  ,
+  **statique**
+  §2.6
+  )
+  ;
+  content
+  (un
+  `Card`
+  §3.3
+  **par
+  question**
+  (la
+  question
+  est
+  **centrée**
+  ,
+  pas une
+  liste
+  de
+  15
+  questions
+  empilées
+  ,
+  §1
+  «
+  une
+  question
+  à
+  la
+  fois
+  »
+  )
+  +
+  les
+  réponses
+  =
+  des
+  `ListItem`
+  **sélectables**
+  (pas
+  des
+  `RadioButton`
+  §3.2
+  —
+  le
+  `RadioButton`
+  est
+  pour
+  les
+  choix
+  **exclusifs**
+  dans
+  un
+  formulaire
+  ; le
+  QCM
+  est
+  une
+  **réponse**
+  ,
+  pas un
+  formulaire
+  : les
+  réponses
+  sont
+  des
+  **items**
+  qu'on
+  **choisit**
+  ,
+  pas des
+  **options**
+  qu'on
+  coche
+  —
+  le
+  `ListItem`
+  **sélectable**
+  §3.3
+  est
+  le
+  bon
+  composant
+  ,
+  pas le
+  `RadioButton`
+  )
+  +
+  (si
+  le
+  mode
+  est
+  «
+  correction
+  immédiate
+  »
+  )
+  un
+  `Callout`
+  **posé**
+  (
+  `success`
+  si
+  bonne
+  ,
+  `danger`
+  si
+  mauvaise
+  )
+  +
+  l'explication
+  (si
+  le
+  mode
+  est
+  «
+  correction
+  immédiate
+  »
+  ,
+  l'explication
+  est
+  **séparée**
+  de
+  la
+  question
+  —
+  la
+  question
+  est
+  dans
+  la
+  `Card`
+  ,
+  l'explication
+  est
+  dans
+  le
+  `Callout`
+  ,
+  le
+  `MathBlock`
+  si
+  la
+  question
+  est
+  une
+  formule
+  (§3.6.8
+  ,
+  doc
+  §17
+  «
+  Mémorisation
+  des
+  formules
+  »
+  )
+  )
+  ;
+  footer
+  (le
+  `BottomNav`
+  est
+  **masqué**
+  —
+  la
+  session
+  de
+  QCM
+  est
+  une
+  **action**
+  ,
+  pas une
+  feuille
+  de
+  nav
+  ,
+  le
+  retour
+  au
+  `BottomNav`
+  s'effectue
+  par
+  le
+  back
+  Android
+  ou
+  un
+  `IconButton`
+  «
+  Terminer
+  »
+  ).
+- **DS** :
+  `TopBar`,
+  `SegmentedControl`
+  (le
+  mode
+  correction
+  /
+  évaluation
+  ,
+  2
+  segments
+  ,
+  §3.4
+  ),
+  `Badge`
+  (le
+  compteur
+  «
+  N/M
+  »
+  ,
+  **statique**
+  ,
+  §2.6
+  ),
+  `Card`
+  (la
+  question
+  ,
+  une
+  par
+  écran
+  ,
+  §3.3
+  ),
+  `ListItem`
+  (les
+  réponses
+  ,
+  **sélectables**
+  ,
+  pas
+  des
+  `RadioButton`
+  ,
+  §3.3
+  ),
+  `Callout`
+  (le
+  feedback
+  de
+  correction
+  ,
+  `success`/`danger`
+  ,
+  le
+  `Callout`
+  est
+  **posé**
+  ,
+  pas
+  un
+  toast
+  ,
+  §2.6
+  règle
+  3
+  ,
+  `focusMode`
+  :
+  les
+  toasts
+  sont
+  **différés**
+  ,
+  le
+  `Callout`
+  **reste**
+  ),
+  `MathBlock`
+  (§3.6.8
+  ,
+  si
+  la
+  question
+  contient
+  une
+  formule
+  —
+  doc
+  §17
+  «
+  Mémorisation
+  des
+  formules
+  :
+  formule
+  ,
+  signification
+  de
+  chaque
+  variable
+  ,
+  unités
+  ,
+  conditions
+  d'utilisation
+  »
+  ,
+  la
+  formule
+  est
+  **toujours**
+  rendue
+  par
+  KaTeX
+  ,
+  jamais
+  en
+  texte
+  brut
+  ,
+  §2.2
+  «
+  les
+  unités
+  et
+  valeurs
+  techniques
+  =
+  toujours
+  `JetBrains
+  Mono`
+  +
+  `tabular-nums`
+  »
+  ),
+  `EmptyState`
+  (pas
+  de
+  QCM
+  dans
+  la
+  matière
+  =
+  un
+  CTA
+  «
+  Générer
+  un
+  QCM
+  »
+  qui
+  ouvre
+  l'agent
+  §4.40
+  —
+  la
+  génération
+  du
+  QCM
+  est
+  une
+  **capacité
+  de
+  l'agent**
+  ,
+  doc
+  §3
+  «
+  Fiches
+  de
+  révision
+  IA
+  »
+  ,
+  le
+  QCM
+  est
+  **généré**
+  ,
+  pas
+  «
+  écrit
+  »
+  par
+  l'app
+  ,
+  AD-12
+  )
+  ,
+  `Skeleton`
+  (le
+  `loading`
+  du
+  QCM
+  =
+  les
+  questions
+  en
+  Skeleton
+  ,
+  le
+  compteur
+  reste
+  ,
+  le
+  mode
+  reste
+  ).
+- **États** :
+  `loading`
+  = les
+  questions
+  en
+  Skeleton
+  (le
+  store
+  local
+  ,
+  les
+  questions
+  sont
+  **générées**
+  par
+  l'agent
+  —
+  le
+  `loading`
+  **couvre**
+  la
+  génération
+  serveur
+  ,
+  pas la
+  lecture
+  locale
+  : un
+  QCM
+  **existant**
+  est
+  **immédiat**
+  ,
+  un
+  QCM
+  **généré**
+  attend
+  le
+  serveur
+  ,
+  AD-12/F-09
+  :
+  le
+  kernel
+  est
+  **serveur**
+  ,
+  l'app
+  est
+  la
+  surface
+  )
+  ;
+  `empty`
+  = pas
+  de
+  QCM
+  dans
+  la
+  matière
+  =
+  un
+  `EmptyState`
+  :
+  icône
+  «
+  QCM
+  »
+  ,
+  «
+  Aucun
+  QCM
+  pour
+  cette
+  matière
+  —
+  demandez-en
+  un
+  à
+  Aurora
+  »
+  +
+  CTA
+  «
+  Générer
+  un
+  QCM
+  »
+  (le
+  CTA
+  ouvre
+  l'agent
+  §4.40
+  ,
+  la
+  génération
+  est
+  **déclarée**
+  comme
+  une
+  capacité
+  du
+  kernel
+  ,
+  AD-12
+  :
+  le
+  `AgentRunState`
+  pack
+  02
+  §6.4
+  =
+  la
+  surface
+  de
+  l'agent
+  ,
+  le
+  QCM
+  est
+  le
+  **résultat**
+  )
+  ;
+  `error`
+  = un
+  échec
+  de
+  génération
+  du
+  QCM
+  (le
+  kernel
+  **échoue**
+  )
+  =
+  un
+  `Callout
+  danger`
+  «
+  La
+  génération
+  du
+  QCM
+  a
+  échoué
+  »
+  +
+  retry
+  (le
+  QCM
+  **précédent**
+  reste
+  accessible
+  si
+  un
+  existait
+  —
+  l'échec
+  ne
+  **supprime
+  pas**
+  le
+  QCM
+  existant
+  ,
+  AD-7
+  :
+  le
+  local
+  reste
+  lisible
+  )
+  ;
+  `offline`
+  = les
+  QCM
+  **existants**
+  restent
+  **lisibles**
+  (lecture
+  locale
+  ,
+  AD-7
+  )
+  ,
+  la
+  génération
+  est
+  **désactivée**
+  avec
+  un
+  `Callout
+  info`
+  «
+  La
+  génération
+  de
+  QCM
+  nécessite
+  le
+  réseau
+  »
+  (le
+  kernel
+  est
+  serveur
+  ,
+  AD-12
+  :
+  le
+  QCM
+  est
+  **généré**
+  par
+  l'agent
+  ,
+  pas par
+  l'app
+  —
+  sans
+  réseau
+  ,
+  pas de
+  génération
+  ,
+  mais
+  les
+  QCM
+  **existants**
+  restent
+  )
+  .
+- **Transitions** :
+  un
+  tap
+  sur
+  une
+  réponse
+  (mode
+  «
+  correction
+  immédiate
+  »
+  )
+  = le
+  `Callout`
+  **apparaît**
+  (
+  `success`/`danger`
+  )
+  +
+  l'explication
+  (si
+  présente
+  )
+  +
+  le
+  compteur
+  **avance**
+  (le
+  `Badge`
+  se
+  met
+  à
+  jour
+  **statiquement**
+  ,
+  §2.6
+  )
+  +
+  la
+  prochaine
+  question
+  apparaît
+  (le
+  `loading`
+  de
+  la
+  prochaine
+  question
+  est
+  **courant**
+  si elle
+  est
+  locale
+  ,
+  AD-7
+  )
+  ;
+  un
+  tap
+  sur
+  une
+  réponse
+  (mode
+  «
+  évaluation
+  pure
+  »
+  )
+  =
+  la
+  question
+  **avance**
+  (pas
+  de
+  `Callout`
+  —
+  le
+  mode
+  «
+  évaluation
+  pure
+  »
+  est
+  une
+  **mesure**
+  ,
+  pas un
+  **coaching**
+  ,
+  le
+  feedback
+  arrive
+  **après**
+  la
+  session
+  ,
+  doc
+  §3
+  «
+  Correction
+  et
+  analyse
+  des
+  erreurs
+  »
+  =
+  le
+  bilan
+  de
+  session
+  ,
+  pas le
+  feedback
+  immédiat
+  )
+  ;
+  «
+  Terminer
+  »
+  =
+  une
+  `BottomSheet`
+  de
+  **bilan**
+  (le
+  `QcmSessionBilan`
+  ,
+  analogue
+  au
+  `FocusSessionBilan`
+  pack 04
+  §4.1
+  )
+  :
+  le
+  score
+  ,
+  les
+  N
+  erreurs
+  ,
+  les
+  erreurs
+  **récurrentes**
+  (le
+  même
+  type
+  d'erreur
+  plusieurs
+  fois
+  ,
+  doc
+  §3
+  «
+  Correction
+  et
+  analyse
+  des
+  erreurs
+  »
+  )
+  +
+  un
+  CTA
+  «
+  Suggérer
+  une
+  correction
+  »
+  qui
+  ouvre
+  l'agent
+  §4.40
+  (le
+  coaching
+  après
+  le
+  QCM
+  est
+  une
+  **capacité
+  de
+  l'agent**
+  ,
+  AD-12
+  :
+  l'app
+  **demande**
+  ,
+  l'agent
+  **suggère**
+  ,
+  l'utilisateur
+  **décide**
+  ,
+  doc
+  §5
+  «
+  Orchestration
+  agentique
+  »
+  )
+  ;
+  le
+  `Menu`
+  (le
+  `TopBar`
+  ,
+  changer
+  de
+  matière
+  )
+  =
+  une
+  `Select`
+  (§3.2
+  )
+  qui
+  **recharge**
+  la
+  pile
+  de
+  QCM
+  (le
+  compteur
+  de
+  `Badge`
+  est
+  **par
+  matière**
+  ,
+  pas
+  global
+  ,
+  le
+  changement
+  de
+  matière
+  **ne**
+  perd
+  pas
+  le
+  compteur
+  global
+  ,
+  le
+  compteur
+  est
+  **par
+  contexte**
+  ,
+  §1
+  «
+  non-surprise
+  »
+  )
+  .
+- **Notes
+  responsive
+  (Phase
+  2)** :
+  desktop
+  = les
+  questions
+  restent
+  **centrées**
+  (le
+  desktop
+  n'élargit
+  pas
+  la
+  question
+  —
+  un
+  QCM
+  est
+  une
+  **question**
+  ,
+  pas
+  un
+  document
+  ,
+  §1
+  «
+  simple
+  en
+  surface
+  »
+  )
+  +
+  les
+  réponses
+  passent
+  en
+  **grille
+  2
+  colonnes**
+  (le
+  mobile
+  est
+  **liste**
+  ,
+  le
+  desktop
+  est
+  **grille**
+  —
+  le
+  layout
+  s'adapte
+  ,
+  la
+  logique
+  (les
+  réponses
+  sont
+  des
+  `ListItem`
+  **sélectables**
+  )
+  est
+  **inchangée**
+  ,
+  doc
+  §23.4
+  )
+  ;
+  le
+  `SegmentedControl`
+  (correction
+  /
+  évaluation
+  )
+  reste
+  **en
+  haut**
+  (le
+  header
+  est
+  **identique**
+  mobile/desktop
+  ,
+  doc
+  §23.4
+  )
+  ;
+  le
+  bilan
+  de
+  session
+  (le
+  `BottomSheet`
+  )
+  passe
+  en
+  **fenêtre**
+  latérale
+  (le
+  desktop
+  a
+  la
+  largeur
+  pour
+  le
+  bilan
+  **côte
+  à
+  côte**
+  avec
+  le
+  QCM
+  ,
+  pas en
+  plein
+  écran
+  ,
+  doc
+  §23.4
+  :
+  «
+  créer
+  des
+  layouts
+  desktop
+  sans
+  modifier
+  la
+  logique
+  métier
+  »
+  ).
+
+### 4.9 Module Learning — mode coach &
+mirror cognitive (doc §3, §13, §14)
+
+#### 4.9.1 `mode-coach` (doc §3, §13)
+- **Objectif** :
+  **apprendre**
+  (pas
+  «
+  voir
+  »
+  le
+  coach
+  —
+  le
+  coach
+  est
+  une
+  **capacité
+  adaptative**
+  ,
+  doc
+  §3
+  «
+  Mode
+  Coach
+  »
+  ,
+  doc
+  §13
+  «
+  Aurora
+  Coach
+  —
+  accompagnement
+  personnel
+  adaptatif
+  »
+  :
+  le
+  coach
+  est
+  le
+  **miroir**
+  de
+  l'apprentissage
+  ,
+  pas un
+  «
+  chatbot
+  »
+  (le
+  chatbot
+  est
+  l'chat
+  **interactif**
+  du
+  kernel
+  ,
+  pack
+  02
+  §6.4
+  :
+  l'
+  `agent`
+  §4.40
+  est
+  la
+  **surface
+  de
+  dialogue**
+  ,
+  le
+  `mode-coach`
+  est
+  la
+  **capacité**
+  du
+  kernel
+  (AD-12
+  :
+  «
+  Planner/Coach/Tutor/Researcher/Executor
+  sont
+  des
+  **capacités**
+  du
+  kernel
+  ,
+  pas
+  des
+  agents
+  séparés
+  »
+  )
+  —
+  le
+  DS
+  **rend**
+  le
+  coach
+  ,
+  il ne
+  **l'exécute
+  pas**
+  (le
+  kernel
+  est
+  **serveur**
+  ,
+  AD-12/F-09
+  :
+  l'app
+  est
+  la
+  surface
+  ,
+  le
+  kernel
+  est
+  l'exécution
+  )
+  .
+- **Zones** :
+  header
+  (`TopBar`
+  «
+  Coach
+  »
+  +
+  un
+  `Badge`
+  d'état
+  du
+  coach
+  (le
+  `AgentRunState`
+  pack
+  02
+  §6.4
+  :
+  `planning`/`retrieving`/`acting`/`done`/`error`
+  =
+  les
+  5
+  états
+  de
+  la
+  surface
+  du
+  kernel
+  ,
+  le
+  `Badge`
+  affiche
+  le
+  `phase`
+  courant
+  en
+  `JetBrains
+  Mono`
+  `xs`
+  ,
+  **statique**
+  §2.6
+  —
+  le
+  `Badge`
+  **change**
+  quand
+  la
+  phase
+  change
+  ,
+  il ne
+  «
+  pulse
+  »
+  pas
+  )
+  +
+  un
+  `Menu`
+  (changer
+  de
+  matière
+  ,
+  passer
+  la
+  session
+  )
+  ;
+  content
+  (le
+  `mode-coach`
+  n'est
+  **pas**
+  un
+  écran
+  de
+  contenu
+  —
+  c'est
+  un
+  **mode**
+  ,
+  pas
+  un
+  lieu
+  :
+  le
+  contenu
+  du
+  coach
+  s'affiche
+  **par-dessus**
+  l'écran
+  courant
+  (un
+  `BottomSheet`
+  §3.5
+  qui
+  **monte**
+  au-dessus
+  de
+  l'écran
+  en
+  cours
+  ,
+  pas
+  un
+  push
+  séparé
+  —
+  le
+  coach
+  **contextualise**
+  ,
+  il ne
+  **déplace**
+  pas
+  :
+  un
+  coach
+  qui
+  remplace
+  l'écran
+  de
+  travail
+  est
+  un
+  **interruption**
+  ,
+  pas un
+  accompagnement
+  ,
+  doc
+  §13
+  :
+  «
+  le
+  coaching
+  ne
+  doit
+  pas
+  devenir
+  intrusif
+  :
+  l'agent
+  doit
+  privilégier
+  la
+  pertinence
+  contextuelle
+  ,
+  respecter
+  les
+  périodes
+  de
+  silence
+  et
+  pouvoir
+  être
+  désactivé
+  ou
+  ajusté
+  »
+  )
+  ;
+  le
+  contenu
+  du
+  `BottomSheet`
+  =
+  un
+  `Callout`
+  **posé**
+  (le
+  **constat**
+  du
+  coach
+  ,
+  doc
+  §13
+  «
+  Dialogue
+  bref
+  et
+  orienté
+  action
+  :
+  Aurora
+  explique
+  le
+  constat
+  »
+  —
+  le
+  `Callout`
+  est
+  **posé**
+  ,
+  pas
+  un
+  toast
+  ,
+  §2.6
+  règle
+  3
+  :
+  le
+  coach
+  est
+  **persistant**
+  dans
+  la
+  sheet
+  ,
+  il ne
+  **disparaît**
+  pas
+  )
+  +
+  une
+  **action**
+  proposée
+  (un
+  `Button
+  primary`
+  dans
+  la
+  sheet
+  ,
+  doc
+  §13
+  «
+  propose
+  une
+  action
+  »
+  —
+  le
+  coach
+  **propose**
+  une
+  action
+  ,
+  il ne
+  **force**
+  pas
+  :
+  l'action
+  est
+  un
+  CTA
+  que
+  l'utilisatrice
+  **choisit**
+  ,
+  pas un
+  CTA
+  qui
+  **s'exécute**
+  ,
+  doc
+  §5
+  «
+  Demander
+  confirmation
+  pour
+  les
+  actions
+  importantes
+  ou
+  irréversibles
+  »
+  )
+  +
+  un
+  `Button
+  ghost`
+  «
+  Suivre
+  le
+  résultat
+  »
+  (doc
+  §13
+  «
+  suit
+  le
+  résultat
+  au
+  lieu
+  de
+  multiplier
+  les
+  notifications
+  »
+  :
+  le
+  `Button
+  ghost`
+  ouvre
+  le
+  **suivi**
+  de
+  la
+  recommandation
+  ,
+  pas
+  un
+  2ᵉ
+  toast
+  )
+  ;
+  footer
+  (le
+  `BottomNav`
+  **reste
+  visible**
+  par-dessus
+  la
+  sheet
+  ,
+  §3.5
+  :
+  le
+  coach
+  est
+  une
+  surface
+  flottante
+  ,
+  pas
+  une
+  feuille
+  —
+  l'utilisatrice
+  **peut**
+  naviguer
+  **en
+  continu**
+  pendant
+  le
+  coach
+  ,
+  le
+  coach
+  **n'exige
+  pas**
+  d'attention
+  pleine
+  ,
+  doc
+  §13
+  :
+  «
+  préférence
+  la
+  pertinence
+  contextuelle
+  »
+  .
+- **DS** :
+  `TopBar`
+  (
+  le
+  `Badge`
+  du
+  `phase`
+  du
+  kernel
+  ,
+  `JetBrains
+  Mono`
+  `xs`
+  ,
+  **statique**
+  §2.6
+  )
+  ,
+  `Menu`
+  (§3.5
+  ,
+  changer
+  de
+  matière
+  /
+  passer
+  la
+  session
+  )
+  ,
+  `BottomSheet`
+  (§3.5
+  ,
+  le
+  coach
+  **monte**
+  par-dessus
+  l'écran
+  courant
+  ,
+  pas
+  un
+  push
+  )
+  ,
+  `Callout`
+  (
+  le
+  constat
+  du
+  coach
+  ,
+  **posé**
+  ,
+  pas
+  un
+  toast
+  ,
+  §2.6
+  )
+  ,
+  `Button`
+  (
+  `primary`
+  :
+  l'action
+  proposée
+  ;
+  `ghost`
+  :
+  «
+  Suivre
+  le
+  résultat
+  »
+  )
+  ,
+  `KeyValueList`
+  (§3.6.2
+  ,
+  le
+  contexte
+  qui
+  a
+  **déclenché**
+  le
+  coach
+  :
+  la
+  tâche
+  en
+  cours
+  ,
+  le
+  temps
+  écoulé
+  ,
+  la
+  matière
+  —
+  le
+  `KeyValueList`
+  **explique**
+  pourquoi
+  le
+  coach
+  parle
+  **maintenant**
+  ,
+  pas
+  pourquoi
+  il
+  a
+  parlé
+  il
+  y a
+  10
+  minutes
+  ,
+  doc
+  §13
+  «
+  Détection
+  des
+  changements
+  »
+  :
+  le
+  contexte
+  est
+  **affiché**
+  ,
+  pas
+  **supposé**
+  )
+  ,
+  `EmptyState`
+  (
+  le
+  coach
+  n'a
+  **rien**
+  à
+  dire
+  =
+  un
+  `EmptyState`
+  :
+  icône
+  «
+  coach
+  »
+  ,
+  «
+  Aucune
+  suggestion
+  pour
+  le
+  moment
+  »
+  +
+  CTA
+  ghost
+  «
+  Explorer
+  les
+  découvertes
+  »
+  qui
+  ouvre
+  `decouverte-feed`
+  §4.27
+  —
+  le
+  coach
+  **n'est
+  pas**
+  un
+  chatbot
+  permanent
+  ,
+  il
+  est
+  **contextuel**
+  ,
+  doc
+  §13
+  :
+  le
+  `mode-coach`
+  est
+  un
+  **mode**
+  ,
+  pas
+  un
+  lieu
+  ,
+  §4.9.1
+  )
+  ,
+  `Skeleton`
+  (
+  le
+  `loading`
+  du
+  coach
+  =
+  le
+  `Callout`
+  en
+  Skeleton
+  ,
+  le
+  `KeyValueList`
+  reste
+  ,
+  le
+  `BottomSheet`
+  **demeure**
+  ouverte
+  )
+  .
+- **États** :
+  `loading`
+  =
+  le
+  coach
+  **calcule**
+  (
+  `phase`
+  =
+  `planning`/`retrieving`
+  du
+  `AgentRunState`
+  pack
+  02
+  §6.4
+  )
+  =
+  le
+  `Callout`
+  et
+  le
+  `KeyValueList`
+  en
+  Skeleton
+  (
+  le
+  `BottomSheet`
+  **monte**
+  **avec**
+  le
+  Skeleton
+  dedans
+  ,
+  pas
+  une
+  sheet
+  vide
+  qui
+  **pulse**
+  ,
+  §3.5
+  )
+  ;
+  `empty`
+  =
+  le
+  coach
+  n'a
+  **rien**
+  à
+  dire
+  =
+  un
+  `EmptyState`
+  **compact**
+  dans
+  la
+  sheet
+  (
+  pas
+  de
+  sheet
+  **plein**
+  écran
+  pour
+  un
+  coach
+  vide
+  —
+  le
+  `EmptyState`
+  est
+  **léger**
+  ,
+  le
+  coach
+  **n'appelle**
+  pas
+  l'attention
+  ,
+  doc
+  §13
+  )
+  ;
+  `error`
+  =
+  un
+  échec
+  du
+  kernel
+  (
+  `phase`
+  =
+  `error`
+  du
+  `AgentRunState`
+  )
+  =
+  un
+  `Callout
+  danger`
+  dans
+  la
+  sheet
+  «
+  Le
+  coach
+  est
+  indisponible
+  »
+  +
+  un
+  retry
+  (
+  le
+  `Button
+  ghost`
+  «
+  Réessayer
+  »
+  —
+  pas
+  un
+  `Button
+  primary`
+  :
+  le
+  retry
+  est
+  une
+  **action
+  mineure**
+  ,
+  pas
+  la
+  **dominante**
+  de
+  l'écran
+  ,
+  §3.1
+  )
+  ;
+  `offline`
+  =
+  le
+  coach
+  est
+  **désactivé**
+  avec
+  un
+  `Callout
+  info`
+  «
+  Le
+  coach
+  nécessite
+  le
+  réseau
+  »
+  (
+  le
+  kernel
+  est
+  serveur
+  ,
+  AD-12
+  :
+  le
+  coach
+  est
+  une
+  capacité
+  du
+  kernel
+  ,
+  sans
+  réseau
+  ,
+  pas
+  de
+  coach
+  —
+  mais
+  l'app
+  **reste**
+  fonctionnelle
+  :
+  les
+  données
+  locales
+  ,
+  le
+  Focus
+  ,
+  les
+  tâches
+  ,
+  tout
+  est
+  **local**
+  ,
+  AD-7
+  )
+  .
+- **Transitions** :
+  le
+  `Button
+  primary`
+  (l'action
+  proposée
+  par
+  le
+  coach
+  )
+  =
+  l'action
+  s'exécute
+  **localement**
+  si
+  elle
+  est
+  locale
+  (
+  ex.
+  «
+  Planifier
+  30
+  min
+  sur
+  la
+  tâche
+  X
+  »
+  =
+  une
+  mutation
+  du
+  `Task`
+  local
+  ,
+  pack
+  03
+  —
+  le
+  coach
+  **propose**
+  ,
+  l'app
+  **exécute**
+  ,
+  le
+  kernel
+  ne
+  mute
+  **jamais**
+  directement
+  une
+  table
+  ,
+  AD-7/F-03
+  :
+  le
+  kernel
+  **émet**
+  la
+  commande
+  ,
+  le
+  module
+  owner
+  **applique**
+  ,
+  PowerSync
+  **propage**
+  )
+  ;
+  le
+  `Button
+  ghost`
+  «
+  Suivre
+  le
+  résultat
+  »
+  =
+  ouvre
+  l'écran
+  concerné
+  (
+  ex.
+  «
+  Suivre
+  le
+  résultat
+  »
+  d'une
+  recommandation
+  de
+  révision
+  =
+  `flashcards`
+  §4.8.1
+  )
+  ;
+  le
+  `Menu`
+  «
+  Changer
+  de
+  matière
+  »
+  =
+  une
+  `Select`
+  (§3.2
+  )
+  qui
+  **recharge**
+  le
+  contexte
+  du
+  coach
+  (
+  le
+  coach
+  est
+  **par
+  matière**
+  ,
+  pas
+  global
+  —
+  le
+  changement
+  de
+  matière
+  **recharge**
+  le
+  `KeyValueList`
+  et
+  le
+  `Callout`
+  ,
+  le
+  coach
+  **recontextualise**
+  ,
+  il ne
+  **s'adapte
+  pas**
+  sans
+  que
+  l'utilisatrice
+  le
+  sache
+  ,
+  §1
+  «
+  non-surprise
+  »
+  )
+  ;
+  le
+  back
+  Android
+  **ferme**
+  la
+  sheet
+  du
+  coach
+  (
+  le
+  coach
+  est
+  une
+  surface
+  flottante
+  ,
+  §3.5
+  :
+  le
+  back
+  **descend**
+  la
+  sheet
+  ,
+  le
+  coach
+  **se
+  replie**
+  ,
+  l'écran
+  sous-jacent
+  **redevient**
+  actif
+  )
+  .
+- **Notes
+  responsive
+  (Phase
+  2)**
+  :
+  desktop
+  =
+  le
+  coach
+  passe
+  en
+  **panneau
+  latéral**
+  (
+  le
+  `BottomSheet`
+  mobile
+  devient
+  un
+  **drawer**
+  à
+  droite
+  ,
+  §3.5
+  `Drawer`
+  —
+  le
+  coach
+  **reste**
+  une
+  surface
+  flottante
+  ,
+  pas
+  un
+  écran
+  :
+  le
+  desktop
+  permet
+  de
+  **travailler**
+  **côte
+  à
+  côte**
+  avec
+  le
+  coach
+  ,
+  pas
+  de
+  le
+  «
+  lancer
+  puis
+  revenir
+  »
+  ,
+  doc
+  §23.4
+  :
+  le
+  composant
+  est
+  **identique**
+  ,
+  seul
+  le
+  **layout**
+  change
+  )
+  ;
+  le
+  `KeyValueList`
+  (le
+  contexte
+  qui
+  a
+  déclenché
+  le
+  coach
+  )
+  reste
+  **visible**
+  même
+  si
+  le
+  panneau
+  est
+  replié
+  (
+  un
+  `Badge`
+  `primary`
+  «
+  Coach
+  a
+  un
+  contexte
+  »
+  signale
+  que
+  le
+  contexte
+  existe
+  ,
+  sans
+  l'expand
+  —
+  le
+  desktop
+  a
+  la
+  **largeur**
+  pour
+  le
+  panneau
+  ,
+  mais
+  le
+  contexte
+  ne
+  doit
+  pas
+  **s'imposer**
+  ,
+  doc
+  §13
+  :
+  «
+  le
+  coaching
+  ne
+  doit
+  pas
+  devenir
+  intrusif
+  »
+  )
+  .
+
+#### 4.9.2 `mirror-cognitive` (doc §3, §14)
+- **Objectif** :
+  **révéler**
+  (
+  pas
+  «
+  noter
+  »
+  —
+  le
+  `mirror-cognitive`
+  est
+  une
+  **vérification**
+  de
+  la
+  compréhension
+  ,
+  doc
+  §3
+  «
+  Mirror
+  Cognitive
+  Mode
+  :
+  l'étudiante
+  explique
+  ce
+  qu'elle
+  a
+  compris
+  et
+  Aurora
+  détecte
+  lacunes
+  ,
+  contradictions
+  et
+  erreurs
+  »
+  :
+  l'utilisatrice
+  **explique**
+  une
+  notion
+  (
+  en
+  texte
+  ou
+  en
+  vocal
+  )
+  ,
+  l'app
+  **analyse**
+  (
+  le
+  kernel
+  ,
+  AD-12
+  )
+  ,
+  et
+  l'écran
+  **affiche
+  le
+  résultat
+  de
+  l'analyse
+  (
+  les
+  lacunes
+  ,
+  les
+  contradictions
+  ,
+  les
+  erreurs
+  —
+  doc
+  §3
+  «
+  détecte
+  lacunes
+  ,
+  contradictions
+  et
+  erreurs
+  »
+  )
+  ,
+  pas
+  l'analyse
+  elle-même
+  (
+  l'analyse
+  est
+  le
+  **serveur**
+  ,
+  le
+  résultat
+  est
+  la
+  **surface**
+  ,
+  AD-12/F-09
+  :
+  le
+  kernel
+  tourne
+  côté
+  serveur
+  ,
+  l'app
+  n'exécute
+  aucun
+  Context
+  Builder
+  /
+  Plan
+  /
+  Router
+  local
+  )
+  .
+- **Zones** :
+  header
+  (`TopBar`
+  «
+  Miroir
+  »
+  +
+  un
+  `Badge`
+  du
+  `phase`
+  du
+  kernel
+  (
+  `AgentRunState`
+  pack
+  02
+  §6.4
+  ,
+  `JetBrains
+  Mono`
+  `xs`
+  ,
+  **statique**
+  §2.6
+  )
+  )
+  ;
+  content
+  (
+  une
+  `TextArea`
+  **grasse**
+  (
+  la
+  saisie
+  de
+  l'ex
