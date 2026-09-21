@@ -152,6 +152,12 @@ Rules: Learning never creates a `ProgressEvidence` row directly (AD-2); the Agen
 - **Prevents:** each team provisioning its own buckets/keys/environments and drifting on the infra envelope.
 - **Rule:** (a) three environments — `dev`, `staging`, `prod` — are the only deploy targets; concrete values (regions, bucket names, provider account IDs) are wave-0 data, the *structure* is fixed here. (b) **One owner of the Model Registry** = `packages/data` + a Supabase table; only that owner may auto-retire a provider (gates AD-5). (c) Foundation owns all provider accounts & CI/CD keys (Supabase, Cloudflare, OneSignal, Sentry, PostHog, GitHub Actions). (d) Foundation is ops duty owner for failed jobs and per-job SLO until a module owns measurable traffic. No feature team may create a new provider account, bucket, or registry entry.
 
+### AD-17 — Multi-theme skin system with invariant semantic states [ADOPTED]
+
+- **Binds:** Design System (`packages/ui`), all UI screens
+- **Prevents:** a visual "theme" silently redefining functional meaning (a success state that stops reading as success when the user changes skin), and teams shipping divergent theme/token implementations.
+- **Rule:** theming resolves in three layers — (1) a **neutral style** (`Light` off-white `#F8F9FA` / `Dark` `#121212`) that owns background, text, surfaces, borders, shadows **and the semantic state tokens** `success`/`warning`/`danger`/`info`; (2) one **expressive theme** (10 catalogued universes: `aurora` default, `lagoon`, `boreal`, `sakura`, `vesper`, `solara`, `terra`, `verdant`, `citrus`, `cosmos`) that owns only accent/decorative tokens (primary, secondary, gradients, shapes, chart palette, motion mood); (3) **declarative local adaptations** per module/screen. A theme **never** redefines a semantic state token (danger stays danger under any skin). Themes live as JSON SSoT in `packages/ui/src/themes/` (AD-15), resolved by `resolveToken(theme, style, key)`; adding a theme = one JSON file, no code change. `user_context.theme` carries the `AuroraTheme` enum (SSoT `packages/domain`), `user_context.theme_style` the light/dark axis; the binary→enum migrator lives in `packages/domain`, not in a module.
+
 ## Consistency Conventions
 
 | Concern | Convention |
