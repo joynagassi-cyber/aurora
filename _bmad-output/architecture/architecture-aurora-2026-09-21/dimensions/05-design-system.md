@@ -1285,7 +1285,7 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
 
 #### 4.1.2 `welcome/home` (AD-14 — invariant, 7 items fixes)
 - **Objectif** : répondre à **une seule** question : « Qu'est-ce
-  qui compte maintenant ? » (AD-14, doc §11 : l' qui compte maintenant ? » (AD-14, doc §11 : l'accueil
+  qui compte maintenant ? » (AD-14, doc §11 : l'accueil
   **n'est jamais** un tableau de widgets (il répond à une
   **question**, il n'empile pas des chiffres, §1).
 - **Zones (composition **fixe** et ordonnée, pack 02 §6.2 —
@@ -2334,256 +2334,519 @@ marqué « écran » a **un test par écran** qui compose l'état (les 5
   **plateforme-agnostique**).
 
 #### 4.5.2 `analytics` (doc §2.10)
-- **Objectif** : **mesurer**
-  (pas « voir » les
-  statistiques — les stats sont
-  **secondaires**, la
-  **mesure** est
-  **primaire** : l'analystique
-  est le **miroir** de la
-  progression, pas le
-  tableau de bord, §1 «
-  calm » : l'écran est
-  **structuré** par
-  question (les 5 questions
-  fondamentales du Progress,
-  doc §18.1), pas par widget
-  (pas un « dashboard de
-  KPIs », AD-14).
-- **Zones** : header (`TopBar`
-  « Analytics » + un `Menu`
-  de période : 7j / 30j /
-  semestre / année (doc §18.2
-  « Progression temporelle » :
-  les 4 échelles — le
-  `Menu` §3.5, 4 items, pas
-  un `SegmentedControl` (4
-  segments = trop, §3.4 :
-  max 3) ;
-  content (les 5 questions
-  fondamentales du doc §18.1
-  **structurent** l'écran (pas
-  des widgets libres) :
-  « Où en suis-je
-  réellement ? » = un
-  `StatTile` par dimension
-  (doc §18.2 : académique /
-  compétences / réelle vs
-  illusion / temporelle /
-  objectifs / professionnelle /
-  oubli / discipline — 8
-  dimensions = 8 `StatTile`,
-  **pas** 8 widgets empilés :
-  les 8 sont **groupés** en
-  2×4 (le `StatTile` §3.3
-  tolère 4 max par écran,
-  §3.3 : les 8 passent en
-  **2 écrans** ou en scroll
-  vertical de 2 groupes
-  (académique+compétences+
-  illusion / temporelle+
-  objectifs+professionnelle+
-  oubli+discipline) — le scroll
-  **structure** les 8, il ne
-  « les empile pas »
-  aléatoirement, §1) ;
-  « Qu'est-ce qui s'est
-  réellement amélioré ? » =
-  un `Timeline` §3.6.3 (les
-  preuves de progression,
-  doc §18.3 : QCM / rappel
-  actif / exercice / explication
-  — les 8 types de
-  `ProgressEvidence`
-  AD-15, chaque preuve = un
-  point de la timeline) ;
-  « Qu'est-ce qui stagne,
-  régresse ou a été oublié ? »
-  = un `Callout warning` **posé**
-  (les stagnations, doc §18.2
-  « Oubli et consolidation » :
-  les compétences qui se
-  dégradent, l'écran **affiche**
-  le `Callout` **avant** les
-  8 `StatTile` — le
-  **problème** précède la
-  mesure, pas l'inverse, doc
-  §18.1 : l'ordre des
-  questions = l'ordre de
-  l'écran) ; « Pourquoi cette
-  évolution ? » = un
-  `Callout info` (l'analyse
-  causale, doc §18.4 : la
-  corrélation ≠ la causalité,
-  le `Callout` **affiche**
-  l'hypothèse de cause
-  **testée** par l'agent, pas
-  une vérité) ; « Quelle
-  prochaine action ? » = un
-  `Button primary` (la
-  « prochaine action
-  productive », doc §18.1 —
-  le CTA ouvre
-  l'`agent` §4.40 :
-  l'analyse causale
-  **alimente** l'agent,
-  l'agent **suggère**,
-  l'utilisateur **décide**,
-  doc §18.7 « Progress comme
-  moteur agentique ») ;
-  footer (`BottomNav`).
-- **DS** : `TopBar`, `Menu`
-  (les 4 périodes),
-  `StatTile` (les 8
-  dimensions, 2×4),
-  `Timeline` (les preuves,
-  doc §18.3), `Callout`
-  (warning de stagnation,
-  info de causalité),
-  `Button` (primary, la
-  prochaine action),
-  `Sparkline` (le 7 derniers
-  jours dans chaque
-  `StatTile` — la tendance
-  **micro** accompagne le KPI,
-  §3.6.5), `EmptyState`
-  (pas de données sur la
-  période), `Skeleton`.
-- **États** : `loading` = les
-  8 `StatTile` + le
-  `Timeline` en Skeleton (le
-  store local, les 8
-  dimensions sont
-  **calculées** par le module
-  Progress, pas lues
-  directement — le `loading`
-  **couvre** le calcul
-  (la donnée est locale,
-  l'agrégation est
-  **rapide**, pack 02 §7 :
-  le `loading` est **court**)
-  ; `empty` = une période sans
-  données = un `EmptyState`
-  par dimension (pas un
-  vide global : 7 vides +
-  1 rempli = **7**
-  `EmptyState` compacts, pas
-  1 `EmptyState` global qui
-  « cache » la 1 dimension
-  remplie — le DS **n'aggrave
-  jamais** l'état de l'autre,
-  la donnée reste visible,
-  AD-7) ; `error` = une
-  dimension qui **échoue** à
-  se calculer = un
-  `Callout danger` **sous** la
-  dimension (les 7 autres
-  restent, AD-7) ; `offline`
-  = les 8 dimensions
-  **locales** restent
-  (l'agrégation est
-  **locale** (SQLite), l'agent
-  est **serveur** —
-  l'analyse causale (le
-  `Callout info` de
-  « Pourquoi ») est
-  **désactivée** avec un
-  `Callout info` « L'analyse
-  causale nécessite le réseau
-  — l'état actuel est
-  affiché sans analyse »
-  (la donnée **locale** reste,
-  l'analyse **serveur**
-  attend, AD-7/AD-12 :
-  l'agent est **serveur**,
-  pas local, pack 02 §6.4).
-- **Transitions** : un
-  `StatTile` → un détail en
-  `BottomSheet` (les preuves
-  de cette dimension — le
-  `Timeline` s'élargit, la
-  `Sparkline` devient un
-  `DataChart` complet avec
-  axes §3.6.5 — le
-  drill-down **est** le
-  switch du `StatTile` en
-  détail, pas un push
-  séparé) ; le `Button
-  primary` « Prochaine
-  action » → l'`agent`
-  §4.40 (la suggestion est
-  **générée** par le kernel,
-  l'app est la surface,
-  AD-12/F-09) ; le `Menu` de
-  période → le `Pager`
-  §3.4 s'adapte (le
-  `SegmentedControl` passe de
-  3 à 4 options si l'on
-  ajoute l'échelle
-  « semestre » — le
-  `Pager` reste **le
-  composant**, le switch
-  d'échelle est **une**
-  option du `Pager`, pas
-  4 écrans séparés).
-- **Notes responsive (Phase 2)** :
-  desktop = les 8
-  `StatTile` passent en
-  **grille 4×2** (pas 2×4 —
-  le desktop a la
-  **largeur**, les 4 par
-  ligne) ; le `Timeline`
-  s'élargit (les preuves
-  s'affichent en
-  **texte** pas en
-  pastille, le desktop a
-  l'espace pour le
-  **titre**, §1 « dense
-  progressivement ») ;
-  l'analyse causale
-  (serveur, AD-12)
-  **reste** le même
-  `Callout` (le composant
-  est **plateforme-
-  agnostique**, seul
-  l'agent est serveur,
-  doc §23.4 : « réutiliser
-  les contrats existants »).
+- **Objectif** : **mesurer** (pas « voir » les statistiques — les stats sont
+  secondaires, la **mesure** est primaire : l'analytique est le **miroir** de
+  la progression, pas le tableau de bord, doc §2.10 + §18.1) : l'écran répond
+  aux 5 questions fondamentales de Progress (doc §18.1) : où en suis-je
+  réellement, qu'est-ce qui s'est réellement amélioré, qu'est-ce qui stagne
+  ou régresse, pourquoi cette évolution, quelle prochaine action produira
+  le plus de progrès utile. **L'écran est structuré par question, pas par
+  widget** (pas un « dashboard de KPIs », AD-14 : l'accueil répond à
+  « Qu'est-ce qui compte maintenant ? », les analytics répondent à
+  « Pourquoi et comment progresser ») ; la charge planifiée vs réelle
+  (doc §2.10) est une **lecture** du temps réellement passé (le
+  `FocusTimer` §4.4.2 alimente cette donnée, AD-7 local).
+- **Zones** : header (`TopBar` « Analytics » + un `SegmentedControl` de
+  période : 7 j / 30 j / semestre / année — doc §18.2 « lectures à 7
+  jours, 30 jours, semestre, année et multi-années ») ; content : une
+  **liste de questions** (5 `ListItem` dépliables, une par question du
+  doc §18.1, chaque `ListItem` s'ouvre en un bloc de **preuves** — pas
+  d'agrégat isolé : doc §18.2 « Privilégier la trajectoire et les
+  tendances plutôt qu'un pourcentage isolé » : un `Timeline` (§3.6.3)
+  pour la trajectoire temporelle, un `Sparkline` (§3.6.5) pour la
+  tendance, un `ChartSpec` (G2, AD-10 §3.6.1) pour la charge planifiée
+  vs réelle, un `StatTile` (§3.3) pour le taux de réalisation, un
+  `SkillStateBadge` (§3.6.11) pour la progression par compétence) ;
+  actions flottantes : un `Button ghost` « Partager » (export du bloc
+  sélectionné vers `Artifact Hub` §4.34, doc §16 : l'artefact est
+  généré **et** stocké, AD-8 Job persisté, `ArtifactGenerated` AD-9
+  émis **post-upload-R2** par le module Artifact, F-06) + un `Button
+  ghost` « Ajouter au journal » (la décision importante, doc §2.9
+  « Journal des décisions importantes » : écrit dans `decisions`,
+  module Productivity, pack 01 §4).
+- **DS** : `ListItem` (dépliable), `SegmentedControl`, `Timeline`
+  (§3.6.3), `Sparkline` (§3.6.5), `DataTable` / `ChartSpec` (§3.6.1,
+  moteur G2 AD-10), `StatTile` (§3.3), `SkillStateBadge` (§3.6.11),
+  `Button`.
+- **États** : `loading` = les agrégats sont **calculés côté serveur**
+  (le Progress module, pack 01 §4 : `ProgressTrend`, `ProgressEvent`
+  sont dans PostgreSQL, AD-6) — le Skeleton de la liste de questions
+  + un `ProgressRing` ; le contenu **partiel** apparaît dès que les
+  premiers blocs de preuves sont prêts (pack 02 §7 : « le content
+  doit se montrer partiellement en dessous ») ; `empty` = aucune
+  preuve n'a encore été produite (nouvelle utilisatrice) — un
+  `EmptyState` « Les analytics apparaîtront après vos premières
+  sessions de travail profond et de révisions » + un `Button primary`
+  « Commencer une session Focus » (sortie vers §4.4.2) ; `error` =
+  un agrégat est incalculable (donnée manquante sur une période) —
+  un `Callout warning` (le bloc est signalé **pas masqué**, AD-11 :
+  la fidélité passe par le signalement, pas le masquage) ;
+  `offline` = les analytics **existantes** sont consultables
+  (AD-7 local : les preuves sont dans SQLite) ; les **nouveaux
+  calculs** sont différés (`Callout info` « les agrégats seront
+  recalculés à la reconnexion », AD-8 : le calcul est un Job
+  persisté, pas synchronisé en temps réel).
+- **Transitions** : entrée depuis `welcome/home` (bloc 4, «
+  Progression critique », §4.1.2 : le nombre de blocages est **lu**
+  de la trajectoire locale, AD-7) ou depuis `focus-mode` (§4.4.2,
+  après une session, le score de concentration alimente
+  l'analytique) ; sortie vers `progress-dashboard` (§4.5.2 **est**
+  le dashboard Progress, doc §18.6 : ce n'est pas un écran
+  séparé — c'est lui) ou vers `fiches-liste` (réviser la
+  compétence signalée) ; retour arrière conserve la période
+  sélectionnée (store UI pack 02 §3.2, AD-7 persist).
+- **Notes responsive (Phase 2)** : desktop = les 5 questions
+  passent en **grille 2×3** (pas une liste linéaire — le
+  desktop a la largeur) ; les `ChartSpec` G2 s'élargissent
+  (le contenu reste identique, seul le layout change, doc §23.4) ;
+  les actions flottantes passent dans la `TopBar`.
+### 4.6 Module Learning — bibliothèque & cours (doc §2.11, §3)
 
+#### 4.6.1 `bibliotheque-ressources` (doc §2.11)
+- **Objectif** : centraliser **toute** la matière de travail et d'apprentissage de
+  l'utilisatrice — cours, PDF, documents, images, vidéos, liens, exercices, rapports,
+  notes (doc §2.11 « Bibliothèque de ressources ») — **rattachée** à une matière,
+  compétence, projet, objectif ou session, avec **recherche** universelle dans les
+  ressources et **récupération de contexte par l'agent** (le kernel, AD-12, §6.4 du
+  pack 02, interroge la bibliothèque pour répondre à une question de l'utilisatrice).
+  L'Artifact Hub (ADR §16, pack 05 §4.34) **stocke** les artefacts produits par
+  Aurora ou par des services externes (doc §2.11 « Stockage des artefacts produits
+  par Aurora ou des services externes »).
+- **Zones** : header (`TopBar` « Bibliothèque » + `SearchBar` plein largeur,
+  recherche dans le contenu local, AD-7) ; content (`ListItem` de ressources :
+  une icône de type (PDF / vidéo / image / lien / note), un titre `md`, un
+  `Badge` de rattachement (matière / projet / objectif) ; `BottomNav` (4 onglets :
+  Bibliothèque, Cours, Fiches, Flashcards) ; actions flottantes : un `FAB`
+  « Ajouter » (ouverture d'un `Menu` : téléverser / capturer / créer une note).
+- **DS** : `ListItem`, `SearchBar`, `Badge`, `FAB`, `Menu`, `Callout` (info :
+  « La synchronisation des artefacts avec R2 est différée, l'offline reste
+  consultable, AD-7 »).
+- **États** : `loading` = Skeleton des `ListItem` pendant le chargement du
+  répertoire local (AD-7 : le contenu est **toujours** disponible, la
+  synchronisation cloud est en arrière-plan) ; `empty` = aucune ressource
+  rattachée à ce rattachement — CTA « Importer un cours » + « Capturer un
+  document » (l'état vide est **actionnable**, pack 02 §7) ; `error` =
+  `Callout danger` sur un artefact corrompu ou illisible (l'artefact restant
+  dans la liste, son aperçu échouant proprement, doc §16 « Formats non pris
+  en charge : conservation du fichier, métadonnées et téléchargement/partage
+  externe sans prétendre à une prévisualisation native ») ; `offline` = la
+  bibliothèque **fonctionne** (AD-7 local-first : le répertoire est dans
+  SQLite, la recherche est locale) ; les artefacts non encore synchronisés
+  portent un `Badge info` « synchronisera à la connexion ».
+- **Transitions** : entrée depuis `welcome/home` (bloc 4, « Révisions à
+  effectuer », §4.1.2) ou depuis `cours-liste` (§4.6.2) ; sortie vers
+  `cours-detail` (ouvers un cours) ou vers l'aperçu d'un artefact
+  (l'écran de visualisation AD-10, §4.34) ; retour arrière conserve la
+  sélection (store UI pack 02 §3.2, AD-7 persist).
+- **Notes responsive (Phase 2)** : desktop = la bibliothèque passe en
+  vue 2 colonnes (liste à gauche, aperçu d'artefact à droite, 30/70) ;
+  le `FAB` devient un `Button` dans la `TopBar` ; la `BottomNav` est
+  remplacée par un `Sidebar` (4 entrées) — la logique est **inchangée**
+  (doc §23.4 : adapter le layout, pas le contenu).
 
-### 4.1 Module Onboarding / Écran racine
+#### 4.6.2 `cours-liste` + `cours-detail` (doc §2.11, §14)
+- **Objectif** : lister les cours rattachés (par matière / semestre) et
+  ouvrir un cours pour **voir** sa structure (chapitres, concepts,
+  définitions, formules, méthodes, exercices) — le cours est **lié** à la
+  Knowledge Base (AD-6, doc §14 : chaque notion pointe vers sa source ;
+  le `SemanticNode` est la vérité, le cours en est une **vue** agrégée
+  par matière, doc §14 « Vue par domaine »). Le cours n'est **pas**
+  l'arbre sémantique lui-même (l'écran dédié = `arbre-semantique`,
+  §4.6.3) : le cours est **une matière**, l'arbre est le savoir global.
+- **Zones** : `cours-liste` = header (`TopBar` « Cours » + `SegmentedControl`
+  par semestre / par matière) ; content (`ListItem` d'un cours : titre
+  `md`, un `Badge` de matière, une `ProgressRing` `xs` de progression) ;
+  actions flottantes : un `FAB` « Importer un cours » (capture documentaire
+  doc v1.5, §4.31) + un `Button ghost` « Organiser » (regroupement par
+  matière). `cours-detail` = header (`TopBar` retour + titre du cours `lg`) ;
+  content : une liste hiérarchique de chapitres (`ListItem` dépliables,
+  un `SemanticTreeNode` compact pour chaque concept clé, §3.6.6), chaque
+  concept pointe vers sa fiche (§4.7.1) ; un `MathBlock` (AD-10 KaTeX)
+  pour les formules du chapitre ; actions flottantes : un `Button primary`
+  « Commencer l'étude » (ouvre le QCM, §4.8.2, ou la fiche, §4.7.1).
+- **DS** : `ListItem` (dépliable), `SegmentedControl`, `Badge`, `ProgressRing`,
+  `SemanticTreeNode` (compact), `MathBlock` (§3.6.8), `FAB`, `Button`.
+- **États** : `loading` = Skeleton de la liste des chapitres (le local est
+  **rapide**, AD-7 — le Skeleton est **court**, pack 02 §7 : « un
+  Skeleton qui dure > 300ms doit laisser apparaître le contenu
+  partiellement en dessous ») ; `empty` = un cours sans chapitre importé
+  — CTA « Importer un cours » (l'état est **actionnable** jamais vide,
+  pack 02 §7) ; `error` = un chapitre corrompu (le `SemanticNode` est
+  signalé, les autres restent accessibles) ; `offline` = le cours est
+  **consultable** (AD-7 local : SQLite, pas de dépendance cloud),
+  l'import d'un nouveau cours est différé (`Badge info`).
+- **Transitions** : entrée depuis `bibliotheque-ressources` (§4.6.1) ou
+  depuis `welcome/home` (bloc 5 « Progression critique », §4.1.2) ;
+  sortie vers `fiches-liste` (étudier une fiche du cours) ou `qcm`
+  (tester la compréhension) ; retour arrière conserve le chapitre ouvert
+  (store UI, AD-7 persist).
+- **Notes responsive (Phase 2)** : desktop = `cours-liste` passe en
+  grille 3 colonnes ; `cours-detail` passe en 2 panneaux (chapitres à
+  gauche, concept sélectionné à droite) ; les composants et la logique
+  sont **identiques** (doc §23.4).
 
-#### 4.1.1 `onboarding`
-- **Objectif** : l'installatrice choisit **qu'elle est** (étudiante,
-  matière, horaire de silence, thème) — 3 écrans max, **pas** un
-  tour de fonctions (règle §12 : simple en surface).
-- **Zones** : content (carrousel 3 slides, un `Avatar` + titre
-  `2xl` + corps `sm`), footer (un `Button primary` « Continuer » +
-  un `Button ghost` « Passer »).
-- **DS** : `Avatar`, `Button` (primary/ghost), `Toggle` (thème),
-  `Select` (matière), `DateField`/`DurationField` (horaires),
-  `Skeleton` (le fond des slides pendant le chargement de la
-  matrice de cours locale).
-- **États** : `loading` (le fond des slides pendant le chargement
-  de la matière locale) ; `empty` n'existe pas (l'onboarding
-  **précède** les données) ; `error` = le choix de la matière qui
-  **échoue** (upload de cours) → `Callout danger` + retry (la
-  matière **peut** être choisie plus tard, l'onboarding
-  **s'achève** malgré l'échec — on ne bloque pas l'entrée dans
-  l'app, AD-7) ; `offline` = l'onboarding **fonctionne** (les
-  choix sont **locaux**, AD-7 ; l'import de cours est différé,
-  `Badge info` « importera à la connexion »).
-- **Transitions** : → `welcome/home` (fin) ; un `onboarding`
-  interrompu **reprend** au premier choix manquant (store
-  local, AD-7 — l'exit/retour **ne perd rien**).
-- **Notes responsive (Phase 2)** : desktop = l'onboarding passe
-  en **panneau latéral** (le carrousel devient 3 étapes
-  empilées, le CTA reste en bas) — la logique (les 3 choix) est
-  **inchangée** (doc §23.4 : adapter le layout, pas le contenu).
+### 4.7 Module Learning — fiches de révision (doc §17)
 
-#### 4.1.2 `welcome/home` (AD-14 — invariant, 7 items fixes)
-- **Objectif** : répondre à **une seule** question : « Qu'est-ce
-  qui compte maintenant ? » (AD-14, doc §11 : l'
+#### 4.7.1 `fiches-liste` + `fiches-detail` (doc §17)
+- **Objectif** : générer et consulter des **fiches de révision intelligentes et
+  fidèles au corpus** (doc §17) — une fiche n'est **pas** un simple résumé :
+  elle est « conçue pour mémoriser, retrouver et réutiliser les connaissances
+  réellement apprises » en **respectant strictement le corpus pédagogique fourni**
+  (doc §17 : « Fidélité prioritaire au corpus enseignant »). La fiche est
+  **adaptée** à la matière (doc §17 : « une fiche de calcul ne suit pas
+  exactement la même structure qu'une fiche de définitions ») : l'agent
+  sélectionne la structure (fiche de définitions / de formules / de méthode /
+  comparative / de procédure / de synthèse / d'exercices — doc §17).
+  **Règle de fidélité (AD-11, doc §17 « Principe académique »)** : la
+  formulation du corpus (définitions, formules imposées) reste **textuelle**
+  ; l'explication d'Aurora est **séparée et labelisée** (un `Callout`
+  `info` « Explication d'Aurora » sous la définition — **jamais** présentée
+  comme la définition officielle du cours). Chaque bloc important peut
+  indiquer sa **référence source** (document, page, passage — doc §17
+  « Références aux sources : chaque bloc important peut indiquer le
+  document, la page ou le passage d'origine »).
+- **Zones** : `fiches-liste` = header (`TopBar` « Fiches » + `SearchBar`
+  par concept) ; content (`ListItem` d'une fiche : titre du concept `md`,
+  un `Badge` de matière, un `Badge` de type (définitions / formules /
+  méthode) ; actions flottantes : un `FAB` « Générer une fiche » (l'agent,
+  AD-12, génère depuis un cours §4.6.2 ou un artefact §4.34). `fiches-detail`
+  = header (retour + titre du concept `lg`) ; content : la fiche **par
+  blocs** — un bloc `Card` par type d'élément (définitions, formules,
+  méthode, exemples, pièges, relations) ; pour une fiche de **formules**
+  (doc §17 « Mémorisation des formules : formule, signification de chaque
+  variable, unités, conditions d'utilisation, cas particuliers,
+  transformations utiles et exemple d'application ») : un `MathBlock`
+  (AD-10 KaTeX) pour la formule, puis un `KeyValueList` (§3.6.2) pour les
+  variables/unités/conditions, un `Callout` `info` pour les transformations
+  utiles ; un `Callout` `info` labelisé « Explication d'Aurora » si
+  l'agent a ajouté une explication pédagogique (AD-11 : **séparation
+  explicite**, jamais fusionnée à la définition) ; chaque bloc porte une
+  référence source (`KeyValueList` avec `SourceRef`, §3.6.2) ; actions
+  flottantes : un `SegmentedControl` (version **courte** / version
+  **complète**, doc §17 « Version courte et version complète selon la
+  densité de contenu ») + un `Button` « Exporter » (multi-format doc §17
+  « Formats d'export prioritaires : Markdown (.md), PDF, Word (.docx) et
+  PNG ») + un `Button ghost` « Envoyer vers FSRS » (les éléments à
+  mémoriser à long terme → flashcards §4.8.1, doc §17 « Détection des
+  éléments à mémoriser à long terme et possibilité de les envoyer vers le
+  système FSRS »).
+- **DS** : `ListItem`, `SearchBar`, `Badge`, `Card`, `MathBlock` (§3.6.8),
+  `KeyValueList` (§3.6.2), `Callout` (info/success/warning), `SegmentedControl`,
+  `FAB`, `Button`.
+- **États** : `loading` = la **génération** d'une fiche est un `Job`
+  asynchrone (AD-8 : les traitements lourds ne bloquent pas l'UI) —
+  l'écran affiche un `Skeleton` de la fiche en cours de génération + un
+  `ProgressRing` ; l'aperçu **partiel** apparaît dès que les premiers
+  blocs sont prêts (pack 02 §7 : « le content doit se montrer
+  partiellement en dessous ») ; `empty` = aucune fiche pour ce concept —
+  CTA « Générer une fiche depuis ce cours » (actionnable, pack 02 §7) ;
+  `error` = la génération a échoué (un bloc est incertain, doc §17
+  « Contrôle de fidélité avant export : comparaison avec les passages
+  sources et signalement des éléments reformulés, ajoutés ou incertains »)
+  → `Callout warning` (fiche partielle, l'élément incertain est signalé
+  **pas supprimé** — la fidélité passe par le signalement, pas le
+  masquage) ; `offline` = les fiches **existent** (AD-7 local : générées
+  puis stockées) ; la **génération** d'une nouvelle fiche est
+  **différée** (l'agent exige le cloud pour l'IA, AD-4) — `Callout info`
+  « sera générée à la connexion ».
+- **Transitions** : entrée depuis `cours-detail` (§4.6.2) ou depuis
+  `qcm` (§4.8.2, après un score faible : « revoir la fiche ») ; sortie
+  vers `flashcards` (§4.8.1, via « Envoyer vers FSRS ») ou vers l'écran
+  de visualisation d'un artefact (l'export, §4.34) ; retour arrière
+  conserve la version (courte/complète) sélectionnée (store UI, AD-7).
+- **Notes responsive (Phase 2)** : desktop = `fiches-liste` en grille 3
+  colonnes ; `fiches-detail` en 2 panneaux (bloc actif à gauche,
+  navigable à droite) ; le gabarit de sortie est **adapté au format**
+  (doc §17 : « Aurora ne doit pas forcer une seule mise en page : le
+  gabarit de sortie est adapté au format et au type de fiche ») — la
+  logique de fidélité (AD-11) est **identique**.
+
+### 4.8 Module Learning — flashcards & QCM (doc §3)
+
+#### 4.8.1 `flashcards` (répétition espacée FSRS, doc §3)
+- **Objectif** : **réviser** (pas « voir » les cartes — la révision est une
+  **action**, doc §3 « Répétition espacée FSRS / Rappel actif ») : l'algorithme
+  FSRS (les paramètres `due`/`stability`/`difficulty` de chaque carte,
+  l'agent **exécute** le FSRS **côté serveur**, pack 01 §4 Learning :
+  « l'algorithme FSRS s'exécute côté serveur, pas sur l'appareil »)
+  détermine **quelles** cartes sont dues ; l'écran montre **la file de
+  révision** de l'utilisatrice et en **réalise** la session (recto/verso,
+  auto-évaluation « reconnu / à revoir / oublié » qui alimente le
+  `SkillState` de l'apprentissage — le `SkillStateChanged` (AD-9, pack 01
+  §3.2) émis par Progress). La révision est un **`ProgressEvidence`**
+  (doc §18.3 : les preuves de compétence incluent « répétition réussie » ;
+  le `ProgressEvidenceCreated` AD-9 émis par Progress, consommé par
+  Knowledge pour mettre à jour le `NodeState`, AD-6/F-02).
+- **Zones** : header (`TopBar` retour + un `SegmentedControl` par matière
+  ou par matière + une progression `ProgressBar` fine de la session de
+  révision en cours) ; content : une **carte centrale** — un `FlashcardCard`
+  (§3.6.10, AD-10 : le verso de la carte est le contenu de la fiche
+  §4.7.1, **fidèle au corpus** AD-11) ; en dessous, une barre de
+  **rétroaction** (3 `Button` de rétrocation, `Callout` `info` :
+  « Reconnu » / « À revoir » / « Oublié » — l'auto-évaluation **avant**
+  l'automatique de la carte : le `FlashcardCard` se retourne **après**
+  que l'utilisatrice a tapé « Voir le verso ») ; actions flottantes :
+  un `Button ghost` « Terminer la session » (la session se **synchronise**
+  — les résultats sont persistés localement, AD-7, et les FSRS
+  s'effectuent côté serveur au prochain re-sync, pack 01 §4) ; un `Button
+  primary` « Lancer la session » (si l'écran est en mode file de révision).
+- **DS** : `FlashcardCard` (§3.6.10), `SegmentedControl`, `ProgressBar`,
+  `Button`, `Callout` (info : « L'algorithme FSRS s'exécute côté serveur ;
+  les résultats sont synchronisés au re-sync »).
+- **États** : `loading` = la **file de révision** est locale (AD-7 : les
+  cartes dues sont dans SQLite, pas de réseau nécessaire pour **afficher**
+  la file) — le seul `loading` = le rendu de la `FlashcardCard` si le
+  contenu inclut un `MathBlock` (KaTeX, §3.6.8) ; `empty` = **aucune
+  carte due** — un `EmptyState` « Toutes les révisions sont à jour » +
+  un `Button primary` « Réviser une autre matière » (l'état est
+  **actionnable**, pack 02 §7 ; **jamais** un bloc vide) ; `error` =
+  un `FlashcardCard` dont le contenu n'est pas disponible (fiche
+  manquante) → `Callout warning` (la carte reste dans la file,
+  sa révision est différée) ; `offline` = la révision **fonctionne**
+  (AD-7 local : les cartes sont dans SQLite, l'auto-évaluation est
+  locale, l'algorithme FSRS serveur est **différé** au re-sync —
+  `Callout info` « les résultats FSRS seront calculés à la
+  connexion »).
+- **Transitions** : entrée depuis `fiches-detail` (§4.7.1, via
+  « Envoyer vers FSRS » qui **crée** les cartes) ou depuis
+  `welcome/home` (bloc 5 « Révisions à effectuer », §4.1.2 : le nombre
+  de cartes dues est **lu** de la file locale, pas du cloud) ;
+  sortie vers `fiches-liste` (revoir le contenu) ou retour arrière
+  à la matière ; la navigation conserve la position dans la file de
+  révision (store UI pack 02 §3.2, AD-7 persist : « interrompu
+  **reprend** au premier choix manquant »).
+- **Notes responsive (Phase 2)** : desktop = la `FlashcardCard` passe
+  au centre (une carte = une page, avec `ProgressBar` en haut) ;
+  la barre de rétroaction passe sous la carte ; la logique (rappel
+  actif, FSRS serveur) est **identique** (doc §23.4 : adapter le
+  layout, pas le contenu).
+
+#### 4.8.2 `qcm` (doc §3)
+- **Objectif** : **tester** la compréhension (doc §3 « QCM /
+  Exercices progressifs / Correction et analyse des erreurs ») :
+  un QCM est **généré** depuis une fiche (§4.7.1) ou un cours (§4.6.2)
+  par l'agent (AD-12, §6.4 pack 02 : le `Plan → Retrieve → Tools →
+  Verify` step du kernel, **côté serveur**, AD-12/F-09) et **exécuté**
+  par l'utilisatrice. Le QCM est un **`ProgressEvidence`** (doc §18.3
+  « Modèle de preuve » : les preuves de compétence incluent « QCM » ;
+  le `ProgressEvidenceCreated` AD-9 émis par Progress, **jamais**
+  créé directement par Learning, AD-2/F-07 : les événements Learning
+  (ex. `FlashcardReviewed`) **alimentent** le QCM, seul Progress
+  émet `ProgressEvidenceCreated` pour le QCM).
+- **Zones** : header (`TopBar` retour + un `SegmentedControl` par type
+  de question (définitions / formules / procédé) + un `ProgressBar`
+  fine de la progression du QCM) ; content : une **question à la fois**
+  — un `ListItem` de la question (`md`) + un groupe de `RadioButton`
+  (les réponses proposées, une seule sélection, doc §3 « QCM » :
+  l'état de la question est **un seul** choix, pas `MultiSelect`) ;
+  en bas, une barre d'actions : un `Button ghost` « Précédente » + un
+  `Button primary` « Suivante » (la question suivante **ne** révèle
+  pas la réponse tant que la précédente n'est pas validée — le
+  QCM est séquentiel, pas un formulaire libre) ; après la dernière
+  question, un écran de **résultat** (un `StatTile` KPI du score,
+  §3.3, un `Callout` par question erronée (warning, avec la
+  correction : « Correction : [la bonne réponse] » et une explication
+  de l'erreur, AD-11 : l'explication est **séparée** de la
+  correction, jamais fusionnée) ; actions flottantes : un `Button
+  primary` « Relancer le QCM » (regénéré depuis le cours §4.6.2 ou
+  la fiche §4.7.1) + un `Button ghost` « Réviser les fiches des
+  erreurs » (sortie vers `fiches-liste`, §4.7.1).
+- **DS** : `ListItem`, `RadioButton`, `SegmentedControl`, `ProgressBar`,
+  `StatTile`, `Callout` (warning / success), `Button`.
+- **États** : `loading` = la **génération** du QCM est un `Job`
+  asynchrone (AD-8, l'agent est **serveur**, AD-12/F-09) — l'écran
+  montre un `Skeleton` de la liste des questions + un `ProgressRing` ;
+  le contenu **partiel** apparaît dès que les premières questions sont
+  générées (pack 02 §7) ; `empty` = le QCM n'a **pas encore été
+  généré** — CTA « Générer un QCM depuis ce cours » (l'état est
+  **actionnable**, pack 02 §7 : « jamais un bloc vide ») ; `error` =
+  la génération a échoué (le cloud est **indisponible**, AD-4) →
+  `Callout danger` + « Réessayer » (le QCM **n'est pas**
+  disponible hors-ligne, l'exécution locale des QCM n'est
+  **pas** supportée — le QCM est généré **par l'agent**, AD-12,
+  qui est serveur) ; `offline` = le QCM **existant** peut être
+  exécuté (les questions sont dans SQLite, AD-7) ; la **génération**
+  d'un nouveau QCM est **différée** (`Callout info` « sera généré
+  à la connexion »).
+- **Transitions** : entrée depuis `fiches-detail` (§4.7.1) ou
+  depuis `cours-detail` (§4.6.2) via le bouton « Tester » ; sortie
+  vers `fiches-liste` (§4.7.1, « réviser les fiches des erreurs »)
+  ou retour arrière à la fiche/cours ; le résultat du QCM est un
+  `ProgressEvidence` persisté (AD-7 local, synchronisé) — la sortie
+  vers `progress-dashboard` (§4.5.2) conserve le score (store UI
+  pack 02 §3.2, AD-7 persist).
+- **Notes responsive (Phase 2)** : desktop = le QCM passe en 2
+  panneaux (questions à gauche, réponses à droite) ; la barre
+  de progression passe en haut ; la logique séquentielle (une
+  question à la fois, validation avant suivante) est **inchangée**
+  (doc §23.4 : adapter le layout, pas le contenu).
+
+### 4.9 Module Learning — mode coach & mirror (doc §3, §13)
+
+#### 4.9.1 `mode-coach` (doc §3, §13)
+- **Objectif** : le **coaching adaptatif** de l'agent (doc §13 «
+  Aurora Coach — accompagnement personnel adaptatif ») : avec
+  **l'autorisation de l'utilisatrice** (les autorisations de
+  coaching sont dans `user_context`, pack 01 §4 Identity : cadence,
+  horaires de silence, niveau d'intervention — ADR §13), l'agent
+  **initie** régulièrement de courtes interactions de coaching
+  (check-ins contextuels, doc §13.1 : début de journée, avant un
+  bloc important, après une session, fin de journée) pour **suivre**
+  la discipline, **comprendre** les écarts plan/réalité, et
+  **adapter** la journée en cours (replanification dynamique,
+  doc §13.1 ; adaptation de l'apprentissage, doc §13.1). Le
+  coaching **n'est pas** un chat libre : c'est un **agent**
+  (le kernel, AD-12, qui **n'est pas** un agent séparé déployé,
+  AD-12 : « Planner, Coach, Tutor, Researcher, Executor et les
+  autres capacités ne constituent pas nécessairement des agents
+  indépendants déployés séparément ») qui **propose** des
+  actions (doc §13.1 : « l'agent explique le constat, propose
+  une action et suit le résultat au lieu de multiplier les
+  notifications »).
+- **Zones** : header (`TopBar` « Aurora Coach » + un `Badge`
+  d'état du kernel, `AgentRunState` pack 02 §6.4, `JetBrains Mono`
+  `xs` **statique** §2.6 : indique si le kernel est **en cours
+  d'analyse** ou **inactif**) ; content : une **conversation
+  courte** — un fil de `ListItem` (les check-ins et les réponses
+  de l'utilisatrice, `md`, une pastille de temps `sm`
+  `text-muted` pour chaque message) ; chaque **constat** du
+  coach (doc §13.1 : « l'agent explique le constat ») est un
+  `Callout` (info = constat neutre, warning = écart, success =
+  alignement plan/réalité) ; chaque **action proposée** est un
+  `Button` (primary pour l'action recommandée, ghost pour
+  « Remettre à plus tard ») ; en bas, une `TextField`
+  (saisie libre de l'utilisatrice, optionnelle — le coaching est
+  **contextuel**, pas un chat, doc §13.1 : « privilégier la
+  pertinence contextuelle, respecter les périodes de silence et
+  pouvoir être désactivé ou ajusté ») ; actions flottantes :
+  un `Button ghost` « Désactiver le coaching pour aujourd'hui
+  » (l'horaires de silence, doc §13.1 : « Paramètres de cadence,
+  horaires de silence et niveau d'intervention contrôlés par
+  l'utilisatrice ») + un `Button ghost` « Réglages du coaching
+  » (ouverture vers `settings` §4.34).
+- **DS** : `ListItem`, `Badge` (`AgentRunState`), `Callout`
+  (info/warning/success), `Button`, `TextField`, `TopBar`.
+- **États** : `loading` = le kernel est **en cours d'analyse**
+  (le `Badge` passe en `AgentRunState: thinking`, §6.4 pack 02 ;
+  la `TextField` reste utilisable **pendant** l'analyse — l'utilisatrice
+  peut interrompre en écrivant, le kernel **intègre** la nouvelle
+  information, AD-12 : le kernel **n'est pas** bloquant) ; `empty` =
+  aucun check-in n'a été déclenché aujourd'hui (le coach est
+  **inactif** — le `EmptyState` « Le coach sera actif aux
+  horaires de silence définis, §13.1 » + un `Button ghost`
+  « Déclencher un check-in maintenant » (l'état est
+  **actionnable**, pack 02 §7)) ; `error` = le kernel a
+  **échoué** (un provider IA est indisponible, AD-4 : le
+  fallback est déclenché, AD-5 — l'UI **ne** change pas de
+  thème, elle **affiche** simplement le `Callout danger`
+  « Le coach est momentanément indisponible, réessaier ») ;
+  `offline` = le coaching est **désactivé** (l'agent est
+  **côté serveur**, AD-12/F-09 : le kernel n'est pas exécuté
+  sur l'appareil) — l'écran montre un `Callout info` « Le
+  coaching nécessite une connexion, les check-ins seront
+  repris à la reconnexion » et **désactive** la `TextField`
+  (pack 02 §7 : « les actions qui exigent le cloud sont
+  désactivées avec explicatif »).
+- **Transitions** : entrée depuis `welcome/home` (bloc 7,
+  « Suggestions pertinentes d'Aurora Coach », §4.1.2) ou
+  depuis `focus-mode` (§4.4.2, après une session, le coach
+  propose un bilan contextuel) ; sortie vers `progress-dashboard`
+  (§4.5.2, le coaching **alimente** le dashboard : doc §13
+  « Le coaching ne doit pas devenir intrusif : l'agent doit
+  privilégier la pertinence contextuelle ») ou vers `settings`
+  (réglages du coaching, §4.34) ; retour arrière conserve
+  le fil de conversation (store UI pack 02 §3.2, AD-7 persist).
+- **Notes responsive (Phase 2)** : desktop = la conversation
+  passe en 2 panneaux (check-ins à gauche, actions à droite) ;
+  le `Badge` `AgentRunState` reste `xs` statique ; la logique
+  de coaching (contextuel, pas chat libre, §13.1) est
+  **inchangée** (doc §23.4 : adapter le layout, pas le
+  contenu).
+
+#### 4.9.2 `mirror-cognitive` (doc §3, §14)
+- **Objectif** : **révéler** (pas « noter ») — le `mirror-cognitive`
+  est une **vérification** de la compréhension (doc §3 « Mirror
+  Cognitive Mode : l'étudiante explique ce qu'elle a compris et
+  Aurora détecte lacunes, contradictions et erreurs » :
+  l'utilisatrice **explique** une notion (en texte ou en
+  vocal), l'app **analyse** (le kernel, AD-12, §6.4 du pack 02)
+  et **affiche** le résultat de l'analyse (les lacunes, les
+  contradictions, les erreurs) avec une **prochaine action
+  concrète** (doc §2.3 : « l'agent explique la recommandation »).
+  L'analyse est un **`ProgressEvidence`** (doc §18.3 : les
+  preuves de compétence incluent « explication personnelle » ;
+  le `ProgressEvidenceCreated` AD-9 émis par Progress, **jamais**
+  créé par Learning, AD-2/F-07).
+- **Zones** : header (`TopBar` retour + un `SegmentedControl`
+  par matière / par concept) ; content : une **saisie libre** —
+  une `TextArea` (grasse, l'utilisatrice **écrit** son
+  explication) + un `AudioWaveformRenderer` (AD-10, pack 02
+  §5.5 : la **saisie vocale** — la transcription est
+  indépendante de la lecture audio, doc v1.5, pack 04 §5 :
+  `TranscriptionProvider` optionnel, **accepte l'absence** du
+  provider) ; en dessous, le **résultat de l'analyse** :
+  un `Callout` par type de résultat — `Callout info`
+  (les concepts correctement compris), `Callout warning`
+  (les **lacunes** détectées : « Vous n'avez pas mentionné
+  [concept clé] »), `Callout danger` (les **erreurs
+  factuelles** : « [la formule que vous avez écrite] n'est
+  pas correcte, la bonne est [la formule du corpus],
+  doc §17 : fidélité au corpus, AD-11 : **l'explication
+  d'Aurora est séparée** de la formule du corpus) ;
+  chaque lacune pointe vers une **fiche** (§4.7.1) ou un
+  **cours** (§4.6.2) ; actions flottantes : un `Button
+  primary` « Lancer l'analyse » (l'analyse est un `Job`
+  asynchrone, AD-8 : le kernel **exécute** le
+  `Intent → Context → Plan → Retrieve → Tools → Verify →
+  Action → Result → Memory`, AD-12, **côté serveur**,
+  AD-12/F-09 : le kernel est serveur, l'appareil **n'exécute
+  pas** l'analyse) + un `Button ghost` « Réessayer » ;
+  le `MathBlock` (AD-10 KaTeX) pour les formules identifiées
+  dans l'explication (doc §15 : l'analyse peut pointer vers
+  une formule mal comprise).
+- **DS** : `TextArea`, `AudioWaveformRenderer` (§3.6), `Callout`
+  (info/warning/danger), `Button`, `MathBlock` (§3.6.8),
+  `SegmentedControl`, `TopBar`.
+- **États** : `loading` = le kernel **analyse** (le `Job` est
+  persisté, AD-8 : l'UI reste **navigable**, le `Skeleton`
+  de la zone de résultat + un `ProgressRing` ; le contenu
+  **partiel** apparaît dès que les premiers `Callout` sont
+  prêts, pack 02 §7) ; `empty` = **aucune analyse lancée** —
+  un CTA « Commencer une session Mirror » + un `TextField`
+  (l'état est **actionnable**, pack 02 §7 : « jamais un
+  bloc vide ») ; `success` = l'analyse est terminée :
+  les `Callout` (lacunes/erreurs) sont affichés +
+  la **prochaine action** est proposée (doc §2.3 :
+  « l'agent explique sa recommandation » : un `Callout
+  info` avec un lien vers la fiche §4.7.1 ou le cours
+  §4.6.2 concerné) ; `error` = le kernel a **échoué**
+  (un provider IA est indisponible, AD-4 : le fallback
+  est déclenché, AD-5) — un `Callout danger` avec un
+  `Button` « Réessayer » ; **jamais** de crash silencieux
+  (pack 02 §7 : « l'état error est toujours visible,
+  jamais caché ») ; `offline` = l'analyse est
+  **indisponible** (le kernel est **côté serveur**,
+  AD-12/F-09 : la saisie **fonctionne** (la `TextArea`
+  est locale, AD-7), l'**analyse** est **différée**
+  (`Callout info` « l'analyse sera exécutée à la
+  reconnexion, la saisie est **archivée** dans le
+  store local, AD-7 : le texte de l'explication n'est
+  **pas perdu »).
+- **Transitions** : entrée depuis `fiches-detail` (§4.7.1)
+  ou `cours-detail` (§4.6.2) via le bouton « Vérifier ma
+  compréhension » ; sortie vers `fiches-liste` (§4.7.1,
+  « réviser les lacunes détectées ») ou retour arrière à
+  la fiche/cours ; la saisie (texte/voix) est **persistée**
+  localement (AD-7 : le re-sync est différé, **l'exit/retour
+  ne perd rien**, pack 02 §3.2 : « l'exit/retour ne perd
+  rien »).
+- **Notes responsive (Phase 2)** : desktop = la saisie
+  (texte/voix) passe dans un **panneau latéral gauche**,
+  le résultat de l'analyse (les `Callout` + `MathBlock`)
+  passe dans un **panneau droit** (2 colonnes, ratio 40/60) ;
+  la logique (saisie → analyse → résultats → prochaine
+  action) est **inchangée** (doc §23.4 : adapter le layout,
+  pas le contenu).
 
 ## 5. Système de thèmes multi-couches (AD-17 candidate)
 
