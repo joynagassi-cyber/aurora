@@ -14,3 +14,4 @@ desktop.ini
 # Binaire Python
 __pycache__/
 *.pyc
+.dyad/

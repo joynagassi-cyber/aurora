@@ -1,0 +1,99 @@
+---
+name: 'Aurora — SPEC'
+type: spec
+altitude: initiative
+status: assembled-2026-09-21
+companion-of: ARCHITECTURE-SPINE.md (autorité, read-only)
+sources: [ARCHITECTURE-SPINE.md, adr-extract.md (ADR v1.7 gelé), dimensions/01–04 (packs gelés), reviews/review-adversary.md (F-01…F-10 intégrées)]
+---
+
+# SPEC — Aurora (contrat prescriptif de référence)
+
+## Contexte
+
+Aurora est une suite de productivité + apprentissage + orchestration agentique, livrée en **Phase 1 mobile-only** (Android : Ionic React + Capacitor), sur une architecture composite figée par le spine `ARCHITECTURE-SPINE.md` (AD-1…AD-16, gelé, statut final 2026-09-21) et l'ADR v1.7 : Modular Monolith + Vertical Slices + Hexagonal (Ports & Adapters) + Local-First (PowerSync/SQLite) + événements cibles + Agent Kernel central, exécuté en 5 packs de dimension (`dimensions/01`–`04` + design system) que ce SPEC consolide et rend exécutable par des équipes/agents parallèles (AD-13 : Contract Pack **avant** le coding parallèle).
+
+## Scope
+
+**V1 (Phase 1 mobile-only, ADR §23.1/§24)** :
+- App Android (Ionic React + Capacitor) ; cœur platform-agnostic (doc §23.3) — **aucun** adapter desktop, **aucun** Electron.
+- Localement : lecture SQLite/PowerSync, mutations local-first via module owner (AD-7/F-03), offline = état premier (AD-7).
+- Serveur (pack 01) : Supabase (PostgreSQL/RLS/Auth/Edge Functions/Cron), R2 (buckets privés + presigned), jobs persistés (AD-8), AI multi-provider côté serveur (AD-4/AD-5/AD-12/F-09, AD-3 : zéro clé sur l'appareil), 9 événements normatifs (AD-9/F-04).
+- Focus Controller Android (pack 04) : restriction/DND/Screen Pinning uniquement — blocage natif non promessable (validation §4.1).
+
+**Phase 2 (hors V1)** : Electron (doc §23.4/§23.5 = ajouter un adapter, pas réécrire) ; microservices ; Event Sourcing ; Yjs ; STT local (whisper.cpp) ; extraction de module ; valeurs d'environnement & noms de buckets (structure fixée par AD-16a, valeurs = données de vague 0).
+
+## Références à l'architecture spine (sans recopie)
+
+- **Spine** = `ARCHITECTURE-SPINE.md` (authoritative, read-only) : AD-1 (isolation fournisseur) · AD-2 (boundaries de modules) · AD-3 (zéro clé sur appareil) · AD-4/AD-5 (pipeline AI multi-provider + fallback/quota) · AD-6 (split de données PostgreSQL/pgvector, ownership Knowledge↔Progress) · AD-7 (local-first + single-writer + owner des scopes PowerSync) · AD-8 (jobs persistés/idempotents) · AD-9 (matrice normative des 9 événements) · AD-10 (5 moteurs figés derrière 5 contrats renderer) · AD-11 (fidélité corpus) · AD-12/F-09 (One Kernel, exécution côté serveur) · AD-13 (Contract Packs + one-writer-per-file + états obligatoires) · AD-14 (invariant de Home) · AD-15 (SSoT des types de domaine) · AD-16 (enveloppe opérationnelle figée : 3 env, owner Model Registry, owner Foundation, duty owner) ; conventions : merge order, évolution de contrat (breaking = dedicated PR + Codex review), test du spine (deux équipes → même contrat).
+- **ADR v1.7** (`adr-extract.md`, gelé) : ADR §1–§26 = sections produit/architecture 1:1 (product §2–§19, stack §25, v1.6/§21–§24 : parallélisation, phases mobile-first, gel).
+- **Trou adversaire** (`reviews/review-adversary.md`, F-01…F-10) : tous intégrés dans le spine final (AD-15/F-01/F-03/F-04/F-05/F-06/F-07/F-08/F-09/F-10) — les packs l'utilisent comme référence de vérification.
+
+## Les 5 dimensions et leurs packs
+
+Chaque pack est un **Contract Pack** (AD-13) : périmètre, décisions, contrats TS, états/erreurs, tests DoD, risques — le SPEC les référence, ne les recopie pas.
+
+### 01 — Backend (`dimensions/01-backend.md`)
+- **Objectif** : trancher le périmètre serveur d'Aurora (Supabase/R2/modules/jobs/AI) en s'appuyant sur le spine.
+- **Décisions** : RLS = mécanisme d'application AD-2 (tranchement de la Open Question du spine, §2.2) ; schémas par module sans DDL (§4) ; contrats TS normalisés + matrice normative des 9 événements (AD-9/F-04, §3.3) ; Edge Functions + dispatcher figé + jobs persistés (AD-8, §5) ; R2 buckets par env + presignation (AD-16, §5.4) ; split AI côté serveur (AD-4/AD-5/AD-16b, §5.6).
+- **Contrats** : `ApiEnvelope`/`AIResponseEnvelope`/`AppError` (SSoT `packages/domain`, AD-15) ; ports `ObjectStorage`/`AIProvider`/`DispatcherApi` (§3–§5).
+- **Liens** : consomme le spine (AD-x) ; lié à 03-sync (vues/RLS) et 02-frontend (envelopes d'erreur).
+- **Liens au test du spine** : test RLS de pénétration + test single-writer + test d'idempotence (§7).
+
+### 02 — Frontend (`dimensions/02-frontend.md`)
+- **Objectif** : opérationnaliser `apps/mobile` (structure, state, routing, états UX, perf) pour les dev agents.
+- **Décisions** : **Zustand** (+ React Query) choisi **par AD-10** (React Flow = Zustand, doc §25.2) + anti-abstraction-AD-13 (§3.1) ; séparation 4 couches (§4, doc §23.3 : presentation / ui-state / use-cases / domain / data-access / platform) ; 5 contrats AD-10 consommés (§5 : `SemanticTreeRenderer`, `InfographicRenderer`, `DataVisualizationRenderer`, `MathRenderer`, `AnimationController` — l'app **consomme** les signatures définies par 05-design-system) ; routing mobile-first + invariant Home AD-14 (§6.2) ; 5 états UX normatifs (AD-13, §7) ; perf mobile dont Semantic Tree lazy/memo/Dagre incrémental (§9).
+- **Contrats** : store UI (UI state + IDs, **jamais** de données métier) ; use-cases (`TaskUseCase`…) ; `AgentRunState` (surface UI du kernel, F-09) ; `AppError` (SSoT `packages/domain`, §10).
+- **Liens** : consomme 01 (envelopes), 03 (repositories/offline), 05 (DS + contrats AD-10 + inventaire des écrans) ; 05-design-system est **gating de la vague 1 UI** (§12 R8/G1 : ratification des signatures + Zustand dans le frontmatter de 05, avant le découpage de la vague 1 UI).
+- **Ouvertures** : G3 (list virtualisation = `IonList` natif, `react-virtuoso` fallback), G4 (`@aurora/ui`), G5 (device de référence = Pixel 4a) — tranchées dans le pack, à ratifier avec le monorepo pnpm (spine OQ #1, AD-16) ; G2 = mapping AD-15 (gating vague 2).
+
+### 03 — Synchronisation (`dimensions/03-sync.md`)
+- **Objectif** : figer la couche local-first (PowerSync + SQLite + Supabase) : sémantique de sync, single-writer, conflits, re-sync, bridge RQ.
+- **Décisions** : single-writer par entité locale (AD-7/F-03 : le kernel **ne mute jamais** directement) ; règle de conflit = **server-wins + horodatage serveur par entité** (canon `updated_at`) ; **CRDT OR-Set figé** (pas LWW-Map) pour les listes, SSoT `packages/domain` (§5.3) ; interdiction de jointure inter-modules (AD-7/F-03, vues publiques du module source) ; ownership des scopes PowerSync = `packages/data` (wave 0, AD-7) ; re-sync après coupure longue (§5.5) ; throttling sync en background = `minSyncIntervalMs` (owner `packages/data`, §5.7, pack 04 impose la contrainte) ; bridge React Query ↔ `watch` (§5.8, owner `packages/data`).
+- **Contrats** : `LocalQueryRepository`/`LocalCommandRepository` (UI lit **uniquement** SQLite, écriture via module owner) ; `SyncStatus`/`SyncState` (§3.2) ; commandes par entité en `packages/domain` (§3.1).
+- **Liens** : consomme 01 (RLS/vues/jobs) et 02 (états UX/offline) ; lié à 04 (throttling §5.7) ; contractuel avec 05 (DS consomme les états `offline`/`error`).
+
+### 04 — Mobile (`dimensions/04-mobile.md`)
+- **Objectif** : couvrir la couche platform (Capacitor derrière les interfaces AD-1/doc §23.3) + validation du blocage natif Android.
+- **Décisions** : whitelist normative des plugins Capacitor (vague 0, §3.1) ; contrats des adapters (notifications OneSignal+locales, stockage fichiers/R2 presigned, `DocumentScanner`/`OCRProvider`, `AudioArtifactProvider`/`TranscriptionProvider` optionnel v1.5, réseau, cycle de vie, §3.2) ; Focus Controller = restriction/DND/Screen Pinning **uniquement** (blocage natif Android = non-promessable, validation §4.1, règle doc §2.8 respectée) ; contraintes perf/batterie/cycle de vie (§6, extension du pack 02 §9) ; tests E2E device (vague 7 QA, §7) ; règle Phase 2 Electron = cœur platform-agnostic **sans** adapter desktop en V1 (§8.2).
+- **Contrats** : `AppLifecycleAdapter` (permissions : `BACKGROUND_ACTIVITY`/`FOREGROUND_SERVICE`/`POST_NOTIFICATIONS`), `LocalFileStorageAdapter`, `DocumentScanner`, `OCRProvider`, `AudioArtifactProvider`, `TranscriptionProvider` (optionnel), `RemoteNotificationAdapter` (OneSignal, clé app via `capacitor.config.ts` owner Foundation — **jamais** de clé serveur dans le bundle, test 7.2e), `LocalNotificationAdapter`, `NetworkStatusAdapter`, `FocusController` (port interne, ADR §8 ; `isBlockingAvailable()` = false sur Android → **pas de CTA de blocage dans l'UI**, §4.2).
+- **Liens** : consomme 01 (jobs/OneSignal serveur/R2 presigned), 02 (state/routing/perf web), 03 (repositories/offline/re-sync) ; `AudioWaveformRenderer` (contrat AD-10, v1.5) = composant pur React dans `packages/ui` (owner 05), **pas** un adapter Capacitor (§5).
+
+### 05 — Design System (`dimensions/05-design-system.md`)
+- **Objectif** : autorité de définition des 5 contrats AD-10 + inventaire écran par écran (AD-14) + tokens/composants + états de composants + theming (palettes Aurora, AD-10 §25.4) + position sur le state management (consommer le store Zustand de l'app shell, **pas** un own store — gating G1 du pack 02).
+- **Note** : le pack 05 **n'est pas encore produit** (le contexte a été compacté avant sa génération) ; ce SPEC le référence comme **gating de la vague 1 UI** (AD-13 : Contract Pack complet avant coding parallèle). Les 5 signatures AD-10 (§5 du pack 02) sont **figées** par 05 ; l'inventaire des écrans (ex. Home AD-14 = agenda + next action + main priority + critical progress + due reviews + Focus + Coach = 7 items fixes, pack 02 §6.2) est porté par 05 ; le test du spine (deux équipes → même contrat) exige que 05 fige : ownership `packages/ui` (one-writer-per-file, AD-13), tests obligatoires (component/test/token/contract), acceptance criteria (AD-13 DoD). **05 doit exister et être ratifié avant que la vague 1 UI commence** (R8/G1 pack 02).
+
+## Open questions consolidées
+
+| ID | Question | Statut | Condition de revisit |
+|---|---|---|---|
+| OQ-01 | Ratification du layout pnpm (spine OQ #1) + mapping AD-15 entité→package→équipe | **[OPEN]** | À ratifier **avant** la découpe des packs Design System/Data/Agent (blocant vague 0, packs 01/03 §8.1) ; Foundation + chaque team. |
+| OQ-02 | Mapping AD-15 (entité → package → équipe, F-01) pour les entités consommées par l'app (Task, Goal, Review, FocusSession, Artifact, ProgressSnapshot, SemanticNode, …) | **[OPEN]** | Gating **vague 2** (pack 02 G2) : SSoT figée avant que l'app ne ré-déclare — violation AD-15/F-01 si non complété. |
+| OQ-03 | Valeurs d'environnement (noms de buckets, régions, provider account IDs, registres par env) — structure AD-16a fixée, valeurs = données de vague 0 | **[ASSUMPTION]** | À trancher par Foundation en vague 0 (AD-16a) ; les packs 01/03 supposent la structure, pas les valeurs. |
+| OQ-04 | `FOREGROUND_SERVICE` : sync continue en background > 30 s ? | **[OPEN]** (pack 04 O4) | À valider **avec le pack 03** avant la vague 1 : le paramètre `minSyncIntervalMs` (owner `packages/data`, pack 03 §5.7) décide ; si O4 = sync continue, la permission est demandée par le pack 03 (pas au boot). |
+| OQ-05 | Matrice AD-9 : consommation UI d'`ArtifactGenerated` déclarée dans le pack 02 (R9) mais la matrice du spine (AD-9) liste pour `ArtifactGenerated` les consumers Knowledge/Learning seulement — écart à ratifier | **[OPEN]** | Le pack 02 §4 déclare la consommation UI comme additive/normée (pas violation) ; **ratifier dans la matrice AD-9 au prochain ADR spine** (pack 02 §4, R9). |
+| OQ-06 | Screen Pinning (`startLockTask()`) : option utilisateur du Focus Controller ? | **[OPEN]** (pack 04 O3) | À valider par Foundation sur les versions Android cibles (API 21+) — **pas** un blocant de la Phase 1 (Focus Mode in-app = réduction + timer suffit, doc §2.8). |
+| OQ-07 | Moteur STT local (whisper.cpp) : évaluer **sur de vrais appareils** Android | **[OPEN]** (pack 04 O5) | **Après** la Phase 1 (spine § Deferred) ; capacité connue via `TranscriptionProvider` (optionnel), jamais bloquante V1. |
+| OQ-08 | Framework d'automatisation Android pour le test E2E device (vague 7 QA) | **[ASSUMPTION]** (pack 04 O2, tranchée) | **Playwright + driver Capacitor (device réel) = choix retenu** ; Appium = fallback si Playwright ne supporte pas le device Android 14 (ADR éventuel) ; le **contrat** = chaque scénario signature tourne sur device (le résultat, pas l'outil) — décision d'implémentation QA (vague 7, doc §21.12). |
+| OQ-09 | Liste virtualisation (G3 pack 02) | **[ASSUMPTION]** (tranchée) | `IonList` natif par défaut ; `react-virtuoso` en fallback pour les listes > 100 items (§9.3 pack 02) — ratifier avec la DS team / App Shell en vague 1 si divergence. |
+| OQ-10 | Nom du package `@aurora/ui` (G4 pack 02) | **[ASSUMPTION]** (tranchée) | Figé comme [ASSUMPTION] dans le SPEC, ratifié avec le monorepo pnpm (spine OQ #1, Foundation, AD-16) avant la vague 1. |
+| OQ-11 | Device de référence Android (G5 pack 02) | **[ASSUMPTION]** (tranchée) | Pixel 4a (CPU mid-range, §9.1 pack 02) ; l'équipe Foundation (AD-16 observation) peut ajuster via ADR si l'observation Sentry/perf montre que le budget (≤300 Ko JS gz, ≤1.5 s TTI, 30 fps) n'est pas atteignable. |
+| OQ-12 | Quotas free-tier (snapshot 21 sept 2026) : point-in-time, le spine les garde hors du `Stack` table volontairement | **[ASSUMPTION]** | Le Model Registry (AD-5/AD-16b) versionne les états ; les valeurs de registres par environnement = données de vague 0 (OQ-03) ; le spine reste silencieux pour que le registry puisse dériver sans changer le spine. |
+| OQ-13 | Électron Phase 2 (spine § Deferred, doc §23.4/§23.5) | **[OPEN]** | Après la stabilisation production mobile (doc §23.1) : **ajouter** un adapter Electron (cœur platform-agnostic, AD-7/doc §23.3), **pas** réécrire ; aucune PR desktop en V1 = violation §23.1 (pack 04 R8). |
+
+## Plan de Contract Packs wave 0 (AD-15 + AD-16)
+
+- **Entités AD-15** (liste figée, spine § Consistency Conventions / F-01) : `Task`, `Event`, `Project`, `Goal`, `Milestone`, `Habit`, `Routine`, `Note`, `Resource`, `Course`, `Subject`, `Skill`, `LearningSession`, `Review`, `FocusSession`, `Artifact`, `Automation`, `Decision`, `UserContext` + `ProgressSnapshot/Evidence/SkillState/Trend/Event/TrajectoryScenario` + `SemanticNode/Edge/Bridge/State` + `SourceRef`, `EvidenceRef`, `DiscoveryItem`, `Gap`, `ExpertSkill` — **une seule SSoT par entité** (`packages/domain`, AD-15/F-01) ; le mapping entité→package→équipe est **la donnée de vague 0** (OQ-01/OQ-02, blocant avant les packs Data/Agent/Design System, spine Open Question #1).
+- **Packages wave 0** (spine § Structural Seed + AD-16) :
+  - `packages/domain` (SSoT types AD-15, owner par entité F-01, ratifié avec OQ-01/OQ-02) ;
+  - `packages/data` (PowerSync/SQLite, migrations, repositories, owner AD-7/AD-16b : Model Registry + vues PowerSync + bridge RQ §5.8 pack 03) ;
+  - `packages/ui` (Design System, owner 05-design-system, gating G1 vague 1 UI : contrats AD-10 + tokens + inventaire écrans + position Zustand) ;
+  - `packages/platform` (Foundation : adapters Capacitor, whitelist §3.1 pack 04, `capacitor.config.ts` — owner exclusif Foundation, AD-16c) ;
+  - `packages/agent` (Agent team : surface UI du kernel, F-09 — l'exécution est **côté serveur**, AD-12) ;
+  - `packages/scientific-engine`, `packages/integrations` (Foundation / Integrations team) ;
+  - `apps/mobile` (App Shell team, pack 02).
+- **Équipes (one-writer-per-file, AD-13)** : Foundation (infra + `packages/platform` + `capacitor.config.ts` + CI/CD keys, AD-16c) ; Data team (`packages/data`) ; Design System team (`packages/ui`, pack 05) ; Agent team (`packages/agent`) ; Scientific team (`packages/scientific-engine`) ; Integrations team (`packages/integrations`) ; App Shell team (`apps/mobile` + feature agents) ; QA (vague 7, E2E device).
+- **Ordre de vague (spine § Consistency Conventions / ADR §21.12)** : wave 0 = contrats/tokens/types/schémas/conventions + CI de base (ce SPEC + packs 01–05 ratifiés, OQ-01/OQ-02 tranchées) → wave 1 = Fondations (UI : `packages/ui` + gating G1 05-design-system ; Data : `packages/data` + PowerSync relay + RLS + R2 ; Auth Supabase) → wave 2 = Features (Productivity, Learning, Knowledge, Discovery, Progress, Scientific/Artifacts — G2 mapping AD-15 figé avant) → wave 3 = Agent Kernel (serveur, F-09) → wave 4 = Intégration (flows transversaux) → wave 5 = Dyad (refinement UI/UX) → wave 6 = Codex (deep review globale) → wave 7 = Release candidate (E2E Android, CI/CD, OQ-08 tranchée). `main` buildable après chaque vague ; test du spine (deux équipes obéissant à leurs packs produisent **le même** contrat) vérifié à chaque merge.
+
+---
+*Assemblé le 2026-09-21. Ce SPEC est **court et convergent** (pas un copier-coller des packs) : il référence le spine (AD-x) et les packs (`dimensions/01`–`04` + design system) sans les recopier ; les décisions contraignantes restent dans le spine (read-only) ; chaque pack est prescriptif (il dit **comment** implémenter les ADs du spine). Tout écart de contrat = ADR (spine § Consistency Conventions : breaking = dedicated PR + mandatory Codex review).*

@@ -1,0 +1,1545 @@
+e par l'
+  utilisatrice, §3.2
+  `Slider`).
+
+### 4.4 Module Productivité — calendrier & focus (doc
+§2.4, §2.8)
+
+#### 4.4.1 `calendrier-jour` / `calendrier-semaine` /
+`calendrier-mois` (doc §2.4)
+- **Objectif** : **voir** et **planifier** les
+  événements/tâches selon l'échelle (jour /
+  semaine / mois — doc §2.4 « Calendrier
+  jour/semaine/mois ») ; le `Pager` §3.4 est
+  **le** composant partagé des 3 écrans (le
+  `SegmentedControl` du `Pager` **est** le
+  switch jour/semaine/mois — les 3 écrans
+  partagent **le même** composant, pas 3
+  vues séparées, doc §2.4 « Agenda »).
+- **Zones** : header (`TopBar` «
+  Calendrier » + le `Pager` §3.4
+  (Jour/Semaine/Mois + la navigation
+  avant/après + « Aujourd'hui »)) ;
+  content (selon le mode du `Pager` :
+  **jour** = une liste `RoutineStep`-
+  like des événements de la journée
+  (heure en `JetBrains Mono` `xs`,
+  un `Badge` par type : cours /
+  examen / réunion / devoir /
+  révision / projet / routine — doc
+  §2.4 « Cours, examens, réunions,
+  devoirs, révisions, projets et
+  routines » : 7 types = 7 `Badge`,
+  les couleurs suivent le type,
+  **pas** le statut (le statut =
+  `Badge` de la tâche si l'événement
+  **est** une tâche) ; **semaine**
+  = une grille 7 colonnes × 48h
+  (lignes d'heures, `JetBrains Mono`
+  `xs`), chaque case = un
+  `CalendarCell` §3.6 (les
+  événements sont **empilés**
+  verticalement dans la case, un
+  `ProgressBar` minuscule si
+  l'événement a une durée
+  pluri-jours) ; **mois** = une
+  grille 7×5 `CalendarCell` (une
+  pastille par événement, max 3
+  visibles + un « +N » en `xs` si
+  plus — le mois est **dense**, le
+  détail passe au mode jour/semaine,
+  §12) ; footer (`BottomNav`).
+- **DS** : `TopBar`, `Pager`
+  (`SegmentedControl` +
+  navigation), `RoutineStep` (mode
+  jour), `CalendarCell` (modes
+  semaine/mois), `Badge` (le type
+  d'événement), `ListItem` (si un
+  événement est **détailé** dans
+  le mode jour), `EmptyState` (un
+  jour vide), `Skeleton`,
+  `Callout` (un « conflit de
+  planning » = un `Callout
+  warning` **posé** au-dessus du
+  jour concerné — doc §2.4
+  « Détection des conflits et de la
+  surcharge » : le conflit est
+  **visible**, pas caché ; «
+  temps de travail
+  surchargé » = un `Callout
+  warning` du jour (le temps
+  réellement planifié vs le temps
+  disponible, doc §2.4 «
+  Planification selon le temps
+  réellement disponible »).
+- **États** : `loading` = les
+  cellules/`RoutineStep` en
+  Skeleton (le store local, court,
+  pack 02 §7) ; `empty` = un jour
+  vide = un `Callout info` «
+  Aucun événement — ajoutez-en
+  un » (pas un vide **mort** :
+  le CTA ouvre une
+  `BottomSheet` de création
+  d'événement avec un
+  `DateField` pré-rempli au
+  jour courant, §3.2) ; `error` =
+  un événement non syncé = un
+  `Badge danger` « à resync »
+  (l'événement **reste** dans la
+  case, AD-7) ; `offline` = le
+  calendrier **fonctionne**
+  (lecture locale, AD-7), la
+  création reste **possible**
+  (écriture locale, pack 03),
+  seul le **scan de documents**
+  liés à un événement est
+  désactivé.
+- **Transitions** : un
+  `CalendarCell` (semaine/mois)
+  → le **jour** concerné (le
+  `Pager` passe en mode jour,
+  **pas** un push séparé — le
+  drill-down **est** le switch de
+  mode du `Pager`, la règle de
+  non-surprise : l'écran de
+  calendrier est **un seul**
+  écran avec 3 modes, pas 3
+  écrans ; le Breadcrumb
+  **n'existe pas** ici (le
+  calendrier est une **feuille**
+  du module Productivité, pas une
+  hiérarchie AD-6 comme le
+  `SemanticTree`) ; un événement
+  → un `ListItem` qui **pousse**
+  le détail (si l'événement
+  **est** une tâche →
+  `taches-detail` §4.2.3 ; si
+  c'est un événement **pur**
+  (doc §2.4 « réunion ») → une
+  `BottomSheet` de détail
+  `BottomSheet` §3.5) ; un
+  `Callout warning` de conflit →
+  un `Button ghost` «
+  Replanifier » qui ouvre
+  l'`agent` §4.40 (la
+  replanification est une
+  capacité du kernel, doc §2.4
+  « Replanification assistée par
+  l'agent » — l'app ne
+  **calcule pas** elle-même,
+  elle **demande** au kernel,
+  AD-12/F-09 : le kernel est
+  **serveur**, l'app est la
+  surface).
+- **Notes responsive (Phase 2)** :
+  desktop = le mode **semaine**
+  devient une **grille 7 colonnes
+  × 24h** (pas 48h — le desktop
+  a la **hauteur**, le mobile
+  compacte à 48h, §2.3) ; le mode
+  **mois** devient 7×5 cellules
+  **plus larges** (les
+  événements s'affichent en
+  **texte** pas en pastille si
+  la case est **vide** — le
+  desktop a l'espace pour
+  montrer le **titre**, le
+  mobile reste **compact** en
+  pastille, §1 « dense
+  progressivement ») ; le
+  `Pager` reste **identique**
+  (le composant est
+  **mobile/desktop-agnostique**,
+  doc §23.4).
+
+#### 4.4.2 `focus-mode` (doc §2.8)
+- **Objectif** : **concentrer**
+  (pas « voir » le focus — le
+  focus est une **action**, pas
+  une donnée, AD-14 bloc 6 :
+  « Accès Focus » = un
+  `Button`, pas une Card).
+- **Zones** : **pas** de
+  `TopBar` (le Focus **enlève**
+  le chrome, doc §2.8 «
+  anti-distraction » : l'écran
+  est **minimal**) ; content
+  (un `FocusTimer` §3.6.9 — le
+  ring 160px + le temps restant
+  `3xl` `JetBrains Mono` au
+  centre + le label de la tâche
+  focusée en `sm`
+  `text-secondary` sous le ring)
+  + un `SegmentedControl`
+  « Pomodoro | Temps libre »
+  §3.4 (le mode de session, doc
+  §2.8 « Minuteur/Pomodoro » —
+  Pomodoro = 25 min + 5 min de
+  break, temps libre = le
+  `Slider` 5–90 min
+  personnalisé) + un `KeyValueList`
+  compact (les tâches
+  **associées** à la session,
+  doc §2.8 « sessions de
+  concentration » : le
+  `FocusSession` AD-15 porte
+  `taskIds`, le `KeyValueList`
+  affiche les titres des tâches
+  liées) ; footer (le
+  `BottomNav` est **masqué** —
+  le Focus **enlève** la
+  navigation, l'utilisateur est
+  **dedans**, pas « dessus » ;
+  le retour au `BottomNav`
+  s'effectue par le back Android
+  ou un `IconButton` « Terminer
+  la session » en bas, pas par
+  le nav) ; surfaces
+  flottantes (un `Callout info`
+  **posé** en haut (le seul
+  chrome restant) : « Les
+  notifications sont réduites
+  pour cette session » —
+  l'affichage de la capacité
+  **réelle** du
+  `FocusController` (pack 04
+  §4.2 : « l'UI affiche la
+  capacité **réelle** » — la
+  réduction des
+  notifications, **pas** le
+  blocage qui n'existe pas sur
+  Android, pack 04 §4.1).
+- **DS** : `FocusTimer`
+  (§3.6.9), `SegmentedControl`
+  (Pomodoro/Temps libre),
+  `Slider` (la durée, si mode
+  « temps libre »),
+  `KeyValueList` (les tâches
+  associées), `Callout` (la
+  réduction des notifications),
+  `IconButton` (« Terminer la
+  session », `ghost`, pas
+  `destructive` — terminer le
+  focus n'est **pas** destructif,
+  le timer **enregistre** le
+  bilan, doc §2.8 « Bilan de
+  session »), `Button`
+  (`primary` : « Démarrer » —
+  le seul CTA de l'écran).
+- **États** : `loading` = le
+  timer ne se « charge »
+  **pas** (le temps est connu,
+  §3.6.9 — le seul `loading`
+  **parmi** les états du Focus =
+  le **bilan** de fin de session
+  qui arrive, un `Skeleton` du
+  bilan, pack 04 §4.1 point 4 :
+  le bilan **doit** exister dans
+  l'inventaire avec le G2
+  contractuel, §3.6.9) ; `empty`
+  n'existe **pas** (un
+  `FocusSession` vide = une
+  session qui **n'a pas** de
+  tâches associées = le
+  `KeyValueList` affiche
+  « Aucune tâche associée » —
+  le Focus **fonctionne
+  quand même** (on peut
+  concentrer **sans** tâche,
+  doc §2.8 : la concentration
+  n'est pas **conditionnée**
+  par une tâche) ; `error` =
+  un échec de **bilan** (le
+  timer **continue** de
+  tourner, la session n'est
+  **pas** perdue à cause d'un
+  échec de bilan, AD-7 —
+  l'état `error` = un `Callout
+  danger` **sous** le timer,
+  le timer reste
+  **préeminent**) ; `offline` =
+  le Focus est **parfaitement**
+  fonctionnel (tout est local :
+  le timer, les tâches
+  associées, la réduction des
+  notifications **locales** via
+  `LocalNotificationAdapter`
+  pack 04 §3.2.5 — les
+  notifications **OneSignal**
+  (serveur, pack 04 §3.4) sont
+  **uniquement** réduites si le
+  réseau le permet ; sans
+  réseau, la réduction se
+  limite aux **locales**,
+  c'est la capacité **réelle**
+  affichée dans le `Callout
+  info`, pack 04 §4.2 : «
+  l'UI affiche la capacité
+  **réelle** »).
+- **Transitions** : « Terminer
+  la session » → un
+  `BottomSheet` de
+  **bilan** (le `FocusSessionBilan`,
+  pack 04 §4.1 point 4 : durée
+  réelle, interruptions, score
+  de concentration — le bilan
+  est un `ChartSpec` consommé
+  par `DataVisualizationRenderer`
+  G2, pack 02 §5.3 : « l'écran
+  de bilan Focus **doit** être
+  dans l'inventaire d'écrans du
+  pack 05 avec le G2
+  contractuel », pack 04 §4.1)
+  + un CTA « Revenir au Home »
+  (le bilan **précède** le
+  retour, pas l'inverse —
+  l'utilisateur **voit** le
+  résultat **avant** de quitter
+  le Focus, doc §2.8 « Bilan de
+  session ») ; un `Callout
+  info` de réduction qui **échoue**
+  (pas de `LocalNotificationAdapter`
+  dispo) = un `Callout warning`
+  à la place (la capacité
+  **réelle** n'a pas pu être
+  mise en place, pack 04 §4.2 :
+  « l'UI affiche la capacité
+  **réelle** » — un échec de
+  réduction **doit** être
+  signalé, pas caché).
+- **Notes responsive (Phase 2)** :
+  desktop = le Focus passe en
+  **fenêtre** (pas plein
+  écran — le desktop permet de
+  **rester** sur une autre
+  fenêtre pendant le Focus, la
+  concentration **n'exige
+  pas** l'exclusivité du
+  viewport sur desktop, doc
+  §23.4) ; le `FocusTimer`
+  reste **identique** (le
+  composant est
+  **plateforme-agnostique**,
+  le timer = l'horloge
+  système, pas un compteur
+  d'écran, pack 04 §6.1) ;
+  la **réduction** des
+  notifications passe par
+  l'adapter Electron (les
+  notifications natives, spine
+  §Stack « Electron native ») —
+  le composant **n'a pas
+  changé**, seul l'adapter a
+  changé (doc §23.4 « ajouter
+  les adapters Electron
+  nécessaires »).
+
+### 4.5 Module Productivité — revues & analytics
+(doc §2.9, §2.10)
+
+#### 4.5.1 `revues-jour` / `revues-semaine` /
+`revues-mois` (doc §2.9)
+- **Objectif** : **réviser**
+  (pas « voir » les revues —
+  une revue est une **action**
+  périodique, doc §2.9
+  « Revue quotidienne /
+  hebdomadaire / mensuelle ») ;
+  la revue est un **formulaire**
+  guidé (pas un free-form
+  journal — le DS **structure**
+  la revue, l'utilisateur
+  **remplit**, §1 « simple en
+  surface, puissant en
+  profondeur » : la structure
+  est **fixe** par échelle
+  (jour/semaine/mois), le contenu
+  est **libre** dans la
+  structure).
+- **Zones** : header (`TopBar`
+  « Revue » + le `Pager`
+  §3.4 (Jour/Semaine/Mois) + un
+  `SegmentedControl` « À faire /
+  Faite » §3.4 (le statut de la
+  revue — une revue **à faire**
+  est une `Review` AD-15
+  `pending`, une revue **faite**
+  est `completed`, le
+  `SegmentedControl` bascule
+  entre les 2 statuts, pas
+  3 — le 3ᵉ « annulée » n'est
+  **pas** un état de revue, une
+  revue annulée = une
+  `Callout info` **historisée**,
+  pas un tab actif) ;
+  content (une `Review` = une
+  `Card` **posée** (pas un
+  `ListItem` : une revue est
+  **riche** (bilan + causes +
+  plan, doc §2.9 « Bilan des
+  tâches accomplies, reportées,
+  abandonnées et bloquées /
+  Analyse des causes de retard /
+  Révision des priorités / Plan
+  d'action suivant / Journal
+  des décisions importantes » =
+  **5 sections** — une Card,
+  pas 5 lignes de liste) ;
+  les 5 sections = 5
+  `KeyValueList`/`TextArea`/
+  `RoutineStep` **mixtes** :
+  « Bilan des tâches » = un
+  `DataTable` §3.6.1 (les
+  tâches accomplies/reportées/
+  abandonnées/bloquées, 4
+  colonnes : statut / titre /
+  projet / « pourquoi »
+  (cause, doc §2.9 « Analyse
+  des causes de retard ») ;
+  « Révision des priorités » =
+  une liste `RoutineStep`
+  (les nouvelles priorités,
+  ordonnées, doc §2.9) ;
+  « Plan d'action suivant » =
+  une liste `RoutineStep`
+  (les actions, doc §2.9) ;
+  « Journal des décisions » =
+  une `TextArea` (le texte
+  libre, doc §2.9 « Journal des
+  décisions importantes ») ;
+  « Analyse des causes » = une
+  `TextArea` + un `Badge`
+  d'hypothèse de cause (le
+  « pourquoi » est **structuré**
+  par 3 `Chip` de cause
+  courantes (charge / fatigue /
+  blocage technique — les
+  3 causes les plus courantes
+  en génie civil, doc §2.9
+  « Analyse des causes de
+  retard »), le reste est
+  libre dans la `TextArea`) ;
+  footer (`BottomNav`).
+- **DS** : `TopBar`, `Pager`
+  (le `SegmentedControl`
+  jour/semaine/mois),
+  `SegmentedControl` (à
+  faire/faite), `Card`,
+  `DataTable` (le bilan des
+  tâches), `RoutineStep`
+  (les priorités/actions),
+  `TextArea` (le journal,
+  l'analyse des causes),
+  `Chip` (les 3 causes
+  courantes), `Callout` (un
+  « revue en retard » = un
+  `Callout warning` **posé**
+  si la revue de la période
+  précédente **n'a pas** été
+  faite, doc §2.9 « Pilotage
+  personnel » — le retard est
+  **signalé**, pas caché),
+  `EmptyState` (pas de revue
+  dans la période),
+  `Skeleton`.
+- **États** : `loading` = les
+  sections de la revue en
+  Skeleton (le store local,
+  court) ; `empty` = pas de
+  revue dans la période = un
+  `EmptyState` : icône
+  « revue », « Pas de revue
+  cette semaine » + CTA « Faire
+  la revue » (la CTA ouvre la
+  `BottomSheet` de création de
+  revue — une `Review` AD-15
+  `pending` est **créée**, pas
+  « une action à planifier »,
+  la revue **est** l'action,
+  doc §2.9) ; `error` = une
+  revue non syncée = un
+  `Badge danger` « à resync »
+  sur la Card (la revue
+  **reste** lisible, AD-7) ;
+  `offline` = les revues
+  restent **lisibles** (lecture
+  locale, AD-7), la création
+  reste **possible** (écriture
+  locale, pack 03) — une
+  revue **n'exige jamais** le
+  réseau (c'est une
+  **auto-évaluation**, pas une
+  requête de l'agent, doc
+  §2.9 : le pilotage est
+  **personnel**, l'agent
+  **suggère** (doc §2.9
+  « Suggestions d'ajustement par
+  l'agent »), l'utilisateur
+  **décide**).
+- **Transitions** : « Faire la
+  revue » → la `BottomSheet` de
+  création (les 5 sections sont
+  **pré-remplies** par les
+  données locales (le bilan des
+  tâches vient du `Task` AD-15
+  local, les priorités viennent
+  du `Goal` AD-15 local — la
+  revue est **pré-remplie**,
+  l'utilisateur **ajuste**,
+  pas « écrit à blanc », doc
+  §12 : simple en surface) ;
+  un `Callout` de retard → un
+  `Button ghost` « Suggérer
+  un ajustement » qui ouvre
+  l'`agent` §4.40 (la
+  suggestion est une capacité
+  du kernel, AD-12/F-09,
+  doc §2.9 « Suggestions
+  d'ajustement par l'agent ») ;
+  une `RoutineStep` du plan
+  d'action → si l'étape
+  **devient** une tâche, un
+  `Button ghost` « En faire une
+  tâche » (le plan d'action
+  **sert** à créer des tâches,
+  doc §2.9 « Plan d'action
+  suivant » : la revue
+  **génère** des tâches, pas
+  l'inverse).
+- **Notes responsive (Phase 2)** :
+  desktop = les 5 sections de
+  la revue passent en **2
+  colonnes** (le bilan à
+  gauche, le reste à droite) —
+  la logique (5 sections) est
+  **inchangée**, le layout
+  s'adapte (doc §23.4) ; le
+  `Pager` reste **identique**
+  (le composant est
+  **plateforme-agnostique**).
+
+#### 4.5.2 `analytics` (doc §2.10)
+- **Objectif** : **mesurer**
+  (pas « voir » les
+  statistiques — les stats sont
+  **secondaires**, la
+  **mesure** est
+  **primaire** : l'analystique
+  est le **miroir** de la
+  progression, pas le
+  tableau de bord, §1 «
+  calm » : l'écran est
+  **structuré** par
+  question (les 5 questions
+  fondamentales du Progress,
+  doc §18.1), pas par widget
+  (pas un « dashboard de
+  KPIs », AD-14).
+- **Zones** : header (`TopBar`
+  « Analytics » + un `Menu`
+  de période : 7j / 30j /
+  semestre / année (doc §18.2
+  « Progression temporelle » :
+  les 4 échelles — le
+  `Menu` §3.5, 4 items, pas
+  un `SegmentedControl` (4
+  segments = trop, §3.4 :
+  max 3) ;
+  content (les 5 questions
+  fondamentales du doc §18.1
+  **structurent** l'écran (pas
+  des widgets libres) :
+  « Où en suis-je
+  réellement ? » = un
+  `StatTile` par dimension
+  (doc §18.2 : académique /
+  compétences / réelle vs
+  illusion / temporelle /
+  objectifs / professionnelle /
+  oubli / discipline — 8
+  dimensions = 8 `StatTile`,
+  **pas** 8 widgets empilés :
+  les 8 sont **groupés** en
+  2×4 (le `StatTile` §3.3
+  tolère 4 max par écran,
+  §3.3 : les 8 passent en
+  **2 écrans** ou en scroll
+  vertical de 2 groupes
+  (académique+compétences+
+  illusion / temporelle+
+  objectifs+professionnelle+
+  oubli+discipline) — le scroll
+  **structure** les 8, il ne
+  « les empile pas »
+  aléatoirement, §1) ;
+  « Qu'est-ce qui s'est
+  réellement amélioré ? » =
+  un `Timeline` §3.6.3 (les
+  preuves de progression,
+  doc §18.3 : QCM / rappel
+  actif / exercice / explication
+  — les 8 types de
+  `ProgressEvidence`
+  AD-15, chaque preuve = un
+  point de la timeline) ;
+  « Qu'est-ce qui stagne,
+  régresse ou a été oublié ? »
+  = un `Callout warning` **posé**
+  (les stagnations, doc §18.2
+  « Oubli et consolidation » :
+  les compétences qui se
+  dégradent, l'écran **affiche**
+  le `Callout` **avant** les
+  8 `StatTile` — le
+  **problème** précède la
+  mesure, pas l'inverse, doc
+  §18.1 : l'ordre des
+  questions = l'ordre de
+  l'écran) ; « Pourquoi cette
+  évolution ? » = un
+  `Callout info` (l'analyse
+  causale, doc §18.4 : la
+  corrélation ≠ la causalité,
+  le `Callout` **affiche**
+  l'hypothèse de cause
+  **testée** par l'agent, pas
+  une vérité) ; « Quelle
+  prochaine action ? » = un
+  `Button primary` (la
+  « prochaine action
+  productive », doc §18.1 —
+  le CTA ouvre
+  l'`agent` §4.40 :
+  l'analyse causale
+  **alimente** l'agent,
+  l'agent **suggère**,
+  l'utilisateur **décide**,
+  doc §18.7 « Progress comme
+  moteur agentique ») ;
+  footer (`BottomNav`).
+- **DS** : `TopBar`, `Menu`
+  (les 4 périodes),
+  `StatTile` (les 8
+  dimensions, 2×4),
+  `Timeline` (les preuves,
+  doc §18.3), `Callout`
+  (warning de stagnation,
+  info de causalité),
+  `Button` (primary, la
+  prochaine action),
+  `Sparkline` (le 7 derniers
+  jours dans chaque
+  `StatTile` — la tendance
+  **micro** accompagne le KPI,
+  §3.6.5), `EmptyState`
+  (pas de données sur la
+  période), `Skeleton`.
+- **États** : `loading` = les
+  8 `StatTile` + le
+  `Timeline` en Skeleton (le
+  store local, les 8
+  dimensions sont
+  **calculées** par le module
+  Progress, pas lues
+  directement — le `loading`
+  **couvre** le calcul
+  (la donnée est locale,
+  l'agrégation est
+  **rapide**, pack 02 §7 :
+  le `loading` est **court**)
+  ; `empty` = une période sans
+  données = un `EmptyState`
+  par dimension (pas un
+  vide global : 7 vides +
+  1 rempli = **7**
+  `EmptyState` compacts, pas
+  1 `EmptyState` global qui
+  « cache » la 1 dimension
+  remplie — le DS **n'aggrave
+  jamais** l'état de l'autre,
+  la donnée reste visible,
+  AD-7) ; `error` = une
+  dimension qui **échoue** à
+  se calculer = un
+  `Callout danger` **sous** la
+  dimension (les 7 autres
+  restent, AD-7) ; `offline`
+  = les 8 dimensions
+  **locales** restent
+  (l'agrégation est
+  **locale** (SQLite), l'agent
+  est **serveur** —
+  l'analyse causale (le
+  `Callout info` de
+  « Pourquoi ») est
+  **désactivée** avec un
+  `Callout info` « L'analyse
+  causale nécessite le réseau
+  — l'état actuel est
+  affiché sans analyse »
+  (la donnée **locale** reste,
+  l'analyse **serveur**
+  attend, AD-7/AD-12 :
+  l'agent est **serveur**,
+  pas local, pack 02 §6.4).
+- **Transitions** : un
+  `StatTile` → un détail en
+  `BottomSheet` (les preuves
+  de cette dimension — le
+  `Timeline` s'élargit, la
+  `Sparkline` devient un
+  `DataChart` complet avec
+  axes §3.6.5 — le
+  drill-down **est** le
+  switch du `StatTile` en
+  détail, pas un push
+  séparé) ; le `Button
+  primary` « Prochaine
+  action » → l'`agent`
+  §4.40 (la suggestion est
+  **générée** par le kernel,
+  l'app est la surface,
+  AD-12/F-09) ; le `Menu` de
+  période → le `Pager`
+  §3.4 s'adapte (le
+  `SegmentedControl` passe de
+  3 à 4 options si l'on
+  ajoute l'échelle
+  « semestre » — le
+  `Pager` reste **le
+  composant**, le switch
+  d'échelle est **une**
+  option du `Pager`, pas
+  4 écrans séparés).
+- **Notes responsive (Phase 2)** :
+  desktop = les 8
+  `StatTile` passent en
+  **grille 4×2** (pas 2×4 —
+  le desktop a la
+  **largeur**, les 4 par
+  ligne) ; le `Timeline`
+  s'élargit (les preuves
+  s'affichent en
+  **texte** pas en
+  pastille, le desktop a
+  l'espace pour le
+  **titre**, §1 « dense
+  progressivement ») ;
+  l'analyse causale
+  (serveur, AD-12)
+  **reste** le même
+  `Callout` (le composant
+  est **plateforme-
+  agnostique**, seul
+  l'agent est serveur,
+  doc §23.4 : « réutiliser
+  les contrats existants »).
+
+### 4.6 Module Learning — bibliothèque & cours
+(doc §2.11, §3)
+
+#### 4.6.1 `bibliotheque-ressources` (doc §2.11)
+- **Objectif** : **retrouver**
+  (pas « classer » — les
+  ressources sont **rattachées**
+  aux matières/compétences/
+  projets/objectifs, doc §2.11
+  « Rattachement à matière,
+  compétence, projet, objectif
+  ou session » : la
+  bibliothèque est le **miroir**
+  du rattachement, pas un
+  catalogue libre) ; la
+  recherche universelle
+  (doc §2.1 « Recherche
+  universelle et Command
+  Palette ») **vive** dans
+  l'inbox, pas ici — ici
+  c'est le **listing**, pas
+  la recherche (la
+  recherche est un overlay
+  global, pack 02 §6.3 :
+  l'`IonModal` de
+  `commandPaletteOpen`, pas
+  un écran).
+- **Zones** : header
+  (`TopBar` « Bibliothèque » +
+  un `Menu` de filtre : par
+  matière / par type / par
+  projet — le `Menu` §3.5,
+  max 6 items) ; content
+  (une liste de
+  `ListItem` `subtitle` —
+  chaque ressource = titre +
+  type en `Badge` (PDF /
+  DOCX / PPTX / XLSX / image /
+  audio / vidéo / Markdown /
+  texte / code / LaTeX /
+  autre — les 12 types du
+  doc §16 « Visualisation
+  universelle des fichiers et
+  artefacts », les 12
+  `Badge` couvrent les 12
+  types, **pas** 12 icônes
+  différentes : le `Badge`
+  affiche le type en texte
+  (pas une icône par type —
+  le type est **lisible**,
+  pas reconnu, §1 «
+  lisibilité technique ») +
+  date en `JetBrains Mono`
+  `xs`) + un
+  `ProgressBar` si la
+  ressource a une
+  progression de lecture
+  (un PDF lu à 60%, un cours
+  audio écouté à 30% — la
+  progression est **par
+  ressource**, doc §2.11
+  « cours, PDF, documents,
+  images, vidéos ») ; footer
+  (`BottomNav`).
+- **DS** : `TopBar`,
+  `Menu`, `ListItem`
+  (`subtitle`), `Badge`
+  (le type de ressource),
+  `ProgressBar` (la
+  progression de lecture),
+  `EmptyState`, `Skeleton`,
+  `FAB` (« Importer », §3.1
+  — l'écran de **création**
+  a son FAB : le FAB ouvre
+  le scanner pack 04
+  §3.2.3 ou l'import
+  local, §4.6.1 note).
+- **États** : `loading` =
+  les items en Skeleton (le
+  store local, les
+  ressources sont
+  **lourd** (les PDF, les
+  cours audio) — le
+  `loading` **couvre**
+  l'index local, pas le
+  téléchargement (le
+  téléchargement est un
+  job serveur AD-8,
+  l'index est local
+  AD-7) ; `empty` = un
+  `EmptyState` : icône
+  « bibliothèque »,
+  « Aucune ressource —
+  importez votre premier
+  cours » + CTA « Importer
+  » (le CTA ouvre le
+  scanner pack 04
+  §3.2.3 **ou** un
+  `BottomSheet` de
+  sélection de source
+  (fichier local /
+  scanner / lien web —
+  les 3 sources du
+  doc §16 « tout
+  fichier importé ou
+  généré », §4.6.1) ;
+  `error` = une ressource
+  non syncée = un
+  `Badge danger` « à
+  resync » (la ressource
+  **reste** visible, son
+  type est **connu**
+  localement, AD-7) ;
+  `offline` = la liste
+  **fonctionne** (lecture
+  locale, AD-7),
+  l'**import** reste
+  **possible** si c'est
+  un fichier **local**
+  (l'écriture est
+  locale, pack 03) —
+  l'import **web**
+  (le lien) et le
+  **scanner** (l'OCR,
+  job serveur pack 01)
+  sont **désactivés**
+  avec un `Callout info`
+  (l'action cloud,
+  pack 02 §7
+  `offline`).
+- **Transitions** : une
+  `ListItem` →
+  `artefacts-detail`
+  §4.34 (l'aperçu de
+  la ressource, doc
+  §16 : « tout
+  fichier importé
+  ou généré doit
+  disposer d'un
+  parcours de
+  visualisation ») ;
+  le FAB → le
+  scanner (pack 04
+  §3.2.3) ou la
+  `BottomSheet`
+  d'import ; un
+  `ProgressBar` de
+  lecture qui
+  **toure** (la
+  progression
+  change) = un
+  « dernier lu »
+  en `xs` sous
+  le titre (la
+  date du dernier
+  accès, pas
+  la durée —
+  le §18.2
+  « Oubli et
+  consolidation »
+  lit les dates
+  d'accès, pas
+  la durée de
+  lecture, la
+  durée est un
+  `FocusSession`,
+  pas une
+  ressource).
+- **Notes responsive
+  (Phase 2)** :
+  desktop = la
+  liste passe en
+  **grille 2
+  colonnes** de
+  `ListItem` (le
+  titre + le type
+  + la
+  progression,
+  pas une Card
+  riche — la
+  bibliothèque
+  est une **liste**
+  dense, pas un
+  dashboard, §1
+  « simple en
+  surface ») ;
+  le FAB devient
+  un `Button`
+  dans le
+  header (le
+  FAB est un
+  **mobile-only**
+  pattern,
+  doc §23.2 —
+  desktop = un
+  CTA dans
+  la `TopBar`) ;
+  l'aperçu
+  (`artefacts-detail`
+  §4.34) passe
+  en **fenêtre**
+  latérale
+  (le détail
+  **côte à
+  côte** avec
+  la liste,
+  pas en
+  push, doc
+  §23.4 :
+  « créer des
+  layouts
+  desktop sans
+  modifier la
+  logique
+  métier »).
+
+#### 4.6.2 `cours-liste` + `cours-detail`
+(doc §3, §14)
+- **Objectif**
+  (liste) : **voir**
+  les cours
+  (les cours
+  **importés**
+  par le
+  scanner,
+  doc §3
+  « Suivi
+  des
+  compétences
+  et
+  sujets
+  maîtrisés/non
+  maîtrisés »)
+  ; **Objectif**
+  (détail) :
+  **un** cours,
+  sa
+  progression
+  (les
+  chapitres,
+  les notions,
+  les formules
+  — doc §14
+  « arbre
+  sémantique
+  évolutif du
+  savoir » :
+  le cours
+  est la
+  **racine**
+  d'une
+  branche de
+  l'arbre,
+  pas un
+  objet
+  isolé).
+- **Zones** :
+  liste = une
+  liste de
+  `Card
+  flat`
+  §3.3
+  (un
+  cours par
+  Card :
+  titre
+  `md`
+  600 +
+  `ProgressBar`
+  (la
+  progression
+  du cours,
+  doc §3
+  « Suivi
+  des
+  compétences
+  et sujets
+  maîtrisés/
+  non
+  maîtrisés »)
+  + 2
+  `Badge`
+  (le niveau
+  de
+  maîtrise
+  global
+  (maîtrisé/
+  fragile/
+  oublié,
+  §3.6.11)
+  + le
+  semestre/
+  année en
+  `JetBrains
+  Mono`
+  `xs`) ;
+  détail =
+  un
+  `Breadcrumb`
+  §3.4
+  (`Cours ›
+  Chapitre ›
+  Notion`,
+  le
+  cours est
+  le
+  **niveau
+  1** de
+  l'arbre,
+  le
+  chapitre
+  le
+  niveau 2,
+  la notion
+  le niveau
+  3 —
+  l'arbre
+  sémantique
+  est
+  **hiérarchique**,
+  pas un
+  graphe,
+  doc §14
+  « véritable
+  arbre
+  sémantique
+  de
+  connaissances
+  … hiérarchie
+  lisible du
+  savoir, et
+  non un
+  réseau de
+  notes ou un
+  graphe de
+  type
+  « second
+  brain » »),
+  une liste
+  de
+  `RoutineStep`
+  (les
+  chapitres,
+  les notions
+  — chaque
+  chapitre =
+  une
+  « étape »
+  avec
+  checkbox +
+  `SkillStateBadge`
+  §3.6.11),
+  un
+  `KeyValueList`
+  (les
+  méta :
+  enseignant,
+  semestre,
+  nombre de
+  chapitres,
+  nombre de
+  notions
+  maîtrisées/
+  fragiles/
+  oubliées —
+  les 3
+  compteurs
+  en
+  `JetBrains
+  Mono`
+  `xs`,
+  couleurs
+  des 3
+  familles,
+  §3.6.11),
+  un
+  `Callout
+  info`
+  (le
+  prochain
+  chapitre
+  à
+  travailler,
+  doc §3
+  « Suivi
+  des
+  compétences
+  et sujets
+  maîtrisés/
+  non
+  maîtrisés »
+  : le
+  « prochain »
+  est
+  **calculé**
+  par le
+  module
+  Progress,
+  pas
+  choisi
+  par
+  l'utilisateur
+  — le
+  cours
+  **suit**
+  la
+  progression,
+  pas
+  l'ordre
+  du
+  programme,
+  doc §18.2
+  «
+  Progression
+  académique
+  : suivre
+  les
+  chapitres,
+  concepts,
+  définitions,
+  formules et
+  méthodes
+  selon leur
+  état :
+  découvert,
+  compris,
+  rappelable,
+  fragile,
+  maîtrisé,
+  oublié »).
+- **DS** :
+  `TopBar`,
+  `Card`
+  (flat),
+  `ProgressBar`,
+  `Badge`,
+  `Breadcrumb`
+  (§3.4),
+  `RoutineStep`
+  (les
+  chapitres/
+  notions),
+  `SkillStateBadge`
+  (§3.6.11),
+  `KeyValueList`
+  (§3.6.2),
+  `Callout`
+  (info, le
+  prochain
+  chapitre),
+  `EmptyState`
+  (pas de
+  cours
+  importés),
+  `Skeleton`.
+- **États** :
+  `loading`
+  = les
+  Cards/
+  sections
+  en
+  Skeleton
+  (le
+  store
+  local,
+  court) ;
+  `empty`
+  = pas de
+  cours =
+  un
+  `EmptyState`
+  : icône
+  « cours »,
+  « Aucun
+  cours
+  importé —
+  scannez
+  votre
+  premier
+  PDF » +
+  CTA
+  «
+  Scanner »
+  (le CTA
+  ouvre le
+  scanner
+  pack 04
+  §3.2.3)
+  ;
+  `error`
+  = un
+  cours non
+  syncé
+  = un
+  `Badge
+  danger`
+  sur la
+  Card
+  (le
+  cours
+  **reste**
+  visible,
+  AD-7) ;
+  `offline`
+  = les
+  cours
+  restent
+  **lisibles**
+  (lecture
+  locale,
+  AD-7),
+  le
+  **scanner**
+  reste
+  **possible**
+  si c'est
+  un
+  fichier
+  local
+  (l'OCR
+  est
+  serveur,
+  pack 01
+  — le
+  scan
+  local
+  **fonctionne**,
+  l'OCR
+  est
+  différé,
+  pack 02
+  §7
+  `offline`).
+- **Transitions** :
+  une
+  `Card`
+  →
+  `cours-detail`
+  (un
+  push, le
+  détail
+  est une
+  **route**
+  (le
+  Breadcrumb
+  `Cours ›
+  Chapitre ›
+  Notion`
+  est
+  **persistant**,
+  le cours
+  a sa
+  propre
+  TopBar +
+  sub-navigation,
+  pas une
+  BottomSheet
+  comme
+  `taches-detail`
+  §4.2.3 —
+  le cours
+  est
+  **riche**
+  (5
+  sections :
+  chapitres,
+  notions,
+  formules,
+  progression,
+  méta), pas
+  une entité
+  simple) ;
+  une
+  `RoutineStep`
+  (chapitre)
+  →
+  `arbre-semantique`
+  §4.30
+  (le
+  chapitre
+  **est**
+  une
+  branche de
+  l'arbre,
+  doc §14
+  : le
+  cours
+  **ouvre**
+  l'arbre
+  au
+  niveau du
+  chapitre,
+  pas un
+  écran
+  séparé —
+  le Breadcrumb
+  **monte**
+  dans
+  l'arbre,
+  pas
+  l'inverse) ;
+  un
+  `Callout
+  info`
+  (prochain
+  chapitre)
+  → un
+  `Button
+  ghost`
+  «
+  Travailler »
+  qui ouvre
+  l'`agent`
+  §4.40
+  (le
+  « travailler »
+  est une
+  capacité
+  du
+  kernel,
+  AD-12/F-09,
+  pas un
+  bouton
+  local —
+  l'app
+  **demande**
+  à
+  l'agent,
+  l'agent
+  **suggère**,
+  l'utilisateur
+  **décide**,
+  doc §5
+  « Orchestration
+  agentique
+  »).
+- **Notes
+  responsive
+  (Phase 2)**
+  : desktop
+  = les
+  Cards
+  passent
+  en
+  **grille
+  2
+  colonnes**
+  ; le
+  Breadcrumb
+  du
+  cours
+  s'élargit
+  (les 3
+  niveaux
+  s'affichent
+  en
+  **texte**
+  pas en
+  pastille,
+  le
+  desktop a
+  la
+  **largeur**,
+  §1 «
+  dense
+  progressivement
+  ») ; le
+  FAB
+  devient
+  un
+  `Button`
+  dans le
+  header
+  (le
+  scanner
+  est un
+  **mobile-only**
+  pattern,
+  doc
+  §23.2 —
+  desktop
+  = un
+  CTA
+  dans
+  la
+  `TopBar`).
+
+### 4.7 Module Learning — fiches, QCM, flashcards,
+mode coach & mirror (doc §3, §17)
+
+#### 4.7.1 `fiches-liste` + `fiches-detail`
+(doc §3, §17)
+- **Objectif**
+  (liste) :
+  **retrouver**
+  les fiches
+  de
+  révision
+  (les
+  fiches
+  **générées**
+  par
+  l'agent,
+  doc
+  §17
+  « Fiches
+  de révision
+  intelligentes
+  et
+  fidèles au
+  corpus »)
+  ; **Objectif**
+  (détail)
+  : **une**
+  fiche,
+  son
+  contenu
+  (les
+  définitions,
+  les
+  formules,
+  les
+  méthodes,
+  les
+  exemples
+  — doc
+  §17
+  « Extraction
+  ciblée :
+  définitions,
+  lois,
+  principes,
+  formules,
+  hypothèses,
+  unités,
+  méthodes,
+  étapes,
+  pièges,
+  exemples
+  et
+  relations
+  importantes
+  »).
+- **Zones** :
+  liste =
+  une
+  liste de
+  `Card
+  flat`
+  (une
+  fiche par
+  Card :
+  titre
+  `md`
+  600 +
+  type en
+  `Badge`
+  (les 7
+  types du
+  doc
+  §17
+  « Exemples
+  de
+  structures
+  :
+  fiche de
+  définitions,
+  fiche de
+  formules,
+  fiche
+  méthode,
+  fiche
+  comparative,
+  fiche
+  procédure,
+  fiche de
+  synthèse
+  théorique
+  et
+  fiche
+  d'exercices
+  » = 7
+  `Badge`,
+  le type
+  **guide**
+  la lecture,
+  pas
+  l'aperçu
+  — le
+  contenu
+  est **sous**
+  le type,
+  pas le
+  type
+  lui-même)
+  + un
+  `SkillStateBadge`
+  §3.6.11
+  (l'état
+  de la
+  notion
+  couverte
+  par la
+  fiche,
+  doc
+  §17
+  « Dét
