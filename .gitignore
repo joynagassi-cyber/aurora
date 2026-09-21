@@ -1,0 +1,16 @@
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Logs
+*.log
+
+# Archives volumineux (ne pas pousser le .docx dans GitHub)
+*.docx
+*.zip
+*.pdf
+
+# Binaire Python
+__pycache__/
+*.pyc
