@@ -35,6 +35,7 @@ knowledge (marked `NEEDS_VERIFICATION` where version/Play-policy dependent).
 | G-L2 | 49 theme×screen mockups not produced | Documentation | 05 §5.7 defines the mechanism + 1 example; the 49 remaining pairs are a wave-0 Dyad/UI deliverable. | Track as wave-0 deliverable (owner Dyad/UI team, ADR §22) |
 | G-L3 | Mirror Cognitive Mode (ADR §3) has no pack section | Documentation | ADR names it (student explains understanding; Aurora detects gaps/contradictions/errors) but no pack designs the flow, data, or agent behavior. | Add to Learning pack (wave 2 prep) — gap G-DOC-04 |
 | G-L4 | `ArtifactGenerated` UI consumer (OQ-05) | Architecture | Pack 02 declares a UI consumer; the AD-9 matrix lists Knowledge/Learning only. | Ratify in the AD-9 matrix at next spine ADR (additive) |
+| G-L5 | **Eisenhower matrix (ADR §2.3) absent from packs and the 05 screen inventory** | Documentation | No pack section designs it; no quadrant screen in 05 §4.3–4.5 (priority appears only as sort/filter + Home "Priorité principale"); `urgency` is derived from `due_at` (no stored column in 01 §4.1). | Prescriptive design produced in `docs/productivity/eisenhower.md` (quadrant view + domain `quadrantOf`/`prioritizationSuggestion` in `packages/domain` + agent-assisted loop). Ratify the quadrant-screen addition with Productivity + DS teams before wave-2 cut; if accepted, add the screen to the 05 inventory (additive) |
 
 ## Platform limitations (documented, never promised beyond them)
 

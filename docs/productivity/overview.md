@@ -20,10 +20,12 @@ Status: `DESIGNED_NOT_IMPLEMENTED` (wave 2). Authority: ADR §2, spine AD-7/AD-8
    `GoalUpdated`; Progress aggregates), agent memory (Agent). Never writes another
    module's tables (AD-2).
 4. **User flows** — capture anywhere (Inbox → triage → object); plan day (agenda +
-   time blocking from actual available time); execute (focus session + task execution +
-   Pomodoro timer); review (daily/weekly/monthly bilan + next actions). Entry points
-   per screen: 05 §4.3–4.5 (project/goal/habit screens, calendar & focus, reviews &
-   analytics).
+   time blocking from actual available time); prioritize (**Eisenhower matrix — see
+   [eisenhower.md](./eisenhower.md)**: quadrant view + agent-assisted, explainable
+   re-prioritization, ADR §2.3); execute (focus session + task execution + Pomodoro
+   timer); review (daily/weekly/monthly bilan + next actions, incl. weekly
+   "Révision des priorités"). Entry points per screen: 05 §4.3–4.5
+   (project/goal/habit screens, calendar & focus, reviews & analytics).
 5. **Architecture** — vertical slice in `apps/mobile/src/features/productivity` (6 layers,
    02 §4); use-cases emit partial `DomainCommand`s (e.g. `completeTask(id)`) →
    `LocalCommandRepository.apply('productivity', …)` (single-writer, AD-7/F-03); reads =
