@@ -1,4 +1,4 @@
-// fn-notifications — 01 §5.1: trigger on `events` (Event History) → OneSignal
+// fn-notifications — 01 §5.1: trigger on `events_history` (Event History) → OneSignal
 // (mobile Phase 1), respecting quiet-hours / coaching silence (ADR §13).
 
 import { ok, err } from "../_shared/envelope.ts";

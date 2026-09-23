@@ -32,7 +32,8 @@ CREATE TABLE document_chunks (
   document_id   uuid NOT NULL REFERENCES knowledge_documents (id) ON DELETE CASCADE,
   chunk_index   int NOT NULL,
   text          text NOT NULL,
-  embedding     vector,   -- pgvector (01 §4.3); NOT mirrored locally (03 §4.2)
+  -- 768-dim (decision: bge-base compatible; change provider + re-embed to migrate)
+  embedding     vector(768),
   UNIQUE (document_id, chunk_index)
 );
 -- FTS + GIN indexes (01 §4.3)
@@ -49,7 +50,8 @@ CREATE TABLE semantic_nodes (
   body         text,
   parent_id    uuid REFERENCES semantic_nodes (id) ON DELETE SET NULL,
   domain_path  text,
-  embedding    vector,
+  -- 768-dim (decision: bge-base compatible; change provider + re-embed to migrate)
+  embedding    vector(768),
   source_ref_ids jsonb NOT NULL DEFAULT '[]'::jsonb, -- CRDT OR-Set (03 §5.3)
   crdt_added   jsonb NOT NULL DEFAULT '{}'::jsonb,
   crdt_removed jsonb NOT NULL DEFAULT '{}'::jsonb,

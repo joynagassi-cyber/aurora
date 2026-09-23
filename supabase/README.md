@@ -25,7 +25,7 @@ supabase/
 | `0006_discovery` | `discovery_items`,`discovery_source_profiles`,`domain_timeline` | 01 §4.5 |
 | `0007_artifact` | `artifacts`(metadata+r2_key),`artifact_files` | 01 §4.6 |
 | `0008_agent_integrations` | `agent_runs`,`agent_actions`,`expert_skills`(server-only, AD-3),`integrations`,`automations`,`notification_preferences` | 01 §4.7 |
-| `0009_event_history` | global `events` (ULID, payload jsonb, `producer`, 2y retention, audit-only) | 01 §4.8 |
+| `0009_event_history` | global `events_history` (ULID, payload jsonb, `producer`, 2y retention, audit-only; renamed from `events` — collision with legacy table on the shared Supabase instance, 01 §4.8) | 01 §4.8 |
 | `0010_jobs` | `job_queue`(G-M4 full shape)+`job_logs`+INSERT trigger | 01 §5.2/§5.3, AD-8 |
 | `0011_registres` | `model_registry`(AD-5/AD-16b),`ai_usage`,`ai_health` | 01 §4.10 |
 | `0012_public_views` | `v_productivity_public`,`v_progress_public`,`v_knowledge_public` | 01 §3.4, 03 §5.4 |
@@ -73,6 +73,6 @@ wave 1 — documented in commit 2.
 - **R2 key convention** = `docs/cloudflare/r2.md §1` (the ONLY source of truth):
   `{env}/{user_id}/{module}/{yyyy}/{mm}/{dd}/{ULID}[_slug].{ext}`. 01 §5.4 is
   obsolete on key naming — do not follow it (documented in commit 3).
-- **ULID** ids (26-char, sortable) for `events`/`job_queue`/`source_local_mutation_id`.
+- **ULID** ids (26-char, sortable) for `events_history`/`job_queue`/`source_local_mutation_id`.
 - **CRDT OR-Set** columns (`crdt_added`/`crdt_removed` jsonb) on merge lists;
   SSoT encoding in `packages/domain` (TODO wave 1).
