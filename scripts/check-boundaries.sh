@@ -16,14 +16,13 @@
 
 set -u
 
-# Resoudre la racine du repo PAVANT le guard git (git ls-files exige
-# un repo ; cd echoue = message explicite).
-# dirname de $0 est le dossier ou le script est COPIE ; on remonte donc
-# d'un niveau pour la racine. En usage standard c'est scripts/ -> racine.
-# Si la racine resolue n'a pas de .git, on essaie le cwd.
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-if [ ! -d "$REPO_ROOT/.git" ] && [ ! -f "$REPO_ROOT/.git" ]; then
+# Resoudre la racine du repo: usage standard = sh scripts/check-boundaries.sh
+# depuis la racine du repo. Si PWD contient deja les scripts/, on reste;
+# sinon on remonte depuis $0 (cas ou le script est copie ailleurs).
+if [ -d "scripts" ] || [ -d "packages" ] || [ -d "supabase" ]; then
   REPO_ROOT="$(pwd)"
+else
+  REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 fi
 cd "$REPO_ROOT" || { echo "[check-boundaries] echec: cd \$REPO_ROOT." >&2; exit 1; }
 
