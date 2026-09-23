@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+/*
+ * Aurora design system base layer (AD-17, 05 §2.1).
+ *
+ * Default = Light neutral style. The <AuroraThemeProvider> overrides these
+ * variables at runtime from the active theme JSON (packages/ui/src/themes/).
+ * shadcn/ui components read `var(--aurora-*)` through the Tailwind theme
+ * (tailwind.config.ts) — never hardcoded values (docs/ui-libraries.md §4).
+ *
+ * Dark neutral values (05 §2.1.3, G-H2 resolved): canvas #0A0E1A.
+ */
+
+:root {
+  /* Light neutral style (05 §2.1.2 — frozen, G-H2: #F8FAFC) */
+  --aurora-bg-h: 210 40% 98%;
+  --aurora-bg-subtle-h: 210 25% 93%;
+  --aurora-surface-h: 0 0% 100%;
+  --aurora-surface-alt-h: 210 40% 98%;
+  --aurora-text-primary-h: 222 47% 11%;
+  --aurora-text-secondary-h: 215 25% 23%;
+  --aurora-text-muted-h: 215 20% 65%;
+  --aurora-text-disabled-h: 214 32% 84%;
+  --aurora-border-h: 214 32% 92%;
+  --aurora-border-strong-h: 215 25% 47%;
+  --aurora-success-h: 160 84% 39%;
+  --aurora-success-surface-h: 150 85% 95%;
+  --aurora-warning-h: 38 92% 50%;
+  --aurora-warning-surface-h: 43 100% 94%;
+  --aurora-danger-h: 0 84% 60%;
+  --aurora-danger-surface-h: 0 80% 95%;
+  --aurora-info-h: 199 89% 48%;
+  --aurora-skeleton-h: 214 32% 91%;
+  --aurora-node-mastered-h: 160 84% 39%;
+  --aurora-node-fragile-h: 38 92% 50%;
+  --aurora-node-forgotten-h: 0 84% 60%;
+
+  /* Aurora default expressive theme (05 §5.4 — bleu électrique #3678F6) */
+  --aurora-accent-primary-h: 221 91% 59%;
+  --aurora-accent-secondary-h: 184 74% 48%;
+  --aurora-accent-punctual-h: 249 92% 69%;
+  --aurora-accent-selected-surface-h: 208 100% 87%;
+  --aurora-accent-on-primary-h: 0 0% 100%;
+  --aurora-accent-focus-ring-h: 221 91% 59%;
+
+  --radius: 0.5rem;
+}
+
+.dark {
+  /* Dark neutral style (05 §2.1.3 — canvas #0A0E1A, surfaces #151C2C) */
+  --aurora-bg-h: 224 46% 6%;
+  --aurora-bg-subtle-h: 226 43% 10%;
+  --aurora-surface-h: 220 42% 14%;
+  --aurora-surface-alt-h: 218 34% 19%;
+  --aurora-text-primary-h: 210 40% 96%;
+  --aurora-text-secondary-h: 215 20% 65%;
+  --aurora-text-muted-h: 215 20% 40%;
+  --aurora-text-disabled-h: 215 25% 33%;
+  --aurora-border-h: 215 25% 29%;
+  --aurora-border-strong-h: 215 20% 40%;
+  --aurora-success-h: 160 84% 53%;
+  --aurora-success-surface-h: 161 84% 19%;
+  --aurora-warning-h: 43 94% 61%;
+  --aurora-warning-surface-h: 35 92% 28%;
+  --aurora-danger-h: 0 84% 69%;
+  --aurora-danger-surface-h: 0 65% 29%;
+  --aurora-info-h: 199 85% 62%;
+  --aurora-skeleton-h: 218 34% 19%;
+  --aurora-node-mastered-h: 160 84% 53%;
+  --aurora-node-fragile-h: 43 94% 61%;
+  --aurora-node-forgotten-h: 0 84% 69%;
+
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--aurora-border-h));
+  }
+  html {
+    font-family: "Inter", system-ui, Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background: hsl(var(--aurora-bg-h));
+    color: hsl(var(--aurora-text-primary-h));
+    /* Technical Calm (05 §1): no decorative noise. */
+    overflow-x: hidden;
+  }
+  code,
+  .tabular-nums {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  :root {
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+  .dark {
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+/* Focus Mode (05 §2.6 rule 3): attenuated animations, deferred toasts. */
+[data-focus-mode="true"] .animate-pulse-skeleton {
+  animation: none;
+  opacity: 0.8;
+}
+
+/* Reduced motion (05 §2.6 rule 2): everything → instant. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
