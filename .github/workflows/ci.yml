@@ -85,22 +85,22 @@ jobs:
       # (a suivre). Idempotents, exit 0 clean / exit 1 + ligne en echec.
       - name: "Boundary G1: vendor names hors adapters"
         if: ${{ hashFiles('scripts/check-boundaries.sh') != '' }}
-        run: bash scripts/check-boundaries.sh G1
+        run: sh scripts/check-boundaries.sh G1
         continue-on-error: ${{ !exists('packages/domain/package.json') }}
 
       - name: "Boundary G2: secrets in code"
         if: ${{ hashFiles('scripts/check-boundaries.sh') != '' }}
-        run: bash scripts/check-boundaries.sh G2
+        run: sh scripts/check-boundaries.sh G2
         continue-on-error: ${{ !exists('packages/domain/package.json') }}
 
       - name: "Boundary G3: hardcoded user"
         if: ${{ hashFiles('scripts/check-boundaries.sh') != '' }}
-        run: bash scripts/check-boundaries.sh G3
+        run: sh scripts/check-boundaries.sh G3
         continue-on-error: ${{ !exists('packages/domain/package.json') }}
 
       - name: "Boundary G4: DOM access in agent"
         if: ${{ hashFiles('scripts/check-boundaries.sh') != '' }}
-        run: bash scripts/check-boundaries.sh G4
+        run: sh scripts/check-boundaries.sh G4
         continue-on-error: ${{ !exists('packages/domain/package.json') }}
 
   # ------------------------------------------------------------------
@@ -168,19 +168,21 @@ jobs:
 
       - name: "RLS penetration (static, 01 S2.2 / S7)"
         if: ${{ hashFiles('scripts/check-rls.sh') != '' }}
-        run: bash scripts/check-rls.sh
-        continue-on-error: ${{ !exists('supabase/migrations/') }}
+        run: sh scripts/check-rls.sh
+        continue-on-error: ${{ !exists('supabase/migrations') }}
         # TODO(wave1): run against live Supabase — le gate static ne couvre
         # que le shape des policies ; le test live (user A ne lit pas user B)
         # sera branche sur la DB dev, avec les secrets GitHub (cf secrets-checklist).
 
       - name: "No cross-module JOIN (03 S5.4 / F-03)"
         if: ${{ hashFiles('scripts/check-view-joins.ts') != '' }}
-        run: pnpm tsx scripts/check-view-joins.ts
-        continue-on-error: ${{ !exists('packages/data/') }}
+        # Node 22.20+ : --experimental-strip-types (run TS natif, zero dep).
+        # Pas de pnpm tsx (tsx n'est pas encore une dep du workspace wave 0).
+        run: node --experimental-strip-types scripts/check-view-joins.ts
+        continue-on-error: ${{ !exists('packages/data') }}
 
       - name: Boundary greps (G1-G4)
-        run: bash scripts/check-boundaries.sh
+        run: sh scripts/check-boundaries.sh
         continue-on-error: ${{ !exists('packages/domain/package.json') }}
 
       - name: Gate summary
