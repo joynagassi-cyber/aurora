@@ -2896,16 +2896,17 @@ rejet (Codex review, AD-13 / doc §21.6).
        ┌─────┴─────┐          ┌─────────┴──────────┐
        │           │          │                    │
      Light        Dark     Aurora              Sakura...
-    #F8F9FA      #121212   (10 thèmes)        (10 thèmes)
+    #F8FAFC      #0A0E1A   (10 thèmes)        (10 thèmes)
                                │
                           LOCAL ADAPTATION
                                │
                           Module / Screen
 ```
 
-- **Niveau 1 — Style Neutre** : `Light` (canvas `#F8F9FA` off-white, surfaces `#FFFFFF` surélevées)
-  ou `Dark` (canvas `#121212`). Définit fond, texte, surfaces, bordures, ombres. Ce sont les
-  tokens §2.1.2 / §2.1.3, déjà figés.
+- **Niveau 1 — Style Neutre** : `Light` (canvas `#F8FAFC` `slate.50`, surfaces `#FFFFFF` surélevées)
+  ou `Dark` (canvas `#0A0E1A` quasi-noir bleuté, surfaces `#151C2C`/`#1B2438`). Définit fond,
+  texte, surfaces, bordures, ombres. Ce sont les tokens §2.1.2 / §2.1.3, déjà figés —
+  **aligné 2026-09-22 sur §2.1** (le draft §5 v2 portait `#F8F9FA`/`#121212` : valeurs obsolètes).
 - **Niveau 2 — Thème Expressif** : 1 des 10 thèmes vivants (§5.4) ou 1 des 3 presets
   spécialisés (§5.5). Définit accent, gradients, formes, motion, chart palette.
 - **Niveau 3 — Adaptation Locale** : un module ou une feature **déclare** des adaptations
@@ -3093,8 +3094,8 @@ s'applique **en plus** du thème, pas à la place.
 
 | Rôle | Valeur | Source |
 |---|---|---|
-| Canvas | `#121212` | style neutre Dark (§2.1.3) |
-| Surfaces | `#1E1E1E` / `#2A2A2A` / `#353535` | Dark |
+| Canvas | `#0A0E1A` | style neutre Dark (§2.1.3, `bg` — aligné 2026-09-22) |
+| Surfaces | `#151C2C` / `#1B2438` (+ overlay `rgba(21,28,44,0.88)`) | §2.1.3 (`surface`/`surface-alt`/`surface-overlay`) |
 | Accent primaire | `#6554C0` | Vesper (§5.4.2) |
 | Accent secondaire | `#8C5BD6` | Vesper |
 | Accent ponctuel | `#D05AA8` | Vesper |
@@ -3138,13 +3139,13 @@ Pour chaque thème × chaque écran (50 paires) :
 │   [Button "Terminer"]  (ghost)     │
 │                                     │
 │   Surfaces : #D9F5EF (cartes)      │
-│   Fond     : #F8F9FA (off-white)   │
+│   Fond     : #F8FAFC (off-white)   │
 └─────────────────────────────────────┘
 ```
 
 Note : Lagoon sur Focus Mode = **parfait**. Le turquoise profond `#007C91` du timer est
 apaisant, le gradient de la barre de progression (teal → turquoise) est fluide sans être
-bruyant. Le fond off-white `#F8F9FA` (style neutre Light, §5.2) ne se dispute pas à l'accent.
+bruyant. Le fond off-white `#F8FAFC` (style neutre Light, §5.2/§2.1.2) ne se dispute pas à l'accent.
 
 Verdict : **BIEN** — proposer comme **thème contextuel recommandé** pour Focus Mode
 (adaptation locale §5.2 niveau 3, pas un changement de thème).
@@ -3238,7 +3239,7 @@ et le §6 du pack d'origine (accessibilité, contrastes, dark mode).
 ### 6.1 Résumé des 3 niveaux (rappel §5.2)
 
 ```
-Style Neutre (Light #F8F9FA / Dark #121212)
+Style Neutre (Light #F8FAFC / Dark #0A0E1A — aligné 2026-09-22 sur §2.1.2/§2.1.3)
   × Thème Expressif (10 vivants + 3 presets)
     × Adaptation Locale (module/écran, déclarative)
 ```

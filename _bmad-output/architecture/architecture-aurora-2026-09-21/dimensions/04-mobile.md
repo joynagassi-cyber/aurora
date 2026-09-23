@@ -311,11 +311,12 @@ l'appareil lui-même). Il promet :
 4. **Historique** : chaque `FocusSession` (AD-15 : durée, tâches associées, interruptions,
    score de concentration) est persistée (Productivity module, pack 01 § 4.1) ; bilan de
    session (doc §2.8) = lecture locale + rendu G2 (**`DataVisualizationRenderer`**, pack 02
-   §5.3 / pack 05 : le graphique de bilan Focus est un spec `ChartSpec` consommé par
-   `apps/mobile` via `packages/ui` — l'écran de bilan Focus **doit** être dans l'inventaire
-   d'écrans du pack 05 avec le G2 contractuel ; si le pack 02 ne définit pas cette vue G2,
-   les équipes Productivity + Design produisent des UIs de bilan incompatibles — le pack
-   05 porte le contrat, pas le pack 02).
+   §5.3). **Contrat porteur (correction H1, figé 2026-09-22)** : le shape `FocusSessionBilan`
+   est le SSoT de `packages/domain` (owner Productivity, `01-backend` § 4.1) ; le `ChartSpec`
+   de bilan = le spec dédié `focusBilan` + la composition `StatTile`/`Sparkline` définis par
+   `05-design-system` § 3.6.9 (le pack 05 porte le contrat visuel) ; l'écran de bilan =
+   05 §4.4.2 ; la signature `DataVisualizationRenderer` (pack 02 §5.3) est **inchangée**
+   (le bilan en est une instanciation).
 
 **Le port `FocusController` (contrat interne, ADR §8)** : son implémentation mobile V1 =
 `packages/platform` (§ 3.2, `reduceForFocus()` + timer + DND recommendation). La
@@ -344,6 +345,39 @@ export interface FocusController {
 **Règle** : si `isBlockingAvailable()` = `false`, l'UI **n'affiche jamais** un CTA « bloquer
 les apps » (ça serait promettre un blocage non validé, violation doc §2.8). L'UI affiche la
 capacité **réelle** : réduction + timer + (optionnel) Screen Pinning recommandé.
+
+### 4.3 (candidat v1.8 — à ratifier, 2026-09-22) Hypothèse de déploiement privé : Device Owner / DPC
+
+> **Rappel de projet (additif, Consistency Conventions) : ce sous-chapitre ne remplace PAS §4.1**
+> (validé sous l'hypothèse « consumer app distribuée »). L'hypothèse produit a changé
+> (décision 2026-09-22) : Aurora cible **un appareil Android dédié, APK sideloadé (hors
+> Play Store), provisionné Device Owner** par l'utilisatrice. Quand l'hypothèse est ratifiée
+> (ADR v1.8, OQ-17), §4.3 = mode **nominal** et §4.1 = **mode dégradé** (fallback si le
+> device n'est pas DPC).
+
+- **Mécanisme (documentation Android officielle, à revalider sur le téléphone cible — OQ-17)** :
+  en tant que Device Policy Controller, Aurora utilise `DevicePolicyManager.setPackagesSuspended`
+  (API 29+) sur les apps choisies par l'utilisatrice : plus d'activités lançables,
+  notifications masquées, disparition des récents ; **Internet reste actif** (restriction par
+  package, pas coupure réseau). Fin de session / crash / reboot : `setPackagesSuspended(…,
+  false)` (restauration via session persistée + receiver `BOOT_COMPLETED`).
+- **Limites documentées** : certains packages ne sont **pas** suspendables (system packages,
+  launcher actif, dialer par défaut, installer/uninstaller, permission controller — liste à
+  valider sur la version cible) ; le package Aurora (DPC) ne peut **JAMAIS** être suspendu ;
+  une **factory reset efface le device owner** (re-provisioning requis — procédure documentée).
+- **Provisioning (procédure AOSP test)** : factory reset → aucun compte utilisateur →
+  `adb shell dpm set-device-owner com.aurora/.AuroraDeviceAdminReceiver` (receiver propriétaire
+  dans un **module natif custom de `packages/platform`**, owner Foundation — **hors whitelist
+  Capacitor de §3.1** = PR Foundation, AD-16c).
+- **Conséquences sur §4.1/§4.2** : `isBlockingAvailable()` devient une **détection de profil de
+  déploiement** (true si DPC opérationnel + pré-check de suspendabilité OK, false sinon) — la
+  règle du CTA (§4.2) est inchangée. **Appels** : `CallScreeningService` (rôle utilisateur,
+  réponse ≤ 5 s) = **option expérimental à activer explicitement**, jamais promis en V1
+  nominale (appels = ring as usual par défaut).
+- **Statut** : candidat ADR v1.8 à ratifier (Foundation + Productivity) ; **vérification OQ-17**
+  (procédure de provisioning + API level + matrice de suspendabilité sur le téléphone cible)
+  AVANT le figage de l'implémentation Focus. Spécification complète = `docs/focus-mode/spec.md`
+  (§0 décision, §9 procédure + checklist de vérification).
 
 ---
 

@@ -62,3 +62,11 @@ Status: `DESIGNED_NOT_IMPLEMENTED` (wave 2). Authority: ADR §16, `01-backend` �
     (consumers), Agent (generation requests).
 23. **Future evolution** — more preview formats; collaborative artifacts (Yjs,
     deferred); desktop preview integration Phase 2.
+
+## 24. Versioning (mission §47)
+
+R2 **object versioning: NOT used in V1** (decision documented in
+`docs/cloudflare/r2.md` §4; re-evaluate if artifact revision history is required —
+NEEDS_DECISION, additive). Artifact *content* revisions = new artifact rows (new
+ULID, `supersedes` metadata link in wave 1) — provenance (source task/context,
+ADR §16) is preserved on every row.

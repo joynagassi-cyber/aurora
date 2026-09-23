@@ -113,3 +113,134 @@ Foundation + Agent (recorded in `01-backend` §8.3, wave-3 option). Not in wave 
 Phase 2 desktop reuses the same kernel (platform-agnostic, ADR §23). Event Sourcing,
 multi-tenant agent fleets and Yjs-assisted memory are explicitly out of V1 (spine
 § Deferred).
+
+## 12. Component architecture (master mission §6 — the 15 components)
+
+All components run **server-side** (AD-12/F-09, 01 §5.6); the device only sees
+`AgentRunState`. Fixed loop: Intent → Context → Plan → Retrieve → Tools → Verify →
+Action → Result → Memory.
+
+| Component | Responsibility | Normative constraint |
+|---|---|---|
+| **Intent Engine** | classify the user goal into a typed intent + task profile (never prompt keywords, ADR v1.7 §6); disambiguation + missing-info handling (§13) | typed `TaskProfile` (complexity, reasoning, tools, vision, context size, latency, cost, criticality, verification need, data sensitivity) |
+| **Context Builder** | assemble the 9 context forms (Intent, Personal, Productivity, Learning, Discovery, Semantic, Expert Skills, Tool, Permission — ADR §16) from module **public contracts** | projections of AD-15 types, never re-declarations (AD-15); server-side only (01 §5.6) |
+| **Planner** | build a capability plan (steps + tool sequence + confirmation points); dynamic replan on change (ADR §13 Coach) | plan = data, re-runnable; "recalcul du planning restant sans détruire l'historique" (ADR §13) |
+| **Capability Registry** | discover module capabilities (§14) | the kernel **discovers**, never hardcodes a growing condition list (mission §8) |
+| **Tool Registry** | tool definitions (input/output schemas, scopes) per capability | tools = typed functions with declared read/write scopes |
+| **Tool Resolver** | pick the tool for a plan step given context + availability (provider present? feature enabled? offline class?) | graceful degradation when absent (AD-1 last paragraph) |
+| **Permission Engine** | read/write/destructive classification per action (Permission Context form, ADR §16) | destructive/irreversible = confirmation mandatory (ADR §5) |
+| **Confirmation Engine** | surfaces confirmations to the user (UI `AgentRunState`), blocks until answered; timeout = safe-cancel | confirmations are part of the plan, not an afterthought |
+| **Model Router** | select model/provider via `AIModelRouter` + `AIModelPolicy` + `AIBudgetManager` (ADR v1.7 §9) → AI Gateway | no concrete model name in domain code (AD-1, ADR v1.7 §1); typed TaskProfile only |
+| **Execution Engine** | run the plan step-by-step (tool calls, jobs for heavy steps) | heavy steps = persisted jobs (AD-8); jobs carry idempotency keys |
+| **Verification Engine** | verify results: KB/source check + `ScientificEngine` for critical tasks (as a **server job**, 01 §5.6); optional second "judge" model only when justified (ADR v1.7 §14) | corpus fidelity (AD-11); verification failures mark `expectedQuality:'degraded'` |
+| **Result Normalizer** | every model answer → `AIResponseEnvelope` (provider/model/attempt/reason/expectedQuality/fallbackUsed/traceId, 01 §3.1) | AD-5 traceability — no untraced fallback |
+| **Memory** | `expert_skills` (server-only table, 03 §4.2): error loop / success loop / guardrails (ADR §14.2–14.5) | provenance + confidence + obsolescence conditions; user can correct/disable/delete |
+| **Observability** | run traces (job_logs, Sentry, PostHog), `AIUsageTracker` feeds, per-kind SLOs (AD-16d) | duty owner = Foundation until a module owns traffic |
+| **Error Recovery** | bounded retry (transient) vs fallback (unavailability/incompatibility/limit); budget stop-before-overrun (`budgetSnapshot`); graceful partial results | a 429 is never bypassed by key rotation (AD-5); recovery = resume from persisted step state |
+
+## 13. Natural language → action (master mission §7)
+
+Pipeline: `NL utterance → Intent Engine (typed profile + disambiguation) → Context
+Builder → Planner (capability plan + confirmation points) → Tool Resolver →
+Execution (commands to owning modules / jobs / gateway) → Verification → Result
+Normalizer → Memory`. Disambiguation = follow-up when the intent is ambiguous
+(never guess destructive parameters); missing information = explicit ask with
+inferred defaults **flagged as inferred**; rollback = the plan records, per step,
+its compensating action (e.g. "created task X" → cancel/delete X on abort) —
+applied on user abort or verification failure.
+
+**Mandatory example (mission §7):**
+
+> "Organise ma journée, mets deux heures de géotechnique ce matin, démarre une
+> session Focus et bloque TikTok et WhatsApp."
+
+```
+Intent: composite (plan_day + schedule + focus_start + block_apps)
+  ↓ Context retrieval: today's calendar + tasks + available time (Productivity
+    Context), exam period? (Personal Context), focus blocklist history
+  ↓ Task analysis: geotechnique course identified (Learning Context → subject),
+    2 h estimate checked against morning availability (time blocking)
+  ↓ Planning: create time block 09:00-11:00 geotechnique (calendar.schedule),
+    reorder morning tasks (planning.daily), focus session (2 h, blocklist
+    [TikTok, WhatsApp])
+  ↓ Focus configuration + start: focus.start(taskId?, 120 min, blocklist) —
+    v1.8 DPC: precheckBlocklist (suspendability matrix, focus spec §4); consumer
+    profile: restriction-only notice
+  ↓ selected app restriction: setPackagesSuspended([tiktok, whatsapp], true)
+    (DPC nominal) / reduceForFocus fallback
+  ↓ final confirmation/result: AgentRunState shows the plan summary + the focus
+    start confirmation (focus start = important action → confirm, ADR §5) →
+    execution + "session démarrée, 2h, TikTok & WhatsApp bloqués (profil DPC)"
+```
+
+Every step maps to a registered capability (`planning.daily`, `calendar.schedule`,
+`focus.start`, `focus.block` — feature-agentability-matrix.md); the agent never
+improvises an unregistered action.
+
+## 14. Capability Registry (master mission §8 — discovery, not hardcoding)
+
+```ts
+interface AgentCapability {
+  id: string;                     // "task.create", "focus.start", "course.search" …
+  name: string;
+  description: string;
+  inputSchema: unknown;           // typed input (validated before execution)
+  outputSchema: unknown;          // typed output
+  readScopes: string[];          // e.g. ["productivity:read", "learning:read"]
+  writeScopes: string[];         // e.g. ["productivity:write"]
+  permissions: string[];         // native/platform permissions the feature needs (focus: POST_NOTIFICATIONS / DPC)
+  dependencies: string[];        // capability ids or provider/feature ids required
+  requiresConfirmation: boolean; // important/irreversible actions (ADR §5)
+  destructive: boolean;          // destructive class (Permission Engine)
+  supportsNaturalLanguage: boolean;
+  platform?: "shared" | "android" | "desktop";
+  offlineClass?: "offline-capable" | "online-required" | "hybrid";  // planner must not
+                                                                   // plan online-only steps into offline windows
+}
+```
+
+Registration: each module declares its capabilities in its **Contract Pack**
+(AD-13) — types in `packages/domain` (AD-15 SSoT), runtime registry owned by
+`packages/agent` (server). The kernel's Capability/Tool Registries are built from
+these declarations (+ availability checks: provider present per `AIHealthRegistry`,
+feature enabled per the feature registry, platform capability per the deployment
+profile — e.g. `focus.block` = android + DPC-provisioned, OQ-17). A disabled
+feature removes its capabilities from the discoverable surface (feature-registry.md
+§2 chain) — the agent **adapts**, it does not know users by name.
+
+## 15. Agent ↔ Frontend surface (mission §61–§63 — the agent drives the UI through commands, never React)
+
+The kernel **never touches React components** (mission §77). Its effects on the
+UI are a typed contract (SSoT `packages/domain`, consumed by `apps/mobile`
+shell + `packages/agent`):
+
+```
+Agent Action (server)
+  ↓ AgentActionEnvelope { actionId, kind, payload, confirmationRequired?, deepLink? }
+Application Command Bus (apps/mobile shell — the single bus, 02 §4)
+  ↓ NavigationIntent { route, params, query, focusElement? }  →  Frontend Router (02 §6)
+  ↓ UiStateCommand { select, filter, expandNode, showArtifact, startFocus… } → Zustand ui-state (02 §3)
+  ↓ FeatureCommand (same use-cases as UI buttons — no duplicated logic, mission §17)
+User-visible result (a screen opened / entity selected / artifact shown)
+```
+
+- **Allowed agent UI actions** (mission §61/§62): create (via use-cases),
+  navigate/open (deep link via the bus), filter/select/expand-node (ui-state
+  commands), show generated artifact (`/artifacts/:id`), start focus
+  (`/focus` + `focus.start`), schedule (calendar view + time block), display
+  result (`AgentRunState` inline + optional target screen), request
+  confirmation (blocking UI surface, kernel §12 Confirmation Engine).
+- **Not allowed**: raw DOM/React manipulation (`document.querySelector` is
+  forbidden by the AD-10 boundary culture — the router/bus is the only door),
+  bypassing navigation rules (02 §6: details open over the current tab; a
+  disabled feature is never navigable), or authorization (Permission Engine
+  decisions are final; the UI only renders them).
+- **Command bus = single source of UI actions**: UI buttons, command palette,
+  agent actions, deep links and automations all resolve to the **same
+  application commands** (mission §17, feature-registry §4) — business logic is
+  written once (02 §4 use-cases), never duplicated between agent and UI
+  (mission §77).
+- **Agent ↔ UI state** (mission §62): `UiStateCommand` cases = open page ·
+  select entity · filter · expand node · show generated artifact · start focus —
+  consumed by the shell store; each command is idempotent and safe to drop on
+  app-kill (the deep link re-creates it, context-preserving navigation).
