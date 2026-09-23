@@ -59,13 +59,25 @@ export interface SyncEngineOptions {
  * no network, zero timers — so it is fully unit-testable (03 S7).
  */
 export class SyncEngine {
+  private readonly store: LocalStore;
+  private readonly queue: UpsyncQueue;
+  private readonly transport: SyncTransport;
+  private readonly status: SyncStatusMachine;
+  private readonly options: SyncEngineOptions;
+
   constructor(
-    private readonly store: LocalStore,
-    private readonly queue: UpsyncQueue,
-    private readonly transport: SyncTransport,
-    private readonly status: SyncStatusMachine,
-    private readonly options: SyncEngineOptions = {},
-  ) {}
+    store: LocalStore,
+    queue: UpsyncQueue,
+    transport: SyncTransport,
+    status: SyncStatusMachine,
+    options: SyncEngineOptions = {},
+  ) {
+    this.store = store;
+    this.queue = queue;
+    this.transport = transport;
+    this.status = status;
+    this.options = options;
+  }
 
   /**
    * One upsync tick (03 S5.1.4 / S5.5.2): drain the queue FIFO in bounded

@@ -100,10 +100,21 @@ export class SyncStatusMachine {
     }
   }
 
-  /** A local mutation was applied + queued (03 S5.1.1 immediate apply). */
+  /** Reconcile the pending counter with the engine's authoritative queue
+   *  WITHOUT a state transition (used between upsync batches, 03 S5.1.4). */
+  reconcilePending(count: number): void {
+    this.pendingUpstream = count;
+  }
+
+  /**
+   * A local mutation was applied + queued (03 S5.1.1 immediate apply) and
+   * acknowledged at the store level: increment pending, and if offline
+   * stay in `pending`; if online transition to `syncing` (an upsync tick
+   * is due, 03 S5.5.2).
+   */
   mutationQueued(): void {
     this.pendingUpstream += 1;
-    const target: SyncState = !this.online ? 'pending' : 'syncing';
+    const target: SyncState = this.online ? 'syncing' : 'pending';
     this.set({ state: target, pendingUpstream: this.pendingUpstream });
   }
 
@@ -149,11 +160,5 @@ export class SyncStatusMachine {
   /** Sync engine backoff re-attempt started (degraded -> syncing). */
   retryStarted(): void {
     this.set({ state: 'syncing', pendingUpstream: this.pendingUpstream });
-  }
-
-  /** Reconcile the pending counter with the engine's authoritative queue
-   *  WITHOUT a state transition (used between upsync batches, 03 S5.1.4). */
-  reconcilePending(count: number): void {
-    this.pendingUpstream = count;
   }
 }

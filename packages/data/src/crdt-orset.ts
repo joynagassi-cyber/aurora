@@ -129,31 +129,43 @@ export function mergeOrSets(a: OrSet, b: OrSet): OrSetMerge & { state: OrSetStat
 
   // Union of observed-removes. A domain OrSet carries no remove log, so the
   // engine tracks it; when only the add-side is known, a remove is implicit
-  // for an element absent on one side AND present on the other with an older
-  // ts (that side last saw it at `lastSeenTs`). This is the conservative
-  // "observed at the sync marker" projection (03 S5.2).
+  // for an element that is OBSERVED on both sides (same token `v|ts|c` in
+  // both views) AND ABSENT from one side's live projection — that side
+  // performed an explicit removal it must not forget. A purely concurrent
+  // add (seen only by its origin, not observed by the other side) is
+  // NEVER implicit-removed: that is the OR-Set guarantee (03 S5.3,
+  // "pas de resurrection" but also "pas de suppression d'un ajout
+  // concurrent non observe").
   const removes: OrSetRemove[] = [];
   const aKeys = new Set(a.elements.map(addKey));
   const bKeys = new Set(b.elements.map(addKey));
   for (const el of a.elements) {
     if (!bKeys.has(addKey(el))) {
-      // b removed `el` (b's view last seen el at el.ts or its marker)
-      removes.push({
-        v: el.v,
-        ts: b.lastSeenTs ?? el.ts,
-        c: b.userId,
-        observedTs: [el.ts],
-      });
+      // el is not in b's observed view: b never saw this add-token, so
+      // it cannot be the source of an observed-remove. If b's view is
+      // newer (lastSeenTs) AND the value is absent from b's live set,
+      // b explicitly removed it after last observing it — synthesize the
+      // observed-remove so the merge is lossless.
+      if (b.lastSeenTs !== undefined && b.lastSeenTs >= el.ts) {
+        removes.push({
+          v: el.v,
+          ts: b.lastSeenTs,
+          c: b.userId,
+          observedTs: [el.ts],
+        });
+      }
     }
   }
   for (const el of b.elements) {
     if (!aKeys.has(addKey(el))) {
-      removes.push({
-        v: el.v,
-        ts: a.lastSeenTs ?? el.ts,
-        c: a.userId,
-        observedTs: [el.ts],
-      });
+      if (a.lastSeenTs !== undefined && a.lastSeenTs >= el.ts) {
+        removes.push({
+          v: el.v,
+          ts: a.lastSeenTs,
+          c: a.userId,
+          observedTs: [el.ts],
+        });
+      }
     }
   }
 

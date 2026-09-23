@@ -99,3 +99,32 @@ export {
   resolveServerWins,
   CRDT_LIST_FIELDS,
 } from './server-wins';
+
+// ULID (03 S5.5.6 — localMutationId)
+export {
+  UlidGenerator,
+  encodeUlid,
+  ulidTimestamp,
+} from './ulid';
+export type { UlidOptions } from './ulid';
+
+// local notifications (04 S3.4)
+export type {
+  LocalNotificationPayload,
+  ScheduledNotification,
+  LocalNotificationTransport,
+} from './notifications';
+export {
+  LocalNotificationAdapter,
+  InMemoryNotificationTransport,
+} from './notifications';
+
+// React Query bridge (03 S5.8 — owner of the RQ ↔ LocalQueryRepository
+// contract; no vendor import, the hook lives in packages/ui)
+export {
+  localQueryKey,
+  entityQueryKey,
+  localQueryClient,
+  localInvalidationKey,
+} from './react-query-bridge';
+export type { LocalQueryClient } from './react-query-bridge';

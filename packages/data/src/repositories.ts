@@ -53,10 +53,12 @@ export interface LocalCommandRepository {
 export class SqliteQueryRepository<T extends LocalRow = LocalRow>
   implements LocalQueryRepository<T>
 {
-  constructor(
-    private readonly store: LocalStore,
-    private readonly entity: string,
-  ) {}
+  private readonly store: LocalStore;
+  private readonly entity: string;
+  constructor(store: LocalStore, entity: string) {
+    this.store = store;
+    this.entity = entity;
+  }
 
   async getById(id: string): Promise<T | undefined> {
     const row = this.store.row(this.entity, id);
@@ -101,10 +103,12 @@ export class SqliteQueryRepository<T extends LocalRow = LocalRow>
  * aimed at the wrong owner module is rejected.
  */
 export class SqliteCommandRepository implements LocalCommandRepository {
-  constructor(
-    private readonly store: LocalStore,
-    private readonly queue: UpsyncQueue,
-  ) {}
+  private readonly store: LocalStore;
+  private readonly queue: UpsyncQueue;
+  constructor(store: LocalStore, queue: UpsyncQueue) {
+    this.store = store;
+    this.queue = queue;
+  }
 
   async apply(
     ownerModule: string,
@@ -148,7 +152,8 @@ export class SqliteCommandRepository implements LocalCommandRepository {
       return;
     }
 
-    const patch = (c as { patch?: Record<string, unknown> }).patch ?? {};
+    const rawPatch = (c as { patch?: Record<string, unknown> }).patch ?? {};
+    const patch = this.normalizePatch(rawPatch);
     const existing = this.store.row(entity, c.id);
 
     if (existing) {
@@ -172,6 +177,19 @@ export class SqliteCommandRepository implements LocalCommandRepository {
     }
 
     this.queue.enqueue(entity, c.id, ownerModule, patch, false, Date.now());
+  }
+
+  /**
+   * Normalize a camelCase command field (e.g. `dueAt`, `r2Key`) to the
+   * mirror row's snake_case column (e.g. `due_at`, `r2_key`) so the local
+   * store and the SQLite mirror stay column-aligned (03 S4.1).
+   */
+  private normalizePatch(patch: Record<string, unknown>): Record<string, unknown> {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(patch)) {
+      out[k.replace(/([A-Z])/g, '_$1').toLowerCase()] = v;
+    }
+    return out;
   }
 }
 

@@ -211,9 +211,45 @@ export const OWNER_MODULE_BY_ENTITY: Readonly<Record<string, string>> = {
 /** Entity table name a command op targets (lower snake_case mirror). */
 export function commandEntity(op: string): string | undefined {
   // op = "<entity>.<verb>" where entity is the domain camelCase singular
+  // ("task.update", "focusSession.start", …). The mirror tables are
+  // snake_case PLURAL (03 S4.1/AD-15): map the singular domain name to its
+  // mirror table, including the Focus-session special cases.
   const entity = op.split('.')[0];
   if (!entity) return undefined;
-  // map camelCase domain name to the snake_case mirror table when needed
-  const snake = entity.replace(/([A-Z])/g, '_$1').toLowerCase();
-  return snake;
+  const lower = entity.toLowerCase();
+  switch (lower) {
+    case 'task': return 'tasks';
+    case 'project': return 'projects';
+    case 'goal': return 'goals';
+    case 'milestone': return 'milestones';
+    case 'habit': return 'habits';
+    case 'routine': return 'routines';
+    case 'focussession': return 'focus_sessions';
+    case 'decision': return 'decisions';
+    case 'calendarevent': return 'calendar_events';
+    case 'note': return 'notes';
+    case 'resource': return 'resources';
+    case 'semanticnode': return 'semantic_nodes';
+    case 'semanticedge': return 'semantic_edges';
+    case 'semanticbridge': return 'semantic_bridges';
+    case 'nodestate': return 'node_state';
+    case 'sourceref': return 'source_refs';
+    case 'course': return 'courses';
+    case 'subject': return 'subjects';
+    case 'skill': return 'skills';
+    case 'learningsession': return 'learning_sessions';
+    case 'review': return 'reviews';
+    case 'skillstate': return 'skill_states';
+    case 'progresssnapshot': return 'progress_snapshots';
+    case 'discoveryitem': return 'discovery_items';
+    case 'gap': return 'gaps';
+    case 'artifact': return 'artifacts';
+    case 'automation': return 'automations';
+    case 'usercontext': return 'user_context';
+    default: {
+      // fall back: snake_case + naive pluralization for additive entities
+      const snake = lower.replace(/([A-Z])/g, '_$1').toLowerCase();
+      return snake.endsWith('s') ? snake : `${snake}s`;
+    }
+  }
 }
