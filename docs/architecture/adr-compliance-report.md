@@ -48,7 +48,40 @@ flagged, not silently resolved. Statuses per mission §2.
 | C-4 | Coherence review H1: `FocusSessionBilan` contract is non-carrier across 04↔05 (no type, no ChartSpec, no named DS component). | AD-13/AD-15 | Define `FocusSessionBilan` in `packages/domain` (Productivity) + `ChartSpec` in 05 §3.6.9 + named DS component before wave-1 UI cut (review recommendation, unchanged) |
 | C-5 | Mission §20 proposes a richer `FocusController` (pause/resume/restore/status) than pack 04 §4.2's minimal contract (start/end/reduceNotifications/isBlockingAvailable). | Pack 04 §4.2 (frozen in pack) | Additive contract extension (additive = normal per Consistency Conventions): record as **proposed**, ratify by Productivity + Foundation before wave 2. See [focus-mode/spec.md](../focus-mode/spec.md) §5 |
 
+## Wave-0 correction pass (2026-09-22) — pre-development fixes applied
+
+The four areas identified as "corrections before launching coding agents" were resolved
+**inside the bmad packs** (additive/editorial, no ADR needed):
+
+| Area | Pack change | Status |
+|---|---|---|
+| Design System canvas conflict (G-H2/C-1) | 05 §5.2/§5.6/§5.7.1/§6.1 values aligned to frozen §2.1 (`#F8FAFC`/`#0A0E1A`); SPEC OQ-16 wording corrected | RESOLVED |
+| `FocusSessionBilan` contract (G-H1) | SSoT shape pinned (`01-backend` §4.1, owner Productivity; 05 §3.6.9 "correction H1" with `focusBilan` ChartSpec); 04 §4.1 pt4 + 02 §5.3 now point to the SSoT, signatures unchanged | RESOLVED |
+| light/dark binary locks (G-H3) | Verified already applied in packs: 02 §3.3/§5.2/§8 (`AuroraTheme` + `themeStyle`), 01 §2.1 (`user_context.theme`), 04 O3b | VERIFIED — ratify at G1 |
+| Mirror Cognitive Mode (G-L3) | Prescriptive section added in `01-backend` §4.2 (flow, data, AD-11 fidelity, F-07 evidence path, tests) | RESOLVED (wave-2 screen = 05 additive) |
+| Preset names (G-M6/C-2) | SPEC §05 lists Slate/Nocturne/High Contrast per 05 §5.5 | RESOLVED |
+
+**Residual before wave 0 (team ratifications, not doc errors):** OQ-01 (pnpm layout),
+OQ-02 (team column of AD-15), OQ-03 (env values), OQ-04 (`FOREGROUND_SERVICE`), OQ-06
+(Screen Pinning), OQ-08 (E2E tooling) + medium items G-M1 (AnimationController wrapper),
+G-M2 (`killed` state), G-M3 (`AppError` SSoT → `packages/domain`), G-M4 (`job_queue` full
+shape SSoT), G-M5 (`ChartSpec` SSoT = `packages/ui`), G-L2 (49 theme×screen mockups).
+
 ## Open items that gate compliance (from SPEC OQ list)
+
+## Focus deployment model — v1.8 candidate (2026-09-22, conflict C-6)
+
+The product hypothesis for Focus Mode changed: **private single-device deployment,
+sideloaded APK, device provisioned as Device Owner (DPC)**. Recorded as **candidate
+ADR v1.8 (additive)** — the frozen spine/ADR v1.7 and 04 §4.1 (consumer-hypothesis
+verdict) are **not modified**; 04 gained an additive §4.3 candidate section; the full
+specification + provisioning procedure + verification checklist live in
+`docs/focus-mode/spec.md` §0/§9. **OQ-17 (new, SPEC)** gates the freeze of the Focus
+implementation: DPC provisioning on the target phone, `setPackagesSuspended` API
+level (>= 29), per-package suspendability matrix, reboot persistence + boot receiver.
+Calls remain an **experimental opt-in** (`CallScreeningService`, user role, ~5 s
+response window) — never a V1 promise. If the target phone cannot be DPC-provisioned,
+the consumer fallback (04 §4.1 restriction mode) applies with its original verdicts.
 
 OQ-01 pnpm layout ratification (wave-0 blocker) · OQ-02 team column of the AD-15 mapping
 (reduced: entity→module owner→local table already frozen in `03-sync` §4.2) · OQ-03 environment

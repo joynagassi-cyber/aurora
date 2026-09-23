@@ -104,3 +104,18 @@ buildable after every wave.
 | Testing | [../testing/matrix.md](../testing/matrix.md) |
 | Deployment & environments | [../deployment/overview.md](../deployment/overview.md) |
 | Troubleshooting & recovery | [../troubleshooting/overview.md](../troubleshooting/overview.md) |
+
+## 8. Master-mission documentation additions (2026-09-22)
+
+System view: [system-interaction-map](./system-interaction-map.md) ·
+[cross-feature-interactions](./cross-feature-interactions.md) ·
+[../workflows/composite-workflows.md](../workflows/composite-workflows.md) (23
+workflows) · [../features/master-feature-catalog.md](../features/master-feature-catalog.md) ·
+[../agent/feature-agentability-matrix.md](../agent/feature-agentability-matrix.md) ·
+[../mobile/navigation-and-page-composition.md](../mobile/navigation-and-page-composition.md) +
+[context-preserving-navigation](../mobile/context-preserving-navigation.md) ·
+[../frontend/feature-registry.md](../frontend/feature-registry.md) (G-M7) +
+[page-contracts](../frontend/page-contracts.md) · [../backend/supabase.md](../backend/supabase.md) ·
+[../cloudflare/r2.md](../cloudflare/r2.md) · [../cloudflare/workers.md](../cloudflare/workers.md) ·
+[../ai/gateway.md](../ai/gateway.md) + per-provider pages in `../ai/providers/` ·
+agent kernel components/NL→action/capability registry: [../agent/kernel.md](../agent/kernel.md) §12–14.

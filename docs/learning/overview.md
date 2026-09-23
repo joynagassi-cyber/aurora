@@ -59,8 +59,11 @@ Status: `DESIGNED_NOT_IMPLEMENTED` (wave 2). Authority: ADR §3/§17, `01-backen
 20. **Tests** — FSRS determinism (server job tests, 01 §7 family), fidelity check
     (corpus-dominant assertions, ADR §17), single-writer (no direct `progress_evidences`
     writes — F-07 test), E2E import→review scenario (wave 4).
-21. **Known limitations** — Mirror Cognitive Mode undesigned (G-L3); local STT not in
-    V1 (spine Deferred); long-corpus OCR quality provider-dependent.
+21. **Known limitations** — local STT not in V1 (spine Deferred); long-corpus OCR
+    quality provider-dependent. Mirror Cognitive Mode: **designed 2026-09-22 in
+    `01-backend` §4.2 (G-L3 closed)** — server-side `mirror-analysis` job, typed
+    detections with AD-11 provenance, F-07 evidence path; dedicated screen to be
+    ratified by pack 05 in wave 2.
 22. **Dependencies** — domain types, data repos, KB (ingestion target), Progress (evidence
     consumers), Artifact (exports), Scientific Engine (formula validation).
 23. **Future evolution** — Yjs collaborative sheets (V1+ extension, spine Deferred);

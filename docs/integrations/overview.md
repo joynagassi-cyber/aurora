@@ -60,3 +60,36 @@ owner = Integrations), `04-mobile` §3.4 (notifications split).
     Productivity (reminders).
 23. **Future evolution** — more integration families behind the same port; Phase 2
     desktop native notifications adapter (ADR §23.4).
+
+## 11. Notification system — complete picture (mission §49)
+
+**Sources (normative split, 04 §3.4):** (a) *server-state-driven* = OneSignal
+push (`fn-notifications`, server key lives there ONLY — 04 §3.2.5): coaching
+check-ins (ADR §13 cadence + silence windows), `JobCompleted` user-facing
+results, reminder sweeps. (b) *local-deadline-driven* = Capacitor local
+(`LocalNotificationAdapter.scheduleLocal`): due-today task/event reminders,
+Focus timer/Pomodoro end (doc §2.4/§2.8). **Never both for the same object**
+(anti-double-push, test 04 §7). (c) *desktop* = native notifications, **Phase 2
+only** (ADR §23.4 — add adapter, not V1 scope).
+
+**Priority & delivery:** each notification declares priority (`reminder` /
+`coach` / `job-result` / `alert`); delivery respects user preferences
+(`user_context` notification prefs, Identity) + OneSignal subscription state
+(`setSubscribed`); foreground = in-app surface (02 §7 states), background =
+system tray notification (Android).
+
+**Suppression:** silence windows (ADR §13 coaching cadence, user-controlled) ·
+Focus Mode (v1.8 DPC: blocklisted apps' notifications hidden by suspension;
+Aurora's own non-critical = `reduceForFocus`, focus spec §8) · user kill-switch
+per category. Suppression = state, not deletion (queue semantics documented in
+wave 1).
+
+**Permissions:** `POST_NOTIFICATIONS` requested **on first use, never at boot**;
+refusal = app fully functional, reminders visible in-app, notifications off
+(permission-matrix §1). OneSignal `appKey` (app-specific, allowed in
+`capacitor.config.ts`, owner Foundation) ≠ server key (never in bundle, 04
+§7.2e test).
+
+**States & errors:** push job failure = `JobCompleted{failed}` (UI may retry,
+01 §6); delivery is best-effort (Android battery optimization is a documented
+platform limitation, not a guarantee); local schedules survive offline (04 §3.4).

@@ -1,0 +1,31 @@
+# Feature Agentability Matrix (master mission §5)
+
+One row per capability id (registered per docs/agent/kernel.md §14; SSoT types in
+`packages/domain`). Statuses: FULL · PARTIAL · CONFIRMATION_REQUIRED · USER_ONLY ·
+PLATFORM_DEPENDENT · NOT_AGENT_ENABLED. "Fallback" = what happens when the
+capability is unavailable (AD-1: the product degrades, never breaks).
+
+| Capability ID | Feature | Agent accessible? | NL trigger | Tool(s) | Read | Write | Confirmation | Destructive | Dependencies | Fallback | Verification | Failure recovery | Status |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| task.create / task.update | Tasks | yes | "add a task…" | TaskUseCase commands | productivity:read | productivity:write | no (bulk = yes) | no (delete = destructive) | — | manual entry | local mirror | upsync queue | FULL |
+| calendar.schedule | Calendar/time blocking | yes | "plan X on…" | EventUpdateCommand, time blocks | productivity:read | productivity:write | yes (conflict override) | no | — | user edit | local | retry upsync | CONFIRMATION_REQUIRED |
+| goal.create / project.create | Goals/Projects | yes | "create a goal…" | commands | productivity:read | productivity:write | yes (decomposition bulk) | no | — | user edit | local | retry | CONFIRMATION_REQUIRED |
+| habit.checkin | Habits | yes | "I did X" | HabitCheckinCommand | productivity:read | productivity:write | no | no | — | manual tick | local | retry | FULL |
+| focus.start | Focus session | yes | "start focus 2h" | FocusController (in-app) | productivity:read | productivity:write | yes (session start) | no | POST_NOTIFICATIONS (optional) | in-app timer only | local | session row | FULL |
+| focus.block | App blocking (v1.8) | yes (DPC profile) | "block TikTok" | DpcAdapter.setPackagesSuspended | — | system (device policy) | yes (blocklist) | no (suspension is reversible) | android + device owner (OQ-17) | restriction mode (04 §4.1) | precheck per package | un-suspend on end/crash/reboot | PLATFORM_DEPENDENT |
+| course.search | Knowledge/learning | yes | "find my course on X" | LocalQuery + server retrieval | learning:read, knowledge:read | — | no | no | online (retrieval, AD-12) | local mirror browse | retrieval result | retry job | PARTIAL (offline = mirror only) |
+| qcm.generate / flashcard.generate | Learning generation | yes | "make me QCM on X" | jobs (generation) | learning:read, knowledge:read | learning:write (items) | no | no | online (AI + jobs) | degraded quality flag (AD-5) | fidelity check (ADR §17) | job retry | FULL |
+| learning.session.start / learning.mirror.analyze | Mirror mode | yes | "explain what I understand / quiz me" | mirror-analysis job | learning:read | learning:write | no | no | online (agent job) | text-only explanations | detection contract (type+source) | session resume | FULL |
+| progress.analyze | Progress | yes | "how am I progressing?" | read mirrors + S jobs | progress:read | — | no | no | mirrors offline-capable; deep analysis online | last-known mirrors | evidence coverage check | recompute jobs | FULL |
+| discovery.research | Discovery | yes | "research X" | research job (ResearchProvider) | discovery:read | discovery:write | no | no | online + provider (You.com/Tavily/Exa) | `uncertain`-marked results (01 §6) | source typing + uncertainty (ADR §13.7) | job retry | FULL |
+| artifact.generate | Artifacts (export) | yes | "export the sheet as PDF" | artifact_gen job | module:read | artifact:write + R2 | no | no | online + R2 | queue job | `ArtifactGenerated` post-R2 only (F-06) | job retry | FULL |
+| scientific.evaluate / scientific.verify | Scientific engine | yes | "compute / check this formula" | engine calls + verify job | knowledge:read | — | no | no | offline-capable (light ops local); heavy = job | manual math | deterministic validation (units/dimensions) | job retry | FULL |
+| planning.daily / planning.replan | Productivity planning | yes | "organize my day" | plan + commands | productivity:read | productivity:write | yes (replan discarding plan) | no | — | manual planning | plan history intact (ADR §13) | idempotent commands | CONFIRMATION_REQUIRED |
+| coach.checkin (proactive) | Coach | yes (bounded) | — (agent-initiated, cadence user-controlled) | notifications + /agent surface | all contexts | productivity:write (soft) | cadence + silence windows (ADR §13) | no | OneSignal (server) | local notifications / no check-in | relevance scoring | job retry | PARTIAL (cadence-limited by design) |
+| agent.run (generic) | Kernel | yes | any intent | kernel loop | per context | per plan | important/irreversible actions (ADR §5) | destructive only with confirmation | AI gateway + budget | fallback chain (AD-5) | Verify step (01 §5.6) | persisted step state | FULL |
+| artifact.preview | Artifact Hub | no (user opens previews) | "show me X" → deep link | renderer contracts | artifact:read | — | no | no | local cache | raw file download | preview fallback | re-download | USER_ONLY |
+| settings.theme / preferences | Identity/DS | partial | "set the app to X theme" | user_context commands | identity:read | identity:write | no | no | — | manual settings | theme JSON SSoT | local persist | PARTIAL |
+| review.run (daily/weekly/monthly) | Productivity reviews | yes | "run my weekly review" | review flows + agent | productivity:read, progress:read | productivity:write (decisions) | yes (priority changes) | no | — | manual review | journals local | retry | CONFIRMATION_REQUIRED |
+| integrations.automation.toggle | Automations | yes | "stop the X automation" | AutomationUpdateCommand | integrations:read | integrations:write | yes | no | — | manual toggle | job logs | retry | CONFIRMATION_REQUIRED |
+| notification.subscribe / silence | Notifications | partial | "silence pushes" | RemoteNotificationAdapter | — | user prefs | no | no | POST_NOTIFICATIONS | in-app states | anti-double-push test | state reconcile | PARTIAL |
+| call.policy (experimental) | Calls in Focus | no (opt-in role, experimental) | "block calls during focus" | CallScreeningService (if role granted) | — | system role | explicit opt-in + policy review | no | android role (G-P2) | calls ring as usual | 5 s window | role unselected = documented default | NOT_AGENT_ENABLED (V1) |

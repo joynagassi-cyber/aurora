@@ -71,3 +71,13 @@ AD-11, `01-backend` §4.3, `03-sync` §4.2, `02-frontend` §5.1, `05-design-syst
     (ingestion source), Discovery (links), renderer contracts (05).
 23. **Future evolution** — G6-scale knowledge graph (evaluated, deferred, ADR §25.9);
     tree evolution analytics from `semantic_tree_version`.
+
+## 24. Agent operations on the tree (mission §44 — permission-classed)
+
+`create` / `expand` (ingestion/consolidation) = **server jobs owned by Knowledge**
+(AD-6: Knowledge is the sole structural writer; the agent *requests* via the
+`CourseImported`/`DiscoveryItemCreated` paths, never writes `semantic_*` directly,
+AD-2); `inspect` / `link` / `explain` = read-only + explanations (agent may render/
+explain, may not restructure — restructuring needs evidence, ADR §14 "fusionne les
+doublons lorsque la preuve est suffisante"). Provenance mandatory on every
+structure the agent cites (AD-11).

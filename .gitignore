@@ -17,3 +17,4 @@ __pycache__/
 .dyad/
 .env.local
 .env.local.*
+.claude/worktrees/

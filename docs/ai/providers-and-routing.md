@@ -97,3 +97,69 @@ All quota/model facts here are the **21 Sept 2026 snapshot** (ADR v1.7 §18 sour
 Re-verify at each provider integration (01 §5.6) and continuously via the Model Registry
 (OQ-12, G-U4). The recurring CI "provider retirement" test (01 §7/§8.2 R1) keeps this
 drift-safe.
+
+## 9. Per-provider detail pages (mission §25–§28)
+
+One page per provider (provider ID, base URL/SDK, auth, models + model IDs,
+reasoning/vision/tool-calling/structured output, context, rate limits, free tier vs
+trial vs limited quota vs paid, pricing, data policy, retention, availability,
+failure modes, 429 behavior, timeout, fallback compatibility, health check,
+**snapshot date + source URL + verification date**): [agnes](./providers/agnes.md) ·
+[workers-ai](./providers/workers-ai.md) · [groq](./providers/groq.md) ·
+[cerebras](./providers/cerebras.md) · [openrouter](./providers/openrouter.md) ·
+[cohere](./providers/cohere.md) · [mistral](./providers/mistral.md) ·
+[gemini](./providers/gemini.md). Excluded: GitHub Models (retired 30 July 2026),
+SambaNova (free plan now paid-credits, ADR v1.7 §13), Hugging Face (test credit only,
+non-core). **Not "many providers for the count"** (mission §28): each retained
+provider has a documented why/what-tasks/what-not-tasks/fallback-role/quota/data-
+sensitivity line in its page.
+
+## 10. Model router decision (mission §29)
+
+```
+selection = f( TaskProfile(complexity, reasoning, tools, vision, context size,
+              latency budget, criticality, data sensitivity)
+              + AIHealthRegistry(provider/model health, 429/5xx, cooldowns)
+              + remaining quota (AIUsageTracker)
+              + model capability (registry: supports the required features)
+              + DataPolicy compatibility (ADR v1.7 §11) )
+→ deterministic pick per task class (AIFallbackStrategy chain), never keyword sniffing
+```
+
+| Class | Policy (reference, ADR v1.7 §14) |
+|---|---|
+| ROUTINE | cheapest/fastest healthy model with required capability (Agnes 2.5 / GLM-4.7 Flash / GPT-OSS 20B per availability) |
+| AGENT | reasoning model + tool calling (Agnes 3.0 first; Nemotron 3 Super / GPT-OSS 120B / Cerebras per health + quota) |
+| VISION/DOCUMENT | multimodal model (Gemma 4 or compatible) |
+| CRITICAL | strong model **+ external/deterministic verification** (KB/source and/or Scientific Engine; second "judge" model only when justified) |
+
+"préférer une réponse légèrement moins puissante mais fiable et vérifiable à une
+panne totale" (ADR v1.7 §7).
+
+## 11. Fallback policy by task class (mission §30 — a fallback NEVER circumvents a limit)
+
+| Trigger | Action | Rule |
+|---|---|---|
+| Provider unavailable | next compatible provider in the class chain | functional compatibility preserved (vision→vision, tools→tools, JSON→JSON) |
+| Model unsupported (feature missing) | provider/model with the capability | capability check via registry, not trial-and-error |
+| Feature unsupported (data-policy block) | `AIRequestGuard` refuses **before** the call; route to a compliant provider or degrade with an explicit reason | never send to a policy-incompatible provider (01 §6) |
+| Timeout | bounded retry (transient) then fallback | retries are separated from fallbacks (AD-5) |
+| 429 | read the limit type → **cooldown** per provider/limit (AIHealthRegistry); continue with other providers/providers' remaining capacity | **a 429 is never bypassed by rotating keys/accounts** (AD-5, ADR v1.7 §10) |
+| Budget exhaustion | stop **before** overrun (`budgetSnapshot` to the job, clean stop, 01 §5.6) | not a mid-generation cut-off |
+Every fallback response stays traceable: provider, model, attempt, reason, expected
+quality (`AIResponseEnvelope` + `traceId`).
+
+## 12. AI health & budget (mission §31/§32)
+
+- **Health** (`AIHealthRegistry`, per provider AND per model): latency, error rate,
+  429/5xx counters, cooldown state, availability, **last successful call** — the
+  Router reads it before every selection (avoids a degraded provider); the Model
+  Registry auto-retires a provider that becomes unavailable or paid (AD-5, single
+  owner AD-16b).
+- **Budget** (`AIBudgetManager` + `AIUsageTracker`): budgets per provider/model/
+  environment/**user**; daily and monthly levels (values = wave-0 data, OQ-03/OQ-12);
+  **alert thresholds** (consumption % of quota → PostHog/Sentry alert, duty owner
+  Foundation AD-16d) and **fallback thresholds** (remaining quota < X → switch class
+  chain early); free-tier consumption tracked explicitly — **a free tier is a
+  variable capacity, never a permanent guarantee** (AD-5; G-U4 drift, recurring CI
+  retirement test 01 §8.2 R1).

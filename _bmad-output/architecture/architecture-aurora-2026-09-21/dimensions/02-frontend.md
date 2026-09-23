@@ -327,6 +327,12 @@ interface DataVisualizationRendererProps {
 // L'app ne construit jamais un Chart G2 en dur : elle passe un spec ; le Design System le rend.
 ```
 
+Le `ChartSpec` de bilan Focus (`focusBilan` — barre `planned vs actual` + `StatTile`
+score/interruptions, `05-design-system` §3.6.9, correction H1) est une **instanciation** de
+ce contrat : signature **inchangée** ; les autres specs (progression, séries temporelles,
+distributions, résultats scientifiques) suivent la même règle — spec typé consommé, rendu par
+le Design System (AD-15 : un seul SSoT de `ChartSpec`, à trancher = `packages/ui`, G-M5).
+
 ### 5.4 `MathRenderer` (KaTeX)
 
 Moteur : `KaTeX`. L'app passe une chaîne LaTeX + un mode (display/inline) :

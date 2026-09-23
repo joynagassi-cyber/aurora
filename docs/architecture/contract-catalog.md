@@ -133,3 +133,66 @@ Edge Functions catalog: `fn-job-dispatcher`, `fn-import-course`, `fn-notificatio
 Device sees **only** `AgentRunState` (02 §4); kernel execution = server jobs + gateway
 (AD-12, 01 §5.6); `Verify` of critical tasks runs as a persisted server job, optionally a
 second "judge" model only when justified (01 §5.6, ADR v1.7 §14).
+
+## 10. Registry contracts (master mission S65/S66 — additive, registries.md)
+
+| Contract | Purpose | Methods | Input | Output | Errors | Permissions | Platform | Implementation | Consumers |
+|---|---|---|---|---|---|---|---|---|---|
+| `FeatureRegistry` | feature activation / deactivation | `get(id)`, `list(filter?)`, `set(id, patch)`, `available(id)` | `FeatureDescriptor` (feature-registry.md S1) | `FeatureDescriptor[]` / availability bool | `feature_not_found`, `dependency_unsatisfied` | identity:write | shared | `packages/domain` type; seed in `user_context`; runtime owner Foundation + App Shell | Navigation Registry, Screen Registry, Agent Capability Registry, Availability Policy |
+| `CapabilityRegistry` | agent capability discovery | `list(filter?)`, `get(id)`, `available(id, context?)` | `AgentCapability` (kernel S14) | `AgentCapability[]` | `capability_unavailable` (provider absent / feature disabled / platform mismatch) | per-capability scopes | shared (server) | `packages/agent` (server); types in `packages/domain` | Agent Kernel (Tool Registry, Planner) |
+| `NavigationRegistry` | route / nav entry management | `routes(filter?)`, `deepLink(featureId, params)`, `visible(featureId)` | route definitions (02 S6.1) | `RouteDefinition[]` / deep link URL | `route_disabled` (feature off) | — | mobile | `packages/navigation` (shell) | Frontend Router, Command Palette, Agent `NavigationIntent` |
+| `ProviderRegistry` | external provider enumeration | `list(category?)`, `get(id)`, `status(id)` | provider entries (registries.md S1) | provider entries + status | `provider_retired` | foundation:read | server | Supabase `provider_registry` table; owner Foundation (AD-16) | AIModelRouter, ResearchProvider, ObjectStorage, NotificationProvider, IntegrationProvider |
+| `ModelRegistry` | AI model catalog | `list(filter?)`, `get(modelId)`, `retire(modelId)`, `quota(modelId)` | model entries (registries.md S2) | model entries + quota snapshot | `model_unavailable`, `quota_exhausted` | foundation:read | server | Supabase `model_registry` (owner `packages/data`, AD-16b) | AIModelRouter, AIHealthRegistry, AIBudgetManager |
+| `ArtifactRegistry` | artifact type catalog | `list(kind?)`, `previewSpec(artifactId)`, `exportFormats(artifactId)` | artifact type entries (registries.md S6) | type specs / preview renderer ref / formats | `format_unsupported` | artifact:read | shared | Artifact module; R2 key conventions | UI (artifact cards), Agent (`artifact.generate`) |
+| `IntegrationRegistry` | external integration catalog | `list(vendor?)`, `connectionState(userId, vendor)`, `tools(userId, vendor?)` | integration entries (registries.md S7) | integration entries + connection state + tool schemas | `disconnected`, `reauth_required` | integrations:read | server | Integrations module; Composio API | Agent Tool Registry, NotificationProvider |
+
+## 11. Agent UI command contracts (kernel S15, mission S61-S63)
+
+```ts
+// SSoT packages/domain, consumed by apps/mobile shell + packages/agent
+interface AgentActionEnvelope {
+  actionId: string;             // ULID, idempotent
+  kind: 'navigate' | 'select' | 'filter' | 'expand_node'
+     | 'show_artifact' | 'start_focus' | 'schedule'
+     | 'confirm' | 'result';
+  payload: unknown;             // typed per kind (NavigationIntent, UiStateCommand, …)
+  confirmationRequired?: boolean;
+  deepLink?: string;           // optional route target (NavigationRegistry)
+}
+
+interface NavigationIntent {
+  route: string;               // from NavigationRegistry
+  params?: Record<string, string>;
+  query?: Record<string, string>;
+  focusElement?: string;       // optional in-page anchor
+}
+
+interface UiStateCommand {
+  command: 'select' | 'filter' | 'expand_node' | 'show_artifact' | 'start_focus' | 'open_page';
+  target: string;             // entity ID / node ID / artifact ID / route
+  params?: Record<string, unknown>;
+}
+```
+
+Rule (mission S77): the kernel emits these envelopes; the mobile shell
+consumes them through the command bus (02 S4). The kernel NEVER imports
+React components, Zustand stores, or DOM APIs.
+
+## 12. Vercel AI SDK (implementation detail, AD-1 boundary)
+
+The Vercel AI SDK (`ai` npm package) is the **implementation framework**
+behind `AIProvider` (contract-catalog S2, ADR v1.7 S9). It is NOT a
+domain contract — it lives in `packages/agent` (server) and
+`apps/mobile` (client `useChat` only). No other package imports it.
+
+| Aspect | Detail |
+|---|---|
+| Server | `streamText` / `generateText` in `fn-agent-run` + jobs; `maxSteps` for autonomous tool-calling loop; tool definitions mapped to Aurora ports (ResearchProvider, KnowledgeBase, IntegrationProvider, ScientificEngine, FocusController) |
+| Client | `useChat` hook in `apps/mobile` (Ionic React compatible); streams `AgentRunState`; attachment handling (files -> R2 presigned); tool-call interception -> AD-10 renderers |
+| Router | `aiRouter.selectModel(taskProfile)` returns a `LanguageModel` adapter (Agnes, Workers AI, Groq, Cerebras, etc.); all behind CF AI Gateway (primary) or direct (fallback) |
+| Fallback | Gateway 429/5xx -> next provider; last resort = CF Worker (Workers AI direct); `AIResponseEnvelope` tracks every step |
+| Security | Zero provider keys in device bundle (AD-3); SDK runs server-side; `useChat` calls Supabase Edge Function (authenticated) |
+| Tiptap | Server AI outputs markdown/JSON; client Tiptap editor renders with CorpusBadge (AD-11) + SourceRef; Yjs = future only |
+| Exports | artifact_gen job (PDF/DOCX/PPTX/XLSX/PNG/TXT/LaTeX/Audio) -> R2 -> `ArtifactGenerated` (F-06) |
+| Excluded | CopilotKit (conflicts with AD-10 frozen engines + 5-state UX + local-first) |
+| Docs | docs/ai/vercel-ai-sdk-integration.md (full spec, 2026-09-22) |

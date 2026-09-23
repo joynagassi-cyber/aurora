@@ -166,11 +166,27 @@ Nommage SQL snake_case ; tous les ids = `uuid` (pgcrypto/gen_random_uuid) ; tabl
 - `projects`, `milestones` (FK project), `goals` (FK user; horizon: short/mid/long), `habits`, `routines` (temporal anchors), `focus_sessions`, `decisions`.
 - Relations : goal → project → task (hiérarchie doc §2.6) ; task → project/skill/subject (multi-attachements par table de jonction) ; `focus_sessions.task_id` optionnel.
 - Unicité : récurrence dérivée = lignes matérialisées (pas de règle récurrente) pour rester compatible PowerSync (AD-7) ; chaque occurrence a une identité stable.
+- **`FocusSessionBilan` (SSoT `packages/domain`, owner Productivity — correction H1, figée 2026-09-22)** : le shape du bilan de session (doc §2.8) est le shape **unique** (AD-15/F-01 : aucune équipe ne le redéclare) :
+
+  ```ts
+  // SSoT packages/domain (AD-15) ; consommé par le ChartSpec `focusBilan` (05 §3.6.9) et l'écran de bilan (05 §4.4.2)
+  interface FocusSessionBilan {
+    sessionId: string;
+    plannedMinutes: number;   // durée planifiée
+    actualMinutes: number;    // durée réellement concentrée
+    interruptions: number;    // nb d'interruptions
+    score: number;            // score de concentration 0-100 (pack 04 §4.1 pt 4)
+    endedAt: string;          // ISO 8601
+  }
+  ```
+
+  Le shape est aligné avec la correction H1 de `05-design-system` §3.6.9 (le `ChartSpec` dédié `focusBilan` + la composition `StatTile`/`Sparkline` vivent dans le pack 05 qui porte le contrat visuel ; `04-mobile` §4.1 pt 4 pointe vers ce SSoT ; la signature `DataVisualizationRenderer` du pack 02 §5.3 est inchangée).
 
 ### 4.2 Learning
 - `courses`, `subjects`, `skills` (définitions canoniques, owner Learning), `learning_sessions`, `reviews`, `flashcards` (+ colonnes d'état FSRS par carte : `stability`, `difficulty`, `due`, `last_reviewed_at`), `course_imports`.
 - `flashcards.course_id`; `learning_sessions.course_id?/skill_id?`; relation subject ↔ skill par table de jonction.
 - L'algorithme FSRS s'exécute côté serveur (job ou transaction) ; l'appareil lit l'état via PowerSync (AD-7 single-writer : seule Learning mute l'état FSRS).
+- **Mirror Cognitive Mode (ADR §3 — design prescriptif ajouté 2026-09-22, clôture G-L3)** : l'utilisatrice **explique** une notion (texte Tiptap ou audio `AudioArtifactProvider` → `TranscriptionProvider` optionnel, job) ; l'analyse tourne **côté serveur** (job `mirror-analysis`, AD-8/F-09, capacité Tutor du kernel, AD-12) et produit des **détectés typés** (lacune / contradiction / erreur), **chacun avec provenance corpus** (AD-11 / ADR §17 / §25.5 : les formulations du professeur restent textuellement dominantes ; l'explication d'Aurora est séparée et labelisée — jamais de réécriture créative du corpus). Données (sans DDL, règle §4) : `learning_sessions.mode = 'mirror'` + findings typés (owner Learning). **Règle preuve (F-07)** : les findings n'écrivent JAMAIS directement de lignes `progress_evidences` ; ils alimentent Progress par ses seuls canaux normatifs (Progress = **seul** producer de `ProgressEvidenceCreated`, AD-9 ; les notions convergent ensuite vers `NodeState` par les événements AD-9, AD-6 — jamais par écriture directe). Optionnel : dérivations flashcards/QCM sur les gaps détectés (génération standard, ci-dessus). UI : famille écran coach (05 §4.8/§4.9) ; l'écran dédié Mirror = **ajout additif à l'inventaire 05 en vague 2** (équipe Design System, non bloquant le reste de la V1). Tests : fidélité corpus (zéro paraphrase présentée comme définition), contract test des findings (type + source obligatoires), F-07 (pas d'écriture `progress_evidences` par Learning), 5 états UX (AD-13).
 
 ### 4.3 Knowledge (AD-6, §25 du doc ADR)
 - `semantic_nodes` (id, user_id, kind [principle|domain|subject|concept|law|formula|method|example|application|skill], label, summary?, body?, parent_id?, domain_path, embedding vector, source_ref_ids[]), `semantic_edges` (source_node, target_node, relation [depends_on|is_a_case_of|deepens|applies|leads_to]), `semantic_bridges` (inter-domaines, explicitly annotated, secondaries), `node_state` (node_id, state [collapsed|expanded|selected|focused|mastered|fragile|forgotten] — **owner Knowledge uniquement, AD-6**), `semantic_tree_version` (version, created_at, diff_json — **table de Knowledge, AD-6/F-10** ; la Event History de Progress ne la double JAMAIS).

@@ -80,3 +80,19 @@ evidence events).
     (measurement), Agent (consumption), Knowledge (state writer).
 23. **Future evolution** — Event Sourcing explicitly excluded from V1 (spine);
     multi-year longitudinal analytics; professional benchmark feeds.
+
+## 24. Evidence map by feature (mission §45 — how each feature creates proof)
+
+All evidence is **qualified and produced by Progress only** (F-07 sole producer of
+`ProgressEvidenceCreated`; the features below emit events/commands, Progress
+qualifies — Learning never writes `progress_evidences` directly):
+
+| Feature | Evidence type it feeds |
+|---|---|
+| QCM / exercise | `ProgressEvidence` (standard/new exercise, recognition vs recall vs transfer, ADR §18.2/18.3) |
+| Flashcard review | memory evidence (FSRS state + rating, `FlashcardReviewed`) |
+| Focus session | discipline evidence (planned vs actual, interruptions — `FocusSessionBilan`, W14) |
+| Mirror Cognitive Mode | understanding evidence (typed detections, 01 §4.2) |
+| Project / professional application | application evidence (project completion, real use, ADR §18.2) |
+Each carries: skill/goal, observed level, evidence, date, freshness, context,
+confidence (minimum dataset, ADR §18.3).
