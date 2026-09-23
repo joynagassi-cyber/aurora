@@ -91,7 +91,7 @@ export class SyncEngine {
         // transient failure: queue stays intact (03 S6), bounded retry
         // (AD-5) — surface as degraded, keep the pending mutations.
         this.status.upsyncFailed();
-        this.reconcilePending();
+        this.status.reconcilePending(this.queue.size());
         return ackedTotal;
       }
       batch = this.queue.nextBatch(size);
@@ -104,10 +104,5 @@ export class SyncEngine {
       this.status.retryStarted();
     }
     return ackedTotal;
-  }
-
-  /** Reconcile the status machine's pending counter with the queue. */
-  private reconcilePending(): void {
-    this.status.reconcilePending(this.queue.size());
   }
 }

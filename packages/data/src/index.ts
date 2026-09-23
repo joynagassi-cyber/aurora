@@ -59,3 +59,43 @@ export {
   SqliteQueryRepository,
   SqliteCommandRepository,
 } from './repositories';
+
+// sync status (03 S3.2)
+export type {
+  SyncState,
+  SyncStatus,
+  SyncStatusChange,
+} from './sync-status';
+export { SyncStatusMachine } from './sync-status';
+
+// upsync queue (03 S5.1 / S5.5.6)
+export type { UpsyncEntry, BatchOptions } from './upsync-queue';
+export { UpsyncQueue } from './upsync-queue';
+
+// sync engine (03 S5.1 / S5.2 / S5.5 — offline-to-online orchestration)
+export type {
+  UpsyncResponse,
+  SyncTransport,
+  SyncEngineOptions,
+} from './sync-engine';
+export { SyncEngine } from './sync-engine';
+
+// CRDT OR-Set (03 S5.3 — the single implementation)
+export type {
+  OrSetRemove,
+  OrSetState,
+} from './crdt-orset';
+export {
+  addOrSetElement,
+  removeOrSetElement,
+  orSetLive,
+  mergeOrSets,
+  mergeLocalWithServer,
+  mergeOrSetValues,
+} from './crdt-orset';
+
+// server-wins conflict resolution (03 S5.3)
+export {
+  resolveServerWins,
+  CRDT_LIST_FIELDS,
+} from './server-wins';
