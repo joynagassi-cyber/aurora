@@ -23,4 +23,14 @@ pnpm typecheck    # tsc -b (project references, strict, noUncheckedIndexedAccess
 pnpm lint         # eslint (boundary rules added in wave0/achilles commit 3)
 ```
 
+## CI gate
+
+All three must pass from a clean checkout (wave 0 acceptance, CI-ready):
+
+```bash
+pnpm install     # 1. install workspace + ESLint tooling
+pnpm typecheck   # 2. tsc -b --noEmit across all 14 packages + 2 apps
+pnpm lint        # 3. eslint boundary rules (AD-1/AD-10/AD-15) on every package
+```
+
 Note: `allowBuilds` + `minimumReleaseAge` blocks in `pnpm-workspace.yaml` are pre-existing — do not break them.
