@@ -143,8 +143,11 @@ jobs:
         continue-on-error: ${{ !exists('packages/domain/package.json') }}
 
       - name: Tests (vitest)
-        # 2 fichiers tests = le "test du spine" (SPEC wave 0). Skip with
-        # reason tant que le workspace n'existe pas.
+        # Wave 0: vitest n'est pas encore une dep du workspace — le test
+        # du spine est execute par la step dediee ci-dessous (node
+        # type-stripping natif, zero dep). Ce step est branche en wave 1
+        # quand le runner arrive (if: le fichier de config existe).
+        if: ${{ hashFiles('vitest.config.ts') != '' && exists('packages/domain/package.json') }}
         run: pnpm -r exec vitest run
         continue-on-error: ${{ !exists('packages/domain/package.json') }}
 
@@ -158,12 +161,16 @@ jobs:
       # Tant que MINERVA (migrations) et ACHILLES (packages) n'ont pas
       # livre, les steps sont continue-on-error avec log explicite.
       - name: "Spine test: 2 equipes, 1 contrat (packages/domain)"
-        # tests/spine/equipe-a.ts et equipe-b.ts importent le meme type de
-        # packages/domain et produisent le meme contrat (type-check croise,
-        # pas de re-declaration — AD-15, spine "test du spine").
+        # tests/spine/equipe-a.contract.ts et equipe-b.contract.ts produisent
+        # le meme contrat (type-check croise, pas de re-declaration — AD-15,
+        # spine "test du spine"). Execution via type-stripping natif de Node
+        # 22.20+ (zero dep : vitest n'existe pas dans le workspace wave 0,
+        # les imports relatifs ".ts" sont resolus par la stripping, les
+        # type imports sont supprimes au chargement). Le test runtime
+        # execute par vitest arrive en wave 1 avec le runner.
         # Skip with reason tant que packages/domain n'existe pas.
-        if: ${{ hashFiles('tests/spine/equipe-a.test.ts', 'tests/spine/equipe-b.test.ts') != '' }}
-        run: pnpm -r exec vitest run tests/spine
+        if: ${{ hashFiles('tests/spine/spine.test.ts') != '' }}
+        run: node --experimental-strip-types --no-warnings tests/spine/spine.test.ts
         continue-on-error: ${{ !exists('packages/domain/package.json') }}
 
       - name: "RLS penetration (static, 01 S2.2 / S7)"

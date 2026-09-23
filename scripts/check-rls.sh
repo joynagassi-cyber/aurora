@@ -62,16 +62,41 @@ done
 [ "$rc" -eq 0 ] && echo "  [a] OK"
 
 # (b) AUCUN USING(true) / WITH CHECK(true) sans bornage.
+# Exception documentee (01 S2.2 regle 4 vs registres server-only 01 S4.10) :
+# model_registry / ai_health / ai_usage sont des registres GLOBAUX serveur
+# (AD-16b, owner Foundation, sans dimension user) : le service_role y est
+# justifie par un commentaire "Rationale:" a cote de la policy. Le check
+# refuse une policy permissive SANS cette justification.
 echo "[check-rls (b)] pas de policy permissive (USING/WITH CHECK true)..."
-# "USING (true)" / "WITH CHECK (true)" ou "USING(true)" sans expression
-# bornee = bug bloquant (01 S2.2 regle 4: aucune policy permissive par defaut).
-permissive=$(grep -rnE 'USING[[:space:]]*\(\s*true\s*\)|WITH[[:space:]]+CHECK[[:space:]]*\(\s*true\s*\)' "$MIG_DIR"/*.sql 2>/dev/null || true)
+permissive=""
+for f in "$MIG_DIR"/*.sql; do
+  [ -f "$f" ] || continue
+  hitlines=$(grep -nE 'USING[[:space:]]*\(\s*true\s*\)|WITH[[:space:]]+CHECK[[:space:]]*\(\s*true\s*\)' "$f" 2>/dev/null || true)
+  [ -n "$hitlines" ] || continue
+  old_ifs="$IFS"; IFS="
+"
+  for hl in $hitlines; do
+    ln="${hl%%:*}"
+    ctx=$(sed -n "$((ln-4)),$((ln+8))p" "$f")
+    case "$ctx" in
+      *Rationale*|*justif*|*registry*|*global*server*)
+        # Justifiee : registre serveur serveur (01 S4.10) — OK.
+        : ;;
+      *)
+        permissive="${permissive}
+$f:$hl" ;;
+    esac
+  done
+  IFS="$old_ifs"
+done
 if [ -n "$permissive" ]; then
-  echo "  [b] FAIL — policy permissive (USING/ WITH CHECK true) sans bornage:"
+  echo "  [b] FAIL — policy permissive (USING/ WITH CHECK true) SANS justification:"
   echo "$permissive"
+  echo "       (01 S2.2 regle 4 : bornage par user_id/auth.uid() requis ;"
+  echo "        exception = registres serveur avec commentaire 'Rationale:')"
   rc=1
 else
-  echo "  [b] OK — aucune policy permissive."
+  echo "  [b] OK — aucune policy permissive injustifiee."
 fi
 
 # (c) FORCE ROW LEVEL SERVICE ROLE sur service_role.

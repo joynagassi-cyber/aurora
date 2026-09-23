@@ -51,7 +51,11 @@ code_files() {
 # ---------------------------------------------------------------------------
 g1() {
   echo "[G1] vendor names hors des 5 adapters (AD-1)..."
-  local vendor_re='@cloudflare/|@supabase/supabase-js|@onesignal/|powersync|exa\.ai|tavily|fal\.ai|groq|cerebras|openrouter'
+  # Pattern d'IMPORT (from 'x' / require('x')), pas de mention textuelle :
+  # les configs (eslint.config.js) et schemas (powersync/schema.json) qui
+  # nomment des vendors ne sont PAS des imports de code (la regle ESLint
+  # no-restricted-imports porte le verrou, ce grep est la 2e couche).
+  local vendor_re="from '@(cloudflare|supabase|onesignal|powersync|groq|cerebras|openrouter|composio)/|require(['\''\x60]@(cloudflare|supabase|onesignal|powersync|groq|cerebras|openrouter|composio)/|from ['\''\x60]@(cloudflare|supabase|onesignal|powersync|groq|cerebras|openrouter|composio)/"
   local hits=""
   for f in $(code_files); do
     case "$f" in
