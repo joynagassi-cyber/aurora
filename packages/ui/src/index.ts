@@ -67,6 +67,9 @@ export * from "./components/ui/toast";
 export * from "./components/ui/toaster";
 export * from "./components/ui/tooltip";
 
+// --- Premium effects (Aceternity + Magic UI, docs/ui-libraries.md §2 s3) ---
+export * from "./components/ui/premium";
+
 // --- Utils & hooks ----------------------------------------------------------
 export { cn } from "./lib/utils";
 export { useToast } from "./hooks/use-toast";
