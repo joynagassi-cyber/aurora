@@ -1,0 +1,93 @@
+{
+  "_comment": "Aurora wave-0 PowerSync mirror mapping (03 S4.2, AD-7/F-03). Consumed by the PowerSync engine/relay: the relay reads module PUBLIC VIEWS via service_role UNDER RLS (01 S3.4, 03 S5.5) - never a cross-module internal JOIN, never BYPASSRLS (AD-16, AD-7). Each scope = exactly ONE module owner (03 S5.4). Server-wins conflict + per-entity updated_at (03 S4.2 rule 3); CRDT OR-Set for merge lists (03 S5.3). RELAY OPERATIONAL = WAVE 1 (03 S8.1): this schema + views/RLS are the wave-0 prerequisites. Cross-module reads use the source module's public view (supabase/migrations/0012).",
+  "$schema": "https://raw.githubusercontent.com/powersync-ja/powersync/main/schema.schema.json",
+  "name": "aurora-sync",
+  "version": "0.1.0-wave0",
+  "comment": "Aurora wave-0 PowerSync mirror mapping (03 S4.2). server-wins + CRDT OR-Set lists.",
+  "scopes": [
+    {
+      "name": "productivity",
+      "ownerModule": "Productivity",
+      "type": "custom",
+      "sql": "SELECT * FROM v_productivity_scope"
+    },
+    {
+      "name": "learning",
+      "ownerModule": "Learning",
+      "type": "custom",
+      "sql": "SELECT * FROM v_learning_scope"
+    },
+    {
+      "name": "knowledge",
+      "ownerModule": "Knowledge",
+      "type": "custom",
+      "sql": "SELECT * FROM v_knowledge_scope"
+    },
+    {
+      "name": "progress",
+      "ownerModule": "Progress",
+      "type": "custom",
+      "sql": "SELECT * FROM v_progress_scope"
+    },
+    {
+      "name": "discovery",
+      "ownerModule": "Discovery",
+      "type": "custom",
+      "sql": "SELECT * FROM v_discovery_scope"
+    },
+    {
+      "name": "artifact",
+      "ownerModule": "Artifact",
+      "type": "custom",
+      "sql": "SELECT * FROM v_artifact_scope"
+    },
+    {
+      "name": "integrations",
+      "ownerModule": "Integrations",
+      "type": "custom",
+      "sql": "SELECT * FROM v_integrations_scope"
+    },
+    {
+      "name": "identity",
+      "ownerModule": "Identity",
+      "type": "custom",
+      "sql": "SELECT * FROM v_identity_scope"
+    }
+  ],
+  "mirrorTables": {
+    "productivity": [
+      "tasks", "milestones", "projects", "goals", "habits", "routines",
+      "focus_sessions", "decisions", "calendar_events"
+    ],
+    "knowledge": [
+      "notes", "resources",
+      "semantic_nodes", "semantic_edges", "semantic_bridges",
+      "node_state", "source_refs"
+    ],
+    "learning": [
+      "courses", "subjects", "skills", "learning_sessions", "reviews"
+    ],
+    "progress": [
+      "skill_states", "progress_snapshots"
+    ],
+    "discovery": ["discovery_items", "gaps"],
+    "artifact": ["artifacts"],
+    "integrations": ["automations"],
+    "identity": ["user_context"]
+  },
+  "excludedFromMirror": {
+    "reasons": {
+      "expert_skills": "AD-3 / 01 S4.7: agent memory is server-only, never synced to device",
+      "events": "Event History (01 S4.8, AD-6/F-10): audit-only, NOT Event Sourcing, no local table",
+      "progress_evidences": "03 S4.2: consumed server-side; evidence_refs[] stay in owner entities' CRDT lists",
+      "progress_events": "server-only (F-10)",
+      "progress_trends": "recomputed server-side (01 S4.4)",
+      "model_registry": "Foundation registry, server-only (AD-16b)",
+      "ai_usage": "Foundation registry, server-only (AD-16b)",
+      "ai_health": "Foundation registry, server-only (AD-16b)"
+    }
+  },
+  "crdtLists": {
+    "comment": "03 S5.3/ S5.4: merge lists use the frozen OR-Set. Each element = {v, ts, c}. Encoded as jsonb local_mutation_id + added/removed. -- TODO(wave1): align sur CRDT SSoT packages/domain (AD-15/F-01)."
+  }
+}
