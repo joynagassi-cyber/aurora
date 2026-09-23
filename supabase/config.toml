@@ -1,0 +1,57 @@
+// Aurora Wave 0 — Supabase project config (pg_cron + Edge Functions)
+//
+// REFERENCE: applied to the live Supabase project via:
+//   supabase db push            # apply supabase/migrations/*.sql
+//   supabase functions deploy   # deploy the fn-* stubs (wave 0 = skeletons)
+//   supabase cron               # register the entries below on the live project
+//
+// Intervals are NOT frozen by the architecture docs (wave-0 data, OQ-03) —
+// values below are ASSUMPTIONS, commented per the wave-0 decision:
+//   "-- ASSUMPTION wave-0: <what + why>"
+// Final values to be ratified by Foundation.
+
+# ---------------------------------------------------------------------------
+# pg_cron entries (01 §5.2: Cron = pure short triggers that INSERT into
+# job_queue; the dispatcher does the work — Cron NEVER executes work itself,
+# AD-8). All entries use the `job` schema installed by `supabase cron enable`
+# (creates the pg_cron extension + job table).
+# ---------------------------------------------------------------------------
+
+# -- ASSUMPTION wave-0: fsrs-tick runs DAILY at 06:00 UTC. Batch-recomputes
+#    due/stability/difficulty for all flashcards (01 §5.1 fn-fsrs-tick).
+#    Interval choice: daily keeps the review queue fresh without hot
+#    recomputation; adjust per OQ-03.
+fsrs-tick-daily:
+  cron: "0 6 * * *"
+  job: "INSERT INTO job_queue (id, user_id, kind, payload, due_at, idempotency_key) SELECT gen_random_uuid()::text, user_id, 'fsrs-tick', '{}'::jsonb, now(), 'fsrs-tick|' || user_id::text FROM (SELECT DISTINCT user_id FROM flashcards) u WHERE not exists (select 1 from job_queue j where j.kind='fsrs-tick' and j.idempotency_key = 'fsrs-tick|' || u.user_id::text and j.status in ('pending','running'))"
+
+# -- ASSUMPTION wave-0: event_dispatch every 15 minutes. The dispatcher
+#    drains due jobs (fn-job-dispatcher contract, 01 §5.2). A Postgres
+#    NOTIFY trigger (0010) also wakes it; the cron is the safety-net poll.
+event-dispatch:
+  cron: "*/15 * * * *"
+  job: "SELECT pg_notify('aurora_job_dispatcher', 'cron-poll')"
+
+# -- ASSUMPTION wave-0: recompute skill_states every 6 hours.
+#    progress_evidences feed skill_states; a periodic job keeps the
+#    mirror (03 §4.2 skill_states) fresh between event-driven updates.
+skill-states-recompute:
+  cron: "0 */6 * * *"
+  job: "INSERT INTO job_queue (id, user_id, kind, payload, due_at, idempotency_key) SELECT gen_random_uuid()::text, user_id, 'skill_recompute', '{}'::jsonb, now(), 'skill_recompute|' || user_id::text FROM (SELECT DISTINCT user_id FROM progress_evidences) u WHERE not exists (select 1 from job_queue j where j.kind='skill_recompute' and j.idempotency_key = 'skill_recompute|' || u.user_id::text and j.status in ('pending','running'))"
+
+# -- ASSUMPTION wave-0: recompute progress_evidences daily at 04:00 UTC
+#    (batch over the day's TaskCompleted / FlashcardReviewed events).
+progress-evidences-recompute:
+  cron: "0 4 * * *"
+  job: "INSERT INTO job_queue (id, user_id, kind, payload, due_at, idempotency_key) SELECT gen_random_uuid()::text, user_id, 'evidence_recompute', '{}'::jsonb, now(), 'evidence_recompute|' || user_id::text FROM (SELECT DISTINCT user_id FROM progress_events WHERE occurred_at > now() - interval '25 hours') u WHERE not exists (select 1 from job_queue j where j.kind='evidence_recompute' and j.idempotency_key = 'evidence_recompute|' || u.user_id::text and j.status in ('pending','running'))"
+
+# ---------------------------------------------------------------------------
+# Edge Functions (01 §5.1) — wave 0 delivers STUBS: they read their secrets
+# from env (SUPABASE_SECRET_KEY / SUPABASE_URL / ONESIGNAL_*), log, and
+# return 200 / ApiEnvelope. Real dispatch lands in wave 1.
+# ---------------------------------------------------------------------------
+edge_functions:
+  - name: fn-job-dispatcher      # the ONLY dispatcher (01 §5.2)
+  - name: fn-import-course       # {courseId, fileRefs[]} -> 202 {jobId}
+  - name: fn-notifications       # events trigger -> OneSignal (Phase 1), quiet-hours aware
+  - name: fn-agent-run           # {intent, contextRefs[], taskProfile} -> 202 {ok, data:{jobId}}
