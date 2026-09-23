@@ -1,0 +1,122 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  apps/mobile:
+    dependencies:
+      '@aurora/agent':
+        specifier: workspace:*
+        version: link:../../packages/agent
+      '@aurora/data':
+        specifier: workspace:*
+        version: link:../../packages/data
+      '@aurora/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@aurora/platform':
+        specifier: workspace:*
+        version: link:../../packages/platform
+      '@aurora/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+
+  apps/server:
+    dependencies:
+      '@aurora/agent':
+        specifier: workspace:*
+        version: link:../../packages/agent
+      '@aurora/data':
+        specifier: workspace:*
+        version: link:../../packages/data
+      '@aurora/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@aurora/integrations':
+        specifier: workspace:*
+        version: link:../../packages/integrations
+      '@aurora/scientific-engine':
+        specifier: workspace:*
+        version: link:../../packages/scientific-engine
+
+  packages/agent:
+    dependencies:
+      '@aurora/domain':
+        specifier: workspace:*
+        version: link:../domain
+
+  packages/data:
+    dependencies:
+      '@aurora/domain':
+        specifier: workspace:*
+        version: link:../domain
+
+  packages/domain: {}
+
+  packages/engineering-adapters:
+    dependencies:
+      '@aurora/domain':
+        specifier: workspace:*
+        version: link:../domain
+
+  packages/engineering-core:
+    dependencies:
+      '@aurora/domain':
+        specifier: workspace:*
+        version: link:../domain
+
+  packages/engineering-registry:
+    dependencies:
+      '@aurora/domain':
+        specifier: workspace:*
+        version: link:../domain
+
+  packages/engineering-solvers:
+    dependencies:
+      '@aurora/domain':
+        specifier: workspace:*
+        version: link:../domain
+
+  packages/integrations:
+    dependencies:
+      '@aurora/domain':
+        specifier: workspace:*
+        version: link:../domain
+
+  packages/platform:
+    dependencies:
+      '@aurora/domain':
+        specifier: workspace:*
+        version: link:../domain
+
+  packages/scientific-engine:
+    dependencies:
+      '@aurora/domain':
+        specifier: workspace:*
+        version: link:../domain
+
+  packages/ui:
+    dependencies:
+      '@aurora/domain':
+        specifier: workspace:*
+        version: link:../domain
+
+packages:
+
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+snapshots:
+
+  typescript@5.9.3: {}

@@ -18,3 +18,9 @@ __pycache__/
 .env.local
 .env.local.*
 .claude/worktrees/
+
+# Node / pnpm (wave 0)
+node_modules/
+dist/
+*.tsbuildinfo
+.turbo/

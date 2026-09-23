@@ -1,0 +1,18 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/domain" },
+    { "path": "packages/data" },
+    { "path": "packages/ui" },
+    { "path": "packages/platform" },
+    { "path": "packages/agent" },
+    { "path": "packages/scientific-engine" },
+    { "path": "packages/integrations" },
+    { "path": "packages/engineering-core" },
+    { "path": "packages/engineering-solvers" },
+    { "path": "packages/engineering-adapters" },
+    { "path": "packages/engineering-registry" },
+    { "path": "apps/mobile" },
+    { "path": "apps/server" }
+  ]
+}
