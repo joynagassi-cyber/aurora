@@ -1,0 +1,19 @@
+{
+  "name": "verdant",
+  "universe": "végétation vivante",
+  "colors": {
+    "primary": "#247A55",
+    "secondary": "#42A96B",
+    "accent": "#8CCF8A",
+    "surface": "#DFF3E3"
+  },
+  "gradients": "vert profond → menthe (canopée)",
+  "illustrationMood": "végétation, canopée, nature vivante",
+  "iconTreatment": "outline 1.5px, couleur #247A55",
+  "selectionTreatment": "fond #DFF3E3 + bordure #247A55",
+  "focusTreatment": "ring 2px #247A55, offset 2px",
+  "chartPalette": ["#247A55", "#42A96B", "#8CCF8A", "#1B5E41"],
+  "decorativeShapes": "feuilles, courbes naturelles",
+  "motionMood": "naturel, vivant mais stable (200ms, ease-out)",
+  "usageEmotionnelRecommande": "habitudes, routines, santé, travail long"
+}

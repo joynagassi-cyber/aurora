@@ -1,0 +1,19 @@
+{
+  "name": "sakura",
+  "universe": "fleurs de cerisier",
+  "colors": {
+    "primary": "#D85B86",
+    "secondary": "#E98EAD",
+    "accent": "#9B78C9",
+    "surface": "#F8DCE7"
+  },
+  "gradients": "rose → lilas (doux, vertical)",
+  "illustrationMood": "fleurs de cerisier, pétales, lumière douce",
+  "iconTreatment": "outline 1.5px, couleur #D85B86 + accents lilas",
+  "selectionTreatment": "fond #F8DCE7 + bordure #D85B86",
+  "focusTreatment": "ring 2px #D85B86, offset 2px",
+  "chartPalette": ["#D85B86", "#E98EAD", "#9B78C9", "#C77DA8"],
+  "decorativeShapes": "pétales, formes organiques arrondies",
+  "motionMood": "doux, flottant (300ms, spring léger)",
+  "usageEmotionnelRecommande": "personnalisation féminine, créativité, notes manuscrites"
+}

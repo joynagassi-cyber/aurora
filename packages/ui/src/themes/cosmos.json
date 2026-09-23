@@ -1,0 +1,20 @@
+{
+  "name": "cosmos",
+  "universe": "espace / nébuleuse",
+  "colors": {
+    "primary": "#3B3FA7",
+    "secondary": "#18BFD4",
+    "accent": "#E95BAA",
+    "surface": "#5964E8"
+  },
+  "gradients": "indigo → cyan → magenta (nébuleuse)",
+  "illustrationMood": "nébuleuse, étoiles, particules",
+  "iconTreatment": "outline 1.5px, couleur #3B3FA7 (dominante)",
+  "selectionTreatment": "fond #5964E8 (secondaire) + bordure #3B3FA7",
+  "focusTreatment": "ring 2px #3B3FA7, offset 2px",
+  "chartPalette": ["#3B3FA7", "#5964E8", "#18BFD4", "#E95BAA"],
+  "decorativeShapes": "étoiles, particules, orbitales",
+  "motionMood": "légèrement dynamique (particules douces, 300ms, spring)",
+  "usageEmotionnelRecommande": "découverte, arbre sémantique (ponts inter-domaines), mode futuriste",
+  "note": "Règle spécifique (05 §5.4.2) : 1 dominante (#3B3FA7) + 1 secondaire (#18BFD4) + 1 accent ponctuel (#E95BAA). Le reste reste neutre (style neutre §5.2 niveau 1)."
+}

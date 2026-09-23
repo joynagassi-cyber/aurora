@@ -1,0 +1,10 @@
+{
+  "name": "slate",
+  "kind": "preset",
+  "role": "lecture longue, sobriété pro, faible stimulation",
+  "colors": {
+    "primary": "#4A4A5A",
+    "secondary": "#707080"
+  },
+  "note": "Preset technique (05 §5.5) — gris-bleu / ardoise. Se combine avec n'importe quel thème expressif, ne remplace pas le thème."
+}

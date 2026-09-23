@@ -4,6 +4,7 @@
     "outDir": "dist",
     "rootDir": "src",
     "jsx": "react-jsx",
+    "resolveJsonModule": true,
     "lib": [
       "ES2022",
       "DOM",
@@ -11,7 +12,8 @@
     ]
   },
   "include": [
-    "src"
+    "src",
+    "src/**/*.json"
   ],
   "exclude": [
     "dist"

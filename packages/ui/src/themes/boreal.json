@@ -1,0 +1,19 @@
+{
+  "name": "boreal",
+  "universe": "paysage nordique",
+  "colors": {
+    "primary": "#2E5C8A",
+    "secondary": "#4A8C6A",
+    "accent": "#8DC7D9",
+    "surface": "#DCEAF2"
+  },
+  "gradients": "glacier → lichen → argent",
+  "illustrationMood": "paysage nordique, glace, forêts de pins",
+  "iconTreatment": "outline 1.5px, couleur #2E5C8A",
+  "selectionTreatment": "fond #DCEAF2 + bordure #2E5C8A",
+  "focusTreatment": "ring 2px #2E5C8A, offset 2px",
+  "chartPalette": ["#2E5C8A", "#4A8C6A", "#8DC7D9", "#6B8DB8"],
+  "decorativeShapes": "géométriques, droites (pin, montagne)",
+  "motionMood": "sobre, précis (150ms, ease-out)",
+  "usageEmotionnelRecommande": "révisions exigeantes, Scientific Engine, calculs"
+}

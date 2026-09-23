@@ -1,0 +1,8 @@
+{
+  "name": "high-contrast",
+  "kind": "preset",
+  "role": "accessibilité forcée, contrastes 7:1, tap targets 56px",
+  "focusRingWidth": 3,
+  "tapTargetPx": 56,
+  "note": "Preset technique (05 §5.5) — noir/blanc purs, bordures épaisses, focus ring 3px. Se combine avec n'importe quel thème expressif (ex. Dark + Cosmos + High Contrast)."
+}

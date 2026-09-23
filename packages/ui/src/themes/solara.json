@@ -1,0 +1,19 @@
+{
+  "name": "solara",
+  "universe": "lumière dorée",
+  "colors": {
+    "primary": "#D99A24",
+    "secondary": "#F0B83F",
+    "accent": "#E86F42",
+    "surface": "#FFF0C2"
+  },
+  "gradients": "or → ambre → corail (golden hour)",
+  "illustrationMood": "golden hour, soleil, lumières dorées",
+  "iconTreatment": "outline 1.5px, couleur #D99A24",
+  "selectionTreatment": "fond #FFF0C2 + bordure #D99A24",
+  "focusTreatment": "ring 2px #D99A24, offset 2px",
+  "chartPalette": ["#D99A24", "#F0B83F", "#E86F42", "#B87A1F"],
+  "decorativeShapes": "rayons, cercles lumineux",
+  "motionMood": "lumineux, énergique (200ms, ease-out)",
+  "usageEmotionnelRecommande": "objectifs ambitieux, jalons, Vision de l'excellence internationale"
+}

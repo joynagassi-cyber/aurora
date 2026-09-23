@@ -1,0 +1,20 @@
+{
+  "name": "aurora",
+  "universe": "ciel à l'aube",
+  "isDefault": true,
+  "colors": {
+    "primary": "#3678F6",
+    "secondary": "#22C7D6",
+    "accent": "#7B61FF",
+    "surface": "#B8DFFF"
+  },
+  "gradients": "cyan → blue → violet",
+  "illustrationMood": "ciel à l'aube, nuages légers, lueurs douces",
+  "iconTreatment": "outline 1.5px, couleur #3678F6 + accents cyan",
+  "selectionTreatment": "fond #B8DFFF + bordure #3678F6",
+  "focusTreatment": "ring 2px #3678F6, offset 2px",
+  "chartPalette": ["#3678F6", "#22C7D6", "#7B61FF", "#5A67F2"],
+  "decorativeShapes": "courbes orbitales douces",
+  "motionMood": "fluide, léger (150–250ms, ease-out, 05 §2.6)",
+  "usageEmotionnelRecommande": "mode par défaut, sessions de travail mixtes"
+}
