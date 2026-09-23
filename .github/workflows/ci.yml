@@ -1,0 +1,191 @@
+# Aurora — CI pipeline (wave 0, AD-16c, owner CI = Foundation)
+#
+# Refs:
+#   - SPEC.md "Plan de Contract Packs wave 0" (gate de boundaries, AD-16c)
+#   - docs/architecture/multi-agent-workflow.md S5 (checklist revue commit)
+#   - docs/architecture/dependency-matrix.md S10/S15 (anti-patterns rejects en CI)
+#
+# Regles wave 0 :
+#   - push  = install + typecheck + lint + 4 boundary greps
+#   - main  = + tests + build + spine test + RLS / view-join static checks
+#   - Les scripts check-* n'echouent PAS tant que le workspace n'existe pas
+#     (steps continue-on-error + log explicite, "skip with reason", pas FAIL
+#     bloquant) — le CI doit tourner des que ci.yml existe.
+#
+# Branch protection main (reglage GitHub, PAS automatise par ce fichier —
+# documente dans docs/ci/gate.md et .github/BRANCH-PROTECTION.md) :
+#   - CI green requis, 1 review requis, force-push interdit.
+
+name: CI
+
+on:
+  push:
+    branches: [main, "wave0/**", "wave*/**"]
+  pull_request:
+    branches: [main]
+
+# Concurrency : 1 run de travail par ref — un nouveau push sur la meme ref
+# remplace l'ancien (in-progress sur main est annule pour eviter la file).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}
+
+# Secrets (cf docs/architecture/secrets-checklist.md) : les donnees
+# d'environnement (Supabase / PowerSync / CF / Sentry / PostHog) vivent en
+# GitHub Secrets, jamais en clair. Le CI de base n'en consomme aucun
+# (typecheck/lint/grep sont statiques) ; le bloc ci-gate ne sera branche
+# sur les secrets que wave 1+ (tests live Supabase), marquee ci-gate-todo.
+env:
+  PNPM_VERSION: "10.28.0"
+  NODE_VERSION: "22"
+
+jobs:
+  # ------------------------------------------------------------------
+  # 1. CI de base — chaque push
+  # ------------------------------------------------------------------
+  ci-base:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        # Le workspace ne contient QUE pnpm-workspace.yaml a ce stade de
+        # wave 0 (aucun packages/ ni apps/) — pnpm install doit rester
+        # idempotent et rapide. continue-on-error tant que le bloc
+        # `packages:` du workspace n'a pas encore de membres (ACHILLES
+        # crele les packages en parallele) ; l'echec est loggue, pas
+        # bloquant, pour les memes raisons que les check-*.
+        run: pnpm install
+        continue-on-error: ${{ !exists('packages/domain/package.json') }}
+
+      - name: Typecheck (tsc --noEmit)
+        # Skip with reason tant que le workspace n'existe pas.
+        if: ${{ hashFiles('tsconfig.json', 'packages/*/tsconfig.json') != '' }}
+        run: pnpm -r exec tsc --noEmit
+
+      - name: Lint (eslint)
+        if: ${{ hashFiles('package.json') != '' }}
+        run: pnpm -r exec eslint . --max-warnings=0
+        continue-on-error: ${{ !exists('packages/domain/package.json') }}
+
+      # ---- 4 boundary greps (SPEC "gate de boundaries", AD-1/AD-2/AD-3) ----
+      # Scripts livres dans le commit "wave0/hermes: 4 boundary grep tests"
+      # (a suivre). Idempotents, exit 0 clean / exit 1 + ligne en echec.
+      - name: "Boundary G1: vendor names hors adapters"
+        if: ${{ hashFiles('scripts/check-boundaries.sh') != '' }}
+        run: bash scripts/check-boundaries.sh G1
+        continue-on-error: ${{ !exists('packages/domain/package.json') }}
+
+      - name: "Boundary G2: secrets in code"
+        if: ${{ hashFiles('scripts/check-boundaries.sh') != '' }}
+        run: bash scripts/check-boundaries.sh G2
+        continue-on-error: ${{ !exists('packages/domain/package.json') }}
+
+      - name: "Boundary G3: hardcoded user"
+        if: ${{ hashFiles('scripts/check-boundaries.sh') != '' }}
+        run: bash scripts/check-boundaries.sh G3
+        continue-on-error: ${{ !exists('packages/domain/package.json') }}
+
+      - name: "Boundary G4: DOM access in agent"
+        if: ${{ hashFiles('scripts/check-boundaries.sh') != '' }}
+        run: bash scripts/check-boundaries.sh G4
+        continue-on-error: ${{ !exists('packages/domain/package.json') }}
+
+  # ------------------------------------------------------------------
+  # 2. Gate main-only — main buildable (SPEC "main buildable apres
+  #    chaque vague")
+  # ------------------------------------------------------------------
+  ci-gate:
+    # Sur main (et son push, son PR vers main) le gate complet doit PASS.
+    # Sur les autres refs on ne le declenche pas : ce sont les PR qui
+    # fusionnent sur main qui le declenchent (jobs on: pull_request).
+    if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    needs: [ci-base]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+        continue-on-error: ${{ !exists('packages/domain/package.json') }}
+
+      - name: Typecheck
+        if: ${{ hashFiles('tsconfig.json') != '' }}
+        run: pnpm -r exec tsc --noEmit
+
+      - name: Lint
+        if: ${{ hashFiles('package.json') != '' }}
+        run: pnpm -r exec eslint . --max-warnings=0
+        continue-on-error: ${{ !exists('packages/domain/package.json') }}
+
+      - name: Tests (vitest)
+        # 2 fichiers tests = le "test du spine" (SPEC wave 0). Skip with
+        # reason tant que le workspace n'existe pas.
+        run: pnpm -r exec vitest run
+        continue-on-error: ${{ !exists('packages/domain/package.json') }}
+
+      - name: Build
+        run: pnpm -r exec tsc --noEmit
+        continue-on-error: ${{ !exists('packages/domain/package.json') }}
+
+      # ---- Static RLS + no cross-join (commit "wave0/hermes: spine test +
+      #      RLS + no cross-join", a suivre) ----
+      # Scan supabase/migrations/*.sql + vues PowerSync (packages/data).
+      # Tant que MINERVA (migrations) et ACHILLES (packages) n'ont pas
+      # livre, les steps sont continue-on-error avec log explicite.
+      - name: "Spine test: 2 equipes, 1 contrat (packages/domain)"
+        # tests/spine/equipe-a.ts et equipe-b.ts importent le meme type de
+        # packages/domain et produisent le meme contrat (type-check croise,
+        # pas de re-declaration — AD-15, spine "test du spine").
+        # Skip with reason tant que packages/domain n'existe pas.
+        if: ${{ hashFiles('tests/spine/equipe-a.test.ts', 'tests/spine/equipe-b.test.ts') != '' }}
+        run: pnpm -r exec vitest run tests/spine
+        continue-on-error: ${{ !exists('packages/domain/package.json') }}
+
+      - name: "RLS penetration (static, 01 S2.2 / S7)"
+        if: ${{ hashFiles('scripts/check-rls.sh') != '' }}
+        run: bash scripts/check-rls.sh
+        continue-on-error: ${{ !exists('supabase/migrations/') }}
+        # TODO(wave1): run against live Supabase — le gate static ne couvre
+        # que le shape des policies ; le test live (user A ne lit pas user B)
+        # sera branche sur la DB dev, avec les secrets GitHub (cf secrets-checklist).
+
+      - name: "No cross-module JOIN (03 S5.4 / F-03)"
+        if: ${{ hashFiles('scripts/check-view-joins.ts') != '' }}
+        run: pnpm tsx scripts/check-view-joins.ts
+        continue-on-error: ${{ !exists('packages/data/') }}
+
+      - name: Boundary greps (G1-G4)
+        run: bash scripts/check-boundaries.sh
+        continue-on-error: ${{ !exists('packages/domain/package.json') }}
+
+      - name: Gate summary
+        run: |
+          echo "CI gate (main buildable) — wave 0:"
+          echo "  refs: SPEC.md wave 0 (main buildable), dependency-matrix S10/S15"
+          echo "  if a gate fails: git revert <commit> (1 story = 1 commit = 1 rollback)"
+          echo "  see docs/ci/gate.md for the exact order + recovery."
