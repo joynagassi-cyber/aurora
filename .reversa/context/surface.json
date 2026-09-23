@@ -1,0 +1,29 @@
+{
+  "project": "aurora-2",
+  "nature": "spec-first monorepo à scaffolder (documentation 100%, code 0%)",
+  "generated_at": "2026-09-23T00:00:00Z",
+  "languages": { "TypeScript": "100% cible", "Markdown": "documentation source" },
+  "primary_frameworks": ["Ionic React", "Capacitor", "Supabase", "PowerSync", "Zustand", "@tanstack/react-query"],
+  "monorepo": {
+    "manager": "pnpm",
+    "packages": ["domain", "data", "ui", "platform", "agent", "scientific-engine", "integrations"],
+    "apps": ["mobile", "server"],
+    "invariants": {
+      "domain_imports_nothing": true,
+      "vendor_sdks_only_in_adapters_and_server": true,
+      "ad10_engines_only_in_ui": true,
+      "feature_slices_no_sibling_imports": true
+    }
+  },
+  "modules": [
+    "architecture", "agent", "ai", "focus-mode", "mobile", "frontend",
+    "design-system", "data", "events", "jobs", "productivity", "learning",
+    "knowledge", "discovery", "progress", "scientific-engine", "integrations",
+    "security", "testing", "deployment", "workflows", "troubleshooting"
+  ],
+  "external_integrations": ["Supabase (3 envs)", "Cloudflare R2", "Cloudflare AI Gateway", "Agnes (primaire)", "OneSignal", "You.com/Tavily/Exa", "Composio", "Sentry", "PostHog"],
+  "database": { "existing": false, "target": "Supabase PostgreSQL + pgvector + RLS par module", "root_tables": ["user_context", "events", "job_queue", "job_logs", "model_registry"] },
+  "tests": { "existing": false, "frameworks": ["Vitest (unit, no DOM)", "Playwright (E2E web)", "Capacitor smoke (Android)"], "mandatory_mats": ["docs/testing/matrix.md", "Focus 13 scenarios [spec S13]", "Agent 20 E2E scenarios", "23 workflows composites"] },
+  "blocking_open_questions": ["OQ-01 (ratification layout pnpm)", "OQ-02 (mapping équipe par entité AD-15)", "OQ-17 (Focus DPC v1.8)"],
+  "frozen_assumptions": ["OQ-08 Playwright+Capacitor", "OQ-09 IonList natif", "OQ-10 @aurora/ui", "OQ-11 Pixel 4a", "OQ-14 10 thèmes+3 presets V1", "OQ-15 adaptations locales = Focus Mode only V1", "OQ-16 Nocturne preset autonome"]
+}

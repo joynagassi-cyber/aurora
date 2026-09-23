@@ -1,0 +1,41 @@
+{
+  "version": "1.0.0",
+  "project": "aurora-2",
+  "user_name": "Joy",
+  "chat_language": "fr-FR",
+  "doc_language": "French",
+  "answer_mode": "chat",
+  "output_folder": "_reversa_sdd",
+  "doc_level": "complet",
+  "phase": "excavation",
+  "completed": ["reconnaissance"],
+  "pending": ["excavation", "interpretation", "generation", "revision", "securite"],
+  "checkpoints": {
+    "scout": {
+      "completed_at": "2026-09-23T00:00:00Z",
+      "files": [
+        "_reversa_sdd/inventory.md",
+        "_reversa_sdd/dependencies.md",
+        ".reversa/context/surface.json"
+      ],
+      "summary": {
+        "languages": ["TypeScript (cible)"],
+        "framework": "Ionic React + Capacitor + Supabase",
+        "modules": ["domain", "data", "ui", "platform", "agent", "scientific-engine", "integrations", "apps/mobile", "apps/server"],
+        "integrations": ["Supabase", "R2", "CF AI Gateway", "Agnes", "OneSignal", "You.com/Tavily/Exa", "Composio"],
+        "database": "à créer (PostgreSQL + pgvector)",
+        "tests": "à créer (Vitest + Playwright)"
+      }
+    }
+  },
+  "engines": ["claude-code"],
+  "agents": ["reversa", "reversa-scout", "reversa-archaeologist", "reversa-architect", "reversa-data-master", "reversa-design-system", "reversa-reconstructor", "reversa-reviewer"],
+  "created_files": [
+    ".reversa/state.json",
+    ".reversa/plan.md",
+    ".reversa/context/surface.json",
+    "_reversa_sdd/execution-log.md",
+    "_reversa_sdd/inventory.md",
+    "_reversa_sdd/dependencies.md"
+  ]
+}
