@@ -70,6 +70,44 @@ export * from "./components/ui/tooltip";
 // --- Premium effects (Aceternity + Magic UI, docs/ui-libraries.md §2 s3) ---
 export * from "./components/ui/premium";
 
+// --- AD-10 renderer contracts + 4 DS data components (05 §3.6) -----------
+export * from "./renderers";
+export type {
+  SemanticTreeRendererProps,
+  InfographicRendererProps,
+  DataVisualizationRendererProps,
+  MathRendererProps,
+  AnimationController,
+  AnimationSlotProps,
+  DataTableColumn,
+  DataTableProps,
+  TimelineEvent,
+  TimelineProps,
+  GanttRowProps,
+  StatTileProps,
+  TreeRelation,
+  RenderSemanticNode,
+  RenderSemanticEdge,
+  RenderSemanticBridge,
+  InfographicSpec,
+} from "./renderers/contracts";
+export type {
+  ChartSpec,
+  AuroraPreset,
+  AuroraTheme,
+} from "./themes/types";
+export {
+  createSemanticTreeRenderer,
+  createInfographicRenderer,
+  createDataVisualizationRenderer,
+  createMathRenderer,
+} from "./renderers/contracts";
+export { DataTable } from "./components/ui/DataTable";
+export { KeyValueList } from "./components/ui/KeyValueList";
+export { Timeline } from "./components/ui/Timeline";
+export { GanttRow } from "./components/ui/GanttRow";
+export { StatTile } from "./components/ui/StatTile";
+
 // --- Utils & hooks ----------------------------------------------------------
 export { cn } from "./lib/utils";
 export { useToast } from "./hooks/use-toast";
