@@ -15,3 +15,5 @@ desktop.ini
 __pycache__/
 *.pyc
 .dyad/
+.env.local
+.env.local.*
