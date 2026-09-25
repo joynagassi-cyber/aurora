@@ -1,0 +1,19 @@
+{
+  "name": "vesper",
+  "universe": "ciel violet du soir",
+  "colors": {
+    "primary": "#6554C0",
+    "secondary": "#8C5BD6",
+    "accent": "#D05AA8",
+    "surface": "#E7DDF8"
+  },
+  "gradients": "indigo → violet → magenta (horizon crépusculaire)",
+  "illustrationMood": "crépuscule, halos, lumières diffuses",
+  "iconTreatment": "outline 1.5px, couleur #6554C0",
+  "selectionTreatment": "fond #E7DDF8 + bordure #6554C0",
+  "focusTreatment": "ring 2px #6554C0, offset 2px",
+  "chartPalette": ["#6554C0", "#8C5BD6", "#D05AA8"],
+  "decorativeShapes": "halos, lumières diffuses",
+  "motionMood": "lent, contemplatif (400–600ms, ease-in-out)",
+  "usageEmotionnelRecommande": "revues hebdo/mensuelles, Progress dashboard, Journal des décisions"
+}

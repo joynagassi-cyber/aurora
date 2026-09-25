@@ -1,0 +1,19 @@
+{
+  "name": "lagoon",
+  "universe": "eau tropicale",
+  "colors": {
+    "primary": "#007C91",
+    "secondary": "#18B7A0",
+    "accent": "#50D8C0",
+    "surface": "#D9F5EF"
+  },
+  "gradients": "teal → turquoise → sable vert",
+  "illustrationMood": "eau tropicale, vagues, reflets",
+  "iconTreatment": "outline 1.5px, couleur #007C91 + accents turquoise",
+  "selectionTreatment": "fond #D9F5EF + bordure #007C91",
+  "focusTreatment": "ring 2px #007C91, offset 2px",
+  "chartPalette": ["#007C91", "#18B7A0", "#50D8C0", "#2FB59C"],
+  "decorativeShapes": "vagues, courbes organiques",
+  "motionMood": "très fluide, lent (400ms, spring doux)",
+  "usageEmotionnelRecommande": "Focus Mode, lecture, concentration, habitudes/routines"
+}

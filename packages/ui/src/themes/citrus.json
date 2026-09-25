@@ -1,0 +1,19 @@
+{
+  "name": "citrus",
+  "universe": "agrumes / énergie solaire",
+  "colors": {
+    "primary": "#F28C28",
+    "secondary": "#F7C948",
+    "accent": "#B7D83D",
+    "surface": "#FFF0B8"
+  },
+  "gradients": "orange → jaune → lime (fruits du soleil)",
+  "illustrationMood": "agrumes, soleil, énergie",
+  "iconTreatment": "outline 1.5px, couleur #F28C28 + accents lime",
+  "selectionTreatment": "fond #FFF0B8 + bordure #F28C28",
+  "focusTreatment": "ring 2px #F28C28, offset 2px",
+  "chartPalette": ["#F28C28", "#F7C948", "#B7D83D", "#D96B14"],
+  "decorativeShapes": "formes rondes, segments d'orange",
+  "motionMood": "vif, énergique (100–150ms, ease-out)",
+  "usageEmotionnelRecommande": "app colorée, mode ludique, productivité en rythme rapide"
+}

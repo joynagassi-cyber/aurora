@@ -1,0 +1,19 @@
+{
+  "name": "terra",
+  "universe": "terre cuite / argile",
+  "colors": {
+    "primary": "#B85C38",
+    "secondary": "#C9823B",
+    "accent": "#D8AE72",
+    "surface": "#F2E1C3"
+  },
+  "gradients": "sable → ocre → terracotta (strates de terre)",
+  "illustrationMood": "argile, strates de terre, matiere vive",
+  "iconTreatment": "outline 1.5px, couleur #B85C38",
+  "selectionTreatment": "fond #F2E1C3 + bordure #B85C38",
+  "focusTreatment": "ring 2px #B85C38, offset 2px",
+  "chartPalette": ["#B85C38", "#C9823B", "#D8AE72", "#8A4426"],
+  "decorativeShapes": "organiques, architecturales (briques, arcs)",
+  "motionMood": "sobre, terrestre (150–200ms, ease-out)",
+  "usageEmotionnelRecommande": "projets, construction, disciplines techniques, créativité matière"
+}
