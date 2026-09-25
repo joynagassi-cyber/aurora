@@ -1,15 +1,15 @@
 /**
  * Ionic app shell (04 S1, 02 S6.1) — root Ionic chrome for the app.
  *
- * Routes + tabs are composed by the router (wave 1 P2); this component only
- * owns the Ionic chrome so the shell stays renderable before feature slices
- * exist. Details open OVER the current tab (IonModal/IonSlides, never a tab
- * switch — 02 §6.1).
+ * The router's root element is <Shell />: pages mount through the React
+ * Router <Outlet /> rendered inside the Ionic chrome (IonRouterOutlet
+ * bridges router navigation into the Ionic nav stack). Details open OVER
+ * the current tab (IonModal/IonSlides, never a tab switch — 02 §6.1).
  */
-import { IonApp, IonContent, IonMenu, IonRouterOutlet, IonTabs } from '@ionic/react';
-import type { ReactNode } from 'react';
+import { IonApp, IonContent, IonMenu, IonRouterOutlet } from '@ionic/react';
+import { Outlet } from 'react-router-dom';
 
-export function Shell({ children }: { children: ReactNode }) {
+export function Shell() {
   return (
     <IonApp>
       <IonMenu menuId="start" type="reveal">
@@ -18,15 +18,9 @@ export function Shell({ children }: { children: ReactNode }) {
         </IonContent>
       </IonMenu>
       <IonContent>
-        <IonTabs>
-          <IonRouterOutlet />
-          <ShellBody>{children}</ShellBody>
-        </IonTabs>
+        <IonRouterOutlet />
+        <Outlet />
       </IonContent>
     </IonApp>
   );
-}
-
-function ShellBody({ children }: { children: ReactNode }) {
-  return <>{children}</>;
 }
