@@ -6,7 +6,7 @@
  * deterministic and re-computable from a persisted session row.
  *
  * Score = 0..100 composite: focus adherence (planned vs actual),
- * interruption penalty, task-completion bonus (spec S15 + master
+ * interruption penalty, bonus on task completion (spec S15 + master
  * mission S41).
  */
 

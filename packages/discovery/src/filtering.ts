@@ -3,7 +3,7 @@
  *
  * "The agent does NOT evaluate relevance by LLM guess." It reads the
  * UserContext (disciplines, region, budget, goals — data-driven, NO
- * `if user === Horeb` in code) and applies deterministic rules:
+ * hardcoded identity checks in code) and applies deterministic rules:
  *   1. DOMAIN MATCH — the hit's discipline is in the active set.
  *   2. INFRASTRUCTURE REALITY — regional feasibility + budget.
  *   3. CAREER RELEVANCE — closes a known gap / required by target role.
