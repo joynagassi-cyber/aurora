@@ -35,6 +35,9 @@ importers:
       '@aurora/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@aurora/focus':
+        specifier: workspace:*
+        version: link:../../packages/focus
       '@aurora/platform':
         specifier: workspace:*
         version: link:../../packages/platform
