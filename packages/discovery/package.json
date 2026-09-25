@@ -1,0 +1,19 @@
+{
+  "name": "@aurora/discovery",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Discovery + Progress module (wave 2, ORION): multi-source discovery sheets (FACT/TREND/ANALYSIS/SCENARIO/UNCERTAINTY), ResearchProvider port (AD-1, optional), data-driven Benin filtering, gap analysis, evidence model (sole-producer F-07), G2 ChartSpec dashboards + trajectories + causal analysis, skill_recompute/research jobs (AD-8).",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": { "types": "./src/index.ts", "default": "./src/index.ts" }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --no-warnings --test \"test/*.test.ts\""
+  },
+  "dependencies": {
+    "@aurora/domain": "workspace:*"
+  }
+}

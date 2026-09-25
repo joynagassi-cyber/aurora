@@ -72,6 +72,12 @@ importers:
         specifier: workspace:*
         version: link:../domain
 
+  packages/discovery:
+    dependencies:
+      '@aurora/domain':
+        specifier: workspace:*
+        version: link:../domain
+
   packages/domain: {}
 
   packages/engineering-adapters:
@@ -104,7 +110,19 @@ importers:
         specifier: workspace:*
         version: link:../domain
 
+  packages/learning:
+    dependencies:
+      '@aurora/domain':
+        specifier: workspace:*
+        version: link:../domain
+
   packages/platform:
+    dependencies:
+      '@aurora/domain':
+        specifier: workspace:*
+        version: link:../domain
+
+  packages/productivity:
     dependencies:
       '@aurora/domain':
         specifier: workspace:*
