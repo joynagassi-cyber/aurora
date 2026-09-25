@@ -163,10 +163,18 @@ Taches :
    - depth.ts (selection Quick/Standard/Deep)
    - read-do-prove.ts (sequencing, framework pas rigide)
    - source-hierarchy.ts (A>B>C>D, D ne remplace jamais A)
-3. Table : ascent_paths (1 table JSONB, server-only, AD-3)
-   RLS : user_id isolation
-   PAS dans le PowerSync sync scope (comme expert_skills)
+3. Migration SQL + surface de sync (fichiers exacts dans
+   docs/ascent/implementation.md "SQL Migration + Sync Surface") :
+   a. supabase/migrations/0013_ascent.sql : ascent_paths JSONB +
+      ENABLE/FORCE RLS + policy user_isolation (pattern 0008)
+   b. powersync/relay.sql : + vue v_ascent_scope (security_invoker)
+   c. powersync/schema.json : + mirrorTables "ascent" + scope
+      (mirror LECTURE SEULE requis pour Slide-Ascent offline,
+      PAS excludedFromMirror — contrairement a expert_skills)
+   d. Test d'intrusion RLS (user A ne lit pas user B)
+   Gates : check-rls.sh + check-view-joins.ts restent verts
 4. Slide-Ascent UI (apps/mobile, 12 types de slides = palette)
+   Lit le local mirror de ascent_paths (offline, aucun SQL propre)
    Progressive disclosure (Level 1 = current+next)
    Active Reading : 5 actions (Explain, Note, Flashcard, Visualize, "Je bloque")
    Depth badge + Source hierarchy badge
@@ -185,6 +193,8 @@ Regles :
 - Ascent emet LearningCommand (domain command, AD-7), PAS ecriture Learning
 - Ascent ne fait PAS de nouvel event AD-9 (consomme les 9 existants)
 - 80/20 : 1 table JSONB pour demarrer, pas 4 tables separees
+- Ascent ECRIT seulement depuis le serveur (AD-12) ; le device
+  lit ascent_paths en lecture seule via le mirror PowerSync
 - PAS de 2e LLM pedagogique (Ascent = deterministe, le LLM explique)
 - PAS de Graphiti/Zep (SourceRef + pgvector suffit, AD-11)
 - PAS de WebGL (AntV + KaTeX + images)

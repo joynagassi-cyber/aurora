@@ -42,11 +42,25 @@ Tu es SOPHIA. Implémente le module Ascent : le moteur de trajectoire pédagogiq
    - depth.ts (selection Quick/Standard/Deep)
    - read-do-prove.ts (sequencing, framework pas rigide)
    - source-hierarchy.ts (A>B>C>D, D ne remplace jamais A)
-3. Table : ascent_paths (1 table JSONB, server-only, AD-3)
-   RLS : user_id isolation
-   PAS dans le PowerSync sync scope (comme expert_skills)
-   + migration RLS + test d'intrusion (pattern wave 0 MINERVA)
+3. Migration SQL + surface de sync (1 commit, fichiers exacts, cf
+   docs/ascent/implementation.md "SQL Migration + Sync Surface") :
+   a. supabase/migrations/0013_ascent.sql (prochain numero apres 0012) :
+      CREATE TABLE ascent_paths (JSONB, schema du doc)
+      + ENABLE/FORCE ROW LEVEL SECURITY + policy user_isolation
+      (USING (user_id = auth.uid()), pattern 0008)
+      + AUCUN USING(true) injustifie (check-rls (b) reste vert)
+   b. powersync/relay.sql : + vue v_ascent_scope
+      (security_invoker=on, SELECT * FROM ascent_paths,
+      PAS de JOIN inter-module — check-view-joins reste vert)
+   c. powersync/schema.json :
+      + mirrorTables : "ascent": ["ascent_paths"]
+      + scopes : {name:"ascent", ownerModule:"Ascent",
+                 type:"custom", sql:"SELECT * FROM v_ascent_scope"}
+      + excludedFromMirror : RIEN (le mirror lecture seule est
+      REQUIS pour Slide-Ascent offline — contrairement a expert_skills)
+   d. Test d'intrusion RLS (user A ne lit pas user B, pattern MINERVA)
 4. Slide-Ascent UI (apps/mobile, 12 types de slides = palette, PAS sequence)
+   Lit le LOCAL MIRROR de ascent_paths (offline, aucun SQL propre)
    Progressive disclosure (Level 1 = current+next seulement)
    Active Reading : 5 actions (Explain, Note, Flashcard, Visualize, "Je bloque")
    Depth badge + Source hierarchy badge (A/B/C/D)
@@ -64,6 +78,6 @@ COMMIT MESSAGES : prefixe "wave3/sophia:"
 - "wave3/sophia: domain types (AscentLearningIR + 6 types)"
 - "wave3/sophia: path-builder + adapter + baseline + depth"
 - "wave3/sophia: source-hierarchy + read-do-prove"
-- "wave3/sophia: ascent_paths table + RLS"
+- "wave3/sophia: 0013_ascent.sql (table + RLS) + v_ascent_scope + schema.json (mirror lecture seule)"
 - "wave3/sophia: Slide-Ascent UI (12 slide types + progressive disclosure)"
 - "wave3/sophia: Agent Kernel integration + tests"

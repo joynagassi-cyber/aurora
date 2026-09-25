@@ -61,7 +61,7 @@ Agent Context Builder (01 S5.6) reads AscentLearningIR
   -> Ascent adapts the path (server-side, event-driven)
 ```
 
-## Data (4 tables, server-only)
+## Data (ascent_paths — server writes, read-only device mirror)
 
 ```sql
 -- ascent_paths (the main table, can start as 1 JSONB table)
@@ -81,16 +81,67 @@ CREATE TABLE ascent_paths (
 );
 
 -- RLS: user_id isolation (AD-2)
--- Server-only: NOT in PowerSync sync scope (like expert_skills, AD-3)
--- Local mirror: read-only view (device sees current path, not adaptations)
+-- Writes: server-side ONLY (AD-12, like Agent Kernel)
+-- Reads: read-only PowerSync mirror (device sees current path) —
+-- deliberately NOT like expert_skills (AD-3: that one is never mirrored);
+-- Slide-Ascent must render offline (mobile-first)
+ ```
 ```
 ### Local mirror (device)
 
 - PowerSync mirrors ONLY `ascent_paths` (current path + steps + depth +
   baseline snapshot) as read-only. The device never computes adaptations
   (AD-12: server-side, like Agent Kernel).
-- Stale mirror + user offline = frozen path, not an error state. The UI
-  shows the last synced path; adaptations arrive on reconnect.
+ - Stale mirror + user offline = frozen path, not an error state. The UI
+   shows the last synced path; adaptations arrive on reconnect.
+
+## SQL Migration + Sync Surface (exact files, 1 commit)
+
+Three files, all in the existing wave-0 pattern (MINERVA). Gates
+`check-rls.sh` and `check-view-joins.ts` scan them — both must stay green.
+
+### 1. `supabase/migrations/0013_ascent.sql` (next number after 0012)
+
+```sql
+-- Ascent module (wave 3) — writes server-only (AD-12),
+-- read-only device mirror via PowerSync (this migration + relay.sql).
+CREATE TABLE ascent_paths ( /* schema from "Data" above */ );
+
+ALTER TABLE ascent_paths ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ascent_paths FORCE ROW LEVEL SECURITY;  -- service_role bound too (01 S2.2)
+
+-- user isolation (0008 pattern) — relay reads THROUGH RLS, never BYPASSRLS
+CREATE POLICY ascent_paths_user_isolation ON ascent_paths
+  USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+
+-- NO un-justified USING(true) anywhere (check-rls (b))
+```
+
+### 2. `powersync/relay.sql` — append the scope view
+
+```sql
+-- Ascent scope (owner Ascent) — read-only mirror surface, no cross-module JOIN
+CREATE VIEW v_ascent_scope WITH (security_invoker = on) AS
+SELECT * FROM ascent_paths;
+```
+
+### 3. `powersync/schema.json` — register the mirror
+
+- `mirrorTables`: add `"ascent": ["ascent_paths"]`
+- `scopes`: add `{ "name": "ascent", "ownerModule": "Ascent", "type": "custom", "sql": "SELECT * FROM v_ascent_scope" }`
+- `excludedFromMirror`: add NOTHING (ascent_paths IS mirrored, read-only;
+  expert_skills-style exclusion would break offline Slide-Ascent)
+
+### Intrusion test
+
+User A must not read user B's `ascent_paths` (RLS + view security_invoker).
+Follow the wave-0 MINERVA test pattern; run on Supabase dev when available.
+
+### Slide-Ascent (UI) — no SQL of its own
+
+Slide-Ascent renders `ascent_paths` from the LOCAL MIRROR (offline-safe).
+It creates no table, no migration, no relay view. The 3 async states
+(empty / loading / error) are UI concerns per docs/ui-libraries.md Partie 3.
 
 ## Events (consumed only — AD-9 stays closed)
 
