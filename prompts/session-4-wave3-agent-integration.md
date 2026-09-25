@@ -124,3 +124,61 @@ Commits : prefixe "wave5/erynis:" puis "wave7/erynis:"
 - E2E device : Playwright + Capacitor, Focus DPC (si OQ-17 ok)
 - 30fps + TTI + JS budget respectes
 - Release candidate
+
+---
+
+## SOUS-AGENT 5 : SOPHIA (Ascent — Pedagogical Trajectory Engine)
+
+Lis :
+- docs/ascent/overview.md (22 sections, le concept complet)
+- docs/ascent/implementation.md (guide d'implementation)
+- docs/architecture/dynamic-goal-engine.md (GoalProject, Ascent = couche au-dessus)
+- docs/agent/kernel.md (S12, Ascent = capability du kernel, pas un agent separe)
+- docs/progress/overview.md (SkillState, ProgressEvidence)
+- docs/learning/overview.md (QCM, flashcards, mirror)
+- docs/knowledge/overview.md (tree, concepts, formulas)
+
+Taches :
+1. packages/domain/ascent.ts : AscentLearningIR, AscentStep,
+   AscentActivity, AscentAdaptation, LearnerBaseline, DepthLevel
+   (AD-15 SSoT, 1 fichier, ~200 lignes)
+2. packages/ascent/ : serveur, 6 fichiers
+   - path-builder.ts (construit le LearningPath)
+   - adapter.ts (adapte sur ProgressEvidenceCreated)
+   - baseline.ts (calcule LearnerBaseline depuis Progress)
+   - depth.ts (selection Quick/Standard/Deep)
+   - read-do-prove.ts (sequencing, framework pas rigide)
+   - source-hierarchy.ts (A>B>C>D, D ne remplace jamais A)
+3. Table : ascent_paths (1 table JSONB, server-only, AD-3)
+   RLS : user_id isolation
+   PAS dans le PowerSync sync scope (comme expert_skills)
+4. Slide-Ascent UI (apps/mobile, 12 types de slides = palette)
+   Progressive disclosure (Level 1 = current+next)
+   Active Reading : 5 actions (Explain, Note, Flashcard, Visualize, "Je bloque")
+   Depth badge + Source hierarchy badge
+5. Agent Kernel integration :
+   Context Builder lit AscentLearningIR
+   Agent emet LearningCommand (generate_qcm, start_mirror)
+   Ascent adapte sur events (ProgressEvidenceCreated, SkillStateChanged)
+6. Tests : baseline accuracy, prerequisite enforcement, adaptation
+   on evidence, depth selection, READ->DO->PROVE flexibility,
+   source hierarchy, progressive disclosure, "Je bloque" flow,
+   offline, RLS
+
+Regles :
+- Ascent = SERVER-SIDE (AD-12, comme Agent Kernel)
+- Ascent lit Knowledge/Progress/Discovery (public views), PAS ecriture
+- Ascent emet LearningCommand (domain command, AD-7), PAS ecriture Learning
+- Ascent ne fait PAS de nouvel event AD-9 (consomme les 9 existants)
+- 80/20 : 1 table JSONB pour demarrer, pas 4 tables separees
+- PAS de 2e LLM pedagogique (Ascent = deterministe, le LLM explique)
+- PAS de Graphiti/Zep (SourceRef + pgvector suffit, AD-11)
+- PAS de WebGL (AntV + KaTeX + images)
+
+Commits : prefixe "wave3/sophia:"
+- "wave3/sophia: domain types (AscentLearningIR + 6 types)"
+- "wave3/sophia: path-builder + adapter + baseline + depth"
+- "wave3/sophia: source-hierarchy + read-do-prove"
+- "wave3/sophia: ascent_paths table + RLS"
+- "wave3/sophia: Slide-Ascent UI (12 slide types + progressive disclosure)"
+- "wave3/sophia: Agent Kernel integration + tests"
