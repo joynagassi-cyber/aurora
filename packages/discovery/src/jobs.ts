@@ -2,10 +2,10 @@
  * Discovery module — job handler for `research` (AD-8, ORION's dispatcher
  * wiring in fn-job-dispatcher).
  *
- * Chevauchement rule: ORION owns the global switch in fn-job-dispatcher.
- * This package exposes a pure handler factory ORION imports; the handler
- * is idempotent (AD-8): the idempotency key dedupes re-dispatches, and
- * the handler checks its completion marker before doing work.
+ * Chevauchement rule: ORION owns the global switch in
+ * supabase/functions/fn-job-dispatcher/index.ts. It registers this
+ * module's handler under module 'discovery' (unroutable jobs stay
+ * pending, AD-8 idempotent, no data loss).
  *
  * Only the closed `JobKind` vocabulary (packages/domain jobs.ts, AD-15).
  * Discovery's heavy work (multi-source search, scenario generation)

@@ -16,6 +16,15 @@
  * `job_queue.result` / `job_logs`, which are Job-system-owned tables).
  */
 import { ok, err, ulid } from "../_shared/envelope.ts";
+import { PRODUCTIVITY_JOB_HANDLERS } from "../../../packages/productivity/src/jobs.ts";
+import {
+  DISCOVERY_JOB_HANDLERS,
+  PROGRESS_JOB_HANDLERS,
+  PROGRESS_FSRS_TICK_HANDLER,
+  PROGRESS_COURSE_IMPORT_HANDLER,
+} from "../../../packages/progress/src/jobs.ts";
+import { SCIENTIFIC_JOB_HANDLERS } from "../../../packages/scientific-engine/src/jobs.ts";
+import { INTEGRATIONS_JOB_HANDLERS } from "../../../packages/integrations/src/automations.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SECRET_KEY = Deno.env.get("SUPABASE_SECRET_KEY") ?? "";
@@ -53,6 +62,24 @@ export function registerHandlers(handlers: RegisteredHandler[]): void {
     );
     if (!exists) HANDLERS.push(h);
   }
+}
+
+/** The full global switch, wired at import time (chevauchement rule:
+ *  this file is the ONLY place the wiring lives; module packages
+ *  provide their handler tables). Unroutable jobs stay pending
+ *  (AD-8 idempotent, no data loss). */
+wireGlobalJobSwitch();
+
+function wireGlobalJobSwitch(): void {
+  registerHandlers([
+    ...PRODUCTIVITY_JOB_HANDLERS,
+    ...DISCOVERY_JOB_HANDLERS,
+    ...PROGRESS_JOB_HANDLERS,
+    PROGRESS_FSRS_TICK_HANDLER,
+    PROGRESS_COURSE_IMPORT_HANDLER,
+    ...SCIENTIFIC_JOB_HANDLERS,
+    ...INTEGRATIONS_JOB_HANDLERS,
+  ]);
 }
 
 /** Route a job to its module handler (the global JobKind switch). */

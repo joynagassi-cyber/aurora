@@ -1,10 +1,12 @@
 /**
  * Progress module — job handlers (AD-8; global wiring in ORION's
- * fn-job-dispatcher switch).
+ * fn-job-dispatcher switch — packages/discovery/src/jobs.ts carries the
+ * discovery-scoped `research` handler, co-located in this module's
+ * file for the shared Progress handler surface).
  *
- * Chevauchement rule: ORION owns the switch in fn-job-dispatcher. This
- * package exposes pure handler factories ORION imports. Progress's heavy
- * work:
+ * Chevauchement rule: ORION owns the switch in fn-job-dispatcher (
+ * supabase/functions/fn-job-dispatcher/index.ts — the ONLY place the
+ * global JobKind switch lives). Progress's heavy work:
  *   - `skill_recompute` — triggered by `progress_evidences` inserts
  *     (01 S5.2); the aggregation that updates SkillState + emits
  *     SkillStateChanged. Idempotent (AD-8): re-running on the same
