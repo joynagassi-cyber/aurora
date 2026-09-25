@@ -322,3 +322,98 @@ export interface StatTileProps {
   chartId?: string;
   loading?: boolean;
 }
+
+// ---------------------------------------------------------------------------
+// 5. CalendarView — engine: FullCalendar v6 (docs/ui-libraries.md §1,
+//    "Calendar (time blocking, events) = FullCalendar, NOT ion-calendar").
+// ---------------------------------------------------------------------------
+
+/**
+ * Time-block types (agent-prompts Phase 2.3 "blocs colores par type").
+ * The BLOCKING rule (05 §5.1): event = schedule data, NOT a semantic
+ * state — success/warning/danger/info never ride on event colors.
+ */
+export type CalendarBlockType = "etude" | "focus" | "projet";
+
+/** One calendar event / time block (04 S4.2 calendar_events, 02 §5.3). */
+export interface RenderCalendarEvent {
+  id: string;
+  title: string;
+  /** ISO start (FullCalendar all-day or timed). */
+  start: string;
+  /** ISO end. Omitted for all-day single events. */
+  end?: string;
+  blockType?: CalendarBlockType;
+  /** Focus sessions = blocklist icon (agent-prompts Phase 2.3). */
+  focusSession?: boolean;
+  /** Double red border when overlapping (FullCalendar eventOverlap). */
+  conflicting?: boolean;
+  allDay?: boolean;
+}
+
+/** The 4 views (docs/ui-libraries.md §1: day, week, month, agenda). */
+export type CalendarViewName =
+  | "dayGridMonth"
+  | "timeGridWeek"
+  | "timeGridDay"
+  | "listWeek";
+
+export interface CalendarViewProps {
+  events: RenderCalendarEvent[];
+  initialView?: CalendarViewName;
+  /** Day grid + week grid + list (agenda) + interaction (drag/drop). */
+  height?: "auto" | number;
+  /** Mobile: day/week only (docs/ui-libraries.md §5). */
+  mobile?: boolean;
+  /** Time-block conflict detection (agent-prompts Phase 2.3). */
+  conflictDetection?: boolean;
+  onEventClick?: (event: RenderCalendarEvent) => void;
+  onEventDrop?: (event: RenderCalendarEvent, start: string) => void;
+  /** AD-13 states: loading (skeleton) / error (callout + retry) /
+   *  empty ("Aucun événement") / offline (last-known + badge). */
+  loading?: boolean;
+  errorMessage?: string;
+  onRetry?: () => void;
+  emptyMessage?: string;
+}
+
+// ---------------------------------------------------------------------------
+// 6. AgGridTable — engine: AG Grid Community (docs/ui-libraries.md §1,
+//    "Data table, virtualized, 1000+ rows 60fps. NOT shadcn Table for
+//    heavy data"). docs §5: rowBuffer 10, maxVisibleRows 30 on mobile.
+// ---------------------------------------------------------------------------
+
+/** Column definition (subset of AG Grid IColDef, app-facing). */
+export interface AgGridColumnDef<T> {
+  field: string;
+  headerName: string;
+  /** Sortable (default true for numeric, false otherwise). */
+  sortable?: boolean;
+  /** Fixed pixel width. Omit for flex sizing. */
+  width?: number;
+  /** Renderer (text / number / progress / badge). */
+  cellRenderer?: "text" | "number" | "progress" | "badge";
+  /** Mono tabular values (05 §2.2). */
+  mono?: boolean;
+  /** Custom cell render (escape hatch, app-owned). */
+  renderCell?: (value: unknown, row: T) => React.ReactNode;
+}
+
+export interface AgGridTableProps<T extends { id: string | number }> {
+  /** Row key field (AG Grid rowSelectionModel). */
+  rows: T[];
+  columns: AgGridColumnDef<T>[];
+  /** Virtualization (docs/ui-libraries.md §5: rowBuffer 10,
+   *  maxVisibleRows 30 on mobile). */
+  virtualized?: boolean;
+  mobile?: boolean;
+  /** AG Grid rowSelectionModel. */
+  selectable?: boolean;
+  onRowClick?: (row: T) => void;
+  /** AD-13 states: loading (skeleton rows) / error (callout + retry,
+   *  last-synced rows stay) / empty ("Aucun résultat") / offline. */
+  loading?: boolean;
+  errorMessage?: string;
+  onRetry?: () => void;
+  emptyMessage?: string;
+}

@@ -90,6 +90,12 @@ export type {
   RenderSemanticEdge,
   RenderSemanticBridge,
   InfographicSpec,
+  CalendarBlockType,
+  RenderCalendarEvent,
+  CalendarViewName,
+  CalendarViewProps,
+  AgGridColumnDef,
+  AgGridTableProps,
 } from "./renderers/contracts";
 export type {
   ChartSpec,
@@ -107,6 +113,12 @@ export { KeyValueList } from "./components/ui/KeyValueList";
 export { Timeline } from "./components/ui/Timeline";
 export { GanttRow } from "./components/ui/GanttRow";
 export { StatTile } from "./components/ui/StatTile";
+
+// --- Calendar (FullCalendar v6) + data grid (AG Grid Community) -----------
+// docs/ui-libraries.md §1: Calendar = FullCalendar (NOT ion-calendar);
+// data tables > 100 rows = AG Grid (virtualized, 60fps Pixel 4a).
+export { CalendarView } from "./components/ui/CalendarView";
+export { AgGridTable } from "./components/ui/AgGridTable";
 
 // --- Utils & hooks ----------------------------------------------------------
 export { cn } from "./lib/utils";

@@ -23,6 +23,12 @@ export type {
   TimelineProps,
   GanttRowProps,
   StatTileProps,
+  CalendarBlockType,
+  RenderCalendarEvent,
+  CalendarViewName,
+  CalendarViewProps,
+  AgGridColumnDef,
+  AgGridTableProps,
   NodeState,
   SourceRef,
 } from "./contracts";
@@ -53,3 +59,7 @@ export { KeyValueList } from "src/components/ui/KeyValueList";
 export { Timeline } from "src/components/ui/Timeline";
 export { GanttRow } from "src/components/ui/GanttRow";
 export { StatTile } from "src/components/ui/StatTile";
+
+// Calendar (FullCalendar) + data grid (AG Grid) — docs/ui-libraries.md §1.
+export { CalendarView } from "../components/ui/CalendarView";
+export { AgGridTable } from "../components/ui/AgGridTable";

@@ -14,13 +14,23 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --max-warnings 0"
+    "lint": "eslint src --max-warnings 0",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "test:device": "node --experimental-transform-types --no-warnings scripts/semantic-tree-30fps.mts"
   },
   "dependencies": {
     "@antv/g2": "^5.4.8",
     "@antv/infographic": "^0.2.20",
     "@aurora/domain": "workspace:*",
     "@dagrejs/dagre": "^3.1.1",
+    "@fullcalendar/core": "^6.1.21",
+    "@fullcalendar/daygrid": "^6.1.21",
+    "@fullcalendar/interaction": "^6.1.21",
+    "@fullcalendar/list": "^6.1.21",
+    "@fullcalendar/react": "^6.1.21",
+    "@fullcalendar/timegrid": "^6.1.21",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.20",
     "@radix-ui/react-alert-dialog": "^1.1.23",
@@ -45,6 +55,8 @@
     "@radix-ui/react-toast": "^1.2.23",
     "@radix-ui/react-tooltip": "^1.2.16",
     "@xyflow/react": "^12.11.6",
+    "ag-grid-community": "^33.3.2",
+    "ag-grid-react": "^33.3.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -66,9 +78,13 @@
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^4.7.0",
+    "@vitest/coverage-v8": "^2.1.9",
     "autoprefixer": "^10.6.1",
+    "happy-dom": "^15.11.7",
+    "jsdom": "^25.0.1",
     "postcss": "^8.4",
     "tailwindcss": "^3.4.19",
-    "vite": "^5.4.21"
+    "vite": "^5.4.21",
+    "vitest": "^2.1.9"
   }
 }

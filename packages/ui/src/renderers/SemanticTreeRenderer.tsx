@@ -15,7 +15,6 @@
  */
 import * as React from "react";
 import { useCallback, useMemo, useState } from "react";
-import * as dagre from "dagre";
 import {
   Background,
   Controls,
@@ -60,17 +59,19 @@ const SemanticNodeComponent = React.memo(function SemanticNodeComponent({
   const node = (data as { semantic: RenderSemanticNode }).semantic;
   const s =
     STATE_STYLES[node.state?.learningState ?? "not-yet"] ?? STATE_FALLBACK;
+  const ring = s.ring;
+  const stateLabel = s.label;
   return (
     <div
       data-node-id={node.id}
       className={cn(
         "rounded-md border border-border bg-card px-3 py-2 text-sm font-medium shadow-sm",
-        s.ring,
+        ring,
       )}
     >
       <span>{node.concept}</span>
       <span className="ml-2 font-mono text-xs text-muted-foreground">
-        {s.label}
+        {stateLabel}
       </span>
       {node.hasChildren ? (
         <span className="ml-1 text-xs text-muted-foreground" aria-hidden>
@@ -86,38 +87,26 @@ const nodeTypes = { semantic: SemanticNodeComponent };
 // ---------------------------------------------------------------------------
 // Dagre — layout only, cached per batch key (R4)
 // ---------------------------------------------------------------------------
+//
+// The headless layout core (batch keying, DAGRE cache, Dagre pass) lives
+// in `src/perf/layout-core.ts` — a framework-free module so the 30fps
+// device script (`scripts/semantic-tree-30fps.mts`, run under Node 22
+// type-stripping) and the CI perf test can time the exact same layout
+// pass without importing React/@xyflow/react. The React path below calls
+// that same `layoutBatch` and wraps its positions into @xyflow/react
+// `Node[]`/`Edge[]` — one shared cache for both paths.
 
-const DAGRE_CACHE = new Map<string, { nodes: Node[]; edges: Edge[] }>();
+import { __resetDagreCacheForTests, layoutWithDagre, type LayoutResult } from "src/perf/layout-core";
 
-function layoutWithDagre(
+function toFlowNodes(
+  laid: LayoutResult,
   nodes: RenderSemanticNode[],
   edges: RenderSemanticEdge[],
   bridges: RenderSemanticBridge[],
 ): { nodes: Node[]; edges: Edge[] } {
-  const key = [
-    nodes.map((n) => n.id).join(","),
-    edges.map((e) => e.id).join(","),
-    bridges.map((b) => b.id).join(","),
-  ].join("|");
-  const hit = DAGRE_CACHE.get(key);
-  if (hit) return hit;
-
-  const g = new dagre.graphlib.Graph();
-  g.setGraph({
-    rankdir: "LR",
-    nodesep: 24,
-    ranksep: 48,
-    marginx: 8,
-    marginy: 8,
-  });
-  g.setDefaultEdgeLabel(() => ({}));
-  for (const n of nodes) g.setNode(n.id, { label: n.concept });
-  for (const e of edges) g.setEdge(e.source, e.target, { label: e.relation });
-  for (const b of bridges) g.setEdge(b.source, b.target, { label: b.label });
-  dagre.layout(g);
-
+  const byId = new Map(laid.nodes.map((p) => [p.id, p]));
   const flowNodes: Node[] = nodes.map((n) => {
-    const p = g.node(n.id) ?? { x: 0, y: 0 };
+    const p = byId.get(n.id) ?? { x: 0, y: 0 };
     return {
       id: n.id,
       type: "semantic",
@@ -146,15 +135,7 @@ function layoutWithDagre(
       labelStyle: { fill: "hsl(var(--aurora-text-muted-h))", fontSize: 10 },
     })),
   ];
-
-  const out = { nodes: flowNodes, edges: flowEdges };
-  DAGRE_CACHE.set(key, out);
-  // Tiny cap: oldest key evicted on overflow (R4 — no unbounded growth).
-  if (DAGRE_CACHE.size > 8) {
-    const oldest = DAGRE_CACHE.keys().next().value;
-    if (oldest !== undefined) DAGRE_CACHE.delete(oldest);
-  }
-  return out;
+  return { nodes: flowNodes, edges: flowEdges };
 }
 
 // ---------------------------------------------------------------------------
@@ -204,7 +185,7 @@ export function SemanticTreeRenderer({
   const effectiveVisible = visibleBranches ?? opened;
 
   const laid = useMemo(
-    () => layoutWithDagre(allNodes, edges, bridges ?? []),
+    () => toFlowNodes(layoutWithDagre(allNodes, edges, bridges ?? []), allNodes, edges, bridges ?? []),
     // R4: cached internally — deps are the batch key inputs.
     [allNodes, edges, bridges, effectiveVisible],
   );
@@ -312,4 +293,21 @@ export function SemanticTreeRenderer({
   );
 }
 
-export { STATE_STYLES, SemanticNodeComponent, layoutWithDagre };
+// 1000-node R2/R4 perf budget (02 §9.2). The renderer's per-frame path
+// is the CACHED Dagre hit (R4); the first-call graph build per batch
+// key is a one-time amortized cost. Device p95 frame < 50ms (30fps
+// on Pixel 4a @4x CPU throttle) is enforced on hardware via
+// `pnpm run test:device` (scripts/semantic-tree-30fps.mts). The CI
+// headless test (test/semantic-tree-perf.test.ts) asserts the
+// R2/R4 contract: incremental layout + cache hits + cache cap.
+export {
+  STATE_STYLES,
+  SemanticNodeComponent,
+};
+
+// Re-export the headless Dagre core from the shared module so the
+// pre-existing `from "src/renderers/SemanticTreeRenderer"` import path
+// keeps working (perf test + any consumer). The REAL cache + layout
+// live in src/perf/layout-core.ts (single source of truth).
+export { __resetDagreCacheForTests, layoutWithDagre } from "src/perf/layout-core";
+export { dagreCacheSize } from "src/perf/layout-core";
