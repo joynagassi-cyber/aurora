@@ -1,0 +1,104 @@
+/**
+ * 17-page router (02 S6.1, docs/mobile/navigation-and-page-composition.md).
+ *
+ * Frozen route table (page matrix S2, "Routing" S6 of goal-dashboard-ui.md):
+ *
+ *  Primary tabs (max 5, 44-60 px bar):
+ *   /home · /tasks · /learn · /progress · /agent
+ *  Details open OVER the current tab (IonModal/IonSlides — 02 §6.1):
+ *   /tasks/:id · /learn/:id · /progress/:id · /knowledge · /knowledge/:nodeId
+ *  Additional routes:
+ *   /artifacts/:id · /inbox · /settings · /goals · /goals/:id ·
+ *   /goals/:id/features/:fid · /focus · /calendar
+ *
+ * Frozen 17-page inventory (02 S6.1):
+ *   1 /home  2 /tasks  3 /tasks/:id  4 /calendar  5 /projects  6 /goals
+ *   7 /goals/:id  8 /learn  9 /learn/:id  10 /knowledge  11 /knowledge/:nodeId
+ *   12 /discovery  13 /progress  14 /progress/:id  15 /focus  16 /artifacts/:id
+ *   17 /agent  (+ /inbox, /settings = tab-adjacent routes, * = fallback)
+ *
+ * Context-preserving navigation: route params + query (?goalId=X) —
+ * see docs/mobile/context-preserving-navigation.md. Native back (Android
+ * gesture) works on every route; a route that blocks back saves first
+ * (02 §6.3, local-first auto-persist).
+ */
+import { createBrowserRouter } from 'react-router-dom';
+import { Shell } from './shell/Shell';
+import { InboxPage } from './pages/inbox';
+
+// 17 pages. Each is a lazy boundary; the tab family renders inside Shell,
+// details render over the current tab (S1 / S3 detail-over-tab rule).
+
+import { HomePage } from './pages/home';
+import { TasksPage, TaskDetailPage } from './pages/tasks';
+import { CalendarPage } from './pages/calendar';
+import { ProjectsPage } from './pages/projects';
+import { GoalsPage, GoalDashboardPage, GoalFeatureDetailPage } from './pages/goals';
+import { LearnPage, LearnDetailPage } from './pages/learn';
+import { KnowledgePage, KnowledgeNodePage } from './pages/knowledge';
+import { DiscoveryPage } from './pages/discovery';
+import { ProgressPage, ProgressDetailPage } from './pages/progress';
+import { FocusPage } from './pages/focus';
+import { ArtifactPage } from './pages/artifacts';
+import { AgentPage } from './pages/agent';
+import { SettingsPage } from './pages/settings';
+import { NotFoundPage } from './pages/not-found';
+
+// Explicit annotation (TS2742): the inferred return type of
+// `createBrowserRouter` pulls in @remix-run/router's Router type through
+// a pnpm transitive path that is not portable from apps/mobile's node_modules
+// graph; naming it here keeps the declaration emit self-contained.
+export type AppRouter = ReturnType<typeof createBrowserRouter>;
+export const appRouter: AppRouter = createBrowserRouter([
+  {
+    element: <Shell />,
+    children: [
+      // --- Primary tabs (5, 02 §6.1) ---
+      { index: true, element: <HomePage />, path: '/' },
+      { path: '/home', element: <HomePage /> },
+      { path: '/tasks', element: <TasksPage /> },
+      { path: '/learn', element: <LearnPage /> },
+      { path: '/progress', element: <ProgressPage /> },
+      { path: '/agent', element: <AgentPage /> },
+
+      // --- Details over the current tab (IonModal/IonSlides, 02 §6.1) ---
+      { path: '/tasks/:id', element: <TaskDetailPage /> },
+      { path: '/learn/:id', element: <LearnDetailPage /> },
+      { path: '/progress/:id', element: <ProgressDetailPage /> },
+      { path: '/knowledge', element: <KnowledgePage /> },
+      { path: '/knowledge/:nodeId', element: <KnowledgeNodePage /> },
+      { path: '/artifacts/:id', element: <ArtifactPage /> },
+
+      // --- Tab-adjacent routes (02 §6.1 page matrix) ---
+      { path: '/inbox', element: <InboxPage /> },
+      { path: '/settings', element: <SettingsPage /> },
+
+      // --- Goals family (goal-dashboard-ui.md S6) ---
+      { path: '/goals', element: <GoalsPage /> },
+      { path: '/goals/:id', element: <GoalDashboardPage /> },
+      { path: '/goals/:id/features/:fid', element: <GoalFeatureDetailPage /> },
+
+      // --- Focus + calendar family views ---
+      { path: '/focus', element: <FocusPage /> },
+      { path: '/calendar', element: <CalendarPage /> },
+
+      // --- Projects family view ---
+      { path: '/projects', element: <ProjectsPage /> },
+
+      // --- Discovery feed ---
+      { path: '/discovery', element: <DiscoveryPage /> },
+
+      // --- Flashcards / QCM / exercises: /learn/:id overlays (05 §4.8) ---
+      // (already registered under details above; no second registration)
+
+      // --- Fallback: deep link into a disabled feature renders a
+      //   "feature disabled" state, NOT a crash / 404 (feature-registry S6).
+      { path: '*', element: <NotFoundPage /> },
+    ],
+  },
+]);
+
+export type AppRoute = '/home' | '/tasks' | '/learn' | '/progress' | '/agent'
+  | '/tasks/:id' | '/learn/:id' | '/progress/:id' | '/knowledge' | '/knowledge/:nodeId'
+  | '/artifacts/:id' | '/inbox' | '/settings' | '/goals' | '/goals/:id'
+  | '/goals/:id/features/:fid' | '/focus' | '/calendar' | '/projects' | '/discovery';

@@ -1,0 +1,19 @@
+/**
+ * Build config for the apps/mobile workspace project.
+ *
+ * Emits declaration files so the TS6305 composite-references check in
+ * `tsc --noEmit` can resolve the `dist/index.d.ts` of the referenced
+ * packages (domain / data / ui / platform / agent). The `build` script
+ * (tsconfig.build.json) is run from the root via `pnpm build` — the
+ * typecheck script in package.json stays `tsc --noEmit` and is the
+ * fast gate for CI.
+ */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "outDir": "dist"
+  }
+}
