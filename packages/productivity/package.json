@@ -1,0 +1,24 @@
+{
+  "name": "@aurora/productivity",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Productivity module \u2014 domain services (tasks, projects, goals, habits, focus), use-cases, event emitters + observers, job registration (AD-7/AD-8/AD-9). Pure logic: no vendor SDKs, no DOM.",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --max-warnings 0",
+    "test": "node --experimental-strip-types --no-warnings --test test/productivity.test.ts"
+  },
+  "dependencies": {
+    "@aurora/domain": "workspace:*"
+  },
+  "devDependencies": {}
+}
