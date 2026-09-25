@@ -1,6 +1,15 @@
 # SESSION 4 — WAVE 3-7 : AGENT + INTEGRATION + RELEASE
-# 4 sous-agents en parallele. Les vagues 0-2 sont terminees
+# 5 sous-agents en parallele. Les vagues 0-2 sont terminees
 # (modules, features, scientific engine).
+#
+# Pour aller vite : donne a chaque sous-agent SON fichier de prompt
+# autonome (contexte + regles + taches inclus) :
+#   ORACLE     -> prompts/oracle.md
+#   HEPHAESTUS -> prompts/hephaestus.md
+#   HARPYS     -> prompts/harpys.md
+#   ERYNIS     -> prompts/erynis.md
+#   SOPHIA     -> prompts/sophia.md
+# Ce fichier (session 4) reste la vue d'ensemble du wave.
 
 ## Contexte commun
 - Projet : C:\Users\joyda\dyad-apps\aurora-2
@@ -13,6 +22,7 @@
 ---
 
 ## SOUS-AGENT 1 : ORACLE (Agent Kernel + Vercel AI SDK + Expert Skills)
+Fichier autonome : prompts/oracle.md
 
 Lis :
 - docs/agent/kernel.md (15 sections, 15 composants)
@@ -47,6 +57,7 @@ Commits : prefixe "wave3/oracle:"
 ---
 
 ## SOUS-AGENT 2 : HEPHAESTUS (Goal Engine + Goal Dashboard)
+Fichier autonome : prompts/hephaestus.md
 
 Lis :
 - docs/architecture/dynamic-goal-engine.md
@@ -73,6 +84,7 @@ Commits : prefixe "wave3/hephaestus:"
 ---
 
 ## SOUS-AGENT 3 : HARPYS (23 Workflows + E2E + Self-Improvement)
+Fichier autonome : prompts/harpys.md
 
 Lis :
 - docs/workflows/composite-workflows.md (W1-W23)
@@ -95,6 +107,7 @@ Commits : prefixe "wave4/harpys:"
 ---
 
 ## SOUS-AGENT 4 : ERYNIS (UI Polish + E2E Device + Release)
+Fichier autonome : prompts/erynis.md
 
 Lis :
 - docs/testing/matrix.md
@@ -128,6 +141,7 @@ Commits : prefixe "wave5/erynis:" puis "wave7/erynis:"
 ---
 
 ## SOUS-AGENT 5 : SOPHIA (Ascent — Pedagogical Trajectory Engine)
+Fichier autonome : prompts/sophia.md
 
 Lis :
 - docs/ascent/overview.md (22 sections, le concept complet)

@@ -1,0 +1,69 @@
+# PROMPT — SOPHIA (Wave 3, Ascent — Pedagogical Trajectory Engine)
+
+Tu es SOPHIA. Implémente le module Ascent : le moteur de trajectoire pédagogique adaptatif.
+
+## Travail dans : C:\Users\joyda\dyad-apps\aurora-2
+
+## Contexte commun (tous les agents wave 3)
+- Monorepo pnpm, 14 packages (wave 0)
+- AD-12 : UN kernel, serveur, device = AgentRunState UNIQUEMENT
+- AD-7 : single-writer (chaque module n'ecrit QUE ses tables)
+- AD-9 : vocabulaire de 9 events FERME (pas de 10e sans ADR)
+- AD-13 : 1 story = 1 commit = 1 rollback
+- docs/ui-libraries.md : composants premium (un seul systeme par ecran)
+
+## Lis AVANT de coder (dans cet ordre) :
+1. docs/ascent/overview.md (22 sections, le concept complet)
+2. docs/ascent/implementation.md (guide d'implementation + erreurs/edges)
+3. docs/architecture/dynamic-goal-engine.md (GoalProject, Ascent = couche au-dessus)
+4. docs/agent/kernel.md (S12, Ascent = capability du kernel, pas un agent separe)
+5. docs/progress/overview.md (SkillState, ProgressEvidence)
+6. docs/learning/overview.md (QCM, flashcards, mirror)
+7. docs/knowledge/overview.md (tree, concepts, formulas)
+
+## Regles absolues :
+- Ascent = SERVER-SIDE (AD-12, comme Agent Kernel), package neuf packages/ascent
+- Ascent lit Knowledge/Progress/Discovery (public views), PAS ecriture
+- Ascent emet LearningCommand (domain command, AD-7), PAS ecriture dans les tables Learning
+- Ascent ne fait PAS de nouvel event AD-9 (consomme les 6 existants, voir implementation.md)
+- 80/20 : 1 table JSONB (ascent_paths) pour demarrer, PAS 4 tables separees
+- PAS de 2e LLM pedagogique (Ascent = deterministe, le LLM explique)
+- PAS de Graphiti/Zep (SourceRef + pgvector suffit, AD-11)
+- PAS de WebGL (AntV + KaTeX + images)
+
+## Taches (1 commit par tache) :
+1. packages/domain/ascent.ts : AscentLearningIR, AscentStep,
+   AscentActivity, AscentAdaptation, LearnerBaseline, DepthLevel
+   (AD-15 SSoT, 1 fichier, ~200 lignes, types exacts = overview.md S6)
+2. packages/ascent/ : serveur, 6 fichiers
+   - path-builder.ts (construit le LearningPath)
+   - adapter.ts (adapte sur ProgressEvidenceCreated)
+   - baseline.ts (calcule LearnerBaseline depuis Progress)
+   - depth.ts (selection Quick/Standard/Deep)
+   - read-do-prove.ts (sequencing, framework pas rigide)
+   - source-hierarchy.ts (A>B>C>D, D ne remplace jamais A)
+3. Table : ascent_paths (1 table JSONB, server-only, AD-3)
+   RLS : user_id isolation
+   PAS dans le PowerSync sync scope (comme expert_skills)
+   + migration RLS + test d'intrusion (pattern wave 0 MINERVA)
+4. Slide-Ascent UI (apps/mobile, 12 types de slides = palette, PAS sequence)
+   Progressive disclosure (Level 1 = current+next seulement)
+   Active Reading : 5 actions (Explain, Note, Flashcard, Visualize, "Je bloque")
+   Depth badge + Source hierarchy badge (A/B/C/D)
+   3 etats asynchrones sur tout (vide, chargement, erreur — ui-libraries.md Partie 3)
+5. Agent Kernel integration :
+   Context Builder lit AscentLearningIR
+   Agent emet LearningCommand (generate_qcm, start_mirror)
+   Ascent adapte sur events (ProgressEvidenceCreated, SkillStateChanged)
+6. Tests : baseline accuracy, prerequisite enforcement, adaptation
+   on evidence, depth selection, READ->DO->PROVE flexibility,
+   source hierarchy, progressive disclosure, "Je bloque" flow,
+   offline (mirror), RLS
+
+COMMIT MESSAGES : prefixe "wave3/sophia:"
+- "wave3/sophia: domain types (AscentLearningIR + 6 types)"
+- "wave3/sophia: path-builder + adapter + baseline + depth"
+- "wave3/sophia: source-hierarchy + read-do-prove"
+- "wave3/sophia: ascent_paths table + RLS"
+- "wave3/sophia: Slide-Ascent UI (12 slide types + progressive disclosure)"
+- "wave3/sophia: Agent Kernel integration + tests"
