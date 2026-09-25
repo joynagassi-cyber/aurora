@@ -14,10 +14,11 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --no-warnings --test test/focus.test.ts test/service.test.ts"
+    "test": "node --experimental-strip-types --no-warnings --test test/focus.test.ts test/service.test.ts test/scenarios-s13.test.ts"
   },
   "dependencies": {
     "@aurora/domain": "workspace:*",
+    "@aurora/platform": "workspace:*",
     "@aurora/productivity": "workspace:*"
   },
   "devDependencies": {}

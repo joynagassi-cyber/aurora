@@ -33,6 +33,7 @@ import type {
   FocusSessionBilan,
   OrSetValue,
 } from '@aurora/domain';
+import type { FocusControllerDpc } from '@aurora/platform';
 import type {
   FocusPrecheck,
   FocusSessionOptions,
@@ -49,18 +50,13 @@ import {
 } from './timer.ts';
 
 /**
- * Minimal DPC surface used by the service (mirrors
- * @aurora/platform's `FocusControllerDpc` — declared locally so the
- * contract package never depends on the platform package; the
- * platform `DpcAdapter` satisfies this shape structurally).
+ * The DPC surface the service drives — structurally satisfied by
+ * @aurora/platform's `FocusControllerDpc` (the `DpcAdapter` over the
+ * Capacitor custom module). Declared in @aurora/platform so the
+ * contract + implementation stay on one side of the hexagon (AD-1:
+ * no vendor, no DOM in this package).
  */
-export interface FocusDpcSurface {
-  precheckBlocklist(names: string[]): Promise<FocusPrecheck>;
-  applyBlocklist(
-    names: string[],
-    on: boolean,
-  ): Promise<{ applied: string[]; rejected: { pkg: string; reason: string }[] }>;
-}
+export type FocusDpcSurface = FocusControllerDpc;
 
 /** Persistence seam — the ATLAS/Productivity writers (AD-7). */
 export interface FocusSessionRepo {

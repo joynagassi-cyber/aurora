@@ -166,6 +166,9 @@ importers:
       '@aurora/domain':
         specifier: workspace:*
         version: link:../domain
+      '@aurora/platform':
+        specifier: workspace:*
+        version: link:../platform
       '@aurora/productivity':
         specifier: workspace:*
         version: link:../productivity
