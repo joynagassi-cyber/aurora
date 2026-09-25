@@ -11,21 +11,47 @@ export {
   createAppLifecycleAdapter,
   type AppLifecycleAdapter,
   type AppState,
-} from './lifecycle';
+} from './lifecycle.ts';
 
 export {
   createNetworkStatusAdapter,
   type NetworkStatusAdapter,
-} from './network';
+} from './network.ts';
 
 export {
   createRemoteNotificationAdapter,
   type RemoteNotificationAdapter,
   type OneSignalNotification,
-} from './remote-notification';
+} from './remote-notification.ts';
 
 export {
   createLocalNotificationAdapter,
   type LocalNotificationAdapter,
   type LocalNotification,
-} from './local-notification';
+} from './local-notification.ts';
+
+export {
+  type BlocklistPrecheck,
+  type DpcBridge,
+  type DpcSuspendResult,
+  type FocusControllerDpc,
+  type PrecheckPackage,
+} from './dpc.ts';
+
+export {
+  DpcAdapter,
+  createDpcAdapter,
+} from './dpc-adapter.ts';
+
+export {
+  reconcileOnBoot,
+  applyRecovery,
+  type SessionRow,
+  type RecoveryDecision,
+} from './boot-receiver.ts';
+
+export {
+  computeFocusBilanScore,
+  type BilanInput,
+  type FocusBilanScore,
+} from './bilan.ts';
