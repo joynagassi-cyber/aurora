@@ -39,6 +39,7 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.30.6",
     "tailwind-merge": "^3.7.0",
-    "zustand": "^5.0.15"
+    "zustand": "^5.0.15",
+    "@aurora/focus": "workspace:*"
   }
 }

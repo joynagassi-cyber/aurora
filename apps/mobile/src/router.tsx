@@ -79,7 +79,7 @@ export const appRouter: AppRouter = createBrowserRouter([
       { path: '/goals/:id/features/:fid', element: <GoalFeatureDetailPage /> },
 
       // --- Focus + calendar family views ---
-      { path: '/focus', element: <FocusPage /> },
+      { path: '/focus', element: <FocusPage service={null} /> },
       { path: '/calendar', element: <CalendarPage /> },
 
       // --- Projects family view ---
