@@ -1,0 +1,19 @@
+{
+  "name": "@aurora/learning",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Learning + Knowledge module (wave 2, SAPPHO): course import pipeline, study sheets, flashcards + FSRS, QCM generation, Mirror Cognitive Mode, semantic tree, retrieval. Owns its tables only (AD-7); 9-event vocabulary (AD-9); heavy work = persisted jobs (AD-8).",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": { "types": "./src/index.ts", "default": "./src/index.ts" }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --no-warnings --test \"test/*.test.ts\""
+  },
+  "dependencies": {
+    "@aurora/domain": "workspace:*"
+  }
+}
