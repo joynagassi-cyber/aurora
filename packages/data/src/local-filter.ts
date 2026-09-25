@@ -32,7 +32,7 @@ export interface LocalRow {
  * cross-module data flows through the source module's own rows (public view
  * semantics, 01 S3.4), never through a local join.
  */
-export interface LocalFilter<T extends LocalRow = LocalRow> {
+export interface LocalFilter<T = LocalRow> {
   entity: string;
   where?: Partial<Record<keyof T, unknown>>;
   orderBy?: { field: keyof T & string; direction?: 'asc' | 'desc' };

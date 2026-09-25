@@ -16,7 +16,10 @@ export function useGoals() {
   const { goals } = useMobileData();
   return useQuery({
     queryKey: qk.goal.list(),
-    queryFn: async () => (await goals.list({})).filter((g): g is GoalProject => g.status === 'active'),
+    queryFn: async () =>
+      ((await goals.list({ entity: 'goals' })).filter(
+        (g): g is GoalProject => (g as GoalProject).status === 'active',
+      ) as GoalProject[]),
   });
 }
 
@@ -33,7 +36,8 @@ export function useTasks(filter?: { userId?: string }) {
   const { tasks } = useMobileData();
   return useQuery({
     queryKey: qk.task.list(filter?.userId),
-    queryFn: async () => tasks.list({ userId: filter?.userId }) as Promise<Task[]>,
+    queryFn: async () =>
+      tasks.list({ entity: 'tasks', where: filter?.userId ? { userId: filter.userId } : undefined }) as Promise<Task[]>,
   });
 }
 

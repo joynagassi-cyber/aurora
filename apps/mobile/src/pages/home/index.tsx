@@ -100,7 +100,7 @@ export function HomePage() {
         {/* AD-14 slot 2: critical-progress — GoalProject cards */}
         <Slot slot="critical-progress" title="Progression critique" state={goalState} flags={flags}>
           <div className="goal-cards">
-            {goals?.map((g) => <GoalProjectCard key={g.id} goal={g} />)}
+            {goals?.map((g: GoalProject) => <GoalProjectCard key={g.id} goal={g} />)}
           </div>
         </Slot>
 

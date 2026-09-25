@@ -24,7 +24,7 @@ export type WriteResult =
   | { ok: true; queuedForUpsync: number }
   | { ok: false; error: { code: string; message: string } };
 
-export interface LocalQueryRepository<T extends LocalRow = LocalRow> {
+export interface LocalQueryRepository<T = LocalRow> {
   /** local-only read by id (AD-7: the UI reads local state first). */
   getById(id: string): Promise<T | undefined>;
   /** local-only filtered list (03 S3.1). */
@@ -50,7 +50,7 @@ export interface LocalCommandRepository {
 // LocalQueryRepository — the read surface (store-backed, SQLite in prod)
 // ---------------------------------------------------------------------------
 
-export class SqliteQueryRepository<T extends LocalRow = LocalRow>
+export class SqliteQueryRepository<T = LocalRow>
   implements LocalQueryRepository<T>
 {
   private readonly store: LocalStore;

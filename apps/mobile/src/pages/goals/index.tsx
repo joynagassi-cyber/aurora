@@ -14,6 +14,7 @@
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useGoals, useGoal } from '../../query/hooks';
+import type { GoalProject, FeaturePlacement, SubGoal } from '@aurora/domain';
 
 export function GoalsPage() {
   const { data: goals, isPending } = useGoals();
@@ -27,7 +28,7 @@ export function GoalsPage() {
         {isPending && <div data-state="loading" />}
         {goals && goals.length === 0 && <div data-state="empty">Aucun objectif + capture CTA</div>}
         <ul className="goals-list">
-          {goals?.map((g) => (
+          {goals?.map((g: GoalProject) => (
             <li key={g.id}>
               <a href={`/goals/${g.id}`}>{g.objective}</a>
             </li>
@@ -56,14 +57,14 @@ export function GoalDashboardPage() {
               <span data-progress={goal.progress.overallPct}>{goal.progress.overallPct}%</span>
             </div>
             <div className="feature-workflow">
-              {goal.features.map((f) => (
+              {goal.features.map((f: FeaturePlacement) => (
                 <a key={f.featureId} href={`/goals/${goal.id}/features/${f.featureId}`} className="feature-node">
                   {f.featureId}
                 </a>
               ))}
             </div>
             <div className="context-strip">
-              <span>Cette semaine : {goal.subGoals.filter((s) => s.status === 'done').length}/
+              <span>Cette semaine : {goal.subGoals.filter((s: SubGoal) => s.status === 'done').length}/
                 {goal.subGoals.length} sous-objectifs</span>
             </div>
           </div>
