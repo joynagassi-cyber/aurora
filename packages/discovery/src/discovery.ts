@@ -9,7 +9,6 @@
  */
 import type {
   DiscoveryItem,
-  OrSetValue,
 } from '@aurora/domain';
 import type {
   DiscoveryFilterContext,
@@ -85,10 +84,12 @@ export function buildDiscoveryItem(
   decision: FilterDecision,
 ): DiscoveryItem {
   const now = draft.now ?? new Date().toISOString();
+  const nowMs = Date.parse(now);
+  // OR-Set encoding (03 S5.3): { v, ts, c } — server ts + client id.
   const sourceIds = draft.results.map((r) => r.title);
-  const sources = sourceIds.map((v) => ({ v })) as OrSetValue[];
+  const sources = sourceIds.map((v) => ({ v, ts: nowMs, c: 'discovery' }));
   const mkOr = (vals?: string[]) =>
-    (vals ?? []).map((v) => ({ v })) as OrSetValue[];
+    (vals ?? []).map((v) => ({ v, ts: nowMs, c: 'discovery' }));
   const uncertain =
     decision.verdict === 'uncertain' ||
     draft.kind === 'UNCERTAINTY' ||
