@@ -2,7 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    "allowImportingTsExtensions": true
   },
   "include": [
     "src"
@@ -13,6 +14,9 @@
   "references": [
     {
       "path": "../domain"
+    },
+    {
+      "path": "../scientific-engine"
     }
   ]
 }

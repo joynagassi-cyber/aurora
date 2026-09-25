@@ -11,9 +11,11 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --max-warnings 0"
+    "lint": "eslint src --max-warnings 0",
+    "test": "node --experimental-strip-types --no-warnings --test test/sympy.test.ts"
   },
   "dependencies": {
-      "@aurora/domain": "workspace:*"
+      "@aurora/domain": "workspace:*",
+      "@aurora/scientific-engine": "workspace:*"
   }
 }
