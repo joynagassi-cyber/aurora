@@ -3,3 +3,6 @@
  * Consumes @aurora/domain types (AD-15 SSoT); vendors only where AD-1 allows.
  */
 export * from './research-provider';
+export * from './composio';
+export * from './notifications';
+export * from './automations';
