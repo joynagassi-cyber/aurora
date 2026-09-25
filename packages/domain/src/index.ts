@@ -44,6 +44,9 @@ export * from './events';
 // ---- 14 ports ----
 export * from './ports';
 
+// ---- Vendor ports (additive, wave 2 ORION) ----
+export * from './research-provider';
+
 // ---- AI pipeline contracts (8) ----
 export * from './ai-pipeline';
 
