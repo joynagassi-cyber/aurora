@@ -176,3 +176,33 @@ export {
   kernelMaxSteps,
   type ModelGatewayDeps,
 } from './gateway.ts';
+
+// Expert Skills — the 4 self-improvement extensions (ADR S14, task 4)
+export {
+  contrastiveConfidence,
+  divergentConclusion,
+  confidenceAt,
+  decayVerdict,
+  generateHypothesis,
+  resolveHypothesis,
+  firewallVerdict,
+  userOverride,
+  skillLifecycle,
+  DECAY_LAMBDA,
+  REEVALUATION_THRESHOLD,
+  AUTO_ARCHIVE_THRESHOLD,
+  FIREWALL_MIN_CYCLES,
+  ESTABLISHED_THRESHOLD,
+  REVALIDATE_CONFIDENCE,
+  type ContrastivePair,
+  type SkillType,
+  type DecayInput,
+  type DecayVerdict,
+  type SkillHypothesis,
+  type HypothesisInput,
+  type HypothesisEvidence,
+  type AnomalyCycle,
+  type FirewallInput,
+  type FirewallVerdict,
+  type SkillLifecycleInput,
+} from './expert-skills.ts';
