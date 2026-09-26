@@ -35,6 +35,9 @@ export * from './entities-integrations';
 export * from './entities-identity';
 export * from './entities-engineering';
 
+// ---- Ascent (wave 3, W3-E2, AD-15) ----
+export * from './ascent';
+
 // ---- Jobs (AD-8) ----
 export * from './jobs';
 
