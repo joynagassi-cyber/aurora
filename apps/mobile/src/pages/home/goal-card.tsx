@@ -12,8 +12,12 @@
 import { IonItem, IonLabel } from '@ionic/react';
 import { useNavigate } from 'react-router-dom';
 import type { GoalProject } from '@aurora/domain';
+import { layoutTagFor } from '@aurora/goal-engine';
 
-/** Per-goal-shape icon (goal-dashboard-ui.md S1: target/loop/tree/milestone/spiral). */
+/** Per-goal-shape icon (goal-dashboard-ui.md S1: target/loop/tree/milestone/spiral).
+ *  The shape is DERIVED from the goal's composition data (goal-engine S5:
+ *  the agent writes the DATA, the UI derives the LAYOUT), not from the
+ *  user's horizon. */
 const SHAPE_ICON: Record<string, string> = {
   preparation: 'target',
   practice: 'loop',
@@ -21,6 +25,11 @@ const SHAPE_ICON: Record<string, string> = {
   delivery: 'milestone',
   adaptation: 'spiral',
 };
+
+/** The shape icon for a goal card (derived, not hardcoded by horizon). */
+export function goalShapeIcon(goal: GoalProject): string {
+  return SHAPE_ICON[layoutTagFor(goal)] ?? 'target';
+}
 
 export function GoalProjectCard({ goal }: { goal: GoalProject }) {
   const navigate = useNavigate();
@@ -39,7 +48,7 @@ export function GoalProjectCard({ goal }: { goal: GoalProject }) {
       aria-label={`Objectif : ${goal.objective}`}
     >
       <IonLabel>
-        <span data-shape-icon={SHAPE_ICON[goal.horizon] ?? 'target'} />
+        <span data-shape-icon={goalShapeIcon(goal)} />
         <strong>{goal.objective}</strong>
         {/* progress bar — `info` token, AD-17 */}
         <div

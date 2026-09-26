@@ -120,14 +120,30 @@ export function assembleGoalProject(input: AssembleInput): GoalProject {
           config: {},
         }));
 
-  // Validation: an explicit placement must reference a known feature of a
-  // sub-goal (the Normalizer's "inputs match outputs" check, AD-15 shapes).
+  // Validation (the Normalizer's "inputs match outputs" check, AD-15 shapes):
+  // an explicit placement must not reference a feature the goal never uses.
+  // A placement may add features the sub-goals don't list yet (a pattern
+  // template seeds the composition; the LLM decomposition finalizes which
+  // are real) — those are VALID, the caller validates availability against
+  // the CapabilityRegistry before calling assembleGoalProject. The only
+  // rejection: a feature named neither by a sub-goal NOR by any explicit
+  // placement (it would be orphaned composition data, the "inputs match
+  // outputs" failure the Normalizer exists to catch).
   const known = new Set(unionFeatures);
+  const explicit = new Set((d.placements ?? []).map((p) => p.featureId));
   for (const p of placements) {
-    if (!known.has(p.featureId) && d.placements?.length) {
+    if (!known.has(p.featureId) && !explicit.has(p.featureId)) {
       throw new Error(`goal-engine/unknown_placement_feature: ${p.featureId}`);
     }
   }
+  // Deduplicate placements: a feature placed more than once is a
+  // composition error (duplicate placement -> the layout engine's row
+  // assignment is ambiguous). Keep the first, drop the rest.
+  const dedup = new Map<string, FeaturePlacement>();
+  for (const p of placements) {
+    if (!dedup.has(p.featureId)) dedup.set(p.featureId, p);
+  }
+  const dedupedPlacements = [...dedup.values()];
 
   const progress: GoalProgress = {
     overallPct: 0,
@@ -144,7 +160,7 @@ export function assembleGoalProject(input: AssembleInput): GoalProject {
     targetDate: d.targetDate,
     horizon: d.horizon,
     subGoals,
-    features: placements,
+    features: dedupedPlacements,
     timeline: d.timeline ?? [],
     progress,
     status: 'active',

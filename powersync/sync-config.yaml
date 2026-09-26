@@ -1,0 +1,119 @@
+# PowerSync Sync Streams — Aurora (wave 1)
+#
+# Design (03 §5.4/§5.5, AD-7/F-03, 01 §3.4) :
+# - Un flux = exactement UN module owner ; jamais de cross-module JOIN
+#   interne (F-03). Chaque flux ne fait référence qu'aux tables de son
+#   module (voir powersync/README.md, « Mirror mapping »).
+# - Filtrage par utilisateur : `WHERE user_id = auth.user_id()`. Le relay
+#   lit sous le service_role SOUS RLS (policies `user_id = auth.uid()` du
+#   module owner, 01 §2.2) — jamais BYPASSRLS (AD-16). auth.user_id() =
+#   UUID Supabase (claim `sub`).
+# - Les vues v_*_scope de powersync/relay.sql (migration 0015) sont le
+#   mirror SSoT ; les flux ci-dessous sont per-table pour éviter la perte
+#   de colonnes hétérogènes d'une UNION ALL — le client materialise par
+#   table réelle.
+# - auto_subscribe: true → synchronisation au connect, pas de
+#   syncStream() manuel côté app ; 1 bucket/user (0 paramètre) → aucune
+#   pression sur la limite 1000 buckets / 1000 param rows.
+# - Priorités (OQ-11 / invariant Home AD-14) : identity = 1 (first paint),
+#   core = 2, bulk = 3 (défaut).
+#
+# Exclues du mirror (server-only, 03 §4.2) : expert_skills, events,
+# progress_evidences, progress_events, progress_trends, model_registry,
+# ai_usage, ai_health → jamais référencées ici.
+
+config:
+  edition: 3
+
+streams:
+  # --- Identity (owner Identity) — first paint, priorité 1 -----------------
+  identity:
+    auto_subscribe: true
+    priority: 1
+    query: SELECT * FROM user_context WHERE user_id = auth.user_id()
+
+  # --- Productivity (owner Productivity) — core, priorité 2 ----------------
+  # Tâches/objets de premier plan de l'écran Home (AD-14)
+  productivity:
+    auto_subscribe: true
+    priority: 2
+    queries:
+      - SELECT * FROM tasks WHERE user_id = auth.user_id()
+      - SELECT * FROM subtasks WHERE user_id = auth.user_id()
+      - SELECT * FROM projects WHERE user_id = auth.user_id()
+      - SELECT * FROM goals WHERE user_id = auth.user_id()
+
+  # --- Productivity (suite) — bulk, priorité 3 (défaut) --------------------
+  productivity_bulk:
+    auto_subscribe: true
+    queries:
+      - SELECT * FROM milestones WHERE user_id = auth.user_id()
+      - SELECT * FROM habits WHERE user_id = auth.user_id()
+      - SELECT * FROM routines WHERE user_id = auth.user_id()
+      - SELECT * FROM focus_sessions WHERE user_id = auth.user_id()
+      - SELECT * FROM decisions WHERE user_id = auth.user_id()
+      - SELECT * FROM calendar_events WHERE user_id = auth.user_id()
+
+  # --- Knowledge (owner Knowledge) — PAS de colonne embedding (03 §4.2) ---
+  knowledge:
+    auto_subscribe: true
+    queries:
+      - SELECT * FROM notes WHERE user_id = auth.user_id()
+      - SELECT * FROM resources WHERE user_id = auth.user_id()
+      - SELECT * FROM semantic_nodes WHERE user_id = auth.user_id()
+      - SELECT * FROM semantic_edges WHERE user_id = auth.user_id()
+      - SELECT * FROM semantic_bridges WHERE user_id = auth.user_id()
+      - SELECT * FROM node_state WHERE user_id = auth.user_id()
+      - SELECT * FROM source_refs WHERE user_id = auth.user_id()
+
+  # --- Learning (owner Learning) -------------------------------------------
+  learning:
+    auto_subscribe: true
+    queries:
+      - SELECT * FROM courses WHERE user_id = auth.user_id()
+      - SELECT * FROM subjects WHERE user_id = auth.user_id()
+      - SELECT * FROM skills WHERE user_id = auth.user_id()
+      - SELECT * FROM learning_sessions WHERE user_id = auth.user_id()
+      - SELECT * FROM reviews WHERE user_id = auth.user_id()
+
+  # --- Progress (owner Progress) — miroir LIMITÉ (03 §4.2) -----------------
+  # `gaps` rows sont owned par le module Progress (0012 : `OWNER_MODULE_BY_ENTITY`) ;
+  # le flux progress les expose, donc la table locale `gaps` (mirror schema.json
+  # Discovery) est peuplée par CE flux. Le flux Discovery n'y touche pas (F-03).
+  progress:
+    auto_subscribe: true
+    queries:
+      - SELECT * FROM skill_states WHERE user_id = auth.user_id()
+      - SELECT * FROM progress_snapshots WHERE user_id = auth.user_id()
+      - SELECT * FROM gaps WHERE user_id = auth.user_id()
+
+  # --- Discovery (owner Discovery) -----------------------------------------
+  # NB (2026-09-26, redeploy fix) : les lignes `gaps` sont exposées par le
+  # flux progress ci-dessus — la table locale `gaps` (mirror schema.json
+  # Discovery) est donc peuplée par le flux progress (F-03 single writer).
+  # Le flux Discovery ne les référence pas ici. (Ancien texte de ce bloc :
+  # « divergence connue, à trancher au wave 2 » — tranché : la version de
+  # `gaps` dans le flux progress est opérationnelle depuis ce deploiement.)
+  discovery:
+    auto_subscribe: true
+    query: SELECT * FROM discovery_items WHERE user_id = auth.user_id()
+
+  # --- Artifact (owner Artifact) — métadonnées + r2_key UNIQUEMENT ---------
+  artifact:
+    auto_subscribe: true
+    query: SELECT * FROM artifacts WHERE user_id = auth.user_id()
+
+  # --- Integrations (owner Integrations) -----------------------------------
+  integrations:
+    auto_subscribe: true
+    query: SELECT * FROM automations WHERE user_id = auth.user_id()
+
+  # --- GoalProject (owner Progress, wave 3 HEPHAESTUS) ----------------------
+  # The Goal Dashboard renders offline (goal-dashboard-ui.md S8): the whole
+  # GoalProject document (subGoals + feature placements + timeline + progress)
+  # is the JSONB `goal` column of `user_goals` (supabase/migrations/0017).
+  # Progress owns the rows (AD-7); the agent composes server-side. The stream
+  # exposes the table so the local mirror materializes `user_goals`.
+  user_goals:
+    auto_subscribe: true
+    query: SELECT * FROM user_goals WHERE user_id = auth.user_id()

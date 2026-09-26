@@ -58,6 +58,12 @@
       "ownerModule": "Ascent",
       "type": "custom",
       "sql": "SELECT * FROM v_ascent_scope"
+    },
+    {
+      "name": "user_goals",
+      "ownerModule": "Progress",
+      "type": "custom",
+      "sql": "SELECT * FROM v_user_goals_scope"
     }
   ],
   "mirrorTables": {
@@ -80,7 +86,8 @@
     "artifact": ["artifacts"],
     "integrations": ["automations"],
     "identity": ["user_context"],
-    "ascent": ["ascent_paths"]
+    "ascent": ["ascent_paths"],
+    "user_goals": ["user_goals"]
   },
   "excludedFromMirror": {
     "reasons": {

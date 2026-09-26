@@ -15,7 +15,43 @@ import { IonContent, IonHeader, IonTitle } from '@ionic/react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useGoals, useGoal } from '../../query/hooks';
 import type { GoalProject } from '@aurora/domain';
-import { GoalDashboard } from './dashboard';
+import {
+  GoalDashboard,
+  GoalHeader,
+  FeatureWorkflow,
+  ContextStrip,
+  featureLabel,
+} from './dashboard';
+import {
+  computeGoalDashboardLayout,
+  layoutTagFor,
+} from '@aurora/goal-engine';
+
+/**
+ * The 5 adaptive goal-shape layouts, rendered from the goal's composition
+ * data (goal-dashboard-ui.md S2: "the layout is NOT the same for every
+ * goal. The agent's composition pattern drives the VISUAL."). The
+ * dashboard component itself picks the renderer; this table is the S5
+ * Agent->UI contract: DATA in, LAYOUT out — the user never sees a
+ * feature list, they see the goal's shape.
+ */
+export function renderGoalDashboard(
+  goal: GoalProject,
+  shapeOverride?: ReturnType<typeof layoutTagFor>,
+) {
+  // The dashboard derives its LAYOUT from goal data (Agent->UI contract,
+  // goal-dashboard-ui.md S5): shape tag from the composition pattern,
+  // layout computed O(n) over the feature count (S8).
+  const shape = shapeOverride ?? layoutTagFor(goal);
+  const layout = computeGoalDashboardLayout(goal, shape);
+  return (
+    <>
+      <GoalHeader layout={layout} goal={goal} />
+      <FeatureWorkflow layout={layout} attenuated={false} onNodeTap={() => {}} />
+      <ContextStrip layout={layout} />
+    </>
+  );
+}
 
 export function GoalsPage() {
   const { data: goals, isPending } = useGoals();
@@ -29,11 +65,20 @@ export function GoalsPage() {
         {isPending && <div data-state="loading" />}
         {goals && goals.length === 0 && <div data-state="empty">Aucun objectif + capture CTA</div>}
         <ul className="goals-list">
-          {goals?.map((g: GoalProject) => (
-            <li key={g.id}>
-              <a href={`/goals/${g.id}`}>{g.objective}</a>
-            </li>
-          ))}
+          {goals?.map((g: GoalProject) => {
+            // context-preserving deep link target (goal-dashboard-ui.md S6):
+            // /goals/:id/features/:fid carries ?goalId=X — the feature screen
+            // shows the goal breadcrumb and back returns here (02 S6.2).
+            const shape = layoutTagFor(g);
+            return (
+              <li key={g.id}>
+                <a href={`/goals/${g.id}?shape=${shape}`} data-shape={shape}>
+                  <span className="goals-list-label">{featureLabel(g.features[0]?.featureId ?? '')}</span>
+                  {g.objective}
+                </a>
+              </li>
+            );
+          })}
         </ul>
       </IonContent>
     </>

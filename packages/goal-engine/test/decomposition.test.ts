@@ -80,21 +80,39 @@ test('assembleGoalProject: empty objective rejected', () => {
   );
 });
 
-test('assembleGoalProject: unknown explicit placement rejected', () => {
-  assert.throws(
-    () =>
-      assembleGoalProject({
-        decomposition: decomposition({
-          placements: [
-            { featureId: 'not_a_feature', role: 'x', frequency: 'on-event', position: '', config: {} },
-          ],
-        }),
-        userId: 'u1',
-        goalId: 'gp1',
-        now: NOW,
-      }),
-    /unknown_placement_feature/,
-  );
+test('assembleGoalProject: explicit placements may seed extra features (pattern templates)', () => {
+  // A pattern template's placements include features the sub-goals don't
+  // list yet — VALID (the LLM finalizes which are real; the caller checks
+  // the CapabilityRegistry). The assembled goal's features = the explicit
+  // placements (deduplicated), not just the sub-goal union.
+  const g = assembleGoalProject({
+    decomposition: decomposition({
+      placements: [
+        { featureId: 'seed_feature_a', role: 'x', frequency: 'on-event', position: '', config: {} },
+      ],
+    }),
+    userId: 'u1',
+    goalId: 'gp1',
+    now: NOW,
+  });
+  assert.ok(g.features.some((p) => p.featureId === 'seed_feature_a'));
+});
+
+test('assembleGoalProject: duplicate placements are deduplicated (first wins)', () => {
+  const g = assembleGoalProject({
+    decomposition: decomposition({
+      placements: [
+        { featureId: 'qcm_generate', role: 'a', frequency: 'daily', position: '', config: {} },
+        { featureId: 'qcm_generate', role: 'b', frequency: 'weekly', position: '', config: {} },
+      ],
+    }),
+    userId: 'u1',
+    goalId: 'gp1',
+    now: NOW,
+  });
+  const qcm = g.features.filter((p) => p.featureId === 'qcm_generate');
+  assert.equal(qcm.length, 1, 'one placement per feature (layout rows stay unambiguous)');
+  assert.equal(qcm[0].role, 'a', 'first placement wins');
 });
 
 test('recomposeGoalProject: preserves progress of surviving sub-goals (ADR S13)', () => {
