@@ -128,3 +128,49 @@ export {
   localInvalidationKey,
 } from './react-query-bridge';
 export type { LocalQueryClient } from './react-query-bridge';
+
+// PowerSync relay glue (03 S8.1 — "relay operational", the engine SWAP
+// behind `LocalStore`; vendors stay in this adapter, AD-1)
+export type { PowerSyncSchema } from './powersync';
+export {
+  POWERSYNC_SCHEMA,
+  allMirrorTableNames,
+  ownerScopeForTable,
+  isMirrorable,
+  ReferencePowerSyncEngine,
+} from './powersync';
+export type { PowerSyncEngine, PowerSyncEngineOptions } from './powersync';
+
+// Vendor PowerSync schema (frozen mirror mapping, 03 S4.2)
+export { AuroraPowerSyncSchema, auroraSchemaTableNames } from './powersync-schema';
+
+// Supabase client factory + PowerSync connector (relay auth, RLS upsync)
+export type {
+  SupabaseEnv,
+  SupabaseClientOptions,
+} from './supabase';
+export {
+  createAuroraSupabaseClient,
+  powersyncEndpoint,
+} from './supabase';
+export type { SupabaseConnectorOptions } from './supabase-connector';
+export {
+  SupabaseBackendConnectorImpl,
+  createSupabaseBackendConnector,
+} from './supabase-connector';
+
+// The production `PowerSyncEngine` binding (`@powersync/capacitor` +
+// `SupabaseBackendConnectorImpl` + frozen mirror schema)
+export type {
+  PowerSyncClientEngineOptions,
+  AuroraSupabaseClient,
+} from './powersync-client';
+export {
+  PowerSyncClientEngine,
+  createPowerSyncClientEngine,
+} from './powersync-client';
+
+// `LocalStore` bridge over an engine (03 S8.1)
+export type { EngineStoreAdapter } from './local-store-bridge';
+export { EngineLocalStoreBridge } from './local-store-bridge';
+

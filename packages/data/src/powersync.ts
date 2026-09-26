@@ -35,6 +35,13 @@ export interface PowerSyncSchema {
   mirrorTables: Readonly<Record<string, string[]>>;
   /** excludedFromMirror + reasons (AD-3, 01 S4.7-8, AD-16b) */
   excludedFromMirror: Readonly<Record<string, string>>;
+  /**
+   * The 03 S5.3 OR-Set merge-list SSoT comment (frozen — encoding shape is
+   * the single SSoT in `@aurora/domain`, AD-15/F-01; runtime impl =
+   * `crdt-orset.ts`). Kept on the TS schema so the two documents cannot
+   * drift.
+   */
+  crdtLists: string;
 }
 
 /**
@@ -54,10 +61,12 @@ export const POWERSYNC_SCHEMA: PowerSyncSchema = {
     { name: 'artifact', ownerModule: 'Artifact', type: 'custom', sql: 'SELECT * FROM v_artifact_scope' },
     { name: 'integrations', ownerModule: 'Integrations', type: 'custom', sql: 'SELECT * FROM v_integrations_scope' },
     { name: 'identity', ownerModule: 'Identity', type: 'custom', sql: 'SELECT * FROM v_identity_scope' },
+    { name: 'ascent', ownerModule: 'Ascent', type: 'custom', sql: 'SELECT * FROM v_ascent_scope' },
+    { name: 'user_goals', ownerModule: 'Progress', type: 'custom', sql: 'SELECT * FROM v_user_goals_scope' },
   ],
   mirrorTables: {
     productivity: [
-      'tasks', 'milestones', 'projects', 'goals', 'habits', 'routines',
+      'tasks', 'subtasks', 'milestones', 'projects', 'goals', 'habits', 'routines',
       'focus_sessions', 'decisions', 'calendar_events',
     ],
     knowledge: [
@@ -70,6 +79,8 @@ export const POWERSYNC_SCHEMA: PowerSyncSchema = {
     artifact: ['artifacts'],
     integrations: ['automations'],
     identity: ['user_context'],
+    ascent: ['ascent_paths'],
+    user_goals: ['user_goals'],
   },
   excludedFromMirror: {
     expert_skills: 'AD-3 / 01 S4.7: agent memory is server-only, never synced to device',
@@ -81,6 +92,10 @@ export const POWERSYNC_SCHEMA: PowerSyncSchema = {
     ai_usage: 'Foundation registry, server-only (AD-16b)',
     ai_health: 'Foundation registry, server-only (AD-16b)',
   },
+  crdtLists:
+    '03 S5.3/ S5.4: merge lists use the frozen OR-Set. Each element = {v, ts, c}. ' +
+    'Encoded as jsonb local_mutation_id + added/removed. -- TODO(wave1): align sur ' +
+    'CRDT SSoT packages/domain (AD-15/F-01).',
 };
 
 /** Every mirror table (flattened, single source for the engine + tests). */
