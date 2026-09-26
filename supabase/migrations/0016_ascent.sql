@@ -12,6 +12,12 @@
 -- 4-table split (ascent_steps / ascent_adaptations / ascent_baselines) is a
 -- deferred query-perf decision, not an architecture change.
 --
+-- APPLIED live 2026-09-26 via Supabase MCP (block-by-block): table +
+-- trigger + ENABLE/FORCE RLS + policies + v_ascent_scope view + GRANT
+-- service_role all verified present post-apply.
+
+-- ============================================================================
+--
 -- Single-writer (AD-7): only Ascent writes ascent_paths. RLS user isolation
 -- (0008 pattern); relay reads THROUGH the policies, never BYPASSRLS (AD-16).
 -- =============================================================================
