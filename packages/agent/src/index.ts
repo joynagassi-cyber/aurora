@@ -74,9 +74,12 @@ export {
 // 9. Model Router (Agnes-primary, S2.6)
 export {
   AgnesPrimaryRouter,
+  AGNES_REGISTRY,
   type ProviderModel,
   type HealthChecker,
   type BudgetChecker,
+  type DataPolicy,
+  type RouterRegistry,
 } from './router.ts';
 
 // 10. Execution Engine
