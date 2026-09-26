@@ -158,8 +158,19 @@ export type ThemeCatalog = Record<string, AuroraTheme | AuroraPreset>;
 /**
  * Public shape consumed by `DataVisualizationRenderer` (AD-10, G-M5).
  * Apps pass a ChartSpec through packages/ui — never raw G2 (05 §3.6).
- * The SSoT shape is `@aurora/domain` (AD-15); this re-exports the
- * contract so `packages/ui` is the only place G2 is touched (AD-1).
+ *
+ * G-M5 (gap-register, figé 2026-09-26): the SSoT shape is frozen in this
+ * file — owner = packages/ui (AD-15/AD-10). The `id` field is a
+ * **dedicated chart identifier** (05 §3.6.9: "focusBilan", "progression",
+ * "science-result", …) — the set is **closed** (a new `id` = ADR
+ * additif, AD-9 analogy). `type` is one of 6 mark families (bar /
+ * line / area / pie / radar / heatmap) — G2 resolves the rendering,
+ * the app passes only the spec (AD-1 boundary: never raw G2 outside
+ * packages/ui).
+ *
+ * This re-exports the contract so `packages/ui` is the only place G2 is
+ * touched (AD-1); `apps/mobile` imports from `@aurora/ui`, never from
+ * `@antv/g2` directly (CI boundary lint).
  */
 export interface ChartSpec {
   /** Dedicated chart id (05 §3.6.9: "focusBilan", "progression", …). */
