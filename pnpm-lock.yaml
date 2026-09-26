@@ -120,6 +120,12 @@ importers:
         specifier: workspace:*
         version: link:../domain
 
+  packages/ascent:
+    dependencies:
+      '@aurora/domain':
+        specifier: workspace:*
+        version: link:../domain
+
   packages/data:
     dependencies:
       '@aurora/domain':
