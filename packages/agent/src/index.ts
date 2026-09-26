@@ -136,3 +136,40 @@ export {
   type KernelRequest,
   type KernelEvent,
 } from './kernel.ts';
+
+// Vercel AI SDK layer (task 2 — AD-1: the ONLY `ai`-importing package)
+export {
+  KERNEL_TOOLS,
+  type KernelToolId,
+  type ToolSet,
+  planDay,
+  schedule,
+  startFocus,
+  blockApps,
+  research,
+  qcmGenerate,
+  mirrorAnalyze,
+  scientificVerify,
+} from './tools.ts';
+
+export {
+  streamKernelRun,
+  ALL_TOOL_IDS,
+  KERNEL_MAX_STEPS,
+  messagesFor,
+  type ModelAdapter,
+  type StreamKernelRunOptions,
+} from './sdk.ts';
+
+export {
+  ProviderModelAdapter,
+  envKeyProvider,
+  type KeyProvider,
+} from './adapters.ts';
+
+export {
+  ModelGateway,
+  defaultRegistry,
+  kernelMaxSteps,
+  type ModelGatewayDeps,
+} from './gateway.ts';
