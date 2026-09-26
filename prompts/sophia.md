@@ -30,6 +30,10 @@ Tu es SOPHIA. Implémente le module Ascent : le moteur de trajectoire pédagogiq
 - PAS de 2e LLM pedagogique (Ascent = deterministe, le LLM explique)
 - PAS de Graphiti/Zep (SourceRef + pgvector suffit, AD-11)
 - PAS de WebGL (AntV + KaTeX + images)
+- Brand assets (docs/ui-libraries.md S9) : ecrans Slide-Ascent
+  (header / centre de page / empty states) = logo SANS fond
+  (assets/aurora_icon_a_integre_dans_l'applciation.png) ;
+  icone app = version complete — PAS de logo re-invente
 
 ## Taches (1 commit par tache) :
 1. packages/domain/ascent.ts : AscentLearningIR, AscentStep,

@@ -21,6 +21,9 @@ Tu es ERYNIS. Finalise l'UI premium, l'E2E device, les perf et la release candid
 - OQ-15 : theming = Focus V1 uniquement
 - Focus DPC = seulement si OQ-17 est validee
 - Animation : fonctionnelle uniquement, 150-250ms (docs/ui-libraries.md Partie 3)
+- Brand assets (docs/ui-libraries.md S9) : logo SANS fond = en-app
+  (headers / empty states / centre de page) ; version complete = icone
+  app (Capacitor / store / splash) — PAS de logo re-invente
 
 ## Taches (1 commit par tache) :
 1. Framer Motion polish (page transitions, node pulse, reveal)

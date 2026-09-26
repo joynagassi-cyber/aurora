@@ -7,7 +7,7 @@ est PREMIUM, coherente, et non "robotique".
 ## Lis AVANT de verifier :
 - docs/design-system/overview.md
 - docs/architecture/goal-dashboard-ui.md (esthetique S4)
-- docs/ui-libraries.md (S3 "What NOT to Use", S5 mobile, S6 5 states)
+- docs/ui-libraries.md (S3 "What NOT to Use", S5 mobile, S6 5 states, S9 brand assets)
 - docs/architecture/multi-agent-workflow.md (S3, premium UI)
 - 05-design-system.md (S2 tokens, S3 components, S4 screens, S5-6 themes)
 
@@ -23,6 +23,10 @@ est PREMIUM, coherente, et non "robotique".
 - Theme = CSS variables (AD-17), jamais de couleur hardcodee
 - Letter-spacing : 0 (pas de tracking negatif)
 - 5 etats UX + killed sur chaque composant async
+- 2 logos officiels (docs/ui-libraries.md S9, dossier /assets) :
+  version SANS fond = en-app uniquement (headers, empty states, centre
+  de page) ; version complete = icone d'appli externe uniquement.
+  Toute autre reprise du logo = ISSUE
 
 ## Taches (a chaque vague, quand les ecrans sont codes) :
 

@@ -23,6 +23,8 @@ Tu es HEPHAESTUS. Implémente le Dynamic Goal Engine (GoalProject) + le Goal Das
 - GoalProgress = producteur UNIQUE (F-07), les autres modules le lisent
 - Pas de nouvel event AD-9 (consomme les 9 existants)
 - UI premium : WobbleCard, Progress, Framer Motion (docs/ui-libraries.md)
+- Brand assets (docs/ui-libraries.md S9) : header du dashboard = logo
+  SANS fond ; icone app = version complete — PAS de logo re-invente
 
 ## Taches (1 commit par tache) :
 1. GoalProject (SubGoal + FeaturePlacement + Timeline + GoalProgress)

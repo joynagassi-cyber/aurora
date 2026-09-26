@@ -330,3 +330,21 @@ Document the decision in a 1-line comment above the component:
 // shadcn Table: < 20 rows, simple data display
 // WobbleCard: GoalProject on Home, interactive, premium feel
 ```
+
+## 9. Brand Assets (the 2 official logos, /assets)
+
+SSoT for branding: exactly 2 files at the repo root — do NOT redraw,
+do NOT generate, do NOT fetch a logo from anywhere else.
+
+| File | What it is | Where it is used |
+|---|---|---|
+| `assets/aurora_logo_icon_d'affichage_l'applicaiton.png` | Full logo (butterfly + light rounded background) | **External app icon ONLY**: Capacitor icons, Play Store, splash screen, install screen. NEVER inside the app UI |
+| `assets/aurora_icon_a_integre_dans_l'applciation.png` | Logo WITHOUT background (transparent butterfly) | **In-app logo**: header (top bar), page center (empty states, onboarding, in-app splash), footer. NEVER as the external app icon |
+
+Rules (every UI agent):
+- Header / empty state / page center = ALWAYS the WITHOUT-background version.
+- Home screen / store / app splash = ALWAYS the full version.
+- Both are referenced from repo-root `/assets` (imported by the app
+  bundler) — never duplicated into src/, node_modules or any other folder.
+- No background color behind the transparent version, no crop, no recolor.
+- When generating app icons (Capacitor build / store assets): source = full version.

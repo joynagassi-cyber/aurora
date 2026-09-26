@@ -18,6 +18,9 @@
 - Agnes = PRIMARY TOUJOURS (retour apres fallback, event-reconciliation S2.6)
 - Vercel AI SDK = packages/agent UNIQUEMENT (AD-1)
 - docs/ui-libraries.md : composants premium
+- Brand assets (docs/ui-libraries.md S9) : logo SANS fond = en-app
+  (headers / centre de page / empty states) ; version complete =
+  icone app externe (Capacitor / store / splash)
 
 ---
 
