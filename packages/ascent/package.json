@@ -1,0 +1,19 @@
+{
+  "name": "@aurora/ascent",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Ascent — Pedagogical Trajectory Engine (wave 3, W3-E2). Server-side, deterministic: builds the AscentLearningIR from goal + LearnerBaseline (Progress skill_states) + Knowledge refs, adapts it on the 6 consumed AD-9 events, and enforces the source hierarchy (A>B>C>D). Writes ONLY ascent_paths (AD-7); emits LearningCommand, never an AD-9 event (AD-9). No vendor SDK (AD-1), no DOM (AD-12/F-09).",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": { "types": "./src/index.ts", "default": "./src/index.ts" }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --no-warnings --import ./test/register-ascent-tests.mjs --test \"test/*.test.ts\""
+  },
+  "dependencies": {
+    "@aurora/domain": "workspace:*"
+  }
+}

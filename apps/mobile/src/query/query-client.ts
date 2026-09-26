@@ -12,16 +12,17 @@
  */
 import { QueryClient } from '@tanstack/react-query';
 import type { LocalQueryRepository, LocalFilter } from '@aurora/data';
-import type { GoalProject, Task } from '@aurora/domain';
+import type { AscentLearningIR, GoalProject, Task } from '@aurora/domain';
 
 /** The injected data provider — one repository per entity family. */
 export interface MobileDataProvider {
   goals: LocalQueryRepository<GoalProject>;
   tasks: LocalQueryRepository<Task>;
+  /** Ascent local mirror (wave 3): the read-only `ascent_paths` table. */
+  ascent?: LocalQueryRepository<AscentLearningIR>;
   /** optional: reactive channel that invalidates the QueryClient on upsync. */
   onLocalChange?: (invalidate: () => void) => void;
 }
-
 /**
  * Query-key factory (02 S6.1 context-preserving: ids + scope live in the
  * key, so two screens reading the same entity with different contexts get
@@ -38,6 +39,12 @@ export const qk = {
     list: (userId?: string, filter?: LocalFilter<Task>) =>
       [...qk.task.all(), 'list', userId ?? 'me', JSON.stringify(filter ?? {})] as const,
     detail: (taskId: string) => [...qk.task.all(), 'detail', taskId] as const,
+  },
+  // Ascent local mirror (ascent_paths, read-only — AD-7/AD-12). The current
+  // path is the newest 'active' row per user (Slide-Ascent, wave 3).
+  ascent: {
+    all: () => ['ascent'] as const,
+    list: (userId?: string) => [...qk.ascent.all(), 'list', userId ?? 'me'] as const,
   },
 };
 
