@@ -20,3 +20,4 @@ export * from './path-builder.ts';
 export * from './adapter.ts';
 export * from './read-do-prove.ts';
 export * from './source-hierarchy.ts';
+export * from './kernel-integration.ts';

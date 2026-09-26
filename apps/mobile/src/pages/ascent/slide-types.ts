@@ -9,7 +9,11 @@
  * (@aurora/domain) but re-declares NOTHING (AD-15). No vendor SDK (AD-1),
  * no DOM (these are data shapes rendered by the page components).
  */
-import type { AscentLearningIR, AscentStep, DepthLevel } from '@aurora/domain';
+import type { AscentStep, DepthLevel } from '@aurora/domain';
+import { level1, type Level1View } from '@aurora/domain';
+export { level1, type Level1View };
+
+
 
 /**
  * The 12 Slide-Ascent slide types (overview S12). A palette: the path does
@@ -122,38 +126,6 @@ export interface Slide {
   source?: SourceHierarchyBadge;
   /** analogy-only metadata (S12 "labelled as analogy, NOT fact") */
   analogy?: AnalogySlideMeta;
-}
-
-/**
- * Level 1 of progressive disclosure (overview S11): the always-visible
- * "what to learn next" = CURRENT step + NEXT step, and nothing else. The
- * user is never shown the full path on first load.
- */
-export interface Level1View {
-  /** the current (active) step, or the first pending step */
-  current: AscentStep | undefined;
-  /** the next step after `current` */
-  next: AscentStep | undefined;
-  /** the goal (verbatim, NL) */
-  goal: string;
-}
-
-/**
- * Derive the Level 1 view from the path (pure, deterministic). "Current"
- * = the step with status `active`, else the first `pending` step that is
- * not blocked. "Next" = the step immediately after it.
- */
-export function level1(path: AscentLearningIR): Level1View {
-  const activeIdx = path.steps.findIndex((s) => s.status === 'active');
-  const startIdx = activeIdx >= 0 ? activeIdx : path.steps.findIndex((s) => s.status === 'pending');
-  const current = startIdx >= 0 ? path.steps[startIdx] : undefined;
-  const next =
-    current !== undefined ? path.steps[startIdx + 1] : undefined;
-  return {
-    current,
-    next,
-    goal: path.goal,
-  };
 }
 
 /**

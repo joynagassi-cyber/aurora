@@ -240,3 +240,35 @@ export type AscentConsumedEvent =
  * the path, never silent.
  */
 export type AscentSourceLevel = 'A' | 'B' | 'C' | 'D';
+
+/**
+ * Level 1 of progressive disclosure (overview S11) — a PURE VIEW over the
+ * IR, shared by the Slide-Ascent UI and the kernel's Context Builder so the
+ * plan and the render never disagree. Level 1 = the always-visible
+ * "what to learn next" = CURRENT + NEXT step, and nothing else.
+ */
+export interface Level1View {
+  /** the current (active) step, or the first pending step */
+  current: AscentStep | undefined;
+  /** the next step after `current` */
+  next: AscentStep | undefined;
+  /** the goal (verbatim, NL) */
+  goal: string;
+}
+
+/**
+ * Derive the Level 1 view from a path (pure, deterministic). "Current" =
+ * the step with status `active`, else the first `pending` step. "Next" =
+ * the step immediately after it.
+ */
+export function level1(path: AscentLearningIR): Level1View {
+  const activeIdx = path.steps.findIndex((s) => s.status === 'active');
+  const startIdx = activeIdx >= 0 ? activeIdx : path.steps.findIndex((s) => s.status === 'pending');
+  const current = startIdx >= 0 ? path.steps[startIdx] : undefined;
+  const next = current !== undefined ? path.steps[startIdx + 1] : undefined;
+  return {
+    current,
+    next,
+    goal: path.goal,
+  };
+}
