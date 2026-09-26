@@ -206,3 +206,18 @@ export {
   type FirewallVerdict,
   type SkillLifecycleInput,
 } from './expert-skills.ts';
+
+// AgentRunState + command bus (kernel S15, task 5 — the device surface)
+export {
+  buildAgentUiEffect,
+  uiCommand,
+  confirmationSurfaceFor,
+  AGENT_UI_COMMANDS,
+  type AgentUiEffect,
+  type AgentUiCommand,
+  type CommandBus,
+  type ConfirmationSurface,
+  type AgentActionEnvelope,
+  type NavigationIntent,
+  type UiStateCommand,
+} from './command-bus.ts';
