@@ -192,9 +192,38 @@ jobs:
         run: sh scripts/check-boundaries.sh
         continue-on-error: ${{ !exists('packages/domain/package.json') }}
 
+      - name: "Node-native tests (E2E gate: OQ-08 device + Focus DPC S13)"
+        # Wave 7 ERYNIS : the OQ-08 device gate (testing/matrix S1) + the
+        # 8-scenario Focus DPC bundle (docs/focus-mode/spec S13, OQ-17)
+        # run as a zero-dep node native test (type-stripping, no
+        # Playwright import) — the same shape the device-observed
+        # Playwright suite (e2e/device/e2e-device.spec.ts) asserts
+        # against the real harness at release time.
+        if: ${{ hashFiles('apps/mobile/test/e2e-device.test.ts') != '' }}
+        run: node --experimental-strip-types --no-warnings --test apps/mobile/test/e2e-device.test.ts apps/mobile/test/focus-dpc.test.ts
+        continue-on-error: ${{ !exists('packages/domain/package.json') }}
+
+      - name: "Perf gate (30fps / TTI / JS budget, 02 S9.1)"
+        # Wave 5 ERYNIS : the static perf budgets (apps/mobile/src/perf)
+        # run against the frozen 02 S9.1 SLOs (300 Ko gz / 1.5 s TTI /
+        # 30 fps). Device-observed via Sentry at release (OQ-08).
+        if: ${{ hashFiles('apps/mobile/test/perf-budget.test.ts') != '' }}
+        run: node --experimental-strip-types --no-warnings --test apps/mobile/test/perf-budget.test.ts
+        continue-on-error: ${{ !exists('packages/domain/package.json') }}
+
+      - name: "Product modes + command palette (feature-registry S7/S4)"
+        # Wave 5 ERYNIS : 6 product modes + the capability-registry
+        # command palette (feature-registry.md S4/S7) — the UI-shell
+        # SSoT for the 5 entry points (UI / palette / agent / deep link /
+        # automation all resolve to the same capability).
+        if: ${{ hashFiles('apps/mobile/test/product-modes.test.ts') != '' }}
+        run: node --experimental-strip-types --no-warnings --test apps/mobile/test/product-modes.test.ts
+        continue-on-error: ${{ !exists('packages/domain/package.json') }}
+
       - name: Gate summary
         run: |
           echo "CI gate (main buildable) — wave 0:"
           echo "  refs: SPEC.md wave 0 (main buildable), dependency-matrix S10/S15"
+          echo "  wave 7 (ERYNIS) : E2E device + Focus DPC + perf + product modes"
           echo "  if a gate fails: git revert <commit> (1 story = 1 commit = 1 rollback)"
           echo "  see docs/ci/gate.md for the exact order + recovery."

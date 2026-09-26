@@ -1,0 +1,189 @@
+# Aurora — Release pipeline (wave 7, ERYNIS task 8, W7-E1-2)
+#
+# Refs:
+#   - docs/release/README S1/S2 (the process: tag v* -> build +
+#     notes + changelog; deploy steps dry-run until OQ-03).
+#   - docs/epics-stories.md W7-E1-2 (CI/CD: build, test, deploy;
+#     release notes generated).
+#   - AD-13 (1 story = 1 commit = 1 rollback; revert, not rewrite).
+#
+# The tag is the release trigger: pushing `v*` re-runs the ci-gate
+# shape on the frozen tree, builds the APK, and cuts the GitHub
+# Release from docs/release/changelog.md. Deploy steps to
+# staging/prod are DRY-RUN (echo) until OQ-03 ratifies the env
+# values (docs/release/README S5) — flip the `if` when the
+# `SUPABASE_URL_PROD` / `CF_*` secrets land in the registry.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+# Concurrency : 1 release build par tag (un nouveau push sur la
+# meme ref remplace l'ancien).
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PNPM_VERSION: "10.28.0"
+  NODE_VERSION: "22"
+
+jobs:
+  # ------------------------------------------------------------------
+  # 1. Gate on the tag — the ci-gate shape, re-run on the frozen tree
+  # ------------------------------------------------------------------
+  release-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Typecheck
+        run: pnpm -r exec tsc --noEmit
+
+      - name: Lint
+        run: pnpm -r exec eslint . --max-warnings 0
+
+      - name: Boundary greps (G1-G4)
+        run: sh scripts/check-boundaries.sh
+
+      # Wave 5-7 gates (E2E device + Focus DPC S13 + perf + modes)
+      # — the zero-device deterministic gate (the device-observed
+      # suite runs on the target, not here).
+      - name: "E2E device gate (OQ-08, consumer fallback)"
+        run: node --experimental-strip-types --no-warnings --test apps/mobile/test/e2e-device.test.ts apps/mobile/test/focus-dpc.test.ts
+
+      - name: "Perf gate (30fps / TTI / JS budget, 02 S9.1)"
+        run: node --experimental-strip-types --no-warnings --test apps/mobile/test/perf-budget.test.ts
+
+      - name: "Product modes + command palette (feature-registry S7/S4)"
+        run: node --experimental-strip-types --no-warnings --test apps/mobile/test/product-modes.test.ts
+
+  # ------------------------------------------------------------------
+  # 2. Build (APK) + notes + release
+  # ------------------------------------------------------------------
+  release-build:
+    runs-on: ubuntu-latest
+    needs: [release-gate]
+    permissions:
+      contents: write # create the GitHub Release + upload the APK
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build the mobile app (Capacitor APK, docs/release/README S2.3)
+        # The APK is the Phase 1 release target (ADR S24: mobile
+        # production-ready; no Electron in the build/QA/release day).
+        run: pnpm -r exec tsc --noEmit
+        # TODO(wave7/OQ-03): wire the Capacitor build (npx cap build android)
+        # + the signed APK artifact when the keystore secret (KEYSTORE_*
+        # in the registry, AD-3 — never in the bundle) is provisioned.
+        # Until then the build is the typecheck gate only (no APK upload).
+
+      - name: Generate RELEASE_NOTES.md from the changelog
+        # The `## Upcoming (v0.1.0)` section of docs/release/changelog.md
+        # is the release-notes source (docs/release/README S2.2). The awk
+        # block extracts `## Upcoming` .. the next `## ` top-level heading
+        # (the `## Wave history` audit-trail section stops it) — the byte-
+        # stable copy the GitHub Release is cut from.
+        run: |
+          set -euo pipefail
+          OUT=RELEASE_NOTES.md
+          awk '/^## Upcoming/{f=1} f && /^## / && !/^## Upcoming/{f=0} f{print}' \
+            docs/release/changelog.md > "$OUT"
+          echo "RELEASE_NOTES.md:"; cat "$OUT"
+          [ -s "$OUT" ] || { echo "RELEASE_NOTES.md is empty — populate docs/release/changelog.md before cutting a tag (README S2.2)"; exit 1; }
+        # NOTE: the empty-notes guard is a soft gate (the notes are the
+        # human audit trail; the release-gate job above is the blocking
+        # step). A tag cut on an empty Upcoming section is a process error,
+        # not a CI failure.
+
+      - name: Create GitHub Release + upload notes
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "Aurora ${{ github.ref_name }}"
+          generate_release_notes: false
+          files: |
+            RELEASE_NOTES.md
+          # APK artifact (when the Capacitor build lands):
+          #   apps/mobile/build/outputs/apk/release/*.apk
+
+  # ------------------------------------------------------------------
+  # 3. Deploy (staging -> prod) — DRY-RUN until OQ-03
+  # ------------------------------------------------------------------
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [release-build]
+    # OQ-03 gate: the deploy steps are commented / dry-run until the
+    # env values (regions, R2 bucket names, provider account IDs) are
+    # ratified + the `SUPABASE_URL_PROD` / `CF_*` secrets land in the
+    # registry (docs/release/README S3/S5). Flip this `if` when ready.
+    if: false
+    env:
+      # Read from the GitHub Secrets registry (AD-3, never in the repo).
+      SUPABASE_URL_DEV: ${{ secrets.SUPABASE_URL_DEV }}
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: "Deploy staging (Supabase + CF Workers + R2, DRY-RUN)"
+        run: |
+          echo "STAGING (dry-run, OQ-03 not yet ratified):"
+          echo "  supabase link ${SUPABASE_URL_DEV} + db push"
+          echo "  wrangler deploy (CF Workers: jobs, last-resort fallback)"
+          echo "  r2 sync (private buckets, presigned URL TTLs per 01 S4)"
+          echo "  flip this step to the real deploy when OQ-03 is ratified"
+
+      - name: "Deploy prod (DRY-RUN)"
+        run: |
+          echo "PROD (dry-run, OQ-03 not yet ratified):"
+          echo "  supabase link ${SUPABASE_URL_DEV} (prod slot) + db push"
+          echo "  wrangler deploy --env prod"
+          echo "  flip when OQ-03 is ratified + the prod secrets land"
