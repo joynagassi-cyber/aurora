@@ -85,3 +85,14 @@ END $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER trg_job_queue_notify
   AFTER INSERT ON job_queue
   FOR EACH ROW EXECUTE FUNCTION notify_job_dispatcher();
+
+-- REST API surface : anon / authenticated ne peuvent PAS appeler
+-- /rest/v1/rpc/notify_job_dispatcher directement (le lint 0028/0029
+-- flag précisément ce chemin, pas la trigger qui est le SEUL chemin
+-- d'écriture de la queue). Le trigger est SECURITY DEFINER (il est
+-- appelé par le rôle qui insère — service_role ou un insert borné par
+-- la policy user_id = auth.uid()) mais l'EXECUTE est restreint au
+-- service_role (pas de BYPASSRLS — l'adversaire n'a pas d'autre
+-- chemin d'écriture sur job_queue, AD-8 : seul le dispatcher agit).
+REVOKE EXECUTE ON FUNCTION notify_job_dispatcher() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION notify_job_dispatcher() TO service_role;

@@ -69,8 +69,14 @@ CREATE TRIGGER user_goals_updated BEFORE UPDATE ON user_goals
 -- Cross-module read surface (AD-2): the GoalProject entity is Progress-owned
 -- (data) + Agent-owned (creation/composition logic). Other modules READ the
 -- composition via the public view — they NEVER write user_goals.
+--
+-- SECURITY INVOKER (01 §3.4, AD-7/F-03): the view inherits the CALLER's RLS
+-- policies, so a service_role reader is still bound by user_id-scoped policy
+-- (the view does NOT bypass RLS). Default view = SECURITY DEFINER (bypasses
+-- RLS) — must be explicit (01 §2.2 rule 1: FORCE RLS on every business table,
+-- the relay goes THROUGH the policies, never BYPASSRLS).
 -- =============================================================================
-CREATE OR REPLACE VIEW v_goal_project_public AS
+CREATE OR REPLACE VIEW v_goal_project_public WITH (security_invoker = on) AS
 SELECT
   id,
   user_id,

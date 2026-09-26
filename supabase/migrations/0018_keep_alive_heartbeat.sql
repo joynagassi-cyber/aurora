@@ -43,9 +43,20 @@
 -- =============================================================================
 
 -- 1. Table `keep_alive` (1 ligne, le timestamp du dernier ping)
+--
+-- RLS : le design originel dit "Pas de RLS" (la table n'a pas de `user_id`,
+-- le heartbeat s'exécute en superuser du pg_cron, pas en tant que user
+-- authentifié). MAIS le Supabase advisory linter traite RLS-désactivé sur
+-- une table `public` comme un ERROR (lint 0013 `rls_disabled_in_public`).
+-- Le design SSoT (0018) dit "pas de données user" — on ENABLE donc RLS pour
+-- satisfaire le linter, avec 0 policy (le heartbeat écrit en superuser qui
+-- bypass le RLS par design ; le lint 0008 INFO `rls_enabled_no_policy`
+-- subsiste mais n'est pas bloquant). Aucune path d'accès user vers cette
+-- table n'existe (aucune route REST, aucun scope PowerSync).
 CREATE TABLE IF NOT EXISTS keep_alive (
   last_ping timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE keep_alive ENABLE ROW LEVEL SECURITY;
 
 -- Amorçage (le job overwrite une seule ligne : une contrainte UNIQUE sur
 -- une colonne impossible n'existe pas — on s'appuie sur la logique DELETE
