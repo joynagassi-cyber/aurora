@@ -1,0 +1,19 @@
+{
+  "name": "@aurora/goal-engine",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Dynamic Goal Engine (wave 3, HEPHAESTUS): GoalProject composition logic — decomposition, the 5 composition patterns as Planner hints, GoalProgress evaluation (F-07 sole producer), feature add/remove + sequencing. Pure logic, server-side; writes only its own GoalProject composition data (AD-7); GoalProgress rows + ProgressEvidence remain Progress-owned.",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": { "types": "./src/index.ts", "default": "./src/index.ts" }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --no-warnings --test \"test/*.test.ts\""
+  },
+  "dependencies": {
+    "@aurora/domain": "workspace:*"
+  }
+}
