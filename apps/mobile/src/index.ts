@@ -33,3 +33,15 @@ export {
   type PaletteCommand,
   type CommandCatalogSource,
 } from './modes/command-palette';
+export {
+  PERF_BUDGETS,
+  checkBytes,
+  checkTti,
+  checkFps,
+  allBudgetsPass,
+  type BudgetCheck,
+} from './perf/budgets';
+export {
+  mobileEmitRawBytes,
+  mobileEmitGzBytes,
+} from './perf/measure';
