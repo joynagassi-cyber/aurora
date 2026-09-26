@@ -15,7 +15,11 @@
  * The 8 scenarios (spec S13) are each asserted on the mock so the
  * gate is DETERMINISTIC on a CI runner. The device-observed suite
  * (e2e-device.spec.ts) runs the same scenario shapes against the
- * real DpcAdapter at release time (OQ-17).
+ * real DpcAdapter at release time (OQ-17). This commit is the wave 7
+ * task "Focus DPC E2E (si OQ-17)" gate: the 8-scenario bundle in
+ * e2e/device/focus-dpc.ts is already tracked (wave4/harpys f08eb9a);
+ * the consumer/provisioned outcome matrix asserted here freezes the
+ * expected release outcome (consumer fallback 6/8, provisioned >=7/8).
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
