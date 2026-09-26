@@ -1,0 +1,26 @@
+{
+  "name": "@aurora/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "description": "OQ-08 E2E agent scenarios (20) + 23 composite workflows + self-improvement + error-recovery — Playwright-on-device runner. Consumes @aurora/workflows as the tracing spec; Playwright execution lands when OQ-08 is resolved.",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --no-warnings --test \"test/*.test.ts\""
+  },
+  "dependencies": {
+    "@aurora/workflows": "workspace:*"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "typescript": "^5.9.3"
+  }
+}
