@@ -10,6 +10,23 @@
 --
 -- Jobs are enqueued idempotently (idempotency_key + ON CONFLICT DO NOTHING,
 -- 0010 uq_job_queue_idempotency). Kind vocabulary = packages/domain JobKind.
+--
+-- APPLICATION STATUS (2026-09-26)
+--   Appliqué au live Supabase DEV via le Supabase MCP `execute_sql`, en
+--   convertissant le `INSERT INTO cron.job` (chemin SSoT, échoué plus tôt —
+--   le rôle MCP n'a pas le GRANT d'écriture directe sur `cron.job`) en
+--   `SELECT cron.schedule(…)`, qui utilise le chemin de la fonction
+--   wrapper et qui fonctionne. Résultat :
+--     jobid 8  aurora_fsrs_tick          '0 2 * * *'    active
+--     jobid 9  aurora_skill_recompute    '0 3 * * *'    active
+--     jobid 10 aurora_event_dispatch     '*/5 * * * *'  active
+--   Les 3 `command` bodies matchent verbatim les INSERTs d'origine.
+--   NOTE : ce fichier reste le SSoT du SQL (INSERT INTO cron.job) ;
+--   l'état live utilise l'équivalent `cron.schedule()`. Le SSoT est à
+--   mettre à jour au prochain standup pour refléter ce qu'on applique
+--   effectivement (décision : normaliser tout en `cron.schedule()`, ou
+--   garder le format INSERT — la commande est identique, seul le mécanisme
+--   d'enregistrement diffère).
 -- =============================================================================
 
 -- 1. fsrs-tick batch — daily 02:00 (placeholder). One job per user per day;

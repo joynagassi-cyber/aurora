@@ -6,23 +6,83 @@
 - [x] 09/23 — implementation-readiness-report-2026-09-22.md : étape 1 (découverte docs) COMPLETÉE ; epics-stories.md = 7 épics / 38 stories
 - [x] 09/23 — Journal créé. Prochaine étape : PHASE 1 (Reversa S0–S6)
 
-## Phase 1 — Reversa
-- [ ] S0 — État initial
-- [ ] S1 — Cartographie
-- [ ] S2 — Analyse des dépendances
-- [ ] S3 — Analyse de sécurité
-- [ ] S4 — Génération DESIGN-BLUEPRINT.md
-- [ ] S5 — Validation
-- [ ] S6 — Commit
+## Reversa — annulé (décision Joy, 09/23)
+- Scout terminé (inventory.md, dependencies.md, surface.json) ; Archéologues 1–3 annulés à la demande
+- Motif : projet spec-first (pas legacy) → le génie inverse n'apportait rien de nouveau par rapport aux docs
+- Remplacement : context engineering via `bmad-generate-project-context`
+
+## Context engineering (suite à Reversa annulé)
+- [x] 09/23 — `_bmad-output/project-context.md` v1 créé (pont + gaps, sans toucher `AI_RULES.md` qui relève d'un autre agent)
+- [x] 09/23 — Changelog : `_bmad-output/project-context-changelog.md`
+- [x] 09/23 — `_bmad-output/project-context.md` v1.1 (purge post-run-3 : G-D10..D14 ajoutés §5, §4 G-D12/OQ-01, §3 n°12 corrigé, §6 wave-0 case)
 
 ## Phase 2 — SDD
-- [ ] bmad-create-architecture
-- [ ] bmad-create-prd (si manquant)
-- [ ] bmad-create-epics-and-stories
-- [ ] bmad-check-implementation-readiness
+- [x] bmad-check-implementation-readiness (run 3, 09/23) — verdict : **PRÊT pour wave 0 sous 2 conditions** :
+  1. Purge du project-context.md (FAITE, v1.1)
+  2. Ratification des 5 décisions bloquantes OQ-01/02/03/17 + G-M7 (standup wave 0, à faire par l'équipe)
+- [x] bmad-generate-project-context (v1 + v1.1)
+- [x] bmad-ux option A (09/23) — `DESIGN.md` + `EXPERIENCE.md` (spines de pont) dans `_bmad-output/ux-designs/ux-aurora-2026-09-23/` (status: draft, pointeurs vers pack 05 + spine)
+- [x] WDS Phase 1/2 distillation (09/23) — workflow Ultracode `wds-phases-1-2-distill` (run `wf_5178a933-862`, 8 agents, ~602k tokens) :
+  - `A-Product-Brief/product-brief.md` (`status: draft`, 8 sections, pointeurs vers ADR v1.7 / spine AD-1…17 / matrice agentability / discovery-gap §5)
+  - `B-Trigger-Map/trigger-map.md` (`status: draft`, 8 sections, 10 intentions, flywheel §15/§19, 4 traps, 20 signaux psychologiques)
+- [x] WDS Phase 3 step 02 — Analyse de périmètre (09/23) — workflow Ultracode `wds3-scope-inventory` (run `wf_d80ca406-58f`, 6 agents, ~519k tokens) :
+  - `_bmad-output/wds/_progress/scope-report.md` (`status: draft`, typologie Dynamic App → Storyboard + Screen Flow, 40 surfaces indexées, 22 parcours nommés, 5 discrepancies de comptes UNRECONCILED → standup wave-0, Mode Suggest recommandé)
+- [x] WDS Phase 3 step 03 — Contexte stratégique (chaînes) (09/23) — workflow Ultracode `wds3-strategic-chains` (run `wf_cab16040-87c`, 5 agents, ~337k tokens) :
+  - `_bmad-output/wds/_progress/strategic-chains.md` (6 chaînes : P1 01-progress-proof · P2 02/03/04 · P3 05/06 ; couverture 40/40 = 37 assignées + 1 UNRECONCILED S-37 + 2 shared ; verdicts adversariaux J2/J3 corrigés par affectation directe)
+- [x] WDS Phase 3 step 04 — Plan de scénarios (09/25) : 6 scénarios approuvés par Joy (01 P1 · 02/03/04 P2 · 05/06 P3 ; S-39 flag NEEDS_DECISION)
+- [x] WDS Phase 3 step 05 — Outline des scénarios (09/25) — workflow Ultracode `wds3-outline-scenarios` (run `wf_d2c52c85-893`, 18 agents, ~1.37M tokens) :
+  - 6 fichiers `C-UX-Scenarios/{NN-slug}/{NN-slug}.md` (tous `status: draft` ; Q8 100 % linéaire ; Q4/Q7 ancrés trigger-map §7 ; corrections manuelles off-by-one S-IDs scénario 02)
+- [x] WDS Phase 3 step 06 — Index `C-UX-Scenarios/00-ux-scenarios.md` (09/25) : matrice de couverture 33/40 surfaces
+- [x] WDS Phase 3 step 07 — Quality Review (09/25) — workflow Ultracode `wds3-quality-review` (run `wf_c47d97af-cef`, 7 agents, ~423k tokens) : 5 Excellent + 1 Good (02), minima step-07 atteints partout (0 Needs Work) ; correction G-A (02 Q7 cibles chiffrées) + note G-C (03 S-26/S-28 convention pont) ; G-B/G-D optionnels, G-E (S-39) reporté wave-2
+- [x] WDS Phase 3 step 08 — Design Log (09/25) : `00-design-log.md` clôturé — sections Progress (6 artefacts listés individuellement + résumé décisionnel) + Key Decisions (4 lignes) ajoutées
+- [x] WDS Distillation feature **Ascent** (09/25, avant step 09) — `_bmad-output/wds/ascent/ascent-distill.md` (`status: draft`, 17 sections, pointeurs vers `docs/ascent/overview.md` + `implementation.md` + `prompts/session-4-wave3-agent-integration.md` §SOUS-AGENT 5) ; workflow Ultracode `wds-ascent-distill` (run `wf_ac9905e6-77e`, 4 agents, ~278k tokens) : 3 extracteurs adversariaux (complétude / convention pont / exploitabilité UX Phase 4) + finalizer ; corrections : budgets NFR (§7), garde AD-14 (§7), 2 NON COUVERT (§15 : SOPHIA ajoutée post-hoc + conflit 1 vs 4 tables), **section 17 « Entrée dans WDS Phase 4 » ajoutée** (S-41 `slide-ascent` proposé, mapping S-26/S-22/S-19-20-38/S-13, scénario 07 « Horeb's Trajet d'apprentissage » recommandé, dépendances FeatureRegistry + 8 effets désactivation)
+- [x] WDS Phase 3 step 09 — Handover (09/25) : **PHASE 3 TERMINÉE**. `design_intent: S` (Suggest, cohérent Mode Suggest step-02) + `design_status: not-started` enregistrés dans les frontmatters des 6 scénarios ; S-41 slide-ascent (proposition Ascent §17) ajouté à la matrice de couverture `00-ux-scenarios.md` (non compté dans les 40 surfaces du scope-report) ; design log clôturé. **Phase 3 WDS = 6 scénarios livrés (01 P1 · 02/03/04 P2 · 05/06 P3) + 1 distillation Ascent.**
+- [ ] WDS Phase 4 — UX Design (6 scénarios en mode Suggest + S-41 slide-ascent)
+  - [x] 09/25 — Scénario 01 (Horeb's Progress Proof, P1, 7 pasos) : **7 pages spécifiées** (01.1 → 01.7, steps 08-15 batch) ; OQ-4 close (option C : 5ᵉ tab BottomNav + FAB, décision Joy app-agentique) ; OQ-1/OQ-3 closes ; **toutes les OQ 01.1–01.7 closes/ratifiées par Joy le 09/25, sauf la flag S-38 UNRECONCILED qui reste au standup wave-0**
+  - [x] 09/25 — Scénario 02 (Horeb's Gap Closure, P2, 5 pasos) : **5 pages spécifiées** (02.1 → 02.5, steps 08-15 batch) ; 02.1 = delta Home (bloc item 7 suggestions Coach) ; 02.2/02.3/02.4/02.5 = S-06/S-07/S-04/S-33 ; fin de chaîne : CTA 02.5 → fiches-liste (S-17) → fiches-detail (S-18) ✓ scenario success ; 8 OQ nouvelles (02.2–02.5) portées au standup
+  - [x] 09/25 — Scénarios 03/04/05/06 + S-41 (batch workflow Ultracode `wds4-ux-design-batch`, run `wf_b69cc27b-9c3`, 41 agents ~2.63M tokens ; fix `wds4-fix-05.3` run `wf_7ec76d8c-e6f`) : **21 pages spécifiées** — 03.1→03.6 (S-02/S-27/S-40/S-14/S-36/S-25+S-16), 04.1→04.5 (S-01/S-23/S-10+S-11/S-21/S-30), 05.1→05.6 (S-08/S-09/S-32/S-05/S-24/S-39, flag NEEDS_DECISION wave-2 dans 05.6), 06.1→06.3 (S-33 ×2 / S-13), S-41 slide-ascent (Ascent §17) ; OQ-4 option C propagée à toutes les specs ; juge 05.3 FAIL mineur (3 remarques : étiquette AD-13, CTA EmptyState ghost, signal 8) — 2 corrections textuelles appliquées au spec 05.3 ; **Phase 4 = 21/21 fiches en place** ; OQ du batch (03–06 + S-41) : ~40 ouvertes lors de la livraison, **ratifiées/close par Joy le 09/25 (batch « je valide tout »)** — toutes les OQ 03–06 + S-41 closes, **sauf** le flag S-39 NEEDS_DECISION (wave-2, 05.6) ; les ~13 OQ du scénario 01 **closes/ratifiées dans le même batch** (cf. sous-point 01 : workflow `wds5-scenario-01`, run `wf_b78f9c3b-485`, 10 agents ~172k tokens)
+- [x] 09/26 — bmad-create-epics-and-stories : patch `docs/epics-stories.md` APPLIQUÉ (4 splits + 3 ajouts FR + rénumérotation) :
+  - W0-E2-1 split → `W0-E2-1` (theme JSON/provider) + `W0-E2-2` (49 mockups [G-L2]) ; rénumérotation `W0-E2-3` (9 DS data components) et `W0-E2-4` (screen inventory) — cross-refs `W0-E2-2`/`W0-E2-4` corrigées dans `W0-E4-2` et `W1-E1-1`
+  - W2-E1-1 split → `W2-E1-1` (Inbox+Task CRUD) + `W2-E1-2` (Eisenhower [G-L5])
+  - W2-E1-5 split (Focus) → `W2-E1-6` (Focus in-app timer) + `W2-E1-7` (Focus v1.8 DPC) ; `W2-E5-1` dep corrigée → `W2-E1-6`
+  - FR11 → `W2-E1-8` Resource Library (rattachée W2-E1-1 + W0-E3-4)
+  - FR23 → `W2-E1-9` Automations (rattachée W1-E2-3)
+  - W2-E1-6 (ancienne Reviews+Analytics) rénumérotée → `W2-E1-10`
+  - W2-E2-5 dé-couplée de W3 : wave-2 part (job + coach-screen UI, owner Learning, dep W2-E2-4) ; NL trigger agentique → `W3-E1-6` Mirror as Agent Tutor capability
+  - FR16 → `W3-E1-7` Coach Mode (flow complet ADR S13, rattaché W3-E1-3)
+  - Total stories : **65** ; note de patch ajoutée en tête de `docs/epics-stories.md` (le décompte « 7 épics / 38 stories » du 09/23 reflétait l'état initial — le patch n'ajoute pas de nouvel epic, seulement des stories)
+- [ ] bmad-create-architecture / bmad-create-prd : **non requis** (ADR v1.7 + SPEC + spine = équivalents déjà figés)
 
 ## Phase 3 — Implementation
-- [ ] Wave 0–5
+- [x] 09/26 — Standup wave 0 : ratifications Freya (sous délégation Joy, aligné vision) :
+  - **OQ-01 pnpm layout : RATIFIÉ** — 9 packages + 2 apps comme spécifiés (`packages/domain`, `data`, `ui`, `platform`, `agent`, `scientific-engine`, `integrations`, `apps/mobile`, `apps/server`), incluant les packages engineering G-D12 (scientific-engine, integrations). Mapping AD-15 entité→package→équipe confirmé (OQ-02) : équipe = owner du module (03-sync §4.2), SSoT `packages/domain`.
+  - **OQ-02 team column : RATIFIÉ** — colonne équipe du mapping 03 S4.2 = owner module (Productivity/Learning/Knowledge/Progress/Discovery/Artifact/Agent/Foundation/Data) ; à renseigner sur `packages/domain` au Scaffolding wave 0.
+  - **OQ-03 env values : RATIFIÉ avec placeholder** — les valeurs (noms buckets, régions, provider account IDs, registres par env) restent **TBD** : structure AD-16a fixée, valeurs = données de vague 0, non bloquant (les packs 01/03 supposent la structure, pas les valeurs). À renseigner par Foundation au W0-E3-1.
+  - **OQ-17 DPC provisioning : RATIFIÉ avec condition** — procédure spec `docs/focus-mode/spec.md` §0/§9 confirmée ; **à rejouer sur le téléphone cible** (factory reset + `adb shell dpm set-device-owner` + API level ≥29 + matrice suspendabilité + `BOOT_COMPLETED` receiver). **Si le device ne peut pas être provisionné DPC → fallback consumer (`04-mobile` §4.1, restriction uniquement, verdicts inchangés)** ; les appels restent optionnels (jamais promis en V1 nominale). Owner : Foundation + Productivity, au W0-E4-3.
+  - **G-M7 Feature Registry : RATIFIÉ** (design complet `docs/frontend/feature-registry.md` S1–S11) : types `FeatureDescriptor`/`FeatureModule`/`AgentFeatureDeclaration` dans `packages/domain` (AD-15) ; chaîne Feature Registry → Availability Policy → Navigation Registry → Screen Registry → Agent Capability Registry ; effets de désactivation complets (nav/shortcuts/palette/capabilities/widgets/scheduled jobs/notifications, données préservées — pas de migration) ; 6 modes produit ; dépendances (optional ≠ hard-deps sur core). **Rattachement Ascent : RATIFIÉ** — Ascent = feature `ascent` (owner Ascent, wave-3) dans le Feature Registry ; ports consommateurs = Knowledge/Progress/Discovery/ObjectiveManager + `FeatureRegistry` (docs/ascent/overview.md S7) ; tables `ascent_*` = server-only (AD-3, comme `expert_skills`) ; types `AscentLearningIR` à ajouter dans `packages/domain` au W3-E2-1 ; **S-37 UNRECONCILED tranché : `progress-dashboard` ≡ S-13 `/progress` (analytics, ADR §18.6) — ne pas dupliquer de surface**.
+  - **Nouvel Epic W3-E2 Ascent ajouté** au `docs/epics-stories.md` (W3-E2-1 engine core + W3-E2-2 agent capability + Slide-Ascent S-41 feature registry) ; S-41 (09/25 OQ closes : Niveau 1 + liste verticale 4 semaines) = livrable W3-E2-2.
+  - **Contradiction heatmap signalée (non tranchée)** : 05.1 (scénario 05) décrit un heatmap de 7 semaines ; G-L2 / inventaire 05 S4 mentionne 5 semaines. Contradiction de source — **à trancher au standup wave-2** (heatmap = surface G-L2, pack 05), pas dans ce batch.
+  - **S-38 UNRECONCILED (exercises, 01.6) : signalé, pas tranché** — reste au standup wave-0 (flag de surface, dépendance wave-2/3) ; **ne pas fermer dans ce batch**.
+- [x] 09/26 — Patch docs/epics-stories.md (cf. détail en Phase 2, sous-point bmad-create-epics-and-stories)
+- [x] 09/26 — Fix des G-M1/M2/M3/M4/M5 + annotation G-L2 (1–2h) :
+  - G-M1 (wrapper AnimationController absent) : pack 05 S3.6.13 **ratifie** `AnimationSlot` + `createAnimationController` (le hook `useAuroraAnimation` = extension optionnelle, non normativement exigée par le pack 05) ; **code SSoT déjà en place** à `packages/ui/src/renderers/AnimationController.tsx` (verdict G-M1 en commentaire de source)
+  - G-M2 (killed app = 6ᵉ état UX implicite) : `killed` ajouté **sous-état de `loading`** (pas un 6ᵉ état canonique) — 02 S7 (bloc « Sous-état `killed` (G-M2, figé 2026-09-26) ») + 05 S3.7 (ligne `killed` + row `AnimationSlot`) ; pattern SSoT = `docs/ui-libraries.md` n°185 (Skeleton + auto-resync, « Reconnexion… » + shimmer) ; test DoD wave 1 = 03 S5.9 « kill-app relaunch = état intact »
+  - G-M3 (AppError SSoT split) : owner tranché = `packages/domain` (AD-15) ; pointer comment déjà en 01 S3.1 + 02 S10 (docs seulement, l'app **importe**, ne redéfinit pas) ; **code SSoT déjà en place** à `packages/domain/src/envelopes.ts` (`AppError` + `AppErrorCode`, lines 33-42, G-M3/C-3 comment)
+  - G-M4 (job_queue SSoT split) : shape complet gelé en 01 S5.3 (lines 260-284) ; 03 S5.5 lines 370-373 **pointent seulement** (01 §5.3 `idempotency_key` + `source_local_mutation_id`) — aucune re-déclaration détectée ; **code SSoT déjà en place** à `packages/domain/src/jobs.ts` (`JobQueue.sourceLocalMutationId` line 47, G-M4 comment)
+  - G-M5 (ChartSpec SSoT undecided) : owner tranché = `packages/ui` ; shape **ratifié** = le `ChartSpec` déjà en `packages/ui/src/themes/types.ts` (lines 164-188 : `id` + `type` bar/line/area/pie/radar/heatmap, `series[].values[] {label, value, unit}`, `animateValues`, `palette`, `labels`) ; G-M5 verdict comment dans le code ; `focusBilan` (§3.6.9) = instanciation `bar` avec `seriesName: 'planned'`/`'actual'` ; règle fidèle §2.6 n°1 (pas d'animation compteur)
+  - G-L2 (49 mockups non produits) : **ANNOTÉ, pas fermé** — 1 exemple fait (Lagoon×Focus en 05 S5.7) ; les 49 restants = deliverable wave-0 Dyad/UI ; **tracké comme `W0-E2-2` (XL) dans `docs/epics-stories.md`** (owner Dyad/UI) — le register porte le lien, pas une promesse de complétion
+- [x] 09/26 — Scaffolding wave 0 ratifié (W0-E1-1, avec correction du layout réel) :
+  - État réel inventorié : **16 packages + 2 apps** (9 originels OQ-01 + 4 G-D12 engineering + 4 équipes module-owner wave 2 : learning/productivity/progress/discovery + focus). ~15k lignes de code déjà présentes (domain 2,5k, data 2,9k, ui 7,5k, modules 0,6–2k).
+  - **OQ-01 ré-ratifié** (project-context.md §4 + §5) : le layout ratifié initial ne mentionnait que 7 packages + 2 apps ; les additifs (4 module-owner + engineering-registry) sont notés comme ré-ratification, **non-bloquante pour wave 3**.
+  - **Convention module-owner (OQ-02) ajoutée au §2** : chaque équipe possède `packages/{module}` (implémentation wave 2+) ; SSoT types = `packages/domain` (AD-15), un module consomme, n'en crée jamais.
+  - `project-context.md` §1 : `DESIGNED_NOT_IMPLEMENTED` → `IMPLEMENTING` (vague courante = wave 1 PowerSync live + wave 2 modules en parallèle).
+  - Changelog v1.8 : ratification notée + impact wave 3 = **aucun blocage**.
 
 ## Phase 4 — Vérification finale
 - [ ] Tests, lint, tsc, build
+- [x] 09/26 — Session 4 wave 3 lancée (Cadence optimale Joy : item 1 = SOPHIA Ascent + ORACLE kernel en parallèle, rien ne bloque wave 3) :
+  - **SOPHIA (module Ascent) : COMPLET, 6/6 tâches** — commits `wave3/sophia:` (domain types AscentLearningIR + 6 types, packages/ascent 6 fichiers, migration 0016 + v_ascent_scope + mirror schema.json, Slide-Ascent UI 12 slides + progressive disclosure, intégration kernel, tests 35+7). Fusionné sur main (merge `95fb9b1`).
+  - **Invariants SOPHIA vérifiés (agent adversarial, 3/3 CONFIRMED_PASS)** : AD-9 fermé (Ascent n'émet AUCUN 10e event, consomme exactement les 6 existants), AD-12+AD-7 (module server-side pur, n'écrit QUE ascent_paths, LearningCommand délégué), AD-15 SSoT (les 6 types déclarés UNIQUEMENT dans `packages/domain/src/ascent.ts`, importés partout ailleurs).
+  - **Migration 0016 appliquée au live Supabase DEV via le MCP (SOPHIA step 5)** : `ascent_paths` (table + trigger set_updated_at) + RLS ENABLE + FORCE + 2 policies (`ascent_paths_user_isolation` USING/WITH CHECK user_id=auth.uid(), `ascent_paths_service_role` SELECT only) + vue `v_ascent_scope` (security_invoker, sans JOIN inter-module) + GRANT service_role. Vérif post-apply : `table_ok=1, rls_enabled=true, rls_forced=true, policies=2, view_ok=1`. Commit `034e1d9` porte l'annotation « appliquée 09/26 ». **Statut : OUI.**
+  - **ORACLE (kernel, tâches 1–2) : déjà sur main** (commits `ec00f8d` kernel core 15 composants + `cf02420` kernel re-brasse + 8 tools Vercel AI SDK dans `packages/agent/src/`) — confirmé au tip main avant le workflow, aucune ré-execution nécessaire.
+  - **0014 (pg_cron) : APPLIQUÉ au live par Joy (manuel, dashboard-side — le rôle MCP n'a pas le droit `cron.job` INSERT, donc vérification seulement, pas réapplication).** Audit via Supabase MCP (`SELECT jobname, schedule FROM cron.job`) : **2/3 présentes** — `aurora_fsrs_tick` (`'0 2 * * *'`) + `aurora_skill_recompute` (`'0 3 * * *'`) matchent le fichier SSoT verbatim ; **`aurora_event_dispatch` (`'*/5 * * * *'`) ABSENTE du live** → re-apply manuel dashboard-side (ou accepter le gap sweep manual jusqu'au wave-2 dispatcher). Annoté dans l'en-tête du fichier 0014.
