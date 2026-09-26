@@ -4,6 +4,11 @@ date: "2026-09-22"
 project: "Aurora"
 stepsCompleted:
   - step-01-document-discovery
+  - step-02-prd-analysis
+  - step-03-epic-coverage-validation
+  - step-04-ux-alignment
+  - step-05-epic-quality-review
+  - step-06-final-assessment
 documents:
   - _bmad-output/architecture/architecture-aurora-2026-09-21/adr-extract.md
   - _bmad-output/architecture/architecture-aurora-2026-09-21/ARCHITECTURE-SPINE.md
@@ -16,6 +21,8 @@ documents:
   - _bmad-output/architecture/architecture-aurora-2026-09-21/reviews/review-adversary.md
   - _bmad-output/architecture/architecture-aurora-2026-09-21/reviews/review-pack-coherence.md
   - _bmad-output/architecture/architecture-aurora-2026-09-21/reviews/review-reconciliation.md
+  - _bmad-output/project-context.md (pont de regles pour agents IA, cree 2026-09-23)
+  - _bmad-output/project-context-changelog.md (v1, 2026-09-23)
   - docs/epics-stories.md
   - docs/architecture/00-overview.md
   - docs/architecture/adr-compliance-report.md
@@ -506,3 +513,78 @@ Plus 4 new minor gaps (G-D11..D14) that are additive (no spine change):
 
 **None of these block wave-0 start.** They are wave-0 deliverables
 to complete alongside the existing 38 stories.
+
+---
+## UPDATE 2026-09-23 (run 3 — context engineering + final gate)
+
+### Contexte du run
+
+- Annulation du skill Reversa (génie inversé non requis — projet spec-first,
+  pas de code legacy à réconstruire). Les artefacts du Scout (`_reversa_sdd/inventory.md`,
+  `dependencies.md`, `.reversa/context/surface.json`) sont conservés mais le reste
+  de la séquence Reversa n'est plus applicable.
+- Création de `_bmad-output/project-context.md` v1 (pont de règles pour agents IA,
+  15 règles critiques, gates wave 0, checklists DoD par vague, 8 anti-patterns)
+  via le skill `bmad-generate-project-context`. Le fichier est **additif** :
+  il ne recopie ni `AI_RULES.md` (territoire d'un autre agent) ni les packs 01–05.
+
+### Gaps de traçabilité identifiés (2026-09-23)
+
+Le rapport précédent (update 09-22) listait les G-D10..D14 comme « wave-0
+deliverables ». Le `project-context.md` en v1 ne capture pas encore ces 4 gaps.
+**Action à prendre : ajouter une section §9 au `project-context.md` listant
+G-D10..D14 comme additifs wave 0** (pas de modif du spine, ADR additif
+conventions). À faire **avant** le lancement des agents de wave 0, sinon
+les 4 gaps se perdent entre les docs.
+
+### Vérification croisée project-context.md ↔ spine/ADR
+
+Le `project-context.md` v1 a été produit comme pont. À re-lire et corriger
+avant le run des agents wave 0 :
+
+- [ ] §4 Gates wave 0 : confirmer que G-D12 (engineering packages dans OQ-01)
+      est mentionné explicitement (actuellement §4 liste OQ-01/OQ-02/OQ-03/G-M7/G1
+      mais **pas** G-D12)
+- [ ] §5 Log des décisions : ajouter une entrée pour G-D10 (Vercel AI SDK
+      additif, pas de spine change), G-D11 (Agnes Image dans Model Registry seed),
+      G-D13 (entities GoalProject en ADR additif), G-D14 (UserContext fields)
+- [ ] §3 règle n°12 : confirmer que le ban de Redux est bien formulé (règle
+      pack 02 S3.1, pas de violation AD-1)
+- [ ] §6 Wave 0 checklist : ajouter une case pour « 4 gaps G-D10..D14 ajoutés
+      au log du project-context.md et suivis dans le plan wave 0 »
+
+### Verdict consolidé (run 3)
+
+**Prêt pour le lancement des agents de wave 0, sous 2 conditions** (pas de
+nouveau verdict fondamental — le run 2 a déjà tranché « READY FOR WAVE-0
+PLANNING ») :
+
+1. **Purger** : ajouter G-D10..D14 au `project-context.md` (gaps de traçabilité)
+   + vérifier les 4 points de croche ci-dessus (§4, §5, §3, §6).
+2. **Ratifier** les 5 décisions bloquantes listées au run 2
+   (OQ-01/OQ-02/OQ-03/OQ-17 + G-M7) — le `project-context.md` §4 les
+   recense déjà comme gates wave 0, mais il faut la **décision** (pas la
+   seule mention), c'est-à-dire le log d'approbation dans §5 du
+   `project-context.md` (ex : « 2026-09-XX — OQ-01 ratifié, pnpm layout
+   = [layout accepté], owner = Foundation »).
+
+Le reste est **administratif et non bloquant** : les 15 issues du run 2
+(5 blocking decisions, 1 structural defect [W2-E2-5 forward dep],
+3 XL stories to split, 3 FR coverage gaps [FR11/FR16/FR23],
+6 minor fixes G-M2/M3/M4/M5 + G-L2, 4 G-D10..D14) sont toutes
+documentées, catégorisées, et assignées. Aucune ne requiert un
+re-architecture.
+
+### Prochaine étape immédiate (wave 0)
+
+1. Purger le `project-context.md` (15 min)
+2. Standup wave 0 : ratifier OQ-01/OQ-02/OQ-03/OQ-17 + G-M7 (2h)
+3. Split des 4 stories (W2-E2-5, W0-E2-1, W2-E1-1, W2-E1-5) + ajout des 3
+   stories manquantes (FR11/FR16/FR23) dans `docs/epics-stories.md` (1h)
+4. Fix des 6 G-M2/M3/M4/M5 + G-L2 (1–2h)
+5. **Lancer le scaffolding wave 0** (story W0-E1-1) avec `project-context.md`
+   + `AI_RULES.md` + spine en lecture seule dans le contexte de l'agent
+
+---
+*Assessment date: 2026-09-23. Assessor: BMAD bmad-check-implementation-readiness skill (run 3). Sources: rapport 2026-09-22 (run 1 + update), `_bmad-output/project-context.md` v1, spine AD-1..AD-16, ADR v1.7, SPEC, packs 01–05, `docs/epics-stories.md`.*
+

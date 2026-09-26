@@ -1155,6 +1155,66 @@ AD-7). La **matrice d'état par composant** est en annexe A (un tableau par comp
   une compétence acquise d'une compétence encore
   disponible »).
 
+**`ChartSpec` — SSoT publié (G-M5, tranché 2026-09-26 : owner = `packages/ui`)**
+
+Le `ChartSpec` est **figé par le Design System** (contrat consommé par
+`DataVisualizationRenderer`, 02 §5.3) — **un seul** SSoT, porté par
+`packages/ui` (`src/themes/types.ts` — déjà ratifié par G-M5, 09/26),
+consommé par `apps/mobile` via `@aurora/ui` : `apps/mobile`
+**consomme** le type + l'instancie, l'**implémentation** (rendu G2)
+vit **uniquement** dans `packages/ui` (AD-1/AD-10 : jamais de moteur
+dans l'app, boundary lint CI). Shape ratifié :
+
+Règles prescriptives (règle §2.6 n°1, fidèle) : un `ChartSpec`
+**jamais** animé « compteur » (pas de 0→valeur qui scintille — la
+donnée est la vérité, pas l'effet) ; les unités/labels en
+`JetBrains Mono` (donnée technique, §2.1) ; **fallback** dégénéré =
+le spec redevient un `DataTable`/`KeyValueList` (§3.6.1/§3.6.2) si le
+moteur échoue (AD-8 : la capacité absente dégrade, elle ne casse
+pas). Toute **nouvelle** `id` de chart dédié = ADR additif (le set
+des `id` ratifiés est **fermé** comme le vocabulaire AD-9 :
+`focusBilan`, `progression`, `science-result`, … — pas de nouvel
+`id` en wave 1+ sans additif).
+
+#### 3.6.13 `AnimationSlot` + `useAuroraAnimation` (wrapper `AnimationController`, moteur motion)
+
+**Le 5ᵉ contrat AD-10 avait de wrapper manquants (G-M1, figé 2026-09-26,
+cut G1 wave-1)** : les 4 autres contrats de 02 §5.1–5.4 ont leur wrapper
+DS (`SemanticTreeNode` §3.6.6, `InfographicSlot` §3.6.7,
+`MathBlock` §3.6.8, `DataTable`/`Sparkline` §3.6.1/§3.6.5) ; le 5ᵉ
+contrat (`AnimationController`, 02 §5.5) n'en avait **aucun** — le DS
+exposait le contrat brut **sans** le wrapper que le DS est censé fournir
+(contrat pack 02 §8 « l'app ne voit que le composant »). **Wrapper
+ratifié = `AnimationSlot` + `createAnimationController` (le hook
+`useAuroraAnimation` est une extension optionnelle, non
+normativement exigée par le pack 05)** :
+
+- **`AnimationSlot`** : un composant **slot** qui enveloppe le noeud
+  cible de la révélation pédagogique (formule, flèche, étape,
+  résultat, branche) : le DS pilote `AnimationController.reveal`
+  (§3.6.5 contrat 02 §5.5) **en interne**, l'app ne voit **que** le
+  slot + ses props `revealKey: RevealKey` + `on` (la révélation
+  déclenchée) — jamais `motion` en dur (AD-1/AD-10).
+- **`createAnimationController()`** : le constructeur qui renvoie
+  l'instance unique du DS (singleton par subtree, le
+  `prefersReducedMotion` doit être **cohérent** app-wide,
+  §2.6 règle 2) ; le hook `useAuroraAnimation` (si ajouté) = une
+  fine couche React au-dessus de ce constructeur, renvoyant
+  `{ reveal(key), reduced }` — extension **optionnelle**, non
+  normativement exigée.
+- **États** : `loading` n/a (la révélation est **immédiate**, le
+  contenu doit être prêt avant — le `loading` vit **avant** le
+  `AnimationSlot`, pas dedans) ; `empty` n/a (pas de contenu,
+  pas de révélation) ; `error` n/a (la révélation ne **peut pas**
+  « échouer » — c'est une animation, pas une donnée) ; `offline`
+  = **fonctionnel** (l'animation est **locale**, §2.6 : rien ne
+  dépend du cloud).
+- **Règle réversible** : `setReducedMotion(true)` (boot + focus
+  mode, §2.6 règles 2/3) passe **toutes** les `reveal` en
+  `anim.instant` (§2.6 table `aurora.anim.*`) — le contenu
+  **apparaît** instantanément, le slot reste **identique** (pas
+  de désactivation du composant, juste la durée → 0).
+
 #### 3.6.12 `HabitStreak` (heatmap type GitHub) + `RoutineStep`
 - **`HabitStreak`** : l'**adhérence temporelle** d'une habitude
   (doc §2.7 : « Suivi de régularité », « Analyse de l'adhérence
@@ -1225,6 +1285,20 @@ par l'app, le rendu par le Design System »).
 | `RoutineStep` | n/a | n/a | ✓ (badge reporté) | ✓ (locale) | composant |
 | `Callout` | n/a | n/a | (c'est l'état) | ✓ (bannière) | écran |
 | `Divider` | n/a | n/a | n/a | n/a | n/a |
+| `AnimationSlot` | n/a | n/a | n/a | ✓ (locale) | composant |
+
+**Colonne `killed` (G-M2, figé 2026-09-26 — sous-état de `loading`, pas un 6ᵉ
+état canonique)** : pour **tout** composant dont `loading` = ✓, le sous-état
+`killed` (relaunch cold après kill système) se rend **exactement** comme le
+`loading` normal du composant **avec** un auto-resync en arrière-plan :
+les données du mirror local s'affichent (jamais d'écran blanc ni de reset —
+AD-7), et le composant passe en état normal quand le resync s'achève
+(message « Reconnexion… » = bannière fine DS, jamais par composant).
+Les composants `loading = n/a` n'ont **rien** de nouveau à rendre pour
+`killed`. **Le `ChartSpec`/`AnimationSlot` (`DataVisualizationRenderer`
+§3.6.5 / `AnimationController` §3.6.13)** n'ont pas de cas `killed`
+spécial (leur `loading`/`offline` normal suffit) — le `kill-app` = un
+relaunch qui part du mirror, pas un nouvel état du moteur.
 
 **Règle de test (pack 02 §11)** : un composant qui **implémente** un
 état de cette matrice a **un test de rendu par état** ; un composant
