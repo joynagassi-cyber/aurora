@@ -41,6 +41,7 @@ import { ProgressPage, ProgressDetailPage } from './pages/progress';
 import { FocusPage } from './pages/focus';
 import { ArtifactPage } from './pages/artifacts';
 import { AgentPage } from './pages/agent';
+import { SlideAscentPage } from './pages/ascent';
 import { SettingsPage } from './pages/settings';
 import { NotFoundPage } from './pages/not-found';
 
@@ -78,6 +79,11 @@ export const appRouter: AppRouter = createBrowserRouter([
       { path: '/goals/:id', element: <GoalDashboardPage /> },
       { path: '/goals/:id/features/:fid', element: <GoalFeatureDetailPage /> },
 
+      // --- Ascent (wave 3, W3-E2): the pedagogical path of the active
+      //   goal. The current userId arrives at boot with the authenticated
+      //   session (05 §4.8); Slide-Ascent renders the local mirror.
+      { path: '/goals/:id/ascent', element: <SlideAscentPage userId="me" /> },
+
       // --- Focus + calendar family views ---
       { path: '/focus', element: <FocusPage service={null} /> },
       { path: '/calendar', element: <CalendarPage /> },
@@ -101,4 +107,4 @@ export const appRouter: AppRouter = createBrowserRouter([
 export type AppRoute = '/home' | '/tasks' | '/learn' | '/progress' | '/agent'
   | '/tasks/:id' | '/learn/:id' | '/progress/:id' | '/knowledge' | '/knowledge/:nodeId'
   | '/artifacts/:id' | '/inbox' | '/settings' | '/goals' | '/goals/:id'
-  | '/goals/:id/features/:fid' | '/focus' | '/calendar' | '/projects' | '/discovery';
+  | '/goals/:id/features/:fid' | '/goals/:id/ascent' | '/focus' | '/calendar' | '/projects' | '/discovery';
