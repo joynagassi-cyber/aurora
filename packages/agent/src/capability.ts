@@ -61,7 +61,7 @@ export class DefaultCapabilityRegistry {
     this.entries = [...this.entries.filter((e) => e.id !== c.id), c];
   }
 
-  /** The 8 kernel tools (Vercel AI SDK) — the canonical capability set. */
+  /** The 8 kernel tools + the 7 goal capabilities — the canonical set. */
   private seedDefaults(): void {
     type Seed = Partial<CapabilityEntry> & { id: string; tool: string; description: string };
     const base: Seed[] = [
@@ -145,6 +145,85 @@ export class DefaultCapabilityRegistry {
         requiresConfirmation: false,
         dependencies: ['scientific-engine'],
         offlineClass: 'offline-capable',
+      },
+      // ------------------------------------------------------------------
+      // Goal capabilities (dynamic-goal-engine.md "Agent capabilities"):
+      // the 7 goal.* commands. AD-7: the kernel emits the command; the
+      // Progress module owns user_goals + applies the mutation (GoalProject
+      // composition data via @aurora/goal-engine). goal.create is
+      // CONFIRMATION_REQUIRED (the user sees the plan before activation).
+      // ------------------------------------------------------------------
+      {
+        id: 'goal.create',
+        tool: 'goal_create',
+        description: 'NL objective -> decompose -> GoalProject (CONFIRMATION_REQUIRED)',
+        writeScopes: ['progress:write'],
+        readScopes: ['progress:read', 'knowledge:read', 'identity:read'],
+        destructive: false,
+        requiresConfirmation: true,
+      },
+      {
+        id: 'goal.status',
+        tool: 'goal_status',
+        description: 'Read GoalProject + GoalProgress snapshot',
+        writeScopes: [],
+        readScopes: ['progress:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      {
+        id: 'goal.recompose',
+        tool: 'goal_recompose',
+        description: 'Re-plan a GoalProject on stall / context change (ADR S13: history preserved)',
+        writeScopes: ['progress:write'],
+        readScopes: ['progress:read'],
+        destructive: false,
+        requiresConfirmation: true,
+      },
+      {
+        id: 'goal.pause',
+        tool: 'goal_pause',
+        description: 'Pause a GoalProject (jobs stop, notifications mute; progress + history preserved)',
+        writeScopes: ['progress:write'],
+        readScopes: ['progress:read'],
+        destructive: false,
+        requiresConfirmation: true,
+      },
+      {
+        id: 'goal.complete',
+        tool: 'goal_complete',
+        description: 'Mark a GoalProject complete when the success criteria are met (F-07: Progress sole producer of the evidence)',
+        writeScopes: ['progress:write'],
+        readScopes: ['progress:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      {
+        id: 'goal.abandon',
+        tool: 'goal_abandon',
+        description: 'Abandon a GoalProject (data preserved AD-15, features deactivated)',
+        writeScopes: ['progress:write'],
+        readScopes: ['progress:read'],
+        destructive: false,
+        requiresConfirmation: true,
+      },
+      {
+        id: 'goal.feature.add',
+        tool: 'goal_feature_add',
+        description: 'Add a feature to a GoalProject composition ("ajoute des QCM chaque semaine")',
+        writeScopes: ['progress:write'],
+        readScopes: ['progress:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      {
+        id: 'goal.feature.remove',
+        tool: 'goal_feature_remove',
+        description: 'Remove a feature from a GoalProject composition ("plus besoin de focus sur ce but")',
+        writeScopes: ['progress:write'],
+        readScopes: ['progress:read'],
+        destructive: false,
+        requiresConfirmation: false,
       },
     ];
     for (const b of base) {
