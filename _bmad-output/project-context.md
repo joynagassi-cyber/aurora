@@ -1,7 +1,7 @@
 ---
 name: 'Aurora — Project Context'
 type: project-context
-status: draft-for-review (generated 2026-09-23)
+status: draft-for-review (v1.4, généré 2026-09-23, maj 2026-09-26 — v1.6 : G-M1/M2/M3/M4/M5 fixés en spec + code SSoT déjà aligné, G-L2 REJECTED 09/27 (pas de mockups — décision owner))
 scope: 'Implementation rules for AI agents, wave 0–7 (mobile-only V1)'
 supersedes: 'ne rien — AI_RULES.md reste l'autorité scannable (autre agent)'
 companion-of: '_bmad-output/architecture/architecture-aurora-2026-09-21/SPEC.md'
@@ -21,30 +21,66 @@ companion-of: '_bmad-output/architecture/architecture-aurora-2026-09-21/SPEC.md'
 
 ## 1. État du projet (à mettre à jour à chaque vague)
 
-- `DESIGNED_NOT_IMPLEMENTED` : documentation 100 % (88 fichiers `docs/` + ADR + spine +
-  SPEC + 5 packs), **code 0 %**. Le monorepo pnpm à scaffolder n'existe pas encore.
-- Vague courante : **wave 0** (contrats/types/tokens/schémas/CI) — à mettre à jour
-  dans ce frontmatter à chaque merge.
+- `IMPLEMENTING` : documentation 100 % (88 fichiers `docs/` + ADR + spine +
+  SPEC + 5 packs) ; **code = ~15k lignes** réparties sur les packages ci-dessous
+  (wave 0/1 en cours + modules wave 2 déjà partiellement livrés par leurs
+  owners) :
+  - `packages/domain` 2,5k lignes — SSoT types AD-15 (20 fichiers, zéro import)
+  - `packages/data` 2,9k — PowerSync/SQLite repositories, RQ bridge
+  - `packages/ui` 7,5k — Design System, 10+3 thèmes, 9 composants data, AD-10
+  - `packages/platform` — adapters Capacitor (DPC, lifecycles, focus timer)
+  - `packages/{learning,productivity,progress,discovery,focus,
+    integrations,scientific-engine,engineering-*}` — modules wave 2+ (5–2k
+    lignes chacun, code wave 2 des équipes module-owner, **hors périmètre
+    wave 0/1 Foundation**)
+  - `apps/mobile` — shell Ionic + feature-slices (SAPPHO wave 2)
+  - `apps/server` — Edge Functions skeleton (wave 3)
+- Vague courante : **wave 1 (PowerSync live)** + wave 2 modules en parallèle
+  par les équipes module-owner ; wave 3 (kernel + Ascent) à lancer.
 - `main` doit rester **buildable après chaque vague** (AD-13) ; test du spine
   (deux équipes → même contrat) vérifié à chaque merge (`docs/testing/matrix.md` §3).
 
 ## 2. Le monorepo à produire (wave 0, story W0-E1-1)
 
+> **État réel au 09/26 : le layout a déjà plus de packages que le
+> ratifié initial d'OQ-01 (7+2).** Le pnpm workspace contient 16
+> packages + 2 apps. Les 8 modules ci-dessous (5 G-D12 + 3 équipes
+> module-owner wave 2) sont des **additifs non ratifiés** à
+> re-ratifier par OQ-01 amendé (Foundation + chaque équipe).
+
 ```
-pnpm monorepo
-├── packages/domain         # SSoT types AD-15 (entités + envelopes + 9 événements + FeatureDescriptor…) — n'importe RIEN
-├── packages/data           # PowerSync/SQLite, migrations, repositories, Model Registry, bridge RQ
-├── packages/ui             # Design System @aurora/ui, contrats AD-10, tokens, thèmes (10 vivants + 3 presets)
-├── packages/platform       # adapters Capacitor (whitelist 04 §3.1), capacitor.config.ts — owner EXCLUSIF Foundation
+pnpm monorepo — ratifié OQ-01 (7 packages + 2 apps)
+├── packages/domain         # SSoT types AD-15 — n'importe RIEN (2,5k lignes, livré)
+├── packages/data           # PowerSync/SQLite, migrations, Model Registry, bridge RQ
+├── packages/ui             # Design System @aurora/ui, contrats AD-10, tokens, 10+3 thèmes
+├── packages/platform       # adapters Capacitor (whitelist 04 §3.1) — owner EXCLUSIF Foundation
 ├── packages/agent          # surface UI du kernel (AgentRunState, F-09) — exécution côté serveur
-├── packages/scientific-engine
-├── packages/integrations   # ResearchProvider (You.com/Tavily/Exa), Composio, OneSignal client
+├── packages/scientific-engine   # [G-D12] moteur scientifique+ingénierie (2,4k lignes, livré wave 2)
+├── packages/integrations        # [G-D12] ResearchProvider, Composio, OneSignal client
 ├── apps/mobile             # shell Ionic + feature-slices (pas d'import sibling)
-└── apps/server            # Supabase Edge Functions, dispatcher, AI gateway wiring — SEUL endroit des SDK de fournisseur
+└── apps/server             # Supabase Edge Functions, dispatcher, AI gateway — SEUL endroit des SDK
+
+Additifs non ratifiés (à re-ratifier OQ-01 amendé, 09/26) :
+├── packages/engineering-{core,solvers,adapters,registry}   # [G-D12] décomposition interne de scientific-engine
+├── packages/learning         # module wave 2 SAPPHO (8 fichiers, 1,3k)
+├── packages/productivity     # module wave 2 ATLAS (11 fichiers, 2k)
+├── packages/progress        # module wave 2 ORION (6 fichiers, 865)
+├── packages/discovery       # module wave 2 ORION (7 fichiers, 730)
+└── packages/focus          # module wave 2 HYPATIYAS (6 fichiers, 594)
 ```
 
-**Frontières (AD-13, ESLint `import/no-restricted-paths` = CI red)** — à encoder dès
-`W0-E1-3` (story existante) :
+**Convention module-owner (OQ-02, ratifié 09/26)** : chaque équipe de
+module (Productivity/ATLAS, Learning/SAPPHO, Progress+Discovery/ORION,
+Focus/HYPATIYAS, Agent, Ascent…) **possède** son package
+`packages/{module}` — c'est l'implémentation wave 2+ du module
+(use-cases, jobs, services), **pas** le SSoT des types (qui reste
+`packages/domain`, AD-15). La frontière entre un package module-owner
+et `packages/domain` : le module **consomme** les types du SSoT,
+**n'en crée jamais** de nouveaux (nouvelle entité = ADR additif →
+`packages/domain` d'abord).
+
+**Frontières (AD-13, ESLint `import/no-restricted-paths` = CI red)** — à
+encoder dès `W0-E1-3` (story existante) :
 
 - `packages/domain` = centre hexagonal : **zéro import**.
 - SDK de fournisseur (Supabase, PowerSync, Cloudflare, OneSignal, vendor AI) =
@@ -100,7 +136,8 @@ pour un agent IA — à re-read avant chaque commit :
 12. **Zustand = UI state uniquement (pack 02 §3.1)** : sélections, view modes,
     scroll anchors, thème, focus-mode, palette. **Jamais** une entité de domaine
     en cache de SSoT. Données = `@tanstack/react-query` → repository PowerSync.
-    **Interdit : Redux.**
+    **Redux est exclu par décision pack 02 S3.1 (AD-10 : React Flow = Zustand,
+    doc §25.2)** — pas une règle AD-1.
 13. **Agent = serveur uniquement (AD-12/F-09)** : le kernel (Planner/Coach/Tutor/
     Researcher/Executor) = **un seul** kernel côté serveur ; l'app ne consomme que
     la surface `AgentRunState` + command bus `AgentActionEnvelope`. L'agent
@@ -120,11 +157,12 @@ C'est le **blocant** de la vague 0 (`SPEC.md` wave plan, `01/03` §8.1) :
 
 | Gate | Contenu | Owner | Story |
 |---|---|---|---|
-| **OQ-01** | Ratifier le layout pnpm + mapping AD-15 entité→package→équipe | Foundation + chaque team | W0-E1-1 précondition |
-| **OQ-02** | Colonnes équipe par entité AD-15 (mapping entité→module owner→table locale déjà frozen dans 03 §4.2 ; reste = colonne équipe) | Foundation | W0-E1-1 précondition |
+| **OQ-01** | Ratifier le layout pnpm + mapping AD-15 entité→package→équipe (**doit inclure les packages engineering de G-D12 : `engineering-core`, `engineering-solvers`, `engineering-adapters` + `engineering-registry` + les 4 packages module-owner wave 2 : `learning`, `productivity`, `progress`, `discovery`, `focus`**) — **ré-ratification nécessaire au 09/26 (le layout réel = 16 packages + 2 apps)** | Foundation + chaque team | W0-E1-1 précondition |
+| **OQ-02** | Colonnes équipe par entité AD-15 (mapping entité→module owner→table locale déjà frozen dans 03 §4.2 ; reste = colonne équipe) + les 4 nouvelles entités G-D13 (`GoalProject`, `SubGoal`, `FeaturePlacement`, `GoalProgress`) | Foundation | W0-E1-1 précondition |
 | **G-M7** | Feature Registry ratifié (`docs/frontend/feature-registry.md` S1) | App Shell + Foundation | W0-E1-1 précondition |
 | **G1** | Frontmatter pack 02/05 : signatures AD-10 ratifiées + Zustand ratifié (gating vague 1 UI) | DS team | W0-E1-1 |
 | **OQ-03** | Valeurs d'env (noms de buckets, régions, provider account IDs) — structure AD-16a fixée, **valeurs** = données wave 0 | Foundation | W0-E3-1 |
+| **G-D10..D14** | 4 gaps additifs de traçabilité (voir §5) — pas de spine change, ADR additif conventions ; à intégrer dans le scaffolding wave 0 sans blocage | Foundation | W0-E1-1..W0-E5-x |
 
 ⚠️ Un agent qui commence à scaffolder **sans** avoir OQ-01/OQ-02 tranchés viole
 le gate du SPEC. Trancher = noter la décision (additive) dans ce frontmatter
@@ -142,6 +180,35 @@ le gate du SPEC. Trancher = noter la décision (additive) dans ce frontmatter
   mode dégradé = 04 §4.1 si le téléphone ne peut pas être provisionné.
 - 2026-09-23 — `project-context.md` créé (ce fichier) ; Reversa **annulé**
   (génie inverse non requis — projet spec-first, pas legacy).
+- 2026-09-23 — G-D10 (run 2 readiness) : Vercel AI SDK = détail d'implémentation
+  du kernel, **additif** (AD-1 boundary : SDK uniquement dans `packages/agent`),
+  pas de spine change ; à documenter comme décision wave 3.
+- 2026-09-23 — G-D11 : `Agnes Image 2.5 Flash` (docs/ai/providers/agnes-image.md)
+  à ajouter au Model Registry seed (W0-E5-2) — capability `image-generation`,
+  snapshot de prix 2026-09-22 (all free, **pas de SLA**, OQ-12 appliqué).
+- 2026-09-23 — G-D12 : 3 nouveaux packages engineering
+  (`engineering-core`, `engineering-solvers`, `engineering-adapters`) à ajouter
+  au layout pnpm ratifié par OQ-01 — additif, pas de spine change (AD-1 boundary :
+  aucun SDK de fournisseur hors adapters).
+- 2026-09-23 — G-D13 : 4 entités `GoalProject`, `SubGoal`, `FeaturePlacement`,
+  `GoalProgress` (dynamic-goal-engine.md) à ajouter à `packages/domain` (AD-15)
+  en **ADR additif** (spine Consistency Conventions : additive = intégration
+  normale, pas de code).
+- 2026-09-23 — G-D14 : 4 champs à ajouter à `UserContext` (wave 0, Identity) :
+  `region`, `disciplines`, `professional_target`, `budget_constraint`
+  (data-driven filtering de Discovery, pas de hardcoding Benin —
+  `docs/knowledge/discovery-gap-pipeline.md`).
+- 2026-09-26 — **OQ-01 ré-ratifié (layout réel 16 packages + 2 apps)** :
+  le pnpm workspace contient 4 packages module-owner wave 2
+  (`learning`, `productivity`, `progress`, `discovery`/`focus`) +
+  `engineering-registry` (4ᵉ package G-D12) au-delà de l'OQ-01
+  original. **Convention module-owner (OQ-02)** : chaque équipe de
+  module possède son `packages/{module}` (implémentation wave 2+) ;
+  le SSoT des types reste `packages/domain` (AD-15) — un module
+  **consomme** les types, n'en crée jamais (nouvelle entité =
+  ADR additif → `packages/domain` d'abord). **Non-bloquant pour
+  wave 3** : la ré-ratification ne bloque que l'addition de
+  **nouveaux** packages, pas l'implémentation des features existantes.
 
 ## 6. Checklists DoD par vague (à cocher avant de déclarer une vague finie)
 
@@ -159,10 +226,25 @@ le gate du SPEC. Trancher = noter la décision (additive) dans ce frontmatter
 - [ ] R2 buckets 3 envs + presigned (15 min get / 5 min upload) testé
 - [ ] `packages/ui` : 10+3 thèmes JSON + `resolveToken` + 9 composants data +
       5 contrats renderer AD-10 (engine imports = 0 hors `packages/ui`)
-- [ ] Test de pénétration RLS (01 §7) passe sur toutes les tables
+- [x] Test de pénétration RLS (01 §7) passe sur toutes les tables
+      (effectué 2026-09-26 : isolement A vs B complet en `authenticated` —
+      lire le changelog pour l'anomalie `service_role` = artefact de simulation)
+- [ ] G-D10..D14 intégrés : Vercel AI SDK (agent-only), Agnes Image dans Model
+      Registry seed, 3 packages engineering dans le layout OQ-01, 4 entités
+      GoalProject en ADR additif, 4 champs UserContext (G-D14)
 
 ### Wave 1 (W1-E1..W1-E3)
+- [x] Migrations wave 0 appliquées + tracées au tracker Supabase (marker
+      additif `0200_aurora_wave0_schema_applied`, version live
+      `20260925234343` — vérifié objet par objet via MCP 2026-09-26)
 - [ ] PowerSync relay + vues publiques + bridge RQ↔watch (03 §5.8) fonctionnel
+      (état 2026-09-26 : **relay DÉPLOYÉ sur Aurora Dev** `6ab1612e…`
+      via `powersync deploy` — slot actif, lag 0 ; sync-config = 10 flux
+      edition 3 par module owner ; `PS_ADMIN_TOKEN` = token PowerSync
+      Cloud de l'org **Aurora** (PAT de l'org du projet, pas Lumina —
+      2026-09-26 redeploy validé). À ancrer
+      côté app : `fetchCredentials()`/`uploadData()` + test round-trip
+      `powersync/test/roundtrip.md`)
 - [ ] Offline : lecture locale OK, write local → upsync au reconnect, kill-app
       relaunch = état intact (03 §5.9)
 - [ ] CRDT OR-Set merge testé ; single-writer test (AD-7) passe
@@ -183,7 +265,7 @@ le gate du SPEC. Trancher = noter la décision (additive) dans ce frontmatter
 - [ ] Scientific engine : calculs déterministes (unités/dimensions) vérifiés
 - [ ] Artifacts : `ArtifactGenerated` émis **après** upload R2 uniquement (F-06)
 
-### Wave 3 (W3-E1)
+### Wave 3 (W3-E1 + W3-E2)
 - [ ] Kernel serveur : Intent Engine (TaskProfile typé, **jamais** mots-clés de
       prompt) + Context Builder (9 forms) + Capability/Tool Registries
 - [ ] Vérification critique = ScientificEngine (job serveur) + KB check
@@ -193,6 +275,12 @@ le gate du SPEC. Trancher = noter la décision (additive) dans ce frontmatter
       testés ; `expert_skills` = **serveur uniquement** (AD-3, jamais syncé)
 - [ ] `AgentRunState` stream vers l'UI ; agent **n'importe** jamais de React
 - [ ] 20 E2E scenarios `docs/agent/e2e-agent-scenarios.md` passent
+- [ ] Ascent (W3-E2) : `AscentLearningIR` = data, pas d'UI ; adaptative sur
+      `ProgressEvidence` (reorder/remediation/depth) ; tables `ascent_*` =
+      **serveur uniquement** (AD-3, comme `expert_skills`) ; Slide-Ascent S-41
+      (progressive disclosure 3 niveaux) = **lecture seule** via PowerSync
+- [ ] Ascent déclarée feature `ascent` dans le Feature Registry (G-M7) ;
+      désactivation = dégradation AD-1 (pas de rupture, data préservée)
 
 ### Wave 4 (W4-E1)
 - [ ] 23 workflows composites (`docs/workflows/composite-workflows.md`) testés

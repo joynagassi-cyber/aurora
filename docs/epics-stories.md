@@ -7,6 +7,8 @@ the individual deliverables within each wave. Each story has: ID, title,
 description, acceptance criteria (DoD), module owner, dependencies, size
 (S/M/L/XL), and wave gate.
 
+**Patch 09/26 (implementation-readiness gaps):** W0-E2-1 split (theme JSON/provider vs 49 mockups [G-L2] → W0-E2-2) ; W2-E1-1 split (Inbox+Tasks vs Eisenhower → W2-E1-2) ; W2-E1-5 split (in-app timer vs v1.8 DPC → W2-E1-6/7) ; + FR11 W2-E1-8 Resource Library, FR23 W2-E1-9 Automations ; W2-E2-5 dé-couplé de W3 (wave-2 part, NL trigger → W3-E1-6) ; + FR16 W3-E1-7 Coach Mode ; + Epic W3-E2 Ascent (engine + Slide-Ascent feature registry, rattachement G-M7 + S-41).
+
 Convention: story IDs = `W{wave}-{epic}-{n}` (e.g. `W0-E1-1`).
 Epic IDs = `W{wave}-E{epic}`.
 
@@ -31,9 +33,10 @@ vocabulary confirmed; 5 UX states confirmed.
 
 | ID | Story | Description | Acceptance Criteria | Owner | Deps | Size |
 |---|---|---|---|---|---|---|
-| W0-E2-1 | Theme JSON SSoT | Create `packages/ui/src/themes/` with 10 living themes + 3 presets (Slate, Nocturne, High Contrast) as JSON files; `resolveToken` TS function; `<AuroraThemeProvider>` component | G-H2 resolved (canvas values #F8FAFC / #0A0E1A); G-M5 ChartSpec shape published in 05 S3.6; 49 theme x screen mockups [G-L2] tracked | DS team | W0-E1-1 | XL |
-| W0-E2-2 | DS data components (9) | Build the 9 DS data components (05 S3.6 DEF): SemanticTreeRenderer, InfographicRenderer, DataVisualizationRenderer, MathRenderer, AnimationController [G-M1: add AnimationSlot] + 4 data components | Components compile; engine imports only in packages/ui; G-M1 AnimationController wrapper added | DS team | W0-E2-1 | L |
-| W0-E2-3 | Screen inventory (05 S4) | Complete the screen inventory for all modules (05 S4.1-4.9); include Mirror screen [G-L3] and Eisenhower quadrant [G-L5] as additive items | Inventory covers all module screens; AD-14 Home invariant verified | DS team | W0-E2-1 | M |
+| W0-E2-1 | Theme JSON SSoT (themes + provider) | Create `packages/ui/src/themes/` with 10 living themes + 3 presets (Slate, Nocturne, High Contrast) as JSON files; `resolveToken` TS function; `<AuroraThemeProvider>` component | G-H2 resolved (canvas values #F8FAFC / #0A0E1A); G-M5 ChartSpec shape published in 05 S3.6; provider compiles + theme switching works | DS team | W0-E1-1 | L |
+| W0-E2-2 | 49 theme x screen mockups [G-L2] — CLOSED | **REJECTED 2026-09-27 (owner Joy, time/token cost)**: mockups not produced. Design follows 05 S5.7 mechanism + Lagoon×Focus example + theme tokens + docs/ui-libraries.md (S9 brand assets). No agent may start mockup production without owner re-approval | N/A (story closed, no DoD) | DS team | W0-E2-1 | XL — CLOSED |
+| W0-E2-3 | DS data components (9) | Build the 9 DS data components (05 S3.6 DEF): SemanticTreeRenderer, InfographicRenderer, DataVisualizationRenderer, MathRenderer, AnimationController [G-M1: add AnimationSlot] + 4 data components | Components compile; engine imports only in packages/ui; G-M1 AnimationController wrapper added | DS team | W0-E2-1 | L |
+| W0-E2-4 | Screen inventory (05 S4) | Complete the screen inventory for all modules (05 S4.1-4.9); include Mirror screen [G-L3] and Eisenhower quadrant [G-L5] as additive items | Inventory covers all module screens; AD-14 Home invariant verified | DS team | W0-E2-1 | M |
 
 ### Epic W0-E3: Backend Schemas & RLS
 
@@ -70,7 +73,7 @@ vocabulary confirmed; 5 UX states confirmed.
 
 | ID | Story | Description | Acceptance Criteria | Owner | Deps | Size |
 |---|---|---|---|---|---|---|
-| W1-E1-1 | packages/ui component library | Complete DS component library (05 S3.6): 9 data components + 5 renderer contracts + theme system; G-M1 AnimationController wrapper; G-M5 ChartSpec | All components render in dev environment; theme switching works (10 themes + 3 presets); perf: 1000-node tree at 30 fps [02 S11] | DS team | W0-E2-1, W0-E2-2 | XL |
+| W1-E1-1 | packages/ui component library | Complete DS component library (05 S3.6): 9 data components + 5 renderer contracts + theme system; G-M1 AnimationController wrapper; G-M5 ChartSpec | All components render in dev environment; theme switching works (10 themes + 3 presets); perf: 1000-node tree at 30 fps [02 S11] | DS team | W0-E2-1 (W0-E2-2 descoped 09/27 — not a blocker; story delivered) | XL |
 | W1-E1-2 | Feature Registry implementation | Implement `FeatureRegistry` (feature-registry.md S1): FeatureDescriptor SSoT, registry chain (S2), deactivation effects (S6), product modes (S7) | Feature toggle works end-to-end: disable a feature -> navigation hidden, agent capability removed, data preserved, deep link shows "disabled" state | App Shell + Foundation | W0-E1-2, W1-E1-1 | L |
 
 ### Epic W1-E2: Data Foundation
@@ -97,12 +100,16 @@ vocabulary confirmed; 5 UX states confirmed.
 
 | ID | Story | Description | Acceptance Criteria | Owner | Deps | Size |
 |---|---|---|---|---|---|---|
-| W2-E1-1 | Inbox + Tasks | Inbox capture/triage; Task CRUD (statuses, subtasks, estimates, actual_minutes, recurrence, dependencies, postponements); Eisenhower quadrant [G-L5] | Task create -> complete -> `TaskCompleted` event emitted; local mirror works; quadrant view renders [eisenhower.md] | Productivity | W1-E2-1 | XL |
-| W2-E1-2 | Calendar + Time Blocking | Calendar view; time blocking; conflict detection; overload detection; `calendar.schedule` capability | Time block creation works; conflict detected; offline-capable [local mirror] | Productivity | W2-E1-1 | L |
-| W2-E1-3 | Projects + Goals | Gantt/Kanban/Timeline/List views; milestones; templates; goal -> project -> task hierarchy; `GoalUpdated` event | Project CRUD works; goal hierarchy renders; `GoalUpdated` emitted on change | Productivity | W2-E1-1 | L |
-| W2-E1-4 | Habits + Routines | Daily/weekly habits; routines (temporal anchors); adherence analytics; `HabitStreak` heatmap | Habit check-in works; streak heatmap renders; offline-capable | Productivity | W2-E1-1 | M |
-| W2-E1-5 | Focus Mode (in-app + v1.8 DPC) | Focus session timer; Pomodoro; blocklist UI; `FocusController` / `FocusControllerDpc` [v1.8]; `FocusSessionBilan` SSoT [G-H1]; crash/reboot recovery [spec S7] | Timer works offline; DPC: `setPackagesSuspended` applied + restored; bilan shape matches 01 S4.1; 13 mandatory test scenarios [spec S13] | Productivity + Platform | W2-E1-1, W0-E4-3 | XL |
-| W2-E1-6 | Reviews + Analytics | Daily/weekly/monthly reviews; decisions journal; planned vs actual; procrastination trends; overload detection | Review flows work; analytics S jobs (aggregation) complete; offline-capable [mirrors] | Productivity | W2-E1-1 | M |
+| W2-E1-1 | Inbox + Task CRUD | Inbox capture/triage; Task CRUD (statuses, subtasks, estimates, actual_minutes, recurrence, dependencies, postponements) | Task create -> complete -> `TaskCompleted` event emitted; local mirror works | Productivity | W1-E2-1 | L |
+| W2-E1-2 | Eisenhower quadrant [G-L5] | Quadrant view (4-quadrant grid, `docs/productivity/eisenhower.md` §4); task placement; triage filter | Quadrant renders; task moves between quadrants; theme tokens only | Productivity | W2-E1-1 | M |
+| W2-E1-3 | Calendar + Time Blocking | Calendar view; time blocking; conflict detection; overload detection; `calendar.schedule` capability | Time block creation works; conflict detected; offline-capable [local mirror] | Productivity | W2-E1-1 | L |
+| W2-E1-4 | Projects + Goals | Gantt/Kanban/Timeline/List views; milestones; templates; goal -> project -> task hierarchy; `GoalUpdated` event | Project CRUD works; goal hierarchy renders; `GoalUpdated` emitted on change | Productivity | W2-E1-1 | L |
+| W2-E1-5 | Habits + Routines | Daily/weekly habits; routines (temporal anchors); adherence analytics; `HabitStreak` heatmap | Habit check-in works; streak heatmap renders; offline-capable | Productivity | W2-E1-1 | M |
+| W2-E1-6 | Focus Mode (in-app: timer + Pomodoro) | Focus session timer; Pomodoro; `FocusController` (in-app); `FocusSessionBilan` SSoT [G-H1] | Timer works offline; bilan shape matches 01 S4.1 | Productivity | W2-E1-1 | L |
+| W2-E1-7 | Focus Mode v1.8 DPC (blocklist + crash/reboot) | `FocusControllerDpc` [v1.8]; blocklist UI; `setPackagesSuspended` + restore; crash/reboot recovery [spec S7] | DPC: suspend applied + restored; 13 mandatory test scenarios [spec S13] | Productivity + Platform | W2-E1-6, W0-E4-3 | L |
+| W2-E1-8 | Resource Library (FR11) | `resources` / `notes` / `documents` tables [01 S4.1]; feature catalog `productivity.library`; item types (cours/PDF/documents/images/vidéos/liens/exercices/rapports/notes); rattachement matière/compétence/projet/objectif/session; search; agent context retrieval; R2 storage [ADR S2.11] | Library CRUD works; R2 upload via presigned URL; item linked to domain entity; `ArtifactGenerated` post-upload | Productivity | W2-E1-1, W0-E3-4 | L |
+| W2-E1-9 | Automations (FR23) | `Automation` entity; Supabase Cron triggers -> Aurora dispatcher -> persisted jobs [AD-8]; user-facing toggle; `integrations.automation.toggle` capability | Automation create + toggle works; cron job fires and upserts; idempotency test passes [01 S7] | Productivity + Integrations | W1-E2-3 | M |
+| W2-E1-10 | Reviews + Analytics | Daily/weekly/monthly reviews; decisions journal; planned vs actual; procrastination trends; overload detection | Review flows work; analytics S jobs (aggregation) complete; offline-capable [mirrors] | Productivity | W2-E1-1 | M |
 
 ### Epic W2-E2: Learning
 
@@ -112,7 +119,7 @@ vocabulary confirmed; 5 UX states confirmed.
 | W2-E2-2 | Study sheets (AI + fidelity) | 7 structures [ADR S17]; AI generation via gateway; fidelity check (corpus-dominant + separated agent explanation); export MD/PDF/DOCX/PNG | Sheet generation works; fidelity check passes; export = Artifact job + R2 + `ArtifactGenerated` post-upload [F-06] | Learning | W2-E2-1, W1-E2-3 | XL |
 | W2-E2-3 | Flashcards (FSRS) | FSRS spaced repetition; algorithm **server** [03 S4.2]; state mirrored local; `FlashcardReviewed` event | Flashcard review works offline [local mirror]; FSRS tick job completes; `FlashcardReviewed` emitted | Learning | W1-E2-3 | M |
 | W2-E2-4 | QCM + exercises | QCM generation (AI + fidelity); progressive exercises; error analysis (recurring errors) | QCM generation works online; error analysis identifies recurring patterns; PARTIAL offline [local items] | Learning | W2-E2-2 | L |
-| W2-E2-5 | Mirror Cognitive Mode | Server `mirror-analysis` job [01 S4.2, G-L3]; typed detections + AD-11 provenance; F-07 evidence path; optional flashcard/QCM derivation; coach-screen UI family [05 S4.8/4.9] | Mirror analysis completes as server job; detections carry source refs; evidence -> `ProgressEvidenceCreated`; screen renders | Learning + Agent | W2-E2-4, W3 | L |
+| W2-E2-5 | Mirror Cognitive Mode (wave-2 part) | Server `mirror-analysis` job [01 S4.2, G-L3]; typed detections + AD-11 provenance; F-07 evidence path; optional flashcard/QCM derivation; coach-screen UI family [05 S4.8/4.9] | Mirror analysis completes as server job; detections carry source refs; evidence -> `ProgressEvidenceCreated`; screen renders | Learning | W2-E2-4 | L |
 
 ### Epic W2-E3: Knowledge
 
@@ -132,7 +139,7 @@ vocabulary confirmed; 5 UX states confirmed.
 
 | ID | Story | Description | Acceptance Criteria | Owner | Deps | Size |
 |---|---|---|---|---|---|---|
-| W2-E5-1 | Evidence model + sole-producer | `ProgressEvidence` model [S18.3]; F-07: Progress = sole producer of `ProgressEvidenceCreated`; `skill_recompute` jobs; mirrors [03 S4.2] | All 6 evidence types (QCM, Exercise, Flashcard, Focus, Mirror, Project) produce evidence via Progress; sole-producer test [01 S7] passes | Progress | W2-E1-5, W2-E2-3, W2-E2-4 | L |
+| W2-E5-1 | Evidence model + sole-producer | `ProgressEvidence` model [S18.3]; F-07: Progress = sole producer of `ProgressEvidenceCreated`; `skill_recompute` jobs; mirrors [03 S4.2] | All 6 evidence types (QCM, Exercise, Flashcard, Focus, Mirror, Project) produce evidence via Progress; sole-producer test [01 S7] passes | Progress | W2-E1-6, W2-E2-3, W2-E2-4 | L |
 | W2-E5-2 | Dashboards + trajectories | Today/week/month/trajectory boards [S18.6]; G2 charts (`ChartSpec` [G-M5]); conditional scenarios [S18.5]; forgetting detection (FSRS + recency) | Dashboard renders all time windows; trajectory scenarios show as aids (not predictions); forgetting curve visible | Progress | W2-E5-1, W1-E1-1 | L |
 
 ### Epic W2-E6: Scientific Engine + Artifacts
@@ -157,6 +164,15 @@ vocabulary confirmed; 5 UX states confirmed.
 | W3-E1-3 | Execution + Verification + Result | Execution Engine (step-by-step, heavy = jobs [AD-8]); Verification Engine (KB check + ScientificEngine for critical, as server job); Result Normalizer (`AIResponseEnvelope` [AD-5]) | Multi-step plan executes; verification marks `expectedQuality:'degraded'` on failure; every model call has envelope trace | Agent | W3-E1-2 | XL |
 | W3-E1-4 | Memory (Expert Skills) | `expert_skills` table [03 S4.2, server-only AD-3]; error loop + success loop [ADR S14.3/14.4]; guardrails [ADR S14.5] (no one-shot hypothesis, provenance, user correction, contradiction detection, periodic review) | Skill creation + validation works; guardrail tests pass (contradiction, obsolescence); no skill synced to device [AD-3] | Agent | W3-E1-3 | L |
 | W3-E1-5 | Agent UI surface (AgentRunState) | Device consumes only `AgentRunState` [02 S4, F-09]; streaming panel; confirmation surface; plan preview; `AgentActionEnvelope` command bus [kernel S15] | AgentRunState streams to UI; confirmation blocks until user answers; agent never touches React components [mission S77] | Agent + App Shell | W3-E1-3 | L |
+| W3-E1-6 | Mirror as Agent Tutor capability | Agent can trigger `mirror-analysis` via NL (Intent #6 « Vérifier sa compréhension »); result lands in AgentRunState + `ProgressEvidenceCreated` | NL trigger -> mirror job dispatched; evidence surfaces in dashboard Progress; confirmation point respected | Agent | W3-E1-3, W2-E2-5 | M |
+| W3-E1-7 | Coach Mode (FR16) | Complete coach flow [ADR S13]: contextual check-ins (start/before block/after session/end), change detection, dynamic replanification, learning adaptation, discipline coaching, concise action-oriented dialogues, longitudinal memory; cadence/silence parameters user-controlled (preset S-21 [04.1 écran 2, 04.4]); OneSignal + local notifications; non-intrusive | Check-in fires at anchor points; silence windows respected; user cadence params persisted in `user_context`; no notification spam (anti-trap 6) | Agent + Productivity | W3-E1-3 | L |
+
+### Epic W3-E2: Ascent — Pedagogical Trajectory Engine
+
+| ID | Story | Description | Acceptance Criteria | Owner | Deps | Size |
+|---|---|---|---|---|---|---|
+| W3-E2-1 | Ascent engine core | `AscentLearningIR` / `AscentStep` / `AscentActivity` / `LearnerBaseline` / `AscentAdaptation` types in `packages/domain` [AD-15]; server-only module (AD-12, like Agent Kernel); `ascent_paths` / `ascent_steps` / `ascent_adaptations` / `ascent_baselines` tables (server-only, 03 S4.2, like expert_skills); build path from goal + learner baseline (Progress skill_states) + Knowledge; sequence READ → DO → PROVE; adapt on new ProgressEvidence (reorder / remediation / depth) | Path builds on fixtures; adaptation log append-only; no writes to module internal tables [AD-2]; path mirrors read-only via PowerSync | Ascent | W3-E1-3, W2 | L |
+| W3-E2-2 | Ascent agent capability + Slide-Ascent surface | Ascent registered as feature `ascent` in the Feature Registry [G-M7] (consumer of `FeatureRegistry` port, docs/ascent/overview.md S7); agent NL trigger -> Ascent path (Intent « Apprendre X »); Slide-Ascent progressive disclosure S-41 (`_bmad-output/wds/C-UX-Scenarios/ascent/S-41-slide-ascent/S-41-slide-ascent.md`, OQ closes 09/25 : CTA « Commencer/Reprendre » ouvre slide Niveau 1 + timeline 4 semaines = liste verticale ordonnée en Niveau 3) ; 12 types de slides (palette, pas une séquence imposée — ascent §12) ; path rendered server-side, device read-only | NL trigger -> Ascent job dispatched; S-41 slide renders Niveau 1 par défaut (étape courante + suivante) ; 4 niveaux de disclosure (Niveau 4 = log AscentAdaptation « pourquoi cet ordre ? », ascent §7) ; feature deactivation = degradation (AD-1), data preserved | Ascent + App Shell | W3-E2-1 | L |
 
 ---
 
