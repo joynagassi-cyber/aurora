@@ -221,3 +221,52 @@ export {
   type NavigationIntent,
   type UiStateCommand,
 } from './command-bus.ts';
+
+// AgentRunState streaming surface (task 5, 02 S4 / AD-12-F-09 — the
+// device-facing snapshot type the kernel / fn-agent-run produce, the UI
+// projects).
+export {
+  type RunPhase,
+  type AgentRunStateChunk,
+  applyChunk,
+  phaseFor,
+  terminalChunk,
+  heartbeatChunk,
+} from './run-state.ts';
+
+// Command bus (task 6, kernel S15) — the typed-command surface the agent
+// drives the UI through (re-exports the SSoT types from packages/domain,
+// AD-15: consume, never re-declare).
+export {
+  CommandBus as RunBus,
+  type AppCommand,
+  type CommandListener,
+  buildActionEnvelope,
+  confirmationCommand,
+  navigationCommand,
+  uiStateCommand,
+} from './run-bus.ts';
+
+// Model invocation layer (task 7, AD-1 boundary — the second `ai`-
+// importing file besides tools.ts, confined to packages/agent).
+export {
+  invokeModel,
+  agnesProviderChain,
+  AGENT_SYSTEM_PROMPT,
+  type HealthMutator,
+  type InvokeModelDeps,
+  type ModelCall,
+  type ModelResult,
+} from './model.ts';
+
+// Provider adapters + runtime pipeline (task 7, AD-3: keys from env only).
+export {
+  isConfigured,
+  buildModel,
+  AgnesRouterRegistry,
+  ProviderHealth,
+  BudgetGate,
+  DataPolicyGate,
+  makeAgnesRouter,
+  type ProviderSettings,
+} from './providers.ts';
