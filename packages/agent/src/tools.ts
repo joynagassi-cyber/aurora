@@ -31,6 +31,7 @@ import { z } from 'zod';
  * output positions covariant, so each concrete tool's inferred type is
  * assignable without re-exporting transitive SDK types.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TS2742: the SDK Tool union is not portable through declaration emit (see the doc block above); `any` keeps each concrete tool assignable.
 type KernelTool = Tool<any, any>;
 
 /**

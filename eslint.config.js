@@ -22,6 +22,12 @@ import tseslint from 'typescript-eslint';
  * Vendor SDK patterns that MUST stay inside:
  *   packages/{data,platform,integrations,scientific-engine} and apps/server
  * They are FORBIDDEN in all other packages.
+ *
+ * EXCEPTION (AD-1, wave 3 ORACLE): `ai` / `@ai-sdk/*` are also allowed in
+ * packages/agent — the Agent Kernel's Vercel AI SDK layer is the designated
+ * model layer (AD-1 vendor isolation is preserved: `ai` lives ONLY in
+ * packages/agent + packages/{data,platform,integrations,scientific-engine}
+ * + apps/server, and never in domain / ui / apps/mobile).
  */
 const VENDOR_PATTERNS = [
   '@supabase/*',
@@ -31,6 +37,7 @@ const VENDOR_PATTERNS = [
   'cloudflare-*',
   '@google/*',
   'ai',
+  '@ai-sdk/*',
   'openai',
   'anthropic',
   '@anthropic-ai/*',
@@ -162,12 +169,16 @@ export default tseslint.config(
   },
 
   // ============================================================
-  // packages/{domain,ui,agent} + apps/mobile —
+  // packages/{domain,ui} + apps/mobile —
   //   ban vendor SDKs + AD-10 engines (AD-1, AD-10)
+  // NOTE: packages/agent is EXEMPT for the Vercel AI SDK layer
+  //   (`ai`, `@ai-sdk/*`) per AD-1 wave 3 (ORACLE) — it is the
+  //   designated model layer. Agent still bans all OTHER vendors
+  //   + AD-10 engines (handled by the agent-only block below).
   // ============================================================
   {
     files: [
-      'packages/{domain,ui,agent}/**/*.ts',
+      'packages/{domain,ui}/**/*.ts',
       'apps/mobile/**/*.ts',
     ],
     rules: {
@@ -178,9 +189,9 @@ export default tseslint.config(
             {
               group: VENDOR_PATTERNS,
               message:
-                'AD-1: vendor SDKs must stay in packages/{data,platform,integrations,scientific-engine} or apps/server.',
+                'AD-1: vendor SDKs must stay in packages/{data,platform,integrations,scientific-engine,agent} or apps/server.',
             },
-            // AD-10 engines are banned in domain / agent / apps/mobile.
+            // AD-10 engines are banned in domain / ui / apps/mobile.
             // (In ui they are allowed — the ui block above doesn't ban them.)
             {
               group: AD10_ENGINES,
@@ -203,6 +214,37 @@ export default tseslint.config(
               ],
               message:
                 'Mobile feature-slice isolation: a feature must not import from a sibling feature. Share code via packages/.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  // ============================================================
+  // packages/agent — AD-1 exception: the Vercel AI SDK layer
+  //   (`ai`, `@ai-sdk/*`) lives here and ONLY here outside
+  //   data/platform/integrations/scientific-engine + apps/server.
+  //   All other vendor SDKs + AD-10 engines remain banned.
+  // ============================================================
+  {
+    files: ['packages/agent/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                ...VENDOR_PATTERNS.filter((p) => p !== 'ai' && p !== '@ai-sdk/*'),
+              ],
+              message:
+                'AD-1: vendor SDKs (except the AI SDK layer) must stay in packages/{data,platform,integrations,scientific-engine} or apps/server.',
+            },
+            {
+              group: AD10_ENGINES,
+              message:
+                'AD-10: the 5 frozen viz engines are restricted to packages/ui only.',
             },
           ],
         },

@@ -107,15 +107,14 @@ export class AgentKernel {
 
     // ── 1. INTENT ──
     const intentReq = { userId: req.userId, intent: req.intent, contextRefs: req.contextRefs, taskProfile: req.taskProfile, signals: req.signals };
-    let intent = classifyIntent(intentReq);
-    let ctx: AgentContext;
+    const intent = classifyIntent(intentReq);
     let state = this.state(agentRunId, 'intent', 'running', t0);
 
     yield { type: 'stage', state };
 
     // ── 2. CONTEXT ──
     const asm = this.deps.assembler;
-    ctx = await buildAgentContext(req.userId, intent, asm, {
+    const ctx: AgentContext = await buildAgentContext(req.userId, intent, asm, {
       capabilityRegistry: this.registry.toDomain(),
     });
     state = this.state(agentRunId, 'context', 'running', t0);
