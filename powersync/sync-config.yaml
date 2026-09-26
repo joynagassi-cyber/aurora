@@ -117,3 +117,12 @@ streams:
   user_goals:
     auto_subscribe: true
     query: SELECT * FROM user_goals WHERE user_id = auth.user_id()
+
+  # --- Ascent (owner Ascent, wave 3 W3-E2) ----------------------------------
+  # Slide-Ascent renders the current path offline (goal-dashboard-ui S8 /
+  # ascent/overview S7). `ascent_paths` carries user_id (0016) → même filtre
+  # per-user que tous les autres flux. Le relay lit sous RLS (0016 :
+  # policies `user_id = auth.uid()`, service_role bound — AD-16).
+  ascent:
+    auto_subscribe: true
+    query: SELECT * FROM ascent_paths WHERE user_id = auth.user_id()
