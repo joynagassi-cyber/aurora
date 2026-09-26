@@ -67,3 +67,27 @@ export function createMobileQueryClient(provider: MobileDataProvider): QueryClie
 
   return client;
 }
+
+/**
+ * Build a `MobileDataProvider` from the production data provider
+ * (`createAuroraDataProvider`, 03 S8.1). The `onLocalChange` channel is
+ * wired to the `AuroraDataProvider.store()` watch — the bridge that
+ * surfaces engine downstream batches to the QueryClient (03 S5.8).
+ */
+export function mobileDataProviderFrom(
+  provider: import('../lib/boot-data').AuroraDataProvider,
+): MobileDataProvider {
+  return {
+    goals: provider.goals,
+    tasks: provider.tasks,
+    onLocalChange: (invalidate) =>
+      provider
+        .store()
+        .watch(
+          { entity: 'goals' },
+          () => {
+            invalidate();
+          },
+        ),
+  };
+}

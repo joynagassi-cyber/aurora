@@ -4,6 +4,14 @@
     "outDir": "dist",
     "rootDir": "src",
     "jsx": "react-jsx",
+    /**
+     * Sibling packages (focus / goal-engine / platform) typecheck with
+     * `allowImportingTsExtensions` — their cross-file `.ts` imports surface
+     * as TS5097 through project references when mobile's noEmit config is
+     * the active one. Mirror the flag so `pnpm typecheck` (noEmit, CI gate)
+     * passes. The `build` script emits with noEmit=false (no conflict).
+     */
+    "allowImportingTsExtensions": true,
     "lib": [
       "ES2022",
       "DOM",

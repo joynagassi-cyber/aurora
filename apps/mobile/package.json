@@ -13,7 +13,7 @@
     }
   },
   "scripts": {
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.capacitor.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.capacitor.json",
     "lint": "eslint src capacitor.config.ts --max-warnings 0",
     "build": "tsc -p tsconfig.build.json"
   },
