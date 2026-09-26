@@ -69,6 +69,72 @@ export function detectStall(
 }
 
 /**
+ * `goal.pause` / `goal.resume` — the agent's goal-state commands
+ * (dynamic-goal-engine.md "Agent capabilities"). Pause stops the goal's
+ * active features (jobs stop, notifications mute — the command bus /
+ * dispatcher observes the status; this module only mutates the GoalProject
+ * data, AD-7). Resume is only legal from `paused` (completed/abandoned
+ * are terminal). Paused goals keep ALL progress + history — pause never
+ * touches `progress` (ADR S13: history is never destroyed).
+ */
+export function pauseGoal(g: GoalProject, now: string): GoalProject {
+  if (g.status !== 'active') {
+    throw new Error(`goal-engine/pause_invalid_status: ${g.status}`);
+  }
+  return { ...g, status: 'paused', updatedAt: now };
+}
+
+export function resumeGoal(g: GoalProject, now: string): GoalProject {
+  if (g.status !== 'paused') {
+    throw new Error(`goal-engine/resume_invalid_status: ${g.status}`);
+  }
+  return { ...g, status: 'active', updatedAt: now };
+}
+
+/**
+ * `goal.complete` — mark the goal completed. The agent requests the
+ * completion; the check (success criteria met) is the Progress module's
+ * job (F-07 sole producer of the evidence + `ProgressEvidenceCreated`).
+ * Terminal: no further mutation of a completed goal.
+ */
+export function completeGoal(g: GoalProject, now: string): GoalProject {
+  if (g.status === 'completed' || g.status === 'abandoned') {
+    throw new Error(`goal-engine/complete_on_terminal_goal: ${g.status}`);
+  }
+  const subGoalProgress: Record<string, number> = { ...g.progress.subGoalProgress };
+  for (const s of g.subGoals) subGoalProgress[s.id] = 100;
+  return {
+    ...g,
+    status: 'completed',
+    subGoals: g.subGoals.map((s) =>
+      s.status === 'pending' || s.status === 'active'
+        ? { ...s, status: 'skipped' as const }
+        : s,
+    ),
+    progress: {
+      ...g.progress,
+      overallPct: 100,
+      subGoalProgress,
+      lastUpdated: now,
+    },
+    updatedAt: now,
+  };
+}
+
+/**
+ * `goal.abandon` — mark abandoned (dynamic-goal-engine.md: "data
+ * preserved, features deactivated"). The GoalProject row + all progress
+ * stay readable (AD-15 additive: no data destroyed); only the status
+ * deactivates the goal's features. Terminal: no further mutation.
+ */
+export function abandonGoal(g: GoalProject, now: string): GoalProject {
+  if (g.status === 'completed' || g.status === 'abandoned') {
+    throw new Error(`goal-engine/abandon_on_terminal_goal: ${g.status}`);
+  }
+  return { ...g, status: 'abandoned', updatedAt: now };
+}
+
+/**
  * The context-strip suggestion (goal-dashboard-ui.md S4: natural-language
  * sentence, NOT a system message). Deterministic from the snapshot — the
  * LLM may enrich it later; the shape contract is fixed.
