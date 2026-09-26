@@ -7,4 +7,29 @@ export { Shell } from './shell/Shell';
 export { AuroraApp } from './app';
 export { appRouter } from './router';
 export { useUiStateStore } from './state/ui-state';
-export { qk, createMobileQueryClient, type MobileDataProvider } from './query/query-client';
+export {
+  qk,
+  createMobileQueryClient,
+  mobileDataProviderFrom,
+  type MobileDataProvider,
+} from './query/query-client';
+export {
+  createAuroraDataProvider,
+  type AuroraDataEnv,
+  type AuroraDataProvider,
+} from './lib/boot-data';
+export {
+  PRODUCT_MODES,
+  MODE_PROFILES,
+  getModeProfile,
+  effectiveEmphasis,
+  type ProductMode,
+  type ModeProfile,
+  type Emphasis,
+} from './modes/product-modes';
+export {
+  buildCommandCatalog,
+  filterCommands,
+  type PaletteCommand,
+  type CommandCatalogSource,
+} from './modes/command-palette';
