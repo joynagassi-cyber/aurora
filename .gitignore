@@ -28,3 +28,7 @@ dist/
 
 # graphify knowledge-graph artifact (regenerable: graphify update .)
 graphify-out/
+
+# BMAD session working files (not design docs)
+_bmad-output/**/*.memlog.md
+_bmad-output/**/.working/
