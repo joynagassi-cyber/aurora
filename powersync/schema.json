@@ -52,6 +52,12 @@
       "ownerModule": "Identity",
       "type": "custom",
       "sql": "SELECT * FROM v_identity_scope"
+    },
+    {
+      "name": "ascent",
+      "ownerModule": "Ascent",
+      "type": "custom",
+      "sql": "SELECT * FROM v_ascent_scope"
     }
   ],
   "mirrorTables": {
@@ -73,7 +79,8 @@
     "discovery": ["discovery_items", "gaps"],
     "artifact": ["artifacts"],
     "integrations": ["automations"],
-    "identity": ["user_context"]
+    "identity": ["user_context"],
+    "ascent": ["ascent_paths"]
   },
   "excludedFromMirror": {
     "reasons": {

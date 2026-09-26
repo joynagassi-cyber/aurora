@@ -35,6 +35,7 @@ DECLARE
     'discovery_items','discovery_source_profiles','domain_timeline',
     'artifacts','artifact_files',
     'agent_runs','agent_actions','expert_skills','integrations','automations','notification_preferences',
+    'ascent_paths',
     'events_history','job_queue'
   ];
 BEGIN

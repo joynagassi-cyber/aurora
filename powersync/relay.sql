@@ -88,8 +88,15 @@ SELECT id, user_id, name, trigger_, action, enabled, crdt_added, crdt_removed,
        local_mutation_id, created_at, updated_at
 FROM automations;
 
+-- Ascent scope (owner Ascent, wave 3, W3-E2). READ-ONLY mirror surface:
+-- Slide-Ascent renders the current path offline. No cross-module JOIN
+-- (the path is self-contained JSONB in ascent_paths — check-view-joins
+-- stays green).
+CREATE VIEW v_ascent_scope WITH (security_invoker = on) AS
+SELECT * FROM ascent_paths;
+
 -- service_role may read every scope view (the relay); RLS still bounds rows.
 GRANT SELECT ON v_identity_scope, v_productivity_scope, v_learning_scope,
                  v_knowledge_scope, v_progress_scope, v_discovery_scope,
-                 v_artifact_scope, v_integrations_scope
+                 v_artifact_scope, v_integrations_scope, v_ascent_scope
   TO service_role;
