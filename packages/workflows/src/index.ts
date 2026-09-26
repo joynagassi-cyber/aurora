@@ -53,6 +53,13 @@ export function allEmittedEvents(): readonly string[] {
   return [...seen];
 }
 
+// ---- AD-9 event wiring (event flow across workflows + scenarios) ----
+export {
+  EVENT_CONSUMERS, emittedBy, observedBy, flowVerdicts,
+  selfImprovementEventChain, allEventsFlow,
+} from './event-flow.ts';
+export type { EventFlowVerdict } from './event-flow.ts';
+
 // ---- Types ----
 export type {
   Workflow, WorkflowModule, UiTransition, WorkflowValidation,
