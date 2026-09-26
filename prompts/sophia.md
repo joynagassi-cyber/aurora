@@ -59,6 +59,16 @@ Tu es SOPHIA. Implémente le module Ascent : le moteur de trajectoire pédagogiq
       + excludedFromMirror : RIEN (le mirror lecture seule est
       REQUIS pour Slide-Ascent offline — contrairement a expert_skills)
    d. Test d'intrusion RLS (user A ne lit pas user B, pattern MINERVA)
+   e. APPLIQUER la migration sur le Supabase DEV avec le SUPABASE MCP
+      (configure dans Claude Code par le user) :
+      - Appliquer 0015_ascent.sql au projet dev VIA le MCP
+        (PAS d'edits SQL manuels / dashboard — le MCP est le chemin d'ecriture)
+      - Verifier apres application : table ascent_paths existe,
+        RLS active (ENABLE + FORCE), policy user_isolation presente,
+        vue v_ascent_scope existe
+   NB : les migrations 0013/0014 existantes sont deja sur main ;
+   si le Supabase dev les contient pas encore, les appliquer aussi
+   via le meme MCP (0013 subtasks + 0014 cron placeholders).
 4. Slide-Ascent UI (apps/mobile, 12 types de slides = palette, PAS sequence)
    Lit le LOCAL MIRROR de ascent_paths (offline, aucun SQL propre)
    Progressive disclosure (Level 1 = current+next seulement)
@@ -73,6 +83,13 @@ Tu es SOPHIA. Implémente le module Ascent : le moteur de trajectoire pédagogiq
    on evidence, depth selection, READ->DO->PROVE flexibility,
    source hierarchy, progressive disclosure, "Je bloque" flow,
    offline (mirror), RLS
+
+## Rapport de fin OBLIGATOIRE
+Mentionner explicitement dans le rapport de fin :
+- "Migration 0015 appliquee via Supabase MCP : OUI / NON"
+- Si OUI : resultats des 4 verifications (table / RLS / policy / vue)
+- Si NON (MCP indisponible) : migration en attente, a appliquer par le user,
+  signale en rouge dans le rapport
 
 COMMIT MESSAGES : prefixe "wave3/sophia:"
 - "wave3/sophia: domain types (AscentLearningIR + 6 types)"

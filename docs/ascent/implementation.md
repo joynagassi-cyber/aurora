@@ -135,7 +135,16 @@ SELECT * FROM ascent_paths;
 ### Intrusion test
 
 User A must not read user B's `ascent_paths` (RLS + view security_invoker).
-Follow the wave-0 MINERVA test pattern; run on Supabase dev when available.
+Follow the wave-0 MINERVA test pattern (tests/rls-penetration.sql).
+
+### Apply to Supabase dev (SOPHIA step, via Supabase MCP)
+
+SOPHIA applies the 0015 migration to the Supabase DEV project through the
+Supabase MCP server configured in Claude Code (the ONLY sanctioned write
+path — no dashboard edits, no manual SQL). Post-apply verification:
+table + RLS (ENABLE+FORCE) + `user_isolation` policy + `v_ascent_scope`
+view all present. The completion report MUST state
+"migration applied via Supabase MCP: YES/NO" (NO = red flag, user applies).
 
 ### Slide-Ascent (UI) — no SQL of its own
 

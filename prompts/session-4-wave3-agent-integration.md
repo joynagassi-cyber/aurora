@@ -172,6 +172,12 @@ Taches :
       (mirror LECTURE SEULE requis pour Slide-Ascent offline,
       PAS excludedFromMirror — contrairement a expert_skills)
    d. Test d'intrusion RLS (user A ne lit pas user B)
+   e. Appliquer la migration au Supabase DEV via le SUPABASE MCP
+      (configure dans Claude Code) : verifier table + RLS + policy
+      + vue v_ascent_scope apres ; appliquer aussi 0013/0014 si absentes
+      du dev. Rapport de fin OBLIGATOIRE : "Migration 0015 appliquee
+      via Supabase MCP : OUI/NON" (+ les 4 verifications si OUI,
+      signalement en rouge si NON)
    Gates : check-rls.sh + check-view-joins.ts restent verts
 4. Slide-Ascent UI (apps/mobile, 12 types de slides = palette)
    Lit le local mirror de ascent_paths (offline, aucun SQL propre)
