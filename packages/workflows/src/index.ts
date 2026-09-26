@@ -69,6 +69,12 @@ export {
   ERROR_CLASSES, ERROR_CLASS_IDS, errorClassById,
 } from './error-recovery.ts';
 
+// ---- Plan-level recovery (partial execution + rollback, S64) ----
+export {
+  classifyPlanError, replanPartial, errorClassErrorById,
+} from './recovery-plan.ts';
+export type { PlanStep, PlanFailure, RecoveryDecision } from './recovery-plan.ts';
+
 // ---- Expert Skill self-improvement loop (ADR S14 + extensions) ----
 export {
   confidenceAt, decayVerdict, DECAY_LAMBDA, REEVALUATION_THRESHOLD,
