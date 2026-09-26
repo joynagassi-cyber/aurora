@@ -168,7 +168,7 @@ Taches :
    - source-hierarchy.ts (A>B>C>D, D ne remplace jamais A)
 3. Migration SQL + surface de sync (fichiers exacts dans
    docs/ascent/implementation.md "SQL Migration + Sync Surface") :
-   a. supabase/migrations/0015_ascent.sql : ascent_paths JSONB +
+   a. supabase/migrations/0016_ascent.sql : ascent_paths JSONB +
       ENABLE/FORCE RLS + policy user_isolation (pattern 0008)
    b. powersync/relay.sql : + vue v_ascent_scope (security_invoker)
    c. powersync/schema.json : + mirrorTables "ascent" + scope
@@ -177,9 +177,9 @@ Taches :
    d. Test d'intrusion RLS (user A ne lit pas user B)
    e. Appliquer la migration au Supabase DEV via le SUPABASE MCP
       (configure dans Claude Code) : verifier table + RLS + policy
-      + vue v_ascent_scope apres ; appliquer aussi 0013/0014 si absentes
-      du dev. Rapport de fin OBLIGATOIRE : "Migration 0015 appliquee
-      via Supabase MCP : OUI/NON" (+ les 4 verifications si OUI,
+      + vue v_ascent_scope apres ; appliquer aussi 0013/0014/0015 si
+      absentes du dev. Rapport de fin OBLIGATOIRE : "Migration 0016
+      appliquee via Supabase MCP : OUI/NON" (+ les 4 verifications si OUI,
       signalement en rouge si NON)
    Gates : check-rls.sh + check-view-joins.ts restent verts
 4. Slide-Ascent UI (apps/mobile, 12 types de slides = palette)
