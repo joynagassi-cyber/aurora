@@ -15,8 +15,8 @@
  * shortcuts, command palette, agent capabilities, widgets and
  * dashboards — historical data is never touched.
  *
- * All data-driven, no `if user === Horeb` (mission §15/§16,
- * feature-registry S3).
+ * All data-driven, no per-user hardcoding of behavior (mission
+ * §15/§16, feature-registry S3).
  */
 
 /** The six product modes (feature-registry S7 table, mission §55). */
