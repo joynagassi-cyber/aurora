@@ -1,0 +1,42 @@
+# PowerSync Cloud config (fetched from cloud, 2026-09-26)
+# yaml-language-server: $schema=https://unpkg.com/@powersync/cli-schemas@latest/json-schema/service-config.json
+#
+# Instance: Development (6ab1612e8453e7cf8338ef9a) — Aurora project, EU.
+# Backend: Supabase `opagfyspdbhxthlxvlrk` (base `postgres`).
+#
+# Mots de passe : stockés comme Cloud secret (`secret_ref: default_password`).
+# Historique (2026-09-26) : le secret original datait de la définition initiale
+# et le relay voyait le DB comme vide (« Table public.X not found » persistant
+# malgré la publication `powersync FOR ALL TABLES` + tables présentes live).
+# Nouvelle stratégie : le mot de passe courant est fourni au premier deploy
+# via `!env PS_DATABASE_PASSWORD` (AD-3 : le secret reste côté harnais,
+# .env.local git-ignored) — le value courant dans `.env.local` =
+# SUPABASE_SECRET_KEY (service_role, le rôle qui a le privilège
+# `REPLICATION` requis par le slot PowerSync ; le rôle `postgres` standard
+# de Supabase ne peut pas créer de logical replication slots, c'est la
+# cause probable du secret obsolète d'origine).
+# Au prochain deploy : `PS_DATABASE_PASSWORD=$SUPABASE_SECRET_KEY powersync
+# deploy service-config` — après ça, `secret_ref: default_password`
+# reprend le relais (le secret est déjà défini côté Cloud).
+
+_type: cloud
+name: Development
+region: eu
+
+replication:
+  connections:
+    - type: postgresql
+      uri: postgresql://postgres@db.opagfyspdbhxthlxvlrk.supabase.co:5432/postgres
+      password:
+        secret_ref: default_password
+      name: Default
+      tag: default
+      sslmode: verify-full
+      debug_api: false
+
+client_auth:
+  # Supabase Auth (projet opagfyspdbhxthlxvlrk) : PowerSync détecte
+  # automatiquement le JWKS (RS256/ES256, SUPABASE_JWKS_URL dans .env.local)
+  # + audience `authenticated` depuis l'URI de réplication — pas de shared
+  # secret HS256, pas de clé en clair (AD-3).
+  supabase: true
