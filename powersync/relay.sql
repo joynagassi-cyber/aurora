@@ -35,7 +35,11 @@ UNION ALL SELECT id, user_id, 'projects', name, description, status,
 UNION ALL SELECT id, user_id, 'goals', title, description, status,
                  3, 3, target_date, '[]'::jsonb, '[]'::jsonb,
                  crdt_added, crdt_removed, local_mutation_id, created_at, updated_at
-           FROM goals;
+           FROM goals
+UNION ALL SELECT id, user_id, 'subtasks', title, NULL, status,
+                 3, 3, NULL, '[]'::jsonb, '[]'::jsonb,
+                 crdt_added, crdt_removed, local_mutation_id, created_at, updated_at
+           FROM subtasks;
 
 -- Learning scope (owner Learning)
 CREATE VIEW v_learning_scope WITH (security_invoker = on) AS
