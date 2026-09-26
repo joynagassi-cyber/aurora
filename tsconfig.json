@@ -6,6 +6,7 @@
     { "path": "packages/ui" },
     { "path": "packages/platform" },
     { "path": "packages/agent" },
+    { "path": "packages/goal-engine" },
     { "path": "packages/scientific-engine" },
     { "path": "packages/integrations" },
     { "path": "packages/engineering-core" },

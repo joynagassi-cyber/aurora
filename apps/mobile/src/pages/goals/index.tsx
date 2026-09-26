@@ -12,9 +12,10 @@
  * Read-only local mirror (AD-7, 03 §4.2) — no network on tap.
  */
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useGoals, useGoal } from '../../query/hooks';
-import type { GoalProject, FeaturePlacement, SubGoal } from '@aurora/domain';
+import type { GoalProject } from '@aurora/domain';
+import { GoalDashboard } from './dashboard';
 
 export function GoalsPage() {
   const { data: goals, isPending } = useGoals();
@@ -42,6 +43,7 @@ export function GoalsPage() {
 export function GoalDashboardPage() {
   const { id } = useParams<{ id: string }>();
   const { data: goal, isPending } = useGoal(id);
+  const navigate = useNavigate();
 
   return (
     <>
@@ -51,23 +53,19 @@ export function GoalDashboardPage() {
       <IonContent>
         {isPending && <div data-state="loading" />}
         {goal && (
-          <div data-goal-shape={goal.horizon} className="goal-dashboard">
-            <div className="goal-header">
-              <strong>{goal.objective}</strong>
-              <span data-progress={goal.progress.overallPct}>{goal.progress.overallPct}%</span>
-            </div>
-            <div className="feature-workflow">
-              {goal.features.map((f: FeaturePlacement) => (
-                <a key={f.featureId} href={`/goals/${goal.id}/features/${f.featureId}`} className="feature-node">
-                  {f.featureId}
-                </a>
-              ))}
-            </div>
-            <div className="context-strip">
-              <span>Cette semaine : {goal.subGoals.filter((s: SubGoal) => s.status === 'done').length}/
-                {goal.subGoals.length} sous-objectifs</span>
-            </div>
-          </div>
+          <GoalDashboard
+            goal={goal}
+            onNodeTap={(fid) =>
+              // context-preserving deep link (goal-dashboard-ui.md S6):
+              // ?goalId=X&subGoalId=Y — the feature screen shows the
+              // goal breadcrumb and back returns here (02 S6.2).
+              navigate(`/goals/${goal.id}/features/${fid}?goalId=${goal.id}`)
+            }
+            onSuggestionTap={() =>
+              // NL suggestion = agent chat with the goal in context (S6).
+              navigate(`/agent?goalId=${goal.id}`)
+            }
+          />
         )}
       </IonContent>
     </>

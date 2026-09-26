@@ -52,9 +52,9 @@ export function isGoalComplete(g: GoalProject): boolean {
 /**
  * Detect a progress stall (recomposition trigger, ADR S13 +
  * dynamic-goal-engine.md "si sub-goal 5 shows < 70% after 2 months").
- * A stall = a sub-goal stuck < `stallThresholdPct` while the goal is
- * active. Pure heuristic on the GoalProgress snapshot; the Agent decides
- * whether to recompose.
+ * A stall = a sub-goal that HAS evidence of work (progress > 0) but is
+ * stuck below `stallThresholdPct` while the goal is active. A pending
+ * sub-goal at 0% is not a stall — it has simply not started.
  */
 export function detectStall(
   g: GoalProject,
@@ -63,7 +63,8 @@ export function detectStall(
   if (g.status !== 'active') return [];
   return g.subGoals.filter((s) => {
     if (s.status === 'skipped' || s.status === 'done') return false;
-    return (g.progress.subGoalProgress[s.id] ?? 0) < thresholdPct;
+    const pct = g.progress.subGoalProgress[s.id] ?? 0;
+    return pct > 0 && pct < thresholdPct;
   });
 }
 

@@ -19,3 +19,4 @@ export * from './patterns.ts';
 export * from './decomposition.ts';
 export * from './progress.ts';
 export * from './mutations.ts';
+export * from './layout.ts';
