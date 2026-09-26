@@ -275,6 +275,10 @@ Chaque Edge Function = contrat HTTP JSON avec l'envelope normalisé (§ 3.1) ; a
                            // déclenché par une mutation locale (re-sync, pack 03 §5.5), le champ
                            // `source_local_mutation_id` (ULID, pack 03) entre dans le hash : un
                            // re-sync répété ne double-ajoute JAMAIS le même job client-originé.
+  source_local_mutation_id?: string; // ULID, G-M4 — nullable : NULL = job server-origin ;
+                                     // non-NULL = ré-emis par le re-sync local (03 §5.5.6) ;
+                                     // le SSoT du champ = ce bloc 01 §5.3 (03 ne redéfinit pas le shape)
+  trace_id?: string; // corrélation observabilité (aligne job_logs.trace_id, Sentry)
   result?: Json;
   created_at: Date; updated_at: Date;
 }

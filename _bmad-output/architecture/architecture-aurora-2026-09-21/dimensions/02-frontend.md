@@ -472,6 +472,17 @@ offline » ; doc §21.1). **Un écran qui n'implémente pas l'un des 5 = DoD non
 | **`error`** | Échec d'une opération ou d'une lecture. | État local lisible (pas de stack trace au user), **retry** toujours disponible, lien vers `/settings` pour l'état du service. Les erreurs **réseau/AI** ≠ erreurs métier : différencier (une feature optionnelle absente = `error` doux, doc §26). |
 | **`offline`** | Sans réseau **ET** sans store local disponible (ex. 1ʳe sync non terminée). | Bannière fine « Hors-ligne — vos données locales sont disponibles ». L'app **fonctionne** (AD-7 : offline = état premier, pas un failure mode). Les données locales sont affichées normalement ; seules les actions **nécessitant le cloud** (générer un artefact, recherche web) sont désactivées avec un explicatif, pas masquées. |
 
+**Sous-état `killed` (G-M2, figé 2026-09-26)** : l'app tuée par le système (memory
+pressure, Android) puis relancée n'est **ni** un 6ᵉ état canonique **ni** un cas absent —
+c'est un **sous-état de `loading`** : le relaunch cold part du mirror local, l'écran
+s'affiche en `loading` (skeleton DS) avec l'état UI restauré, puis passe au `loading` normal
+(auto-resync de la session). Règle de rendu : jamais d'écran blanc ni de reset des données
+à l'ouverture (le mirror + le store persist rendent le relaunch indistinguable d'un
+refresh partiel). Pattern SSoT : `docs/ui-libraries.md` n° 186 (`killed → Skeleton +
+auto-resync`, message « Reconnexion… » + shimmer) ; test DoD wave 1 : « kill-app relaunch
+= état intact » (03 §5.9, checklists wave 1). Matrice composant à ajouter : une colonne
+`killed` = « `loading` avec resync auto » dans `05-design-system.md` S3.7.
+
 **Règle de surface (normative)** : un composant de `presentation/` expose un `data-state` (`loading|
 empty|success|error|offline`) et **un seul** composant par état (le Design System). L'état est **décidé
 par l'app** (use-case/store), le **rendu** par le Design System. Cette séparation rend les 5 états
@@ -601,22 +612,22 @@ L'app **n'affiche jamais** une raw exception. Contrat d'erreur consommé par l'a
 // (enveloppe produite par 01-backend §3.1 / transportée par 03-sync §6 ; le type complet vit
 // dans `packages/domain`, owner = Foundation/AD-15 — une copie inline dans ce pack serait
 // une violation AD-15/F-01. Ci-dessous : documentation du contrat consommé, pas la définition.)
-export interface AppError {
-  code: AppErrorCode;        // stable, branchable par l'UI
-  message: string;          // lisible, utilisateur (pas de stack, pas d'identifiant technique)
-  cause?: 'network' | 'quota' | 'provider' | 'permission' | 'data' | 'unknown';
-  retryable: boolean;       // pilote le bouton « Réessayer » (états error, section 7)
-  details?: { provider?: string; model?: string; attempt?: number; reason?: string; expectedQuality?: string };
-}
-export type AppErrorCode =
-  | 'TASK_NOT_FOUND' | 'SYNC_PENDING' | 'OFFLINE' | 'JOB_FAILED' | 'JOB_QUEUED'
-  | 'AI_UNAVAILABLE' | 'AI_QUOTA' | 'PERMISSION_DENIED' | 'MEDIA_UNSUPPORTED' | 'UNKNOWN';
-// L'APP branch sur `code` + `cause` pour rendre un état d'écran (section 7) ; la règle AD-5 (429 jamais
-// bypass) est côté serveur — l'APP reçoit simplement un AppError{ cause:'quota', retryable:false }.
+// CONTRAT CONSOMMÉ — documentation seule, PAS une définition (AD-15/F-01, G-M3 figé 2026-09-26) :
+// le type complet vit dans `packages/domain/envelopes.ts` ; l'APP importe, ne redéfinit pas.
+// Champs consommés par l'UI (shape exact = SSoT domaine) :
+//   code       : AppErrorCode — string MODULE-PREFIXED ("productivity/task_not_found",
+//                "media/unsupported_format", …) ; l'APP branch sur `code` pour l'état d'écran (section 7)
+//   message    : string — lisible, utilisateur (pas de stack, pas d'identifiant technique)
+//   offline?   : boolean — true si l'erreur mappe l'état UX offline (03 S3.2)
+//   retryable? : boolean — pilote le bouton « Réessayer » (états error, section 7)
+//   details?   : Record<string, unknown> — contexte technique (provider, model, attempt…) ;
+//                jamais affiché tel quel à l'utilisateur
+// Exemple : la règle AD-5 (429 jamais bypass) est côté serveur — l'APP reçoit simplement
+// un AppError{ code:'provider/quota_reached', retryable:false }.
 ```
 
 Règle d'affichage (normative) : `retryable=false` → pas de bouton retry, CTA alternatif (ex. « vous
-êtes hors-ligne », « quota atteint, l'IA sera de retour plus tard »). `MEDIA_UNSUPPORTED` (doc §16
+êtes hors-ligne », « quota atteint, l'IA sera de retour plus tard »). `media/unsupported_format` (doc §16
 formats non pris en charge) → l'app affiche « téléchargement/partage externe possible » + le fichier
 source, **sans** prétendre à une prévisualisation native (doc §16 : les formats inconnus sont
 conservés, métadonnées + download, jamais une preview factice).
