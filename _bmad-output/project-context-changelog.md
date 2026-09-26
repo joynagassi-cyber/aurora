@@ -93,13 +93,12 @@
   service_role + policies `user_id = auth.uid()`, AD-16), auto_subscribe,
   priorité 1/2/3 (identity / core / bulk, OQ-11 + invariant Home AD-14),
   exclusions server-only respectées (03 §4.2).
-- **BLOCANT** : le `PS_ADMIN_TOKEN` actuel du `.env.local` est lié à
-  l'org `joynagassi-cyber` (instances Lumina `6a9dd962…` / `6a9dd963…`) —
-  pas à l'org `Aurora`. `powersync validate` / `deploy` retournent 401
-  AUTHORIZATION sur l'instance cible. **Action requise** : générer un
-  PAT pour l'org Aurora sur https://dashboard.powersync.com (section
-  Aurora → access tokens), le remplacer dans `.env.local`, puis relancer
-  `powersync validate` + `powersync deploy`.
+- ~~**BLOCANT** : le `PS_ADMIN_TOKEN` actuel du `.env.local` est lié à
+  l'org `joynagassi-cyber`~~ → **corrigé (ratifié 2026-09-26)** : le
+  `PS_ADMIN_TOKEN` du `.env.local` EST le token PowerSync Cloud de l'org
+  **Aurora** (celui du projet). `powersync deploy` exécuté avec succès
+  (slot `..._2_4761`, validation OK) ; l'org `joynagassi-cyber`
+  correspond aux instances Lumina, sans lien avec le token Aurora.
 
 ## v1.4 — 2026-09-26 (Ascent rattaché au Feature Registry + Epic W3-E2)
 
@@ -177,6 +176,6 @@ Résultats session 4 (SOPHIA + ORACLE), à reporter dans `project-context.md` §
 - **Migration 0016 appliquée au live Supabase DEV via le MCP Supabase : OUI.** 4 vérifications post-apply : `table_ok=1` (`ascent_paths`), `rls_enabled=true` + `rls_forced=true` (FORCE ROW LEVEL SECURITY), `policies=2` (`ascent_paths_user_isolation` USING/WITH CHECK user_id=auth.uid() + `ascent_paths_service_role` SELECT-only), `view_ok=1` (`v_ascent_scope`, security_invoker, GRANT service_role). Annoté dans l'en-tête du fichier 0016 + commit `034e1d9`.
 - **Invariants vérifiés adversariallement (3/3 CONFIRMED_PASS)** : AD-9 fermé (Ascent consomme exactement 6 events existants, n'en émet aucun 10e), AD-12+AD-7 (module server-side, écrit uniquement `ascent_paths`, `LearningCommand` délégué au kernel), AD-15 (6 types déclarés uniquement dans `packages/domain`).
 - **Flag follow-up (out-of-scope du batch Sophia)** : le repository `ascent` n'est pas câblé dans `AuroraDataProvider` (`apps/mobile/src/lib/boot-data.ts` : goals/tasks seulement, pas de `ascent_paths` ni `provider.ascent`) → Slide-Ascent render « Aucun chemin actif » au boot prod tant que le scope `ascent` n'est pas ajouté à `createAuroraDataProvider.connect()`. Fix minimal à encoder dans le wave mobile suivant (owner : mobile/Dyad).
-- **ORACLE (kernel Agent, tâches 1–2) : déjà livré sur main** (`ec00f8d` + `cf02420`, 15 composants kernel S12 + 8 tools Vercel AI SDK dans `packages/agent/src/tools.ts`). Tâches 3–7 (expert-skills.ts 4 extensions, AgentRunState, command bus AgentActionEnvelope/UiStateCommand, fn-agent-run) = in-flight en worktree `oracle-t27` (agent ORACLE, commit prefix `wave3/oracle:`).
-- **0014 (pg_cron) : APPLIQUÉ au live par Joy (manuel, dashboard-side — le rôle MCP n'a pas le droit `cron.job` INSERT, donc vérification seulement, pas réapplication via MCP).** Audit Supabase MCP (`SELECT jobname, schedule FROM cron.job`) : **2/3 présentes** — `aurora_fsrs_tick` (`'0 2 * * *'`) + `aurora_skill_recompute` (`'0 3 * * *'`) matchent le fichier SSoT verbatim ; **`aurora_event_dispatch` (`'*/5 * * * *'`) ABSENTE du live** → re-apply manuel dashboard-side (ou accepter le gap sweep manuel jusqu'au wave-2 dispatcher). Annoté dans l'en-tête du fichier 0014.
+- **ORACLE (kernel Agent, tâches 1–2) : déjà livré sur main** (`ec00f8d` + `cf02420`, 15 composants kernel S12 + 8 tools Vercel AI SDK dans `packages/agent/src/tools.ts`). **Tâches 3–7 : COMPLÈTES, sur main via merge `58cddd6`** — tâche 3 (router S2.6 Agnes-PRIMARY) vérifiée sans commit (`router.ts` existant déjà conforme) ; tâches 1–4 absorbées par le workflow parallèle (`d072fcb`/`5b52691`/`c9df140`/`4efe68f`/`ed98c0f`) ; le delta résiduel (run-state.ts, run-bus.ts, model.ts, providers.ts, barrel, test — 6 fichiers / 821 lignes, run-state 9/9 tests) grafté comme `8aabfbd` dans `oracle-t27` puis merged sur main comme `58cddd6` (base `0b161ca`). Lenses AD-1 + AD-3 passés post-merge. `pnpm-lock` du delta non repris (déjà couverte par `d072fcb`). Worktree pruned, plus rien d'open côté ORACLE.
+- **0014 (pg_cron) : CORRECTIF — APPLIQUÉ au live via le Supabase MCP `cron.schedule()`** (jobids 8/9/10 : `aurora_fsrs_tick` `0 2 * * *`, `aurora_skill_recompute` `0 3 * * *`, `aurora_event_dispatch` `*/5 * * * *`), + **0018 (keep_alive heartbeat) : APPLIQUÉ au live via le Supabase MCP `cron.schedule()`** (jobid 7, `0 0 * * *` quotidien, table `keep_alive` 1 ligne) — anti-pause Supabase Free tier, prévu pour couvrir la pause de développement de 4+ mois. L'annotation 0014 de cette section initiale (« 2/3 présentes / 1 ABSENTE ») était un faux positif : elle avait confondu les 2 jobs `generate-ai-post-*` d'une autre instance du dashboard partagé avec les 3 `aurora_*` 0014, qui en réalité n'étaient PAS appliquées. Réappliquées + heartbeat ajouté, le tout via `SELECT cron.schedule(…)` (le `INSERT INTO cron.job` direct échouait sur le GRANT du rôle MCP ; le wrapper `cron.schedule()` fonctionne). Commité `70ddff7`.
 
