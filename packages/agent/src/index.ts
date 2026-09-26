@@ -164,6 +164,15 @@ export {
   type StreamKernelRunOptions,
 } from './sdk.ts';
 
+// Agent job handler (AD-8: provided to ORION's fn-job-dispatcher global
+// switch via the chevauchement rule — the dispatcher imports + registers,
+// the agent module owns the handler body).
+export {
+  buildAgentRunHandler,
+  type AgentHandlerDeps,
+  type AgentJobHandler,
+} from './jobs.ts';
+
 export {
   ProviderModelAdapter,
   envKeyProvider,

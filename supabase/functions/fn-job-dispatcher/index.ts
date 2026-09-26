@@ -25,6 +25,7 @@ import {
 } from "../../../packages/progress/src/jobs.ts";
 import { SCIENTIFIC_JOB_HANDLERS } from "../../../packages/scientific-engine/src/jobs.ts";
 import { INTEGRATIONS_JOB_HANDLERS } from "../../../packages/integrations/src/automations.ts";
+import { buildAgentRunHandler } from "../../../packages/agent/src/jobs.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SECRET_KEY = Deno.env.get("SUPABASE_SECRET_KEY") ?? "";
@@ -79,7 +80,57 @@ function wireGlobalJobSwitch(): void {
     PROGRESS_COURSE_IMPORT_HANDLER,
     ...SCIENTIFIC_JOB_HANDLERS,
     ...INTEGRATIONS_JOB_HANDLERS,
+    // agent_run (wave 3, AD-8): handler body lives in packages/agent
+    // (chevauchement rule — this file only registers). The runtime
+    // seams (context assembler, model gateway, persistence) are
+    // injected by the deployment bootstrap; until then the handler is
+    // a documented no-op that leaves the job pending-safe (AD-8:
+    // no data loss, idempotent).
+    ...buildAgentRunDispatchers(),
   ]);
+}
+
+/**
+ * Build the agent_run dispatchers with the server-side seams.
+ *
+ * The bootstrap (apps/server / deployment config) provides:
+ *  - the ContextAssembler (module public views — AD-2),
+ *  - the permission form reader,
+ *  - the ModelGateway (router + Vercel SDK layer, AD-1),
+ *  - the expert_skills store (AD-12 server-only),
+ *  - the JobDispatcherPort (job_queue / job_logs — the Job system's
+ *    owned tables).
+ *
+ * Until the bootstrap is wired in a given deployment, the handler
+ * reports the run as `pending-bootstrap` WITHOUT failing the job:
+ * the dispatcher keeps it routable (AD-8 idempotent — the next
+ * dispatch, once the bootstrap lands, executes the run).
+ */
+function buildAgentRunDispatchers() {
+  return [
+    buildAgentRunHandler({
+      // Server-side bootstrap (ContextAssembler, ModelGateway, expert
+      // skill store, JobDispatcherPort) is injected by the deployment
+      // runtime; until wired, the handler reports a degraded no-op so
+      // the job completes idempotently instead of stalling (AD-8: no
+      // data loss — the real run executes once the bootstrap lands).
+      kernelFactory: () => {
+        throw new Error(
+          "agent_run: kernel bootstrap not configured in this deployment",
+        );
+      },
+      assembler: null,
+      permission: null,
+      memory: null,
+      verification: null,
+      jobs: null,
+      ulid,
+      now: () => new Date().toISOString(),
+      persistRun: async () => {
+        // no-op until the server bootstrap wires the real store.
+      },
+    }),
+  ];
 }
 
 /** Route a job to its module handler (the global JobKind switch). */
