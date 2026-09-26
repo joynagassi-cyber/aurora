@@ -44,7 +44,7 @@ Tu es SOPHIA. Implémente le module Ascent : le moteur de trajectoire pédagogiq
    - source-hierarchy.ts (A>B>C>D, D ne remplace jamais A)
 3. Migration SQL + surface de sync (1 commit, fichiers exacts, cf
    docs/ascent/implementation.md "SQL Migration + Sync Surface") :
-   a. supabase/migrations/0013_ascent.sql (prochain numero apres 0012) :
+   a. supabase/migrations/0015_ascent.sql (prochain numero libre apres 0014) :
       CREATE TABLE ascent_paths (JSONB, schema du doc)
       + ENABLE/FORCE ROW LEVEL SECURITY + policy user_isolation
       (USING (user_id = auth.uid()), pattern 0008)
@@ -78,6 +78,6 @@ COMMIT MESSAGES : prefixe "wave3/sophia:"
 - "wave3/sophia: domain types (AscentLearningIR + 6 types)"
 - "wave3/sophia: path-builder + adapter + baseline + depth"
 - "wave3/sophia: source-hierarchy + read-do-prove"
-- "wave3/sophia: 0013_ascent.sql (table + RLS) + v_ascent_scope + schema.json (mirror lecture seule)"
+- "wave3/sophia: 0015_ascent.sql (table + RLS) + v_ascent_scope + schema.json (mirror lecture seule)"
 - "wave3/sophia: Slide-Ascent UI (12 slide types + progressive disclosure)"
 - "wave3/sophia: Agent Kernel integration + tests"

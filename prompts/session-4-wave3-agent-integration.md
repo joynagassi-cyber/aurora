@@ -165,7 +165,7 @@ Taches :
    - source-hierarchy.ts (A>B>C>D, D ne remplace jamais A)
 3. Migration SQL + surface de sync (fichiers exacts dans
    docs/ascent/implementation.md "SQL Migration + Sync Surface") :
-   a. supabase/migrations/0013_ascent.sql : ascent_paths JSONB +
+   a. supabase/migrations/0015_ascent.sql : ascent_paths JSONB +
       ENABLE/FORCE RLS + policy user_isolation (pattern 0008)
    b. powersync/relay.sql : + vue v_ascent_scope (security_invoker)
    c. powersync/schema.json : + mirrorTables "ascent" + scope

@@ -100,7 +100,7 @@ CREATE TABLE ascent_paths (
 Three files, all in the existing wave-0 pattern (MINERVA). Gates
 `check-rls.sh` and `check-view-joins.ts` scan them — both must stay green.
 
-### 1. `supabase/migrations/0013_ascent.sql` (next number after 0012)
+### 1. `supabase/migrations/0015_ascent.sql` (next free number after 0014)
 
 ```sql
 -- Ascent module (wave 3) — writes server-only (AD-12),
