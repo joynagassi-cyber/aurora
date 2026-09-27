@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Aurora — Aperçu AgentThinkingLoader (ui-libraries §9.3)</title>
+<!--
+  APERÇU NON-NORMATIF — SSoT = packages/ui/src/components/ui/AgentThinkingLoader.tsx
+  + docs/ui-libraries.md §9.3. Ce HTML réplique 1:1 la géométrie du composant :
+  mêmes 3 paths de blobs, mêmes durées (4.2/3.4/2.6 s), mêmes coefficients
+  (scale ×1.08/×0.94, rotation +120°, opacités ×1.25/×0.8), mêmes 12 mots
+  (DEFAULT_THINKING_WORDS), même intervalle 2400 ms, même crossfade 200 ms,
+  même chip « Réflexion · Ns » (tabular-nums), même sortie « exiting » 200 ms.
+  Adaptations (exigence owner 2026-09-28) : placement inline dans l'interface
+  de chat + le texte du loader (mots + chip) est à la même taille que le
+  texte de réflexion et le texte du streaming de réponse (15 px partout).
+  Le papillon = le SVG monochrome épuré (build), repli sur la SSoT si absent.
+  Ouvrir en file:// — aucune dépendance, aucun CDN, fonctionne hors-ligne.
+-->
+<style>
+  :root {
+    /* tokens neutres (05 §2.1.2/.3) */
+    --canvas: #0A0E1A;
+    --surface: #151C2C;
+    --surface-alt: #1B2438;
+    --border: hsl(214 32% 22%);
+    --text-primary: hsl(222 47% 92%);
+    --text-secondary: hsl(215 25% 66%);
+    --text-muted: hsl(215 20% 48%);
+    /* thème expressif par défaut = Aurora (05 §5.4 : bleu électrique) */
+    --aurora-accent-primary-h: 221 91% 59%;
+    --aurora-accent-secondary-h: 184 74% 48%;
+  }
+  [data-theme="sakura"] {
+    --aurora-accent-primary-h: 340 85% 74%;
+    --aurora-accent-secondary-h: 320 70% 66%;
+  }
+  [data-theme="nocturne"] {
+    --aurora-accent-primary-h: 215 18% 62%;
+    --aurora-accent-secondary-h: 215 14% 45%;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--canvas);
+    color: var(--text-primary);
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: flex; flex-direction: column;
+  }
+
+  /* ---------- header (S9 : version colorée sans fond dans le header) ------ */
+  header.top {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  header.top img.brand { width: 24px; height: 24px; }
+  header.top h1 { font-size: 15px; font-weight: 600; letter-spacing: 0; margin-right: 8px; }
+  header.top .spacer { flex: 1; }
+  .ctl {
+    font-size: 12px; color: var(--text-secondary);
+    background: var(--surface-alt); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 10px; cursor: pointer;
+    font-family: inherit;
+  }
+  .ctl.on { color: var(--text-primary); border-color: hsl(var(--aurora-accent-primary-h) / 0.6); }
+
+  /* ---------- chat (le loader se pose sur une surface, jamais le canvas) - */
+  main.chat {
+    flex: 1; overflow-y: auto; padding: 20px 16px;
+    display: flex; flex-direction: column; gap: 16px;
+    max-width: 640px; margin: 0 auto; width: 100%;
+  }
+  .msg {
+    align-self: flex-end; max-width: 78%;
+    background: var(--surface-alt); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 15px; line-height: 1.5;
+  }
+  .turn {
+    align-self: flex-start; width: 100%;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+
+  /* ---- rangée réflexion : organisme (48 px) à GAUCHE, mots + chip à droite */
+  .thinking { display: flex; gap: 12px; align-items: flex-start; }
+  .organism { position: relative; width: 48px; height: 48px; flex: 0 0 48px; margin-top: 2px; }
+  .organism svg.blob {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    transform-origin: 50% 50%; will-change: transform, opacity;
+  }
+  .organism .blob-back   { animation: blobBack 4.2s ease-in-out infinite; }
+  .organism .blob-middle { animation: blobMiddle 3.4s ease-in-out infinite; }
+  .organism .blob-front  { animation: blobFront 2.6s ease-in-out infinite; }
+  /* keyframes = copie exacte des keyframes du composant (motion/react) */
+  @keyframes blobBack {   /* scale 1 / rotate 0° / opacity .5 */
+    0%   { transform: scale(1)    rotate(0deg);   opacity: .5; }
+    33%  { transform: scale(1.08) rotate(120deg); opacity: .625; }
+    66%  { transform: scale(.94)  rotate(240deg); opacity: .4; }
+    100% { transform: scale(1)    rotate(360deg); opacity: .5; }
+  }
+  @keyframes blobMiddle { /* scale .82 / rotate -30° / opacity .6 */
+    0%   { transform: scale(.82)  rotate(-30deg); opacity: .6; }
+    33%  { transform: scale(.886) rotate(90deg);  opacity: .75; }
+    66%  { transform: scale(.771) rotate(210deg); opacity: .48; }
+    100% { transform: scale(.82)  rotate(330deg); opacity: .6; }
+  }
+  @keyframes blobFront {  /* scale .6 / rotate 60° / opacity .7 */
+    0%   { transform: scale(.6)   rotate(60deg);  opacity: .7; }
+    33%  { transform: scale(.648) rotate(180deg); opacity: .875; }
+    66%  { transform: scale(.564) rotate(300deg); opacity: .56; }
+    100% { transform: scale(.6)   rotate(420deg); opacity: .7; }
+  }
+  .organism .mark { position: absolute; inset: 0; display: grid; place-items: center; }
+  .organism .mark img { width: 26px; height: 26px; display: block; }
+  /* état « exiting » du composant : resserrement + fondu 200 ms ease-out */
+  .organism.exiting {
+    opacity: 0; transform: scale(.9);
+    transition: opacity .2s ease-out, transform .2s ease-out;
+  }
+  .thinking.done .organism { opacity: 0; transform: scale(.9); transition: opacity .2s ease-out, transform .2s ease-out; }
+  .thinking.done .thinking-line { display: none; }
+  .thinking.done .elapsed { color: var(--text-secondary); } /* « Thought for Ns » gelé */
+
+  /* ---- mots + chip : MÊME TAILLE que le texte du chat (15 px) ------------ */
+  .thinking-meta { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding-top: 2px; }
+  .thinking-line {
+    position: relative; height: 20px; overflow: hidden; /* boîtier fixe, zéro reflow */
+    font-size: 15px; font-weight: 500; color: var(--text-secondary);
+  }
+  .thinking-line .rotator {
+    position: absolute; inset: 0; display: flex; align-items: center;
+    opacity: 0; transform: translateY(4px);
+    transition: opacity .2s ease-out, transform .2s ease-out; /* crossfade GPU */
+  }
+  .thinking-line .rotator.show { opacity: 1; transform: translateY(0); }
+  .elapsed {
+    font-size: 15px; color: var(--text-muted);
+    font-family: "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
+    font-variant-numeric: tabular-nums; /* zéro jitter quand N monte */
+  }
+
+  /* ---- réponse streaming : même taille 15 px --------------------------- */
+  .answer { font-size: 15px; line-height: 1.5; color: var(--text-primary); display: none; }
+  .answer.visible { display: block; }
+
+  /* ---- reduced motion (05 §2.6 règle 2 : tout = statique) --------------- */
+  body.reduced .organism .blob-back,
+  body.reduced .organism .blob-middle,
+  body.reduced .organism .blob-front { animation: none; }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  footer.note {
+    padding: 10px 16px; border-top: 1px solid var(--border);
+    font-size: 11px; line-height: 1.6; color: var(--text-muted); background: var(--surface);
+  }
+</style>
+</head>
+<body>
+  <header class="top">
+    <img class="brand" src="../../../assets/aurora_icon_a_integre_dans_l'applciation.png" alt="Aurora" onerror="this.style.display='none'" />
+    <h1>Aurora · Aperçu §9.3</h1>
+    <span class="spacer"></span>
+    <button class="ctl on" data-theme-btn="aurora">Aurora</button>
+    <button class="ctl" data-theme-btn="sakura">Sakura</button>
+    <button class="ctl" data-theme-btn="nocturne">Nocturne</button>
+    <label class="ctl" style="display:flex;align-items:center;gap:6px;cursor:pointer">
+      <input type="checkbox" id="reducedChk" style="accent-color:hsl(var(--aurora-accent-primary-h))" />
+      reduced-motion
+    </label>
+    <button class="ctl" id="replayBtn">↻ Rejouer</button>
+  </header>
+
+  <main class="chat">
+    <div class="msg">Pourquoi mon objectif « ML Mastery » stagne à 62&nbsp;% ?</div>
+
+    <div class="turn" role="status" aria-live="polite">
+      <div class="thinking" id="thinking">
+        <div class="organism" id="organism" aria-hidden="true">
+          <svg class="blob blob-back" viewBox="0 0 200 200"><path fill="hsl(var(--aurora-accent-primary-h) / 0.28)" d="M100,18 C142,14 178,44 184,86 C190,128 162,168 122,180 C82,192 40,176 26,138 C12,100 34,56 70,34 C78,29 88,20 100,18 Z"/></svg>
+          <svg class="blob blob-middle" viewBox="0 0 200 200"><path fill="hsl(var(--aurora-accent-secondary-h) / 0.45)" d="M60,40 C96,18 150,30 166,72 C182,114 156,160 116,170 C76,180 34,158 30,116 C26,74 32,54 60,40 Z"/></svg>
+          <svg class="blob blob-front" viewBox="0 0 200 200"><path fill="hsl(var(--aurora-accent-primary-h) / 0.6)" d="M78,74 C102,58 140,66 148,96 C156,126 132,152 104,150 C88,149 74,140 66,124 C58,108 58,88 78,74 Z"/></svg>
+          <div class="mark">
+            <img id="mark" src="../../../apps/mobile/.build/aurora-mono.stripped.svg" alt=""
+                 onerror="this.onerror=null; this.src='../../../assets/vs_monochrome_en_svg.svg';" />
+          </div>
+        </div>
+        <div class="thinking-meta">
+          <div class="thinking-line" aria-hidden="true">
+            <span class="rotator show" id="wordRotator">Réfléchit…</span>
+            <span class="sr-only">L'agent réfléchit</span>
+          </div>
+          <div class="elapsed" id="elapsed">Réflexion · 0 s</div>
+        </div>
+      </div>
+
+      <p class="answer" id="answer"></p>
+    </div>
+  </main>
+
+  <footer class="note">
+    Aperçu non-normatif — SSoT : <code>packages/ui</code> <code>AgentThinkingLoader</code> +
+    <code>docs/ui-libraries.md §9.3</code>. Géométrie des blobs, durées (4.2/3.4/2.6 s),
+    12 mots (2 400 ms), crossfade 200 ms, chip « Réflexion · Ns » : copie exacte du
+    composant. Uniquement l'emplacement (inline chat) et la taille du texte (15 px =
+    taille du streaming) diffèrent, per exigence owner 2026-09-28.
+  </footer>
+
+<script>
+  // Réplique du comportement de AgentThinkingLoader (mêmes constantes).
+  const DEFAULT_THINKING_WORDS = [
+    "Réfléchit…", "Pondère…", "Tisse…", "Mûrit…", "Brasse…", "Explore…",
+    "Vérifie…", "Éclaire…", "Distille…", "Recompose…", "Anticipe…", "Ordonne…",
+  ];
+  const WORD_INTERVAL_MS = 2400;  // composant : wordIntervalMs défaut
+  const THINKING_MS = 7000;       // démo : durée de la phase réflexion
+  const ANSWER =
+    "Ton blocage vient du chapitre QCM Thermo : les 3 mêmes questions sont errées en boucle depuis lundi, et la révision de 9 h a été décalée deux fois. Plan en 3 étapes : 1) refaire le cours §4.2 (20 min), 2) 10 flashcards ciblées sur les 3 questions, 3) revue demain 9 h. Je peux lancer une session Focus maintenant — tu veux que je réserve le créneau ?";
+
+  const $ = (id) => document.getElementById(id);
+  const rotator = $("wordRotator"), elapsedEl = $("elapsed"),
+        organism = $("organism"), thinking = $("thinking"), answer = $("answer");
+
+  let wordTimer = null, elapsedTimer = null, streamTimer = null;
+  let wordIdx = 0, elapsedSec = 0;
+  const reduced = () => document.body.classList.contains("reduced");
+
+  function startWords() {
+    wordIdx = 0;
+    rotator.textContent = DEFAULT_THINKING_WORDS[0];
+    rotator.classList.add("show");
+    clearInterval(wordTimer);
+    if (reduced()) return; // 05 §2.6 règle 2 : mots statiques
+    wordTimer = setInterval(() => {
+      wordIdx = (wordIdx + 1) % DEFAULT_THINKING_WORDS.length;
+      rotator.classList.remove("show");
+      setTimeout(() => {
+        rotator.textContent = DEFAULT_THINKING_WORDS[wordIdx];
+        rotator.classList.add("show");
+      }, 200); // crossfade 200 ms (composant)
+    }, WORD_INTERVAL_MS);
+  }
+  function stopWords() { clearInterval(wordTimer); }
+
+  function tickElapsed() {
+    clearInterval(elapsedTimer);
+    elapsedSec = 0;
+    elapsedEl.textContent = "Réflexion · 0 s";
+    elapsedTimer = setInterval(() => {
+      elapsedSec += 1;
+      elapsedEl.textContent = "Réflexion · " + elapsedSec + " s";
+    }, 1000);
+  }
+  function stopElapsed() { clearInterval(elapsedTimer); }
+
+  // état « exiting » du composant : organisme disparaît en 200 ms, le mot
+  // s'efface, la chip gelée reste (le reçu « Thought for Ns » de Claude).
+  function finishThinking() {
+    stopWords();
+    stopElapsed();
+    thinking.classList.add("done");
+    answer.classList.add("visible");
+    startStreaming();
+  }
+
+  function startStreaming() {
+    const words = ANSWER.split(" ");
+    let i = 0;
+    answer.textContent = "";
+    clearInterval(streamTimer);
+    const step = () => {
+      i += 2;
+      answer.textContent = words.slice(0, i).join(" ");
+      if (i < words.length) streamTimer = setTimeout(step, 160);
+    };
+    step();
+  }
+
+  function play() {
+    stopWords(); stopElapsed(); clearInterval(streamTimer);
+    thinking.classList.remove("done");
+    answer.classList.remove("visible");
+    answer.textContent = "";
+    startWords();
+    tickElapsed();
+    setTimeout(finishThinking, THINKING_MS);
+  }
+
+  $("replayBtn").addEventListener("click", play);
+  $("reducedChk").addEventListener("change", (e) => {
+    document.body.classList.toggle("reduced", e.target.checked);
+    if (!thinking.classList.contains("done")) {
+      stopWords();
+      if (reduced()) {
+        wordIdx = 0;
+        rotator.textContent = DEFAULT_THINKING_WORDS[0];
+        rotator.classList.add("show");
+      } else {
+        startWords();
+      }
+    }
+  });
+  document.querySelectorAll("[data-theme-btn]").forEach((b) => {
+    b.addEventListener("click", () => {
+      document.body.setAttribute("data-theme", b.dataset.themeBtn);
+      document.querySelectorAll("[data-theme-btn]").forEach((x) => x.classList.toggle("on", x === b));
+    });
+  });
+
+  play();
+</script>
+</body>
+</html>
