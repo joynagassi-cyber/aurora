@@ -1,5 +1,46 @@
 # Changelog project-context.md
 
+## v1.10 — 2026-09-27 (Vérification live heartbeat 0018 + correction du 1er run quotidien)
+
+- **Vérification de bout en bout du heartbeat 0018 (demande Joy, 2026-09-27)** : le
+  1er run quotidien de l'ancienne version du job (jobid 8, command
+  `DELETE+INSERT`) a **ÉCHOUÉ** au live (`cron.job_run_details.status='failed'`,
+  `start_time 2026-09-27 00:00 UTC`, `return_message = ERROR: cannot delete from
+  table "keep_alive" because it does not have a replica identity and publishes
+  deletes`). Cause : la publication `powersync` (relay PowerSync, `FOR ALL
+  TABLES`, créée 0001/0015) couvre `keep_alive` — le `DELETE` du job pg_cron
+  viole la contrainte de replica identity de Postgres sur une table publiée
+  sans `REPLICA IDENTITY FULL`.
+- **Corrélation heureuse avec les 3 jobs du 0014** : `aurora_fsrs_tick`
+  (jobid 1, 02:00 UTC) et `aurora_skill_recompute` (jobid 2, 03:00 UTC) ont
+  tous deux exécuté avec **succès** ce matin (2026-09-27) — preuve que le
+  scheduler pg_cron tourne correctement et que seul le command body
+  `DELETE+INSERT` du 0018 était le problème (pas le scheduler lui-même).
+- **Fix live appliqué via le MCP Supabase** :
+  1. `ALTER TABLE keep_alive REPLICA IDENTITY FULL;`
+  2. `SELECT cron.unschedule('aurora_keep_alive');` (supprime l'ancienne jobid 8)
+  3. `SELECT cron.schedule('aurora_keep_alive', '0 0 * * *', $cmd$ UPDATE public.keep_alive SET last_ping = now(); $cmd$);`
+     → nouvelle jobid 9, `active=true`, command body `UPDATE` (pas de `DELETE`
+     → plus de contrainte de replica identity)
+  4. `keep_alive.last_ping` reste figé à l'amorçage manuel de 2026-09-26
+     23:32:13 UTC jusqu'au prochain run quotidien (00:00 UTC 2026-09-28), qui
+     confirmera le fix (statut à revérifier à ce moment-là via
+     `SELECT status FROM cron.job_run_details WHERE jobid = 9`).
+- **SSoT corrigé** : `supabase/migrations/0018_keep_alive_heartbeat.sql`
+  reflète désormais l'état live corrigé (section « CORRECTION 2026-09-27 » en
+  tête + `REPLICA IDENTITY FULL` dans le DDL + command body `UPDATE` dans le
+  `cron.schedule()`) — le SSoT n'est plus une divergence avec le live.
+- **Prompt réutilisable v2** : `prompts/supabase-free-tier-heartbeat.md`
+  enrichi d'un **piège N°2 documenté** (publication logical replication
+  `ALL TABLES` casse le command body `DELETE+INSERT`) + `ÉTAPE 0e` (check
+  publication via `pg_publication.puballtables`) + `REPLICA IDENTITY FULL`
+  dans l'ÉTAPE 1 + command body `UPDATE` dans l'ÉTAPE 2 + rapport final
+  ajusté. Commité `257685f` (les 3 fichiers).
+- **§Wave 1 (W1-E3) état inchangé** : le job system end-to-end reste «
+  scheduler en place » ; seul le **test de dispatch** (job créé par le
+  cron → claim → résultat, idempotence vérifiée) reste à exécuter —
+  non impacté par cette correction.
+
 ## v1.9 — 2026-09-27 (pg_cron 0014+0018 live — audit de falsification corrigé)
 
 - **Audit pg_cron 0014/0018** : les 3 jobs aurora du 0014
