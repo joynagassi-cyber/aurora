@@ -36,3 +36,6 @@ _bmad-output/**/.working/
 # Local secrets script (real values NEVER committed — see
 # set-secrets.template.ps1 for the tracked, value-free template).
 set-secrets.ps1
+# Generated build artifacts
+# Stripped monochrome logo (ui-libraries §9.2 — node scripts/strip-logo-metadata.mjs)
+apps/mobile/.build/

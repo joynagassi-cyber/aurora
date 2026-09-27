@@ -89,7 +89,12 @@ premium ; ce prompt est DOCS-ONLY.
 | 44 | not-found / feature-disabled | Shell | * | page matrix S2 + feature-registry S6 | claimé, non détaillé |
 
 Surfaces flottantes à spécifier (transverses, 1 doc dédié + référence par
-écran) : BottomSheet, Modal, Drawer, Command palette, Toast, FAB (05 §3.5).
+écran) : BottomSheet, Modal, Drawer, Command palette, Toast, FAB (05 §3.5)
++ AgentThinkingLoader (loader « agent réfléchit », spec ui-libraries §9.3 :
+organisme organique = 3 blobs morphants (motion, GPU-only transform+
+opacity) autour du PAPILLON MONO STATIQUE au centre (prop `butterfly`),
+coloré aux tokens accent (10 thèmes + 3 presets), reduced-motion =
+statique. INTERDIT : trois-points linéaires, spinner classique.
 
 ## Lis AVANT d'écrire (dans cet ordre)
 1. _bmad-output/architecture/architecture-aurora-2026-09-21/dimensions/05-design-system.md (§2 tokens, §3 composants, §4 écrans, §5–6 thèmes)
@@ -113,9 +118,14 @@ Surfaces flottantes à spécifier (transverses, 1 doc dédié + référence par
   Pas de SSoT pour un élément = ligne `OQ-<n>` dans la section « Open
   questions » du document écran. Jamais de spec muette, jamais de
   « à décider » masqué.
-- 5 états UX + killed (ui-libraries S6) sur CHAQUE élément async :
-  loading / empty / error / offline / killed — pour chaque : texte exact,
-  visuel (composant + tokens), CTA.
+- 6 états S6 (ui-libraries §6) sur CHAQUE élément async :
+  loading / empty / error / success / offline / killed — pour chaque :
+  texte exact, visuel (composant + tokens), CTA.
+- États sémantiques d'écran (ui-libraries §6.1) : en-cours (progression
+  mesurable ≠ loading), terminé (terminal positif ≠ success toast),
+  échec (terminal non retryable ≠ error transitoire), 404/not-found
+  (logo coloré au centre) — chaque état applicable documenté, sinon
+  « N/A (raison) ».
 - Tokens only (AD-17) : aucune valeur color/spacing/typo/ radius brute ;
   10 thèmes + 3 presets = spec du COMPORTEMENT par couche (05 §5.2), jamais
   de valeur par thème ; règle bloquante 05 §5.1 (thème ne touche jamais
@@ -134,9 +144,16 @@ Surfaces flottantes à spécifier (transverses, 1 doc dédié + référence par
 - A11y WCAG AA (05 §6.3) : contraste vérifié par thème × style neutre, focus
   visible (ring contrast), tap targets >= 44 px (56 px High Contrast),
   aria-label sur tous les icon buttons, letter-spacing 0.
-- Logos S9 (ui-libraries §9) : version SANS fond = headers / centres de page /
-  empty states UNIQUEMENT ; version complète = icône d'app externe UNIQUEMENT.
-  Chaque occurrence par écran listée.
+- Logos S9 (ui-libraries §9, 4 fichiers, owner decision 2026-09-27) :
+  version COLOREE sans fond = headers / centres de page / empty states par
+  défaut ; version complète = icône d'app externe UNIQUEMENT ; version
+  MONOCHROME (grayscale tonale) = cas de la matrice ui-libraries §9.1
+  UNIQUEMENT (agent chat new session + thinking, états killed/désactivés,
+  presets Nocturne/High Contrast, watermarks, exports docs). Chaque
+  occurrence par écran listée avec sa version (colorée / monochrome / pleine).
+  Page 404 / not-found = logo AURORA COLORE au CENTRE de page (état « vivant
+  » avec CTA primaire = marque active, §9.1/§6.1) — c'est LA page de détail
+  qui montre le travail de finition.
 - 1 écran = 1 système de composants (ui-libraries S1) : chaque élément =
   composant DS (05 §3) + lib d'implémentation (shadcn/Radix, FullCalendar,
   AG Grid, motion, AntV, KaTeX, Tiptap, dnd-kit, Virtuoso). ion-calendar /
@@ -149,6 +166,12 @@ Surfaces flottantes à spécifier (transverses, 1 doc dédié + référence par
   si un widget change, le spec dit exactement quel composant, quel token,
   quel état, quelle micro-animation, quelle transition — sans qu'il ait à
   deviner.
+- PRÉCISION (work of detail) : le §3 d'un écran couvre 100% de la zone —
+  aucun élément « non listé » ; la SSoT est muette sur un élément = OQ
+  (jamais de spec implicite). Même exigence pour §4 : chaque état de la
+  matrice §6/§6.1 est documenté ou motivé N/A. C'est ce qui rend un
+  changement de widget / micro-animation / modal / formulaire / pagination
+  / transition PROPAGABLE sans re-décision.
 
 ## Modèle de document PAR ÉCRAN (obligatoire, sections 1–14 complètes)
 
@@ -167,8 +190,16 @@ Chaque zone : liste des éléments (composant DS + lib + tokens utilisés)
 Table : élément · composant DS (05 §3) · lib (ui-libraries S1) ·
 tokens · variante responsive · source SSoT
 
-## 4. États (5 + killed) — par élément async
-loading / empty / error / offline / killed : texte exact + visuel + CTA
+## 4. États — matrice COMPLÈTE (par élément async + par écran)
+Ligne par ligne, chaque : composant (DS+lib) · tokens · texte exact · CTA ·
+transition d'entrée/sortie :
+- 6 S6 (ui-libraries §6) : loading / empty / error / success / offline /
+  killed (G-M2) — sur chaque élément async
+- Sémantiques (ui-libraries §6.1) : en-cours · terminé · échec — si
+  applicables à l'écran (sinon « N/A (raison) »)
+- 404 / not-found : SI l'écran est routé — page entière : logo AURORA
+  coloré au CENTRE (§9.1/§6.1), message, CTA "Retour à l'accueil"
+- killed sur tout flux serveur (flux mort → skeleton + "Reconnexion...")
 
 ## 5. Micro-interactions
 Table : élément · action → feedback · durée (150–250 ms) · GPU only ·
@@ -199,7 +230,11 @@ Contraste par thème × style, focus, 44/56 px, aria-labels, SR labels
 Classe offline (catalog), miroir local, dégradation AD-1, killed
 
 ## 13. Logos S9
-Occurrences (header / empty state / centre) = version SANS fond uniquement
+Occurrences (header / empty state / centre) = version SANS fond, COLOREE par
+défaut ; version MONOCHROME = cas de la matrice ui-libraries §9.1 (agent chat
+new session + thinking, killed, presets Nocturne/High Contrast, watermarks,
+exports). Chacune listée explicitement : version + raison (designer
+psychology) + SSoT ref.
 
 ## 14. Open questions
 Chaque OQ : n°, écran, élément, question, options envisagées, décideur
@@ -220,11 +255,19 @@ Chaque OQ : n°, écran, élément, question, options envisagées, décideur
 5. Lot Knowledge/Discovery/Progress : knowledge-tree, knowledge-node,
    discovery-feed, discovery-sheet, progress-dashboard. 1 commit
    (ce lot a le plus d'écrans « claimés non détaillés » → le plus d'OQ ;
-   chaque OQ cite le doc module qui MANQUE la prescripion écran)
+   chaque OQ cite le doc module qui MANQUE la prescription écran)
 6. Lot Agent/Ascent/Artifacts/Settings/Shell : agent-chat, slide-ascent,
    artifacts-detail, settings, not-found/feature-disabled + doc transversal
-   surfaces flottantes (BottomSheet/Modal/Drawer/Command palette/Toast/FAB).
-   1 commit
+   surfaces flottantes (BottomSheet/Modal/Drawer/Command palette/Toast/FAB
+   + AgentThinkingLoader). Le spec agent-chat DOIT inclure : new session =
+   marque MONOCHROME statique (empty state neutre, §9.1) ; état « l'agent
+   réfléchit » = AgentThinkingLoader (§9.3) en §4 (loading) + §5
+   (micro-interaction de sortie 150–250 ms au premier token du streaming ;
+   la marque revient colorée dans le header seulement). Le spec
+   not-found/feature-disabled DOIT inclure : page 404 = logo AURORA COLORE
+   au CENTRE (§9.1/§6.1), message court, CTA primaire "Retour à
+   l'accueil" + CTA secondaire "Consulter l'écran parent", aucun crash /
+   texte 404 nu. 1 commit
 7. `docs/design-system/screens/_open-questions.md` — OQ consolidées
    (chaque OQ : écran, élément, question, options, décideur attendu) +
    `docs/design-system/screens/index.md` (sommaire cliquable des N docs).
@@ -234,6 +277,10 @@ Chaque OQ : n°, écran, élément, question, options envisagées, décideur
 - 14 sections complètes (pas de section vide : soit SSoT citée, soit OQ)
 - Chaque élément du §3 a sa ligne d'états (§4) et sa micro-interaction (§5)
 - Aucun élément sans composant DS/lib (ou OQ explicite)
+- 100% de la matrice des états (§4) documentée ou « N/A (raison) » —
+  jamais de case vide ; 404 présent si l'écran est routé
+- Monochrome : chaque occurrence de logo listée avec sa version exacte
+  (colorée / monochrome / pleine) + cas §9.1 invoqué (pas d'usage ad hoc)
 - Vérification : le spec de l'écran permet à DYAD de coder l'écran SANS
   lire d'autre doc
 

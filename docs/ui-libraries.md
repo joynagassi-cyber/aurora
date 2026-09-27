@@ -186,6 +186,21 @@ Every component that loads async data MUST handle:
 
 **No async component may be missing any of these 6 states.**
 
+### 6.1 Screen-level semantic states (beyond the S6 component states, owner decision 2026-09-27)
+
+S6 is the SSoT for async COMPONENTS. Screens additionally document these
+semantic states — each screen spec lists WHICH apply, with exact text /
+component / token / CTA (state not applicable = "N/A (raison)", never blank):
+
+| State | Meaning | Component + visual | Distinction (blocking) |
+|---|---|---|---|
+| **en-cours** | operation actively running WITH partial results (streaming, import, QCM in progress, sync) | shadcn `Progress` (value %) + live label; agent = streaming tokens | ≠ S6 `loading` (data not arrived, no progress): en-cours has a MEASURABLE progress |
+| **terminé** | terminal, neutral-positive: the object is done, nothing left to do | Lucide `CheckCircle2` + summary + next-action hint (AD-14 "What matters now?") | ≠ S6 `success` (transient Toast): terminé is the OBJECT's state |
+| **échec** | terminal, negative: failed and NOT retryable in place | shadcn `Alert` (destructive) + reason + CTA to an ALTERNATIVE path | ≠ S6 `error` (transient, "Réessayer" in place): échec = no in-place retry |
+| **succès** | transient positive confirmation after an action | S6 `success` (Toast, 3s auto-dismiss) | unchanged S6 |
+| **erreur** | transient failure, retryable in place | S6 `error` (destructive Alert + "Réessayer") | unchanged S6 |
+| **404 / not-found** | unknown route / deep link into a disabled feature | FULL-SCREEN: COLORED without-background Aurora logo CENTERED (§9.1), short message, primary CTA "Retour à l'accueil", optional secondary "Consulter l'écran parent"; NO crash, NO bare 404 text (feature-registry S6) | the only state that MANDATES the centered logo (S9) |
+
 ## 7. Premium Component Examples (for reference)
 
 ### GoalProject Card (Home screen)
@@ -331,20 +346,123 @@ Document the decision in a 1-line comment above the component:
 // WobbleCard: GoalProject on Home, interactive, premium feel
 ```
 
-## 9. Brand Assets (the 2 official logos, /assets)
+## 9. Brand Assets (the 4 official logo files, /assets)
 
-SSoT for branding: exactly 2 files at the repo root — do NOT redraw,
-do NOT generate, do NOT fetch a logo from anywhere else.
+SSoT for branding: exactly 4 files at the repo root (2 official colored +
+2 monochrome, owner decision 2026-09-27) — do NOT redraw, do NOT generate,
+do NOT fetch a logo from anywhere else.
 
 | File | What it is | Where it is used |
 |---|---|---|
 | `assets/aurora_logo_icon_d'affichage_l'applicaiton.png` | Full logo (butterfly + light rounded background) | **External app icon ONLY**: Capacitor icons, Play Store, splash screen, install screen. NEVER inside the app UI |
-| `assets/aurora_icon_a_integre_dans_l'applciation.png` | Logo WITHOUT background (transparent butterfly) | **In-app logo**: header (top bar), page center (empty states, onboarding, in-app splash), footer. NEVER as the external app icon |
+| `assets/aurora_icon_a_integre_dans_l'applciation.png` | Logo WITHOUT background (transparent butterfly, COLORED) | **In-app logo (default)**: header (top bar), page center (empty states, onboarding, in-app splash), footer. NEVER as the external app icon |
+| `assets/lg_aurora_vs_monochrome.png` | MONOCHROME rendition (grayscale metallic tones, no background) | Raster fallback / document exports only (see §9.1–9.3). In-app = the SVG |
+| `assets/vs_monochrome_en_svg.svg` | MONOCHROME vector (same art, grayscale, 1024×1024 viewBox) | In-app monochrome usage ONLY: animated `AgentThinkingLoader` (§9.3) + static monochrome states (§9.1). Vector = sharp at any size |
 
 Rules (every UI agent):
-- Header / empty state / page center = ALWAYS the WITHOUT-background version.
+- Header / empty state / page center = ALWAYS the COLORED WITHOUT-background
+  version — EXCEPT where the §9.1 matrix prescribes the monochrome version.
 - Home screen / store / app splash = ALWAYS the full version.
 - Both are referenced from repo-root `/assets` (imported by the app
   bundler) — never duplicated into src/, node_modules or any other folder.
 - No background color behind the transparent version, no crop, no recolor.
 - When generating app icons (Capacitor build / store assets): source = full version.
+
+### 9.1 Monochrome usage matrix (owner decision, 2026-09-27)
+
+« Monochrome » = a grayscale TONAL rendition (metallic grays #131B22 →
+#B9BABC), NOT a flat silhouette. It is a STATE, not a theme: monochrome
+reads as "brand present but not speaking" (neutrality / waiting / inactive);
+the colored version reads as "brand active".
+
+| Case | Version | Why (designer psychology) |
+|---|---|---|
+| Header / top bar (every screen) | colored without-background | owner decision 2026-09-27: the header ALWAYS carries the COLORED brand |
+| Agent chat — new session / empty state | monochrome | the agent has not spoken yet = neutral presence; color returns on the first message (fluidity) |
+| Agent thinking / loading (animated) | monochrome SVG, animated (§9.3) | "the brand is thinking": calm grayscale while processing; response = color returns |
+| Killed / disabled states (S6) | monochrome | "inactive" visual consistency on killed surfaces |
+| Nocturne + High Contrast presets | monochrome | desaturated / high-contrast universes; the 10 expressive themes = colored version |
+| Watermark / low-opacity backgrounds (QCM sheets, empty library) | monochrome at low opacity | grayscale never fights the content |
+| Document exports (PDF/DOCX/PNG, infographics) | monochrome | print-friendly, neutral |
+| 404 / not-found / feature-disabled (page center) | COLORED without-background, CENTERED | living empty state (primary CTA "Retour à l'accueil") = active brand; S9 page-center rule (§6.1 row 404) |
+| In-app splash / onboarding / Home / store | colored (or full, external) | S9 default — unchanged |
+
+FORBIDDEN: the full (background) version inside the app UI; the monochrome
+version in a "living" empty state (primary CTA = active brand = colored);
+any recolor.
+
+Precision (blocking, DAPHNE-enforced — no ambiguity left):
+- Monochrome mark = grayscale TONAL range #131B22 → #B9BABC (metallic),
+  transparent background ONLY (S9: no background behind, no crop, no recolor).
+- Watermark usage = a SINGLE application at 8% opacity over the content
+  zone (never a gradient fill, never repeated tiles, never above text).
+- Dark neutral style: the monochrome mark sits on `surface` (05 §2.1.3),
+  NEVER on the raw #0A0E1A canvas; DAPHNE measures the mark's dominant
+  tone vs that surface — blocking if < 3:1 (WCAG 1.4.3 non-text);
+  fallback = render on the elevated `surface-alt` tone.
+- Monochrome never animates outside §9.3 (the only animated monochrome
+  usage in the product = AgentThinkingLoader).
+- Per-version occurrence list is part of EVERY screen spec (template §13).
+
+### 9.2 Monochrome in the bundle (C2PA + size)
+
+`vs_monochrome_en_svg.svg` (owner-provided, 2026-09-27) ships with an
+embedded C2PA manifest (Recraft AI provenance): ~140 Ko, of which the
+bulk is a base64 blob inside `<metadata>`. The original stays the UNTOUCHED
+SSoT (S9). For the bundler: a build step emits a STRIPPED copy (metadata
+removed, art identical) — stripping metadata is NOT a redraw.
+RESOLVED 2026-09-27 (owner feu vert): the stripped-copy approach is RATIFIED.
+A build-time script (`scripts/strip-logo-metadata.mjs`) emits
+`apps/mobile/.build/aurora-mono.stripped.svg` (gitignored — a generated
+artifact, NOT a duplicated SSoT source). The originals in `assets/` are
+NEVER modified. Bundle −~125 Ko; no provenance shipped to the device (AD-3).
+
+### 9.3 `AgentThinkingLoader` — l'état « l'agent réfléchit » (IMPLEMENTED 2026-09-27)
+
+- Owner decision 2026-09-27: NO three-dot / linear loader — the thinking
+  state is an ORGANIC organism. Rejected: three dots, plain spinner.
+- Component (DS, AD-10): `packages/ui/src/components/ui/AgentThinkingLoader.tsx`,
+  exported from `@aurora/ui`. Test: `packages/ui/test/agent-thinking-loader.test.tsx`.
+- Organic organism = 3 layered morphing SVG blobs (back/middle/front,
+  staggered 2.6/3.4/4.2 s loops) — GPU ONLY (transform scale/rotate +
+  opacity), no `layout` animations, no CPU-heavy filters (S5 mobile
+  battery + 05 §2.6). Color = `--aurora-accent-primary-h` /
+  `--aurora-accent-secondary-h` CSS vars → follows the active expressive
+  theme; Nocturne / High Contrast desaturate automatically via token.
+- The monochrome butterfly mark (stripped copy, §9.2) is a PROP
+  (`butterfly`), rendered STATIC at center (S9: the mark is never
+  redrawing/animated itself — the organism thinks, the brand stays calm).
+  @aurora/ui stays asset-free (AD-1): the APP imports
+  `apps/mobile/.build/aurora-mono.stripped.svg` and passes it.
+- Props: `state` ("thinking" | "idle" | "exiting") · `butterfly`
+  (ReactNode, optional) · `label` (default "Agent réfléchit…", 13 px/500
+  text-secondary) · `size` (default 88 px; 64–96 in chat). `exiting` =
+  collapse + fade 200 ms ease-out when the response starts streaming.
+- `prefers-reduced-motion` ON = fully STATIC organism + static mark
+  (05 §2.6 rule 2); testable via `data-reduced-motion` /
+  `data-thinking-state` attributes.
+- A11y: `role="status"` + `aria-live="polite"` (when a label is set);
+  non-interactive (no touch target needed).
+- S9 guardrail: the loader only TRANSFORMS existing vectors
+  (scale / rotate / opacity / mask). ANY new stroke paths / simplified
+  outline / decomposed wing groups = a NEW logo = FORBIDDEN (S9 "do NOT
+  redraw").
+- WING-FLAP SCOPE (owner decision 2026-09-27, "le battement d'aile
+  organique sera compliqué" → v1 = breathing only):
+  - v1 SHIPPED = the organic organism above (3 staggered GPU blobs; NO
+    wing motion).
+  - v2 (STRETCH, BLOCKED on an owner-provided asset): an organic
+    left/right wing-flap is NOT achievable on the current SVG — it is a
+    flat list of ~50 gradient-filled paths with NO independent wing
+    groups / rotation axes, and S9 forbids restructuring the art. IF the
+    owner later provides a DECOMPOSED variant (leftWing / rightWing /
+    body groups + transform-origins, registered as a 5th S9 SSoT file),
+    then per-group `rotate` about the body axis (GPU, 3–5° amplitude,
+    1.2–1.6 s ease-in-out, reduced-motion = static). Until then: breathing.
+- A stroke-dash "drawing" style is likewise BLOCKED on an owner-provided
+  outline variant (a redraw — not allowed under S9 by default).
+- In chat: 48–64 px mark + "Agent thinking…" label (13 px/500,
+  text-secondary token); non-interactive (no touch target needed).
+- Contrast QA: the darkest gray (#131B22) must never sit on the raw
+  #0A0E1A canvas — the loader sits on a `surface` in both neutral styles;
+  DAPHNE verifies legibility (blocking if not).

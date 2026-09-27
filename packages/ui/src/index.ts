@@ -69,6 +69,10 @@ export * from "./components/ui/tooltip";
 
 // --- Premium effects (Aceternity + Magic UI, docs/ui-libraries.md §2 s3) ---
 export * from "./components/ui/premium";
+// --- Agent thinking state (docs/ui-libraries.md §9.3) --------------------
+// Organic "organism" loader (3 morphing blobs, GPU transform+opacity)
+// + optional static monochrome butterfly mark (prop). S9-compliant.
+export { AgentThinkingLoader, type AgentThinkingLoaderProps } from "./components/ui/AgentThinkingLoader";
 
 // --- AD-10 renderer contracts + 4 DS data components (05 §3.6) -----------
 export * from "./renderers";
