@@ -11,15 +11,22 @@
 -- Jobs are enqueued idempotently (idempotency_key + ON CONFLICT DO NOTHING,
 -- 0010 uq_job_queue_idempotency). Kind vocabulary = packages/domain JobKind.
 --
--- APPLICATION STATUS (2026-09-26)
+-- APPLICATION STATUS (2026-09-26, confirmé live 2026-09-27)
 --   Appliqué au live Supabase DEV via le Supabase MCP `execute_sql`, en
 --   convertissant le `INSERT INTO cron.job` (chemin SSoT, échoué plus tôt —
 --   le rôle MCP n'a pas le GRANT d'écriture directe sur `cron.job`) en
 --   `SELECT cron.schedule(…)`, qui utilise le chemin de la fonction
---   wrapper et qui fonctionne. Résultat :
---     jobid 8  aurora_fsrs_tick          '0 2 * * *'    active
---     jobid 9  aurora_skill_recompute    '0 3 * * *'    active
---     jobid 10 aurora_event_dispatch     '*/5 * * * *'  active
+--   wrapper et qui fonctionne. Résultat (jobids corrigés suite à la
+--   vérification live du 2026-09-27 — le premier passage avait rapporté
+--   les jobids 8/9/10, re-numérotées par le rechargement d'instance) :
+--     jobid 1  aurora_fsrs_tick          '0 2 * * *'    active, run 02:00 UTC
+--                                                  2026-09-27 = succeeded
+--     jobid 2  aurora_skill_recompute    '0 3 * * *'    active, run 03:00 UTC
+--                                                  2026-09-27 = succeeded
+--     jobid 3  aurora_event_dispatch     '*/5 * * * *'  active, 241 runs depuis
+--                                                  21:05 UTC 2026-09-26,
+--                                                  dernier run 17:05 UTC
+--                                                  2026-09-27 = succeeded
 --   Les 3 `command` bodies matchent verbatim les INSERTs d'origine.
 --   NOTE : ce fichier reste le SSoT du SQL (INSERT INTO cron.job) ;
 --   l'état live utilise l'équivalent `cron.schedule()`. Le SSoT est à

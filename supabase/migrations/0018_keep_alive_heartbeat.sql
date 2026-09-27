@@ -3,6 +3,26 @@
 -- (01 §5.2 + docs reference: "Comment Maintenir un Projet Supabase Actif sur
 -- le Plan Gratuit (Guide Complet 2026)" — article inforeole, 16 juillet 2026)
 --
+-- ⚠️ CORRECTION 2026-09-27 (vérification live post-application) :
+--   Le SSoT initial utilisait `DELETE + INSERT` dans le command body du job.
+--   Le tout premier run quotidien (00:00 UTC) a ÉCHOUÉ :
+--     ERROR: cannot delete from table "keep_alive" because it does not have
+--     a replica identity and publishes deletes
+--   Cause : la publication `powersync` (relay PowerSync, créee 0001/0015)
+--   couvre FOR ALL TABLES, donc `keep_alive` est publiée. Le DELETE du job
+--   pg_cron (exécuté hors transaction de WAL-identité complète) viole la
+--   contrainte de replica identity de Postgres sur les tables publiées
+--   sans `REPLICA IDENTITY FULL`.
+--   FIX (appliqué live le 2026-09-27, voir section APPLICATION STATUS ci-dessous) :
+--     1. `ALTER TABLE keep_alive REPLICA IDENTITY FULL;`
+--     2. Remplacer le command body du job par un `UPDATE` idempotent
+--        (plus de DELETE, plus de repli sur l'identity) :
+--        `UPDATE public.keep_alive SET last_ping = now();`
+--     3. Réappliqué via `cron.unschedule()` + `cron.schedule()` :
+--        l'ancienne `jobid 8` (commande DELETE+INSERT, échouée) →
+--        nouvelle `jobid 9` (commande UPDATE, active).
+--   Ce SSoT reflète désormais l'état live corrigé.
+--
 -- Motif : Supabase met en pause un projet Free après 7 jours d'inactivité
 -- applicative sur la DB. L'équipe de développement a prévu une pause de
 -- 4+ mois ; sans heartbeat, le projet serait restaurable pendant 90 jours
@@ -16,30 +36,43 @@
 -- information_schema au moment de l'application, 2026-09-26 : 0 table
 -- `keep_alive` en `public`).
 --
--- Pas de RLS (table sans user_id ; le heartbeat s'exécute en tant que
--- superuser du scheduler pg_cron, pas en tant que authenticated user) —
--- la table ne contient JAMAIS de données utilisateur, uniquement un
--- timestamp de ping. Le job s'exécute quotidiennement à 00:00 UTC.
+-- RLS : ENABLE uniquement pour satisfaire le linter Supabase
+-- `rls_disabled_in_public` (voir commentaire de la section DDL ci-dessous) ;
+-- le heartbeat s'exécute en superuser du pg_cron, qui bypass le RLS par
+-- design. Aucune path d'accès user vers cette table (aucune route REST,
+-- aucun scope PowerSync de lecture).
 --
--- APPLICATION STATUS (2026-09-26)
+-- APPLICATION STATUS
 --   Appliqué au live Supabase DEV via le Supabase MCP (`execute_sql`,
---   block-by-block) :
+--   block-by-block) — 2026-09-26 (version initiale) :
 --     1. CREATE TABLE keep_alive (collision check : 0 table existante)
 --     2. INSERT amorçage (1 ligne, last_ping = 2026-09-26 21:23:55 UTC)
---     3. SELECT cron.schedule('aurora_keep_alive', '0 0 * * *', …)
---        → jobid 7 créé, active=true
---   Vérification post-apply :
---     SELECT j.jobid, j.jobname, j.schedule, j.active, j.command
---     FROM cron.job WHERE jobname = 'aurora_keep_alive'
---     → jobid 7, schedule '0 0 * * *', active=true,
---       command = 'DELETE FROM public.keep_alive; INSERT INTO public.keep_alive
---       DEFAULT VALUES;' (verbatim SSoT)
---   NOTE (correction vs le statut plus ancien du 0014) : le rôle MCP
---   PEUT écrire dans `cron.job` (le `cron.schedule()` a réussi, contrairement
---   à l'INSERT direct `cron.job` du 0014 qui a échoué : le 0014 utilise
---   `INSERT INTO cron.job` = un chemin différent, soumis à un GRANT
---   distinct de la fonction wrapper `cron.schedule()`). Le 0014 reste donc
---   le seul à nécessiter une application dashboard-side manuelle.
+--     3. SELECT cron.schedule('aurora_keep_alive', '0 0 * * *', DELETE+INSERT)
+--        → jobid 8 créé (ancien numéro live ; voir note ci-dessous sur
+--        le re-numbering jobids 1/2/3 pour le 0014 corrigé)
+--   2026-09-27 (correction post-échec du 1er run) :
+--     4. ALTER TABLE keep_alive REPLICA IDENTITY FULL;
+--     5. cron.unschedule('aurora_keep_alive')  (supprime l'ancienne jobid 8)
+--     6. SELECT cron.schedule('aurora_keep_alive', '0 0 * * *', UPDATE)
+--        → nouvelle jobid 9, active, command body =
+--          ' UPDATE public.keep_alive SET last_ping = now(); '
+--     7. Vérification : run échoué de la jobid 8 (00:00 UTC, status
+--        'failed', return_message = l'erreur replica identity ci-dessus) ;
+--        le prochain run quotidien de la jobid 9 rafraîchira `keep_alive`.
+--   NOTE jobids 0014 vs 0018 : les 3 jobs du 0014 ont été re-numérotées
+--   au live entre la version initiale et cette correction (jobids actuels
+--   1/2/3 = `aurora_fsrs_tick`/`aurora_skill_recompute`/
+--   `aurora_event_dispatch`, toutes 3 `succeeded` à 02:00/03:00/17:05
+--   UTC le 2026-09-27) ; la `aurora_keep_alive` initiale de cette
+--   migration occupait le slot `jobid 8`, désormais remparée par la
+--   version corrigée en `jobid 9`.
+--
+-- NOTE (sur le chemin cron.schedule vs INSERT) : le rôle MCP
+-- PEUT écrire dans `cron.job` via le wrapper `cron.schedule()`
+-- (contrairement à l'`INSERT INTO cron.job` direct du 0014 qui a
+-- échoué sur le GRANT du rôle MCP au premier passage) ; cette
+-- migration s'appuie donc exclusivement sur `cron.schedule()` /
+-- `cron.unschedule()`.
 -- =============================================================================
 
 -- 1. Table `keep_alive` (1 ligne, le timestamp du dernier ping)
@@ -57,20 +90,25 @@ CREATE TABLE IF NOT EXISTS keep_alive (
   last_ping timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE keep_alive ENABLE ROW LEVEL SECURITY;
+ALTER TABLE keep_alive REPLICA IDENTITY FULL;
 
--- Amorçage (le job overwrite une seule ligne : une contrainte UNIQUE sur
--- une colonne impossible n'existe pas — on s'appuie sur la logique DELETE
--- + INSERT du command body, pas sur une PK)
+-- Amorçage (la table tient une seule ligne durable, rafraîchie par le
+-- command body du job ci-dessous)
 INSERT INTO keep_alive (last_ping) VALUES (now());
 
--- 2. Job pg_cron quotidien 00:00 UTC (le `0 0 * * *` du scheduler
---    pg_cron, exécuté en `public` par défaut)
+-- 2. Job pg_cron quotidien 00:00 UTC (exécuté en `public` par défaut,
+--    en superuser du scheduler pg_cron)
+--
+-- Command body corrigée (UPDATE idempotent, non DELETE+INSERT) : la
+-- publication `powersync` (FOR ALL TABLES) couvre `keep_alive`, et
+-- Postgres exige `REPLICA IDENTITY FULL` pour DELETE sur une table
+-- publiée — la version initiale DELETE+INSERT échouait donc au 1er run
+-- quotidien (voir section « CORRECTION 2026-09-27 » en tête de fichier).
 SELECT cron.schedule(
   'aurora_keep_alive',
   '0 0 * * *',
   $cmd$
-    DELETE FROM public.keep_alive;
-    INSERT INTO public.keep_alive DEFAULT VALUES;
+    UPDATE public.keep_alive SET last_ping = now();
   $cmd$
 );
 

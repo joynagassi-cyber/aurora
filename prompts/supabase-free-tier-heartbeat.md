@@ -20,8 +20,25 @@ sauvegarde auto sur Free — perte de données si on dépasse).
 Méthode retenue (cf. article inforeole 16/07/2026 « Maintenir un projet
 Supabase actif sur le plan Free ») : **heartbeat pg_cron** — 1 table
 `keep_alive` (1 ligne) + 1 job quotidien à 00:00 UTC qui fait
-DELETE + INSERT. Charge négligeable, 100 % native Postgres, aucune
-dépendance tierce, aucun service externe à surveiller.
+`UPDATE last_ping = now()`. Charge négligeable, 100 % native Postgres,
+aucune dépendance tierce, aucun service externe à surveiller.
+
+⚠️ PIÈGE N°2 (au-delà du piège `cron.schedule()` ci-dessous) : si le projet
+a une **publication logical replication** active (ex. relay PowerSync
+`FOR ALL TABLES`, ou tout autre `PUBLICATION … ALL TABLES`), la table
+`keep_alive` est automatiquement publiée. Dans ce cas, un command body
+`DELETE + INSERT` **échouera** au 1er run :
+`ERROR: cannot delete from table "keep_alive" because it does not have a
+replica identity and publishes deletes`. Solution :
+1. `ALTER TABLE keep_alive REPLICA IDENTITY FULL;` (obligatoire si
+   publication active sur `ALL TABLES`)
+2. Utiliser un command body `UPDATE` pur (sans DELETE) :
+   `UPDATE public.keep_alive SET last_ping = now();`
+   L'`UPDATE` n'a pas la même contrainte de replica identity que le
+   `DELETE` — mais le `REPLICA IDENTITY FULL` reste nécessaire pour que
+   les `UPDATE` soient correctement publiés aux subscribers.
+Vérifier la présence d'une publication ALL TABLES en ÉTAPE 0 (ajouté
+ci-dessous) pour décider du command body correct dès le départ.
 
 ---
 
@@ -52,6 +69,19 @@ d. Vérifier que le projet est sur le Free tier (l'option Pro ne le
    nécessite pas, mais le deployer ne fait aucun mal sur Pro non plus —
    si tu doutes, tu me demandes, tu ne supposes pas).
 
+e. **Vérifier s'il y a une publication logical replication `ALL TABLES`**
+   (piège N°2, critique) — car elle rend `DELETE` impossible sur une
+   table publiée sans `REPLICA IDENTITY FULL`, et détermine quel
+   command body employer (DELETE+INSERT ou UPDATE pur) dès l'ÉTAPE 2 :
+   → `SELECT p.pubname, p.puballtables FROM pg_publication p;`
+   Si `puballtables = true` pour n'importe quelle publication (ex.
+   relay PowerSync `powersync`), l'ÉTAPE 1 doit inclure
+   `ALTER TABLE keep_alive REPLICA IDENTITY FULL;` et l'ÉTAPE 2 doit
+   employer le command body `UPDATE` (pas DELETE+INSERT). Sinon
+   (aucune publication `ALL TABLES`), le DELETE+INSERT de base reste
+   valide mais l'UPDATE pur reste aussi le choix le plus robuste —
+   préférence par défaut : toujours le UPDATE.
+
 ---
 
 ÉTAPE 1 — CRÉER LA TABLE `keep_alive`
@@ -60,6 +90,9 @@ d. Vérifier que le projet est sur le Free tier (l'option Pro ne le
 CREATE TABLE IF NOT EXISTS keep_alive (
   last_ping timestamptz NOT NULL DEFAULT now()
 );
+-- Obligatoire si l'ÉTAPE 0e a détecté une publication `ALL TABLES`
+-- (piège N°2) ; sinon recommandée aussi (aucun coût, robustesse future) :
+ALTER TABLE keep_alive REPLICA IDENTITY FULL;
 ```
 Règle de non-collision (instance partagée) : vérifier d'abord avec
 `information_schema` que le nom n'existe pas chez un autre projet ;
@@ -82,8 +115,7 @@ SELECT cron.schedule(
   'keep_alive_daily',            -- nom du job, modifiable si collision
   '0 0 * * *',                   -- 00:00 UTC quotidien (modifiable)
   $cmd$
-    DELETE FROM public.keep_alive;
-    INSERT INTO public.keep_alive DEFAULT VALUES;
+    UPDATE public.keep_alive SET last_ping = now();
   $cmd$
 );
 ```
@@ -138,9 +170,10 @@ RAPPORT DE FIN OBLIGATOIRE (1 seul message, format fixe)
     Projet Supabase : <nom d'org>/<nom de projet>
     Plan : Free / Pro
     Extension pg_cron : v<version>
+    Publication ALL TABLES détectée : oui/non (si oui → REPLICA IDENTITY FULL appliqué)
     Table keep_alive : présente (1 ligne, dernier ping = <date UTC>)
     Job <nom> : jobid <N>, schedule <x>, active=<true/false>
-    Commande du job (verbatim) : « DELETE FROM …; INSERT INTO … »
+    Commande du job (verbatim) : « UPDATE public.keep_alive SET last_ping = now(); »
     Statut final : OUI — le projet est immunisé contre la pause auto
     (NON si une des vérifs ÉTAPE 3 a échoué — indiquer laquelle)
     Réversibilité : cron.unschedule('<nom>') + DROP TABLE keep_alive;
