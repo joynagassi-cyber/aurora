@@ -1,14 +1,21 @@
 # Aurora — Technical Documentation: Architecture Overview
 
-> **Status note (2026-09-22):** Aurora is in the **design/solutioning phase**. No application
-> code exists yet (repo = pnpm workspace stub + BMAD architecture docs). Every statement in this
-> documentation tree is therefore **DOCUMENTED_ONLY** (decided and written in the authority docs)
-> or **DESIGNED_NOT_IMPLEMENTED** (designed, implementation scheduled in a wave). No capability is
-> described as "implemented" or "supported on device" without a mechanism + permission +
-> component + behavior + limits + tests. Authority chain: `ADR v1.7 (frozen)` >
-> `ARCHITECTURE-SPINE.md (AD-1..AD-16, frozen)` > `SPEC.md` > Contract Packs
-> (`01-backend`, `02-frontend`, `03-sync`, `04-mobile`, `05-design-system`). Conflicts are
-> flagged in [gap-register.md](./gap-register.md), never resolved silently.
+> **Status note (original 2026-09-22, reconciled for waves 0→7):** This documentation tree was
+> authored in the **design/solutioning phase** (wave-0 snapshot). Since then the working tree has
+> delivered **waves 0 → 7** and sits at the **v0.1.0 release-candidate**: the `packages/*`,
+> `supabase/` migrations, `powersync/` relay, agent kernel and mobile screens are **implemented,
+> not just designed**. The *invariants and decisions* below remain **frozen** and are the source
+> of truth for **what to build**; for **what is already built**, trust
+> [release/changelog.md](../release/changelog.md) and `git log`. ⚠️ The
+> `DOCUMENTED_ONLY` / `DESIGNED_NOT_IMPLEMENTED` status lines scattered through the `docs/` tree
+> are **wave-0 planning labels, not live status** — read them as "design status at authoring
+> time"; treat a capability as *built* only if it is present in the tree + changelog (see
+> [AI_RULES.md](../../AI_RULES.md) §1 "Reality check"). No capability is described as
+> "implemented" or "supported on device" without a mechanism + permission + component + behavior
+> + limits + tests. Authority chain: `ADR v1.7 (frozen)` > `ARCHITECTURE-SPINE.md
+> (AD-1..AD-17, frozen)` > `SPEC.md` > Contract Packs (`01-backend`, `02-frontend`, `03-sync`,
+> `04-mobile`, `05-design-system`). Conflicts are flagged in [gap-register.md](./gap-register.md),
+> never resolved silently.
 
 ## 1. What Aurora is
 

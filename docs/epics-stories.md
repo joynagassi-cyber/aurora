@@ -1,6 +1,9 @@
 # Aurora — Epics & Stories (Planification Implementation)
 
-**Status:** `DESIGNED_NOT_IMPLEMENTED`. Derived from: ADR v1.7 (adr-extract.md),
+**Status:** planning doc — the **wave 0→7 plan**; all seven waves are **delivered** (v0.1.0 RC — see
+[release/changelog.md](release/changelog.md)). The `DESIGNED_NOT_IMPLEMENTED` label is the wave-0
+snapshot, not the current tree (a capability is *built* when present in the tree + changelog).
+Derived from: ADR v1.7 (adr-extract.md),
 ARCHITECTURE-SPINE.md (AD-1..AD-16), SPEC.md (wave plan, OQ-01..OQ-17),
 packs 01-05, docs/ (87 files, this session). One Epic per wave; Stories are
 the individual deliverables within each wave. Each story has: ID, title,
