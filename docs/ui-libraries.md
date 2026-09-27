@@ -434,14 +434,31 @@ NEVER modified. Bundle −~125 Ko; no provenance shipped to the device (AD-3).
   redrawing/animated itself — the organism thinks, the brand stays calm).
   @aurora/ui stays asset-free (AD-1): the APP imports
   `apps/mobile/.build/aurora-mono.stripped.svg` and passes it.
+- THINKING-WORDS layer (researched 2026-09-27 — Claude Code pairs its
+  pulsing star with a rotating list of 184 thinking verbs "Pondering… /
+  Ruminating… / Combobulating…" + a "Thought for Ns" elapsed chip; source:
+  blog.alexbeals.com/posts/claude-codes-thinking-animation, 2026-02-07):
+  a rotating line of thinking verbs (default `DEFAULT_THINKING_WORDS`, 12
+  FR present-tense verbs mixing serious + one playful register, à la
+  Claude's mix) that crossfades every `wordIntervalMs` (default 2400 ms).
+  Fixed h-5 box = NO reflow; the rotator is aria-hidden and the SCREEN
+  READER reads the STABLE `label` (no SR spam); reduced-motion = first
+  word static. An optional `elapsedSeconds` chip renders "Réflexion · Ns"
+  (Claude's "Thought for Ns" pattern — the APP owns the clock, the
+  component only renders; mono + tabular-nums = no jitter).
 - Props: `state` ("thinking" | "idle" | "exiting") · `butterfly`
-  (ReactNode, optional) · `label` (default "Agent réfléchit…", 13 px/500
-  text-secondary) · `size` (default 88 px; 64–96 in chat). `exiting` =
-  collapse + fade 200 ms ease-out when the response starts streaming.
+  (ReactNode, optional) · `label` (STABLE screen-reader text, default
+  "L'agent réfléchit…", 13 px/500 text-secondary) · `words`
+  (rotating thinking-verbs, default `DEFAULT_THINKING_WORDS`; pass `[]`
+  for the static label) · `wordIntervalMs` (default 2400) ·
+  `elapsedSeconds` (optional "Réflexion · Ns" chip) · `size` (default
+  88 px; 64–96 in chat). `exiting` = collapse + fade 200 ms ease-out
+  when the response starts streaming.
 - `prefers-reduced-motion` ON = fully STATIC organism + static mark
   (05 §2.6 rule 2); testable via `data-reduced-motion` /
   `data-thinking-state` attributes.
-- A11y: `role="status"` + `aria-live="polite"` (when a label is set);
+- A11y: `role="status"` + `aria-live="polite"`; the rotating words are
+  `aria-hidden` and the SCREEN READER hears the stable `label` only;
   non-interactive (no touch target needed).
 - S9 guardrail: the loader only TRANSFORMS existing vectors
   (scale / rotate / opacity / mask). ANY new stroke paths / simplified
@@ -461,8 +478,10 @@ NEVER modified. Bundle −~125 Ko; no provenance shipped to the device (AD-3).
     1.2–1.6 s ease-in-out, reduced-motion = static). Until then: breathing.
 - A stroke-dash "drawing" style is likewise BLOCKED on an owner-provided
   outline variant (a redraw — not allowed under S9 by default).
-- In chat: 48–64 px mark + "Agent thinking…" label (13 px/500,
-  text-secondary token); non-interactive (no touch target needed).
+- In chat: 48–64 px mark + rotating thinking-verb line (13 px/500
+  text-secondary; default label "L'agent réfléchit…" is the SR-only text)
+  + optional "Réflexion · Ns" elapsed chip; non-interactive (no touch
+  target needed).
 - Contrast QA: the darkest gray (#131B22) must never sit on the raw
   #0A0E1A canvas — the loader sits on a `surface` in both neutral styles;
   DAPHNE verifies legibility (blocking if not).

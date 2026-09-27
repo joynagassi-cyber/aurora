@@ -94,7 +94,12 @@ Surfaces flottantes à spécifier (transverses, 1 doc dédié + référence par
 organisme organique = 3 blobs morphants (motion, GPU-only transform+
 opacity) autour du PAPILLON MONO STATIQUE au centre (prop `butterfly`),
 coloré aux tokens accent (10 thèmes + 3 presets), reduced-motion =
-statique. INTERDIT : trois-points linéaires, spinner classique.
+statique + ligne de MOTS DE RÉFLEXION rotatifs (pattern Claude «
+Pondering…/Ruminating…/Combobulating… » : 12 verbes présents FR
+serious + 1 joueur, crossfade 200 ms, boîtier fixe sans reflow, SR =
+label stable) + chip optionnelle « Réflexion · Ns » (pattern Claude
+« Thought for Ns », mono tabular-nums). INTERDIT : trois-points
+linéaires, spinner classique.
 
 ## Lis AVANT d'écrire (dans cet ordre)
 1. _bmad-output/architecture/architecture-aurora-2026-09-21/dimensions/05-design-system.md (§2 tokens, §3 composants, §4 écrans, §5–6 thèmes)
@@ -262,8 +267,10 @@ Chaque OQ : n°, écran, élément, question, options envisagées, décideur
    + AgentThinkingLoader). Le spec agent-chat DOIT inclure : new session =
    marque MONOCHROME statique (empty state neutre, §9.1) ; état « l'agent
    réfléchit » = AgentThinkingLoader (§9.3) en §4 (loading) + §5
-   (micro-interaction de sortie 150–250 ms au premier token du streaming ;
-   la marque revient colorée dans le header seulement). Le spec
+   (organisme + MOTS DE RÉFLEXION rotatifs + chip « Réflexion · Ns »
+   optionnelle ; micro-interaction de sortie 150–250 ms au premier token
+   du streaming ; la marque revient colorée dans le header seulement).
+   Le spec
    not-found/feature-disabled DOIT inclure : page 404 = logo AURORA COLORE
    au CENTRE (§9.1/§6.1), message court, CTA primaire "Retour à
    l'accueil" + CTA secondaire "Consulter l'écran parent", aucun crash /

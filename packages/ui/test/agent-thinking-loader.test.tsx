@@ -1,14 +1,19 @@
 /**
  * AgentThinkingLoader — the "agent is thinking" state (docs/ui-libraries.md
  * §9.3). Organic organism (3 morphing blobs, GPU transform+opacity) +
- * optional static monochrome butterfly mark (S9: mark never animated).
+ * rotating thinking-verbs (Claude "Pondering/Ruminating" pattern) +
+ * optional static monochrome butterfly mark (S9: mark never animated) +
+ * optional "Réflexion · Ns" elapsed chip ("Thought for Ns" pattern).
  *
  * Asserted via structure + `data-*` flags (docs/ui-libraries.md §6:
  * AD-13 states are data-driven, testable via data attributes).
  */
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as React from "react";
-import { AgentThinkingLoader } from "src/components/ui/AgentThinkingLoader";
+import {
+  AgentThinkingLoader,
+  DEFAULT_THINKING_WORDS,
+} from "src/components/ui/AgentThinkingLoader";
 import { render } from "./render";
 
 /** Simulate `prefers-reduced-motion` (jsdom matchMedia → always false). */
@@ -39,7 +44,7 @@ describe("AgentThinkingLoader (ui-libraries §9.3)", () => {
     restore();
   });
 
-  it("renders the 3-blob organism + default label, role=status", () => {
+  it("renders the 3-blob organism + rotating thinking-words + stable SR label", () => {
     const { container, unmount } = render(<AgentThinkingLoader />);
     const root = container.querySelector<HTMLElement>("[data-agent-thinking]");
     expect(root).not.toBeNull();
@@ -49,10 +54,14 @@ describe("AgentThinkingLoader (ui-libraries §9.3)", () => {
     expect(root?.getAttribute("aria-live")).toBe("polite");
     // 3 organic blob layers (SVG paths)
     expect(container.querySelectorAll("svg path").length).toBe(3);
-    // default label
+    // rotating thinking-words: first word visible + stable SR label
+    // (the visible word = the aria-hidden span; the sr-only label is a sibling)
+    const wordsBox = container.querySelector<HTMLElement>("[data-thinking-words]");
+    expect(wordsBox).not.toBeNull();
     expect(
-      container.querySelector("[data-thinking-label]")?.textContent,
-    ).toBe("Agent réfléchit…");
+      wordsBox?.querySelector("span[aria-hidden]")?.textContent?.trim(),
+    ).toBe(DEFAULT_THINKING_WORDS[0]);
+    expect(DEFAULT_THINKING_WORDS.length).toBeGreaterThanOrEqual(8);
     unmount();
   });
 
@@ -73,15 +82,80 @@ describe("AgentThinkingLoader (ui-libraries §9.3)", () => {
   it("supports idle + exiting states (data-driven, §9.3 states)", () => {
     for (const state of ["idle", "exiting"] as const) {
       const { container, unmount } = render(
-        <AgentThinkingLoader state={state} label="" />,
+        <AgentThinkingLoader state={state} words={[]} />,
       );
       const root = container.querySelector<HTMLElement>("[data-agent-thinking]");
       expect(root?.getAttribute("data-thinking-state")).toBe(state);
-      // no label rendered when label="" (non-interactive minimal)
-      expect(container.querySelector("[data-thinking-label]")).toBeNull();
-      expect(root?.getAttribute("aria-live")).toBe(null);
+      // words=[] → static label fallback (data-thinking-label)
+      expect(container.querySelector("[data-thinking-words]")).toBeNull();
       unmount();
     }
+  });
+
+  /** the VISIBLE thinking word (aria-hidden span, not the sr-only label). */
+  const visibleWord = (container: HTMLElement) =>
+    container
+      .querySelector<HTMLElement>("[data-thinking-words]")
+      ?.querySelector("span[aria-hidden]")
+      ?.textContent?.trim();
+
+  it("rotates the thinking-words on an interval (Claude pattern)", () => {
+    vi.useFakeTimers();
+    try {
+      const { container, unmount } = render(
+        <AgentThinkingLoader words={["A…", "B…", "C…"]} wordIntervalMs={1000} />,
+      );
+      expect(visibleWord(container)).toBe("A…");
+      // act() flushes the interval-driven state update synchronously
+      // (React 18 schedules the re-render outside fake timers).
+      React.act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+      expect(visibleWord(container)).toBe("B…");
+      React.act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+      expect(visibleWord(container)).toBe("C…");
+      React.act(() => {
+        vi.advanceTimersByTime(1000); // wraps
+      });
+      expect(visibleWord(container)).toBe("A…");
+      unmount();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("reduced-motion = words stay static (no rotation, 05 §2.6 rule 2)", () => {
+    vi.useFakeTimers();
+    restore();
+    const restore2 = mockReducedMotion(true);
+    try {
+      const { container, unmount } = render(
+        <AgentThinkingLoader words={["A…", "B…"]} wordIntervalMs={1000} />,
+      );
+      expect(visibleWord(container)).toBe("A…");
+      vi.advanceTimersByTime(5000);
+      expect(visibleWord(container)).toBe("A…"); // static — no rotation
+      unmount();
+    } finally {
+      vi.useRealTimers();
+      restore2();
+    }
+  });
+
+  it("renders the elapsed-seconds chip when provided (Thought-for-Ns)", () => {
+    const { container, unmount } = render(
+      <AgentThinkingLoader elapsedSeconds={12} />,
+    );
+    expect(container.querySelector("[data-thinking-elapsed]")?.textContent).toBe(
+      "Réflexion · 12 s",
+    );
+    unmount();
+    // default = no chip
+    const noChip = render(<AgentThinkingLoader />);
+    expect(noChip.container.querySelector("[data-thinking-elapsed]")).toBeNull();
+    noChip.unmount();
   });
 
   it("reduced-motion ON = static marker (05 §2.6 rule 2)", () => {
