@@ -32,3 +32,7 @@ graphify-out/
 # BMAD session working files (not design docs)
 _bmad-output/**/*.memlog.md
 _bmad-output/**/.working/
+
+# Local secrets script (real values NEVER committed — see
+# set-secrets.template.ps1 for the tracked, value-free template).
+set-secrets.ps1
