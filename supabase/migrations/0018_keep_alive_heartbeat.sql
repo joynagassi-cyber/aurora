@@ -59,6 +59,15 @@
 --     7. Vérification : run échoué de la jobid 8 (00:00 UTC, status
 --        'failed', return_message = l'erreur replica identity ci-dessus) ;
 --        le prochain run quotidien de la jobid 9 rafraîchira `keep_alive`.
+--     8. TEST MANUEL DU FIX (2026-09-27 17:30 UTC, immédiatement après le
+--        rescheduling, sans attendre le passage 00:00 UTC du lendemain) :
+--        `UPDATE public.keep_alive SET last_ping = now();` exécuté via le
+--        MCP → `keep_alive.last_ping` rafraîchi à l'instant
+--        (23:32:13 → 17:30:45 UTC) : le command body `UPDATE` est prouvé
+--        fonctionnel, pas seulement théorique. Le passage 00:00 UTC du
+--        lendemain (jobid 9, `SELECT status FROM cron.job_run_details
+--        WHERE jobid = 9`) reste la confirmation officielle du scheduler,
+--        mais le fix lui-même est validé par ce test manuel.
 --   NOTE jobids 0014 vs 0018 : les 3 jobs du 0014 ont été re-numérotées
 --   au live entre la version initiale et cette correction (jobids actuels
 --   1/2/3 = `aurora_fsrs_tick`/`aurora_skill_recompute`/

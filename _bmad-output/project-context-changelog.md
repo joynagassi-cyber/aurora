@@ -26,6 +26,13 @@
      23:32:13 UTC jusqu'au prochain run quotidien (00:00 UTC 2026-09-28), qui
      confirmera le fix (statut à revérifier à ce moment-là via
      `SELECT status FROM cron.job_run_details WHERE jobid = 9`).
+  5. **TEST MANUEL DU FIX IMMÉDIAT (2026-09-27 17:30 UTC)** : le command body
+     `UPDATE public.keep_alive SET last_ping = now();` a été exécuté à la main
+     via le MCP juste après le rescheduling, sans attendre 00:00 UTC →
+     `keep_alive.last_ping` rafraîchi à l'instant (23:32:13 → 17:30:45 UTC). Le
+     fix est prouvé fonctionnel, pas seulement théorique ; le passage 00:00 UTC
+     du lendemain reste la confirmation officielle du scheduler (jobid 9), mais
+     le risque d'échec répété est levé.
 - **SSoT corrigé** : `supabase/migrations/0018_keep_alive_heartbeat.sql`
   reflète désormais l'état live corrigé (section « CORRECTION 2026-09-27 » en
   tête + `REPLICA IDENTITY FULL` dans le DDL + command body `UPDATE` dans le
