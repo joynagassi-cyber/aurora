@@ -1,5 +1,23 @@
 # Changelog project-context.md
 
+## v1.9 — 2026-09-27 (pg_cron 0014+0018 live — audit de falsification corrigé)
+
+- **Audit pg_cron 0014/0018** : les 3 jobs aurora du 0014
+  (`aurora_fsrs_tick`, `aurora_skill_recompute`, `aurora_event_dispatch`)
+  **n'étaient PAS au live** — l'ancienne vérification lisait les jobs
+  `generate-ai-post-*` d'une autre instance du dashboard partagé
+  (fals positif). Corrigé par l'application via `SELECT cron.schedule(…)`
+  (le chemin INSERT direct échouait sur le GRANT du rôle MCP) :
+  `jobid 7 aurora_keep_alive '0 0 * * *'` (0018), `jobid 8
+  aurora_fsrs_tick '0 2 * * *'`, `jobid 9 aurora_skill_recompute
+  '0 3 * * *'`, `jobid 10 aurora_event_dispatch '*/5 * * * *'` (0014).
+  Commits : `70ddff7` (0018 SSoT + annotations 0014 + heartbeat),
+  `58cddd6` (merge ORACLE résiduel), `180c3bc` (docs alignées).
+- **§Wave 1 (W1-E3)** : le job system end-to-end passe à l'état
+  « scheduler en place » — les 3 jobs 0014 + 1 heartbeat 0018 sont
+  actifs au live DEV ; reste à exécuter le test de dispatch (job
+  créé par le cron → claim → résultat, idempotence vérifiée).
+
 ## v1.8 — 2026-09-26 (Scaffolding wave 0 ratifié : layout réel = 16 packages + 2 apps)
 
 - **Layout ratifié** (OQ-01 ré-amendé) : le pnpm workspace réel contient

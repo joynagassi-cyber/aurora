@@ -108,9 +108,15 @@ CRDT OR-Set for merge lists (03 S5.3). No new event vocabulary is introduced
   **progress** (`gaps WHERE user_id = auth.user_id()`, F-03 single-writer)
   — le flux Discovery n'y touche pas ; `v_progress_public` (0012) reste la
   surface de lecture inter-module pour Discovery.
-- **0014 (pg_cron)** : non appliquée au live — `permission denied for
-  table cron.job` pour le rôle du MCP ; à exécuter via le dashboard
-  Supabase.
+- **0014 (pg_cron) + 0018 (heartbeat)** : appliqués au live DEV via
+  `SELECT cron.schedule(…)` (le chemin INSERT direct échoue sur le GRANT
+  du rôle MCP — piège documenté). Les 4 jobs sont en place (vérifié
+  par l'audit live du 2026-09-27 : les 3 `generate-ai-post-*` vues plus tôt
+  appartenaient à une autre instance du dashboard partagé) :
+  - `jobid 7  aurora_keep_alive       '0 0 * * *'`   (immunité pause 4 mois, 0018)
+  - `jobid 8  aurora_fsrs_tick        '0 2 * * *'`   (0014)
+  - `jobid 9  aurora_skill_recompute  '0 3 * * *'`   (0014)
+  - `jobid 10 aurora_event_dispatch   '*/5 * * * *'` (0014)
 - **PowerSync Cloud** : instance `6ab1612e8453e7cf8338ef9a` (= `POWERSYNC_URL`
   du `.env.local`, org Aurora, region eu). `cli.yaml` + `service.yaml`
   écrits ; `client_auth.supabase: true` (JWKS auto-détecté, audience

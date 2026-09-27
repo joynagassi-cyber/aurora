@@ -239,17 +239,26 @@ le gate du SPEC. Trancher = noter la décision (additive) dans ce frontmatter
       `20260925234343` — vérifié objet par objet via MCP 2026-09-26)
 - [ ] PowerSync relay + vues publiques + bridge RQ↔watch (03 §5.8) fonctionnel
       (état 2026-09-26 : **relay DÉPLOYÉ sur Aurora Dev** `6ab1612e…`
-      via `powersync deploy` — slot actif, lag 0 ; sync-config = 10 flux
-      edition 3 par module owner ; `PS_ADMIN_TOKEN` = token PowerSync
+      via `powersync deploy` — slot actif, lag 0 ; sync-config = 12 flux
+      edition 3 par module owner (wave 1 ×10 + `user_goals` + `ascent`,
+      ajout 2026-09-26) ; `PS_ADMIN_TOKEN` = token PowerSync
       Cloud de l'org **Aurora** (PAT de l'org du projet, pas Lumina —
       2026-09-26 redeploy validé). À ancrer
       côté app : `fetchCredentials()`/`uploadData()` + test round-trip
-      `powersync/test/roundtrip.md`)
+      `powersync/test/roundtrip.md`. **Résidu** : les 31 warnings
+      « table not found » de `powersync status` (le secret
+      `default_password` du Cloud ne correspond plus au mot de passe
+      courant du DB — à corriger côté dashboard ; cf
+      `powersync/README.md` § Wave 1 status).)
 - [ ] Offline : lecture locale OK, write local → upsync au reconnect, kill-app
       relaunch = état intact (03 §5.9)
 - [ ] CRDT OR-Set merge testé ; single-writer test (AD-7) passe
 - [ ] Supabase Auth (email + OAuth) + RLS actif sur toutes les tables
 - [ ] Job system end-to-end : dispatch → claim → résultat, idempotence testée
+      (état 2026-09-27 : **scheduler live DEV** — les 4 jobs
+      `aurora_keep_alive`/`aurora_fsrs_tick`/`aurora_skill_recompute`/
+      `aurora_event_dispatch` (jobids 7–10) sont actifs via
+      `cron.schedule()` ; reste le test de dispatch/claim/idempotence)
 - [ ] OneSignal + local notifications : pas de double-push pour le même objet
       (test 04 §7.2)
 
