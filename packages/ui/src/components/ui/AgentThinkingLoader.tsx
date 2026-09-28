@@ -10,9 +10,19 @@
  * its pulsing star with a rotating list of 184 thinking verbs — e.g.
  * "Pondering… / Ruminating… / Combobulating…"; Claude also shows a
  * "Thought for Ns" elapsed chip): a rotating line of thinking verbs
- * (crossfade, fixed box, aria-hidden) + an optional elapsed-seconds chip.
- * The word change resets the boredom counter while the organism breathes;
- * the SR text stays STABLE (the rotator is aria-hidden).
+ * (float: exit up −4 px / enter from +4 px, fixed box, aria-hidden) + an
+ * optional elapsed-seconds chip. Each word change also makes the ORGANISM
+ * "inhale" (scale 1 → 1.04 → 1, 250 ms) so the two motion layers breathe
+ * TOGETHER (owner retouche 2026-09-28). The SR text stays STABLE (the
+ * rotator is aria-hidden).
+ *
+ * ALL-THEMES CONTRACT (ui-libraries §9.3, owner decision 2026-09-28):
+ *   - The loader must read correctly on ALL 10 expressive themes × {light,
+ *     dark} × 3 presets, NO EXCEPTION — blobs = `--aurora-accent-*` only
+ *     (theme-aware by construction), butterfly = grayscale monochrome
+ *     (works on light & dark), text = neutral tokens. No hue outside a
+ *     token (accent-only rule: themes accentuate a WHITE base by default;
+ *     DARK is only when the user chooses it).
  *
  * Contracts (05 §2.6 + ui-libraries §9.3 + S5 mobile battery):
  *   - GPU ONLY: transform (scale/rotate) + opacity — no `layout`, no filters.
@@ -28,7 +38,7 @@
  * @aurora/ui asset-free (AD-1) and S9-compliant (no asset duplication).
  */
 import * as React from "react";
-import { motion } from "motion/react";
+import { AnimatePresence, motion, useAnimationControls } from "motion/react";
 import { cn } from "src/lib/utils";
 import { useReducedMotion } from "src/theme/provider";
 
@@ -152,7 +162,7 @@ export function AgentThinkingLoader({
   const middle = "hsl(var(--aurora-accent-secondary-h) / 0.45)";
   const front = "hsl(var(--aurora-accent-primary-h) / 0.6)";
 
-  // ---- thinking-words rotation (Claude pattern; stable SR text) --------
+  // ---- thinking-words rotation (Claude pattern; stable SR text) ----------
   // `words` via ref: the interval must survive re-renders (callers may
   // pass fresh array literals); only length/loop/interval gate the loop.
   const wordsRef = React.useRef(words);
@@ -170,25 +180,48 @@ export function AgentThinkingLoader({
     return () => window.clearInterval(t);
   }, [loop, words.length, wordIntervalMs]);
 
+  // ---- organism "inhale" pulse, SYNCED to every word change --------------
+  // One-shot scale [1 → 1.04 → 1] (250 ms, GPU): the organism reacts to
+  // each new thought word. Reduced-motion / idle / exiting = no pulse.
+  const organismCtl = useAnimationControls();
+  React.useEffect(() => {
+    if (reduced) return;
+    organismCtl.start(
+      exiting
+        ? { opacity: 0, scale: 0.9, transition: { duration: 0.2, ease: "easeOut" } }
+        : { opacity: 1, scale: 1, transition: { duration: 0.2, ease: "easeOut" } },
+    );
+  }, [exiting, reduced]);
+  React.useEffect(() => {
+    if (!loop || wordIdx === 0) return;
+    organismCtl.start({
+      scale: [1, 1.04, 1],
+      transition: { duration: 0.25, ease: "easeInOut" },
+    });
+  }, [wordIdx]);
+
   return (
     <div
       data-agent-thinking
       data-thinking-state={state}
       data-reduced-motion={reduced ? "true" : "false"}
+      data-inhale={loop && wordIdx > 0 ? "true" : "false"}
       role="status"
       aria-live="polite"
       className={cn("flex flex-col items-center gap-3", className)}
     >
       <motion.div
         className="relative"
-        style={{ width: size, height: size }}
-        initial={false}
-        animate={
-          exiting
-            ? { opacity: 0, scale: 0.9 }
-            : { opacity: 1, scale: 1 }
-        }
-        transition={{ duration: 0.2, ease: "easeOut" }}
+        style={{
+          width: size,
+          height: size,
+          // reduced-motion = STATIC per-frame values (no control animation)
+          ...(reduced
+            ? { opacity: exiting ? 0 : 1, scale: exiting ? 0.9 : 1 }
+            : {}),
+        }}
+        initial={reduced ? false : { opacity: 1, scale: 1 }}
+        animate={reduced ? undefined : organismCtl}
       >
         <Blob d={BLOB_BACKEND} fill={back} scale={1} rotate={0} opacity={0.5} duration={4.2} loop={loop} />
         <Blob d={BLOB_MIDDLE} fill={middle} scale={0.82} rotate={-30} opacity={0.6} duration={3.4} loop={loop} />
@@ -205,25 +238,32 @@ export function AgentThinkingLoader({
         )}
       </motion.div>
       {words.length > 0 ? (
-        // Rotating thinking-verbs: fixed h-5 box (no reflow), crossfade
-        // (opacity + translateY, GPU), aria-hidden (SR reads the stable
-        // `label` below). Reduced-motion = first word, static.
+        // Rotating thinking-verbs: fixed h-5 box (no reflow), FLOAT
+        // (exit up −4 px / enter from +4 px, GPU), aria-hidden (SR reads
+        // the stable `label` below). Reduced-motion = first word, static.
+        // AnimatePresence (default sync mode): the outgoing word exits
+        // (up) while the incoming word enters (from below) — no dead
+        // time, both absolute in the fixed h-5 box.
         <div
           data-thinking-words
           className="relative h-5 text-[13px] font-medium text-muted-foreground"
         >
-          <span
-            key={wordIdx}
-            aria-hidden
-            className="absolute inset-0 grid place-items-center"
-          >
-            <motion.span
-              initial={reduced ? false : { opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              {words[wordIdx % words.length]}
-            </motion.span>
+          <span className="absolute inset-0">
+            <AnimatePresence initial={false}>
+              {/* each word = its own absolute layer (no reflow, they
+                  overlap during the 200 ms cross-float) */}
+              <motion.span
+                key={wordIdx}
+                aria-hidden
+                className="absolute inset-0 grid place-items-center"
+                initial={reduced ? false : { opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={reduced ? undefined : { opacity: 0, y: -4 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
+                {words[wordIdx % words.length]}
+              </motion.span>
+            </AnimatePresence>
           </span>
           <span className="sr-only">{label}</span>
         </div>

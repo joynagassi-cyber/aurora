@@ -478,10 +478,49 @@ NEVER modified. Bundle −~125 Ko; no provenance shipped to the device (AD-3).
     1.2–1.6 s ease-in-out, reduced-motion = static). Until then: breathing.
 - A stroke-dash "drawing" style is likewise BLOCKED on an owner-provided
   outline variant (a redraw — not allowed under S9 by default).
-- In chat: 48–64 px mark + rotating thinking-verb line (13 px/500
-  text-secondary; default label "L'agent réfléchit…" is the SR-only text)
-  + optional "Réflexion · Ns" elapsed chip; non-interactive (no touch
-  target needed).
+- In chat: 48–64 px mark + rotating thinking-verb line + optional
+  "Réflexion · Ns" elapsed chip; non-interactive (no touch target needed).
+  SIZING (owner 2026-09-28, écran agent-chat) : la ligne de mots + la
+  chip sont à la TAILLE DU TEXTE DU CHAT (même corps que le streaming de
+  réponse) — le loader s'insère inline, il ne surdimensionne pas la
+  conversation. L'organisme reste 48 px à gauche (marque, pas texte).
 - Contrast QA: the darkest gray (#131B22) must never sit on the raw
   #0A0E1A canvas — the loader sits on a `surface` in both neutral styles;
   DAPHNE verifies legibility (blocking if not).
+
+### 9.3.1 Précisions owner (2026-09-28) — à respecter par TOUT agent UI
+
+- **TOUS THÈMES SANS EXCEPTION** : le loader doit rester lisible sur les
+  10 thèmes expressifs × {light, dark} × 3 presets (Nocturne, High
+  Contrast, Slate) — zéro exception. Par construction : les blobs =
+  `--aurora-accent-primary/secondary` uniquement (ils s'adaptent à tous
+  les thèmes), le papillon = grayscale monochrome (lisible en light ET
+  dark), les textes = tokens neutres (`text-secondary` / `text-muted`).
+  DAPHNE check bloquant : rendu du loader sur les 13 combinaisons
+  (10 + 3 presets) × 2 styles neutres.
+- **BLANC PAR DÉFAUT, NOIR À LA DEMANDE** (owner 2026-09-28) : le style
+  neutre par défaut est LIGHT (#F8FAFC) ; le DARK (#0A0E1A) n'apparaît
+  QUE si l'utilisateur le choisit (settings, 05 §2.1 — jamais de
+  bascule silencieuse au retour foreground). Le loader ne contient
+  AUCUNE hypothèse de fond : il est identique en light et dark (tokens).
+- **ACCENT ONLY — zéro couleur inutile** (owner 2026-09-28) : les thèmes
+  existent UNIQUEMENT pour l'accentuation sur la base neutre blanche/noire.
+  Le loader n'introduit AUCUNE nuance hors tokens : blobs = accent,
+  papillon = gris, texte = neutre. Toute autre couleur = finding bloquant
+  (règle S6 de DAPHNE).
+- **INHALE (retouche 1, implémentée)** : à chaque changement de mot,
+  l'organisme « inhale » (scale 1 → 1.04 → 1, 250 ms ease-in-out, GPU) —
+  les deux couches de mouvement respirent ENSEMBLE. reduced-motion = pas
+  de pulsation.
+- **FLOAT DU MOT (retouche 2, implémentée)** : le mot sortant monte
+  (−4 px) en s'estompant pendant que le suivant arrive depuis le bas
+  (+4 px → 0), 200 ms, GPU (transform + opacity), boîtier h-5 fixe
+  (zéro reflow). reduced-motion = swap sans animation.
+- **CHIP REPLIABLE « Réflexion · Ns ▸ » (spécifié pour l'écran
+  agent-chat, lot 6 DYAD — le composant n'expose que `elapsedSeconds`)** :
+  à la fin de la réflexion, la chip devient une ligne repliable avec
+  chevron (pattern Claude « Thought for 7s ») ; au clic elle révèle un
+  court extrait de la réflexion (le `thinking` summary de l'agent,
+  jamais la chaîne brute — claudelog: thinking blocks = brief summaries) ;
+  a11y = bouton `aria-expanded` ; le chevron pointe vers le bas quand
+  ouvert. L'organisme, lui, disparaît (état `exiting`).

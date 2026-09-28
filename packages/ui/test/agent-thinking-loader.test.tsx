@@ -62,6 +62,8 @@ describe("AgentThinkingLoader (ui-libraries §9.3)", () => {
       wordsBox?.querySelector("span[aria-hidden]")?.textContent?.trim(),
     ).toBe(DEFAULT_THINKING_WORDS[0]);
     expect(DEFAULT_THINKING_WORDS.length).toBeGreaterThanOrEqual(8);
+    // no inhale pulse before the first word change
+    expect(root?.getAttribute("data-inhale")).toBe("false");
     unmount();
   });
 
@@ -92,12 +94,14 @@ describe("AgentThinkingLoader (ui-libraries §9.3)", () => {
     }
   });
 
-  /** the VISIBLE thinking word (aria-hidden span, not the sr-only label). */
-  const visibleWord = (container: HTMLElement) =>
-    container
-      .querySelector<HTMLElement>("[data-thinking-words]")
-      ?.querySelector("span[aria-hidden]")
-      ?.textContent?.trim();
+  /** All aria-hidden thinking-word spans. In sync AnimatePresence mode a
+   *  briefly-exiting word can coexist with the current one for ~200 ms, so
+   *  this returns every one (assert membership, not order). The sr-only
+   *  label is NOT aria-hidden, so it never appears here. */
+  const thinkingWordTexts = (container: HTMLElement) =>
+    Array.from(
+      container.querySelectorAll("[data-thinking-words] [aria-hidden]"),
+    ).map((s) => s.textContent?.trim());
 
   it("rotates the thinking-words on an interval (Claude pattern)", () => {
     vi.useFakeTimers();
@@ -105,21 +109,28 @@ describe("AgentThinkingLoader (ui-libraries §9.3)", () => {
       const { container, unmount } = render(
         <AgentThinkingLoader words={["A…", "B…", "C…"]} wordIntervalMs={1000} />,
       );
-      expect(visibleWord(container)).toBe("A…");
+      // initial single word
+      expect(thinkingWordTexts(container)).toEqual(["A…"]);
       // act() flushes the interval-driven state update synchronously
       // (React 18 schedules the re-render outside fake timers).
       React.act(() => {
         vi.advanceTimersByTime(1000);
       });
-      expect(visibleWord(container)).toBe("B…");
+      expect(thinkingWordTexts(container)).toContain("B…");
+      // organism "inhale" pulse fired on the word change (retouche 1)
+      expect(
+        container
+          .querySelector<HTMLElement>("[data-agent-thinking]")
+          ?.getAttribute("data-inhale"),
+      ).toBe("true");
       React.act(() => {
         vi.advanceTimersByTime(1000);
       });
-      expect(visibleWord(container)).toBe("C…");
+      expect(thinkingWordTexts(container)).toContain("C…");
       React.act(() => {
         vi.advanceTimersByTime(1000); // wraps
       });
-      expect(visibleWord(container)).toBe("A…");
+      expect(thinkingWordTexts(container)).toContain("A…");
       unmount();
     } finally {
       vi.useRealTimers();
@@ -134,9 +145,15 @@ describe("AgentThinkingLoader (ui-libraries §9.3)", () => {
       const { container, unmount } = render(
         <AgentThinkingLoader words={["A…", "B…"]} wordIntervalMs={1000} />,
       );
-      expect(visibleWord(container)).toBe("A…");
+      expect(thinkingWordTexts(container)).toEqual(["A…"]);
       vi.advanceTimersByTime(5000);
-      expect(visibleWord(container)).toBe("A…"); // static — no rotation
+      expect(thinkingWordTexts(container)).toEqual(["A…"]); // static — no rotation
+      // no inhale pulse either (reduced-motion = fully static)
+      expect(
+        container
+          .querySelector<HTMLElement>("[data-agent-thinking]")
+          ?.getAttribute("data-inhale"),
+      ).toBe("false");
       unmount();
     } finally {
       vi.useRealTimers();

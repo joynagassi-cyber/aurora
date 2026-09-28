@@ -93,13 +93,29 @@ Surfaces flottantes à spécifier (transverses, 1 doc dédié + référence par
 + AgentThinkingLoader (loader « agent réfléchit », spec ui-libraries §9.3 :
 organisme organique = 3 blobs morphants (motion, GPU-only transform+
 opacity) autour du PAPILLON MONO STATIQUE au centre (prop `butterfly`),
-coloré aux tokens accent (10 thèmes + 3 presets), reduced-motion =
-statique + ligne de MOTS DE RÉFLEXION rotatifs (pattern Claude «
-Pondering…/Ruminating…/Combobulating… » : 12 verbes présents FR
-serious + 1 joueur, crossfade 200 ms, boîtier fixe sans reflow, SR =
-label stable) + chip optionnelle « Réflexion · Ns » (pattern Claude
-« Thought for Ns », mono tabular-nums). INTERDIT : trois-points
-linéaires, spinner classique.
+coloré aux tokens accent, reduced-motion = statique + ligne de MOTS DE
+RÉFLEXION rotatifs (pattern Claude « Pondering…/Ruminating…/
+Combobulating… » : 12 verbes présents FR serious + 1 joueur, FLOAT du mot
+200 ms — sortie −4 px / entrée +4 px, boîtier fixe sans reflow, SR = label
+stable) + INHALE de l'organisme à chaque mot (scale 1→1.04→1, 250 ms, les
+deux couches respirent ensemble) + chip optionnelle « Réflexion · Ns »
+(pattern Claude « Thought for Ns », mono tabular-nums).
+PRÉCISIONS OWNER 2026-09-28 (§9.3.1, à respecter par TOUT écran du lot) :
+- TOUS THÈMES SANS EXCEPTION : le loader est lisible sur les 10 thèmes ×
+  {light,dark} × 3 presets (blobs = accent uniquement, papillon =
+  grayscale, textes = tokens neutres) — check bloquant DAPHNE sur les 13
+  combinaisons × 2 styles.
+- BLANC PAR DÉFAUT : le neutre par défaut est LIGHT ; le DARK ne vient
+  que si l'utilisateur le choisit (settings, 05 §2.1, jamais silencieux).
+- ACCENT ONLY : zéro couleur inutile — les thèmes n'accentuent que la
+  base blanche/noire ; toute nuance hors tokens = finding bloquant.
+- CHIP REPLIABLE « Réflexion · Ns ▸ » : à la fin, la chip devient une
+  ligne disclosure (chevron) qui révèle un extrait court de la réflexion
+  (summary, jamais la chaîne brute) ; a11y bouton aria-expanded ;
+  l'organisme disparaît (état exiting).
+- TAILLE : dans l'écran agent-chat, ligne de mots + chip = MÊME taille
+  que le texte du chat / du streaming (le loader s'insère inline).
+INTERDIT : trois-points linéaires, spinner classique, couleur hors tokens.
 
 ## Lis AVANT d'écrire (dans cet ordre)
 1. _bmad-output/architecture/architecture-aurora-2026-09-21/dimensions/05-design-system.md (§2 tokens, §3 composants, §4 écrans, §5–6 thèmes)
@@ -267,10 +283,14 @@ Chaque OQ : n°, écran, élément, question, options envisagées, décideur
    + AgentThinkingLoader). Le spec agent-chat DOIT inclure : new session =
    marque MONOCHROME statique (empty state neutre, §9.1) ; état « l'agent
    réfléchit » = AgentThinkingLoader (§9.3) en §4 (loading) + §5
-   (organisme + MOTS DE RÉFLEXION rotatifs + chip « Réflexion · Ns »
-   optionnelle ; micro-interaction de sortie 150–250 ms au premier token
-   du streaming ; la marque revient colorée dans le header seulement).
-   Le spec
+   (organisme + INHALE à chaque mot + MOTS DE RÉFLEXION en FLOAT +
+   chip « Réflexion · Ns » qui devient REPLIABLE ▸ en fin de réflexion,
+   révélant un extrait court de la réflexion — summary, jamais la chaîne
+   brute, bouton aria-expanded ; micro-interaction de sortie 150–250 ms
+   au premier token du streaming ; la marque revient colorée dans le
+   header seulement). PRÉCISIONS §9.3.1 applicables ici : tous thèmes
+   sans exception, blanc par défaut, accent-only (zéro couleur hors
+   tokens), ligne de mots + chip à la taille du texte du chat. Le spec
    not-found/feature-disabled DOIT inclure : page 404 = logo AURORA COLORE
    au CENTRE (§9.1/§6.1), message court, CTA primaire "Retour à
    l'accueil" + CTA secondaire "Consulter l'écran parent", aucun crash /

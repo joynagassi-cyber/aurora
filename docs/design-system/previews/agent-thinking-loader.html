@@ -15,11 +15,30 @@
   de chat + le texte du loader (mots + chip) est à la même taille que le
   texte de réflexion et le texte du streaming de réponse (15 px partout).
   Le papillon = le SVG monochrome épuré (build), repli sur la SSoT si absent.
+  Précisions owner 2026-09-28 (§9.3.1) : base BLANCHE par défaut (le noir
+  vient seulement si on le demande), INHALE de l'organisme à chaque mot
+  (scale 1→1.04→1, 250 ms), FLOAT du mot (sortie −4 px / entrée +4 px,
+  200 ms), loader lisible sur TOUS les thèmes (accent via tokens) sans
+  exception, accent-only (zéro couleur hors tokens).
   Ouvrir en file:// — aucune dépendance, aucun CDN, fonctionne hors-ligne.
 -->
 <style>
   :root {
-    /* tokens neutres (05 §2.1.2/.3) */
+    /* tokens neutres LIGHT = PAR DÉFAUT (owner 2026-09-28 : blanc d'abord,
+       le noir seulement si demandé ; 05 §2.1.2) */
+    --canvas: #F8FAFC;
+    --surface: #FFFFFF;
+    --surface-alt: #F1F5F9;
+    --border: hsl(214 32% 88%);
+    --text-primary: hsl(222 47% 11%);
+    --text-secondary: hsl(215 25% 35%);
+    --text-muted: hsl(215 20% 55%);
+    /* thème expressif par défaut = Aurora (05 §5.4 : bleu électrique) */
+    --aurora-accent-primary-h: 221 91% 59%;
+    --aurora-accent-secondary-h: 184 74% 48%;
+  }
+  /* DARK = seulement quand l'utilisateur le demande (05 §2.1.3) */
+  [data-neutral="dark"] {
     --canvas: #0A0E1A;
     --surface: #151C2C;
     --surface-alt: #1B2438;
@@ -27,9 +46,6 @@
     --text-primary: hsl(222 47% 92%);
     --text-secondary: hsl(215 25% 66%);
     --text-muted: hsl(215 20% 48%);
-    /* thème expressif par défaut = Aurora (05 §5.4 : bleu électrique) */
-    --aurora-accent-primary-h: 221 91% 59%;
-    --aurora-accent-secondary-h: 184 74% 48%;
   }
   [data-theme="sakura"] {
     --aurora-accent-primary-h: 340 85% 74%;
@@ -136,6 +152,8 @@
     transition: opacity .2s ease-out, transform .2s ease-out; /* crossfade GPU */
   }
   .thinking-line .rotator.show { opacity: 1; transform: translateY(0); }
+  /* FLOAT (retouche 2) : le mot sortant monte (−4 px) en s'estompant */
+  .thinking-line .rotator.exit-up { opacity: 0; transform: translateY(-4px); }
   .elapsed {
     font-size: 15px; color: var(--text-muted);
     font-family: "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
@@ -166,6 +184,9 @@
     <img class="brand" src="../../../assets/aurora_icon_a_integre_dans_l'applciation.png" alt="Aurora" onerror="this.style.display='none'" />
     <h1>Aurora · Aperçu §9.3</h1>
     <span class="spacer"></span>
+    <button class="ctl on" data-neutral-btn="light">Blanc</button>
+    <button class="ctl" data-neutral-btn="dark">Noir</button>
+    <span style="width:8px"></span>
     <button class="ctl on" data-theme-btn="aurora">Aurora</button>
     <button class="ctl" data-theme-btn="sakura">Sakura</button>
     <button class="ctl" data-theme-btn="nocturne">Nocturne</button>
@@ -207,8 +228,12 @@
     Aperçu non-normatif — SSoT : <code>packages/ui</code> <code>AgentThinkingLoader</code> +
     <code>docs/ui-libraries.md §9.3</code>. Géométrie des blobs, durées (4.2/3.4/2.6 s),
     12 mots (2 400 ms), crossfade 200 ms, chip « Réflexion · Ns » : copie exacte du
-    composant. Uniquement l'emplacement (inline chat) et la taille du texte (15 px =
-    taille du streaming) diffèrent, per exigence owner 2026-09-28.
+    composant. Inhales (scale 1→1.04→1 à chaque mot) + float des mots
+    (sortie −4 px / entrée +4 px, 200 ms) = retouches owner 2026-09-28.
+    Base BLANCHE par défaut (le noir seulement si demandé), accent-only
+    (zéro couleur hors tokens), lisible sur tous les thèmes. Uniquement
+    l'emplacement (inline chat) et la taille du texte (15 px = taille du
+    streaming) diffèrent, par exigence owner 2026-09-28.
   </footer>
 
 <script>
@@ -230,19 +255,55 @@
   let wordIdx = 0, elapsedSec = 0;
   const reduced = () => document.body.classList.contains("reduced");
 
+  // INHALE (retouche 1) : l'organisme « inhale » (scale 1 → 1.04 → 1,
+  // 250 ms) à chaque nouveau mot — les deux couches respirent ensemble.
+  function inhale() {
+    if (reduced()) return; // 05 §2.6 règle 2 : statique
+    organism.animate(
+      [
+        { transform: "scale(1)" },
+        { transform: "scale(1.04)" },
+        { transform: "scale(1)" },
+      ],
+      { duration: 250, easing: "ease-in-out" },
+    );
+  }
+
+  // FLOAT (retouche 2) : le mot sortant MONTE (−4 px) en s'estompant
+  // (200 ms), le suivant arrive depuis le bas (+4 px → 0), 200 ms.
+  function swapWord(nextText) {
+    if (reduced()) {
+      rotator.textContent = nextText;
+      rotator.classList.add("show");
+      return;
+    }
+    rotator.classList.remove("show");
+    rotator.classList.add("exit-up"); // monte en s'estompant (200 ms)
+    setTimeout(() => {
+      rotator.textContent = nextText;
+      rotator.classList.remove("exit-up");
+      rotator.style.transition = "none";
+      rotator.style.opacity = "0";
+      rotator.style.transform = "translateY(4px)"; // repart du bas
+      void rotator.offsetWidth; // reflow — état « bas » engagé
+      rotator.style.transition = "";
+      rotator.style.opacity = "";
+      rotator.style.transform = ""; // retour aux classes → fade in au centre
+      rotator.classList.add("show"); // descend du bas au centre (200 ms)
+    }, 200);
+  }
+
   function startWords() {
     wordIdx = 0;
     rotator.textContent = DEFAULT_THINKING_WORDS[0];
+    rotator.classList.remove("exit-up");
     rotator.classList.add("show");
     clearInterval(wordTimer);
     if (reduced()) return; // 05 §2.6 règle 2 : mots statiques
     wordTimer = setInterval(() => {
       wordIdx = (wordIdx + 1) % DEFAULT_THINKING_WORDS.length;
-      rotator.classList.remove("show");
-      setTimeout(() => {
-        rotator.textContent = DEFAULT_THINKING_WORDS[wordIdx];
-        rotator.classList.add("show");
-      }, 200); // crossfade 200 ms (composant)
+      inhale(); // retouche 1 : sync organisme ↔ mots
+      swapWord(DEFAULT_THINKING_WORDS[wordIdx]);
     }, WORD_INTERVAL_MS);
   }
   function stopWords() { clearInterval(wordTimer); }
@@ -309,6 +370,17 @@
     b.addEventListener("click", () => {
       document.body.setAttribute("data-theme", b.dataset.themeBtn);
       document.querySelectorAll("[data-theme-btn]").forEach((x) => x.classList.toggle("on", x === b));
+    });
+  });
+  // Blanc par défaut — le noir seulement si demandé (owner 2026-09-28)
+  document.querySelectorAll("[data-neutral-btn]").forEach((b) => {
+    b.addEventListener("click", () => {
+      if (b.dataset.neutralBtn === "dark") {
+        document.body.setAttribute("data-neutral", "dark");
+      } else {
+        document.body.removeAttribute("data-neutral");
+      }
+      document.querySelectorAll("[data-neutral-btn]").forEach((x) => x.classList.toggle("on", x === b));
     });
   });
 
