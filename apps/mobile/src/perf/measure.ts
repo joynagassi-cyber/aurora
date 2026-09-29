@@ -52,6 +52,11 @@ export function mobileEmitRawBytes(): number {
  * when the real bundler gzip is not available.
  */
 export function mobileEmitGzBytes(rawBytes: number): number {
+  // A5: when the Vite web bundle exists (dist/assets/*.js), its real gzip is
+  // the true JS-gz transfer size (300 Ko SLO, PERF_BUDGETS.jsGzBytes) —
+  // prefer it over the tsc `.d.ts` proxy below.
+  const viteGz = viteBundleGzBytes();
+  if (viteGz > 0) return viteGz;
   if (rawBytes === 0) return 0;
   const d = distDir();
   try {
@@ -61,6 +66,27 @@ export function mobileEmitGzBytes(rawBytes: number): number {
     /* fall through to factor */
   }
   return Math.ceil(rawBytes * 0.35);
+}
+
+/**
+ * A5: the REAL web-bundle gzip — sum the gzipped bytes of `dist/assets/*.js`
+ * (the Vite output = the transfer size the 300 Ko SLO bounds). Returns 0
+ * when the Vite assets are absent, so the caller falls back to the proxy.
+ */
+export function viteBundleGzBytes(): number {
+  const assetsDir = path.join(distDir(), 'assets');
+  let total = 0;
+  let found = false;
+  try {
+    for (const name of readdirSync(assetsDir)) {
+      if (!name.endsWith('.js') && !name.endsWith('.mjs')) continue;
+      found = true;
+      total += gzipSync(readFileSync(path.join(assetsDir, name))).length;
+    }
+  } catch {
+    return 0; // no Vite assets yet — the caller falls back to the proxy.
+  }
+  return found ? total : 0;
 }
 
 function collectText(dir: string): string {

@@ -21,7 +21,8 @@ import {
   type LocalStore,
   type PowerSyncClientEngine,
 } from '@aurora/data';
-import type { GoalProject, Task } from '@aurora/domain';
+import type { AscentLearningIR, GoalProject, Task } from '@aurora/domain';
+import { createAscentRepo } from './ascent-repo';
 
 /**
  * The `LocalStore`-backed provider the shell boots (03 S8.1). One per
@@ -34,6 +35,8 @@ export interface AuroraDataProvider {
   goals: LocalQueryRepository<GoalProject>;
   /** local-only read (03 S3.1): `tasks` mirror table. */
   tasks: LocalQueryRepository<Task>;
+  /** Ascent local mirror (wave 3, read-only AD-7/AD-12): `ascent_paths`. */
+  ascent: LocalQueryRepository<AscentLearningIR>;
   /** the upsync queue (03 S5.1 — the command repository's write side). */
   upsync: UpsyncQueue;
   /** the production engine (`@powersync/capacitor`), null before init. */
@@ -103,10 +106,13 @@ export function createAuroraDataProvider(env: AuroraDataEnv): AuroraDataProvider
 
   const goals = new SqliteQueryRepository<GoalProject>(bridge, 'goals');
   const tasks = new SqliteQueryRepository<Task>(bridge, 'tasks');
+  // A2: the Ascent local-mirror repo (snake→camel + JSON.parse, confined here).
+  const ascent = createAscentRepo(bridge);
 
   return {
     goals,
     tasks,
+    ascent,
     upsync,
     engine,
 
@@ -118,11 +124,14 @@ export function createAuroraDataProvider(env: AuroraDataEnv): AuroraDataProvider
       // paint = priority 1, OQ-11/AD-14).
       await engine.addScope('identity');
       await engine.addScope('productivity');
+      // A2: the ascent local-mirror stream (ascent_paths, read-only AD-7).
+      await engine.addScope('ascent');
       // Bind the engine's reactive row stream into the bridge cache (03
       // S5.2.2) so repository reads stay live without a poll; the UI's
       // QueryClient invalidation rides on this channel (03 S5.8).
       void bridge.bindEngineWatch('goals');
       void bridge.bindEngineWatch('tasks');
+      void bridge.bindEngineWatch('ascent_paths');
     },
 
     async dispose(clear = false): Promise<void> {

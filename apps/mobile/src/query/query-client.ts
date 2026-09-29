@@ -69,6 +69,8 @@ export function createMobileQueryClient(provider: MobileDataProvider): QueryClie
     provider.onLocalChange(() => {
       client.invalidateQueries({ queryKey: qk.goal.all() });
       client.invalidateQueries({ queryKey: qk.task.all() });
+      // A2: the Ascent local mirror invalidates on the ascent_paths watch.
+      client.invalidateQueries({ queryKey: qk.ascent.all() });
     });
   }
 
@@ -87,14 +89,13 @@ export function mobileDataProviderFrom(
   return {
     goals: provider.goals,
     tasks: provider.tasks,
-    onLocalChange: (invalidate) =>
-      provider
-        .store()
-        .watch(
-          { entity: 'goals' },
-          () => {
-            invalidate();
-          },
-        ),
+    // A2: expose the Ascent local-mirror repo (snake→camel-mapped, AD-15).
+    ascent: provider.ascent,
+    onLocalChange: (invalidate) => {
+      // The bridge watches the mirror tables; invalidate on downstream
+      // batches (03 S5.8). goals + the ascent_paths read-only mirror (A2).
+      provider.store().watch({ entity: 'goals' }, () => invalidate());
+      provider.store().watch({ entity: 'ascent_paths' }, () => invalidate());
+    },
   };
 }

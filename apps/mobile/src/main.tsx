@@ -1,0 +1,75 @@
+/**
+ * dyad/beta: A1 (mobile build) — app mount (Vite entry, index.html → /src/main.tsx).
+ *
+ * Mount chain (verified against the current tree, 2026-09-29):
+ *   createAuroraDataProvider(env)      — src/lib/boot-data.ts (PowerSync/SQLite local-mirror provider)
+ *     → mobileDataProviderFrom(p)      — src/query/query-client.ts (adds the Ascent repo, A2)
+ *       → <FocusThemeAdapter>          — src/ux/theme-adapter.tsx (AD-17 tokens, A7 blanc-par-défaut)
+ *           → <MobileDataCtx>          — src/query/context.tsx
+ *               → <AuroraApp>         — src/app.tsx (React Query + router)
+ *
+ * AD-3: no secret is hardcoded. The PUBLIC Supabase key + the PowerSync relay
+ * URL come from the build env (`import.meta.env`, owner-provided `.env.local`).
+ * connect() failure (offline / no auth session) degrades to the local-mirror
+ * shell (AD-7 offline-first) — it never blocks render.
+ */
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+
+// Ionic web CSS — the mobile shell chrome (AD-1: the native surface lives in
+// @aurora/platform; the Ionic web CSS is the documented shell exception).
+import '@ionic/react/css/core.css';
+import '@ionic/react/css/normalize.css';
+import '@ionic/react/css/structure.css';
+import '@ionic/react/css/typography.css';
+
+import { AuroraApp } from './app';
+import { FocusThemeAdapter } from './ux/theme-adapter';
+import { MobileDataCtx } from './query/context';
+import { mobileDataProviderFrom } from './query/query-client';
+import { createAuroraDataProvider, type AuroraDataEnv } from './lib/boot-data';
+import { useUiStateStore } from './state/ui-state';
+
+const env: AuroraDataEnv = {
+  supabaseUrl: import.meta.env.VITE_SUPABASE_URL ?? '',
+  supabasePublishableKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? '',
+  powersyncUrl: import.meta.env.VITE_POWERSYNC_URL ?? '',
+};
+
+// The local-mirror data provider (A2: `ascent` is wired through here).
+const provider = createAuroraDataProvider(env);
+const dataProvider = mobileDataProviderFrom(provider);
+
+function Root() {
+  const focusActive = useUiStateStore((s) => s.focusActive);
+  const theme = useUiStateStore((s) => s.theme);
+  // A7 (AD-17): DARK only when the user explicitly chose it — 'auto' resolves
+  // to light (blanc-par-défaut), never a silent theme switch on foreground.
+  const style = theme === 'dark' ? 'dark' : 'light';
+  return (
+    <FocusThemeAdapter focusActive={focusActive} style={style}>
+      <MobileDataCtx value={dataProvider}>
+        <AuroraApp dataProvider={dataProvider} />
+      </MobileDataCtx>
+    </FocusThemeAdapter>
+  );
+}
+
+async function boot(): Promise<void> {
+  // 03 S8.1: the sync loop is the boot readiness gate. Offline / no session →
+  // keep the local-mirror shell (AD-7); log for the diagnostics.
+  try {
+    await provider.connect();
+  } catch (error) {
+    console.warn('[Aurora] data provider connect() unavailable — offline / local-mirror mode', error);
+  }
+  const rootEl = document.getElementById('root');
+  if (!rootEl) throw new Error('[Aurora] #root element not found');
+  ReactDOM.createRoot(rootEl).render(
+    <React.StrictMode>
+      <Root />
+    </React.StrictMode>,
+  );
+}
+
+void boot();
