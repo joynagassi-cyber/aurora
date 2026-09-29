@@ -281,6 +281,97 @@ export const goalFeatureRemove: KernelTool = tool({
   },
 });
 
+// ---------------------------------------------------------------------------
+// Document tools (docs/agent/document-tools.md) — the 4 docs.* capabilities,
+// two strict directions (NEVER mixed, document-tools S4):
+//   TEXT→DOC : docs_generate (Pandoc, whole-document) + docs_refine
+//              (python-docx, surgical precision on an existing .docx)
+//   DOC→TEXT : docs_inspect (mammoth, quick .docx read) + docs_parse
+//              (Docling, complex multi-format read incl. tables)
+// All heavy steps = persisted `artifact_gen` jobs (AD-8; the kind
+// vocabulary is unchanged — the discriminator is payload.docTool).
+// Generated / refined / parsed outputs land as NEW artifact rows
+// (blobs immutable, artifacts §24 supersedes) — `ArtifactGenerated`
+// only post-R2 (F-06).
+// ---------------------------------------------------------------------------
+
+/** docs.generate — LLM Markdown → .docx/.pdf/.pptx/.html/.epub (Pandoc, AD-8 job). */
+export const docsGenerate: KernelTool = tool({
+  description:
+    'Generate a FULL document from Markdown (Pandoc): docx / pdf / pptx / html / epub. Optional templateId (--reference-doc corporate styles); Mermaid blocks render as images. Whole-document generation ONLY — to parse an existing document use docs.parse / docs.inspect. Heavy step → artifact_gen job (AD-8); the artifact lands in the Artifact Hub (F-06, post-R2 only).',
+  inputSchema: z.object({
+    /** the LLM-authored Markdown source */
+    markdown: z.string(),
+    /** target format */
+    outputFormat: z.enum(['docx', 'pdf', 'pptx', 'html', 'epub']).default('docx'),
+    /** a --reference-doc template id (corporate style), optional */
+    templateId: z.string().optional(),
+    /** render embedded Mermaid blocks as images (pandoc Lua filter) */
+    renderMermaid: z.boolean().optional(),
+  }),
+  execute: async (input) => ({
+    ok: true,
+    jobKind: 'artifact_gen',
+    payload: { docTool: 'pandoc', ...input },
+    // null-safe: direct execute() calls bypass zod .default() (test path).
+    idempotencyKey: `doc:pandoc:${input.outputFormat ?? 'docx'}`,
+  }),
+});
+
+/** docs.refine — surgical .docx precision (python-docx, new revision). */
+export const docsRefine: KernelTool = tool({
+  description:
+    'Surgical, pixel-precise edits on an EXISTING .docx (python-docx): complex data tables, invoices, dynamic styles, targeted text replacement. NOT for first-time whole-document generation (use docs.generate). Output = a NEW artifact revision (supersedes; source blob immutable, artifacts §24). Heavy step → artifact_gen job (AD-8).',
+  inputSchema: z.object({
+    /** the artifact to refine (presigned fetch — no client-held keys, AD-3) */
+    artifactId: z.string(),
+    /** typed edit operations (table fill, style patch, section replace) */
+    operations: z.array(z.record(z.unknown())).min(1),
+  }),
+  execute: async (input) => ({
+    ok: true,
+    jobKind: 'artifact_gen',
+    payload: { docTool: 'python-docx', ...input },
+    idempotencyKey: `doc:refine:${input.artifactId}`,
+  }),
+});
+
+/** docs.inspect — quick read of an existing .docx (mammoth, read-only, light). */
+export const docsInspect: KernelTool = tool({
+  description:
+    'Quickly read / inspect an existing .docx (mammoth): clean Markdown/HTML of the content + structure outline + typo scan. READ-ONLY, .docx ONLY — for PDF / PPTX / XLSX / scanned documents use docs.parse. Light artifact_gen job (AD-8); the parsed representation is stored as a new artifact row linked to the source (provenance).',
+  inputSchema: z.object({
+    /** the artifact to inspect (presigned fetch, AD-3) */
+    artifactId: z.string(),
+    /** output mode */
+    mode: z.enum(['markdown', 'html', 'outline']).default('markdown'),
+  }),
+  execute: async (input) => ({
+    ok: true,
+    jobKind: 'artifact_gen',
+    payload: { docTool: 'mammoth', ...input },
+    idempotencyKey: `doc:inspect:${input.artifactId}:${input.mode ?? 'markdown'}`,
+  }),
+});
+
+/** docs.parse — complex document → structured Markdown/JSON (Docling, heavy). */
+export const docsParse: KernelTool = tool({
+  description:
+    'Parse a COMPLEX existing document (Docling): scanned or native PDF, PPTX, XLSX, HTML, images → clean structured Markdown / JSON, with faithful multi-page table reconstruction. READ-ONLY, DOC→TEXT direction only — it never generates documents (that is docs.generate). Heavy model-inference step → artifact_gen job (AD-8). Degraded fallback: pandoc text extraction (degraded flag, AD-5); raw photo / low-quality scan → ocr job pipeline.',
+  inputSchema: z.object({
+    /** the source artifact (presigned fetch, AD-3) */
+    artifactId: z.string(),
+    /** output format for the parsed representation */
+    format: z.enum(['markdown', 'json', 'html']).default('markdown'),
+  }),
+  execute: async (input) => ({
+    ok: true,
+    jobKind: 'artifact_gen',
+    payload: { docTool: 'docling', ...input },
+    idempotencyKey: `doc:parse:${input.artifactId}:${input.format ?? 'markdown'}`,
+  }),
+});
+
 /**
  * The full kernel tool set, keyed by the canonical tool ids the Planner's
  * `resolveTool` + `ExecutionEngine.invoke` address them by
@@ -303,6 +394,11 @@ export const KERNEL_TOOLS = {
   goal_abandon: goalAbandon,
   goal_feature_add: goalFeatureAdd,
   goal_feature_remove: goalFeatureRemove,
+  // Document tools (docs/agent/document-tools.md) — 4 docs.* capabilities
+  docs_generate: docsGenerate,
+  docs_refine: docsRefine,
+  docs_inspect: docsInspect,
+  docs_parse: docsParse,
 };
 
 export type KernelToolId = keyof typeof KERNEL_TOOLS;

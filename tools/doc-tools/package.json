@@ -1,0 +1,13 @@
+{
+  "name": "@aurora/doc-tools",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Doc engine scaffold for the 4 docs.* agent capabilities (docs/agent/document-tools.md). Server-side only (AD-8); never bundled into the app.",
+  "dependencies": {
+    "mammoth": "^1.13.0"
+  },
+  "scripts": {
+    "install-engines": "powershell -ExecutionPolicy Bypass -File install.ps1",
+    "check": "powershell -ExecutionPolicy Bypass -File check.ps1"
+  }
+}

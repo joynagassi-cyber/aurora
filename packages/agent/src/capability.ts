@@ -225,6 +225,62 @@ export class DefaultCapabilityRegistry {
         destructive: false,
         requiresConfirmation: false,
       },
+      // ------------------------------------------------------------------
+      // Document tools (docs/agent/document-tools.md) — 4 capabilities,
+      // the two directions (TEXT→DOC: docs.generate / docs.refine;
+      // DOC→TEXT: docs.inspect / docs.parse). Never mixed: a generator
+      // never parses, a parser never generates (document-tools S4).
+      // All heavy steps = persisted artifact_gen jobs (AD-8); outputs are
+      // new artifact rows (F-06 post-R2; revisions supersedes, §24).
+      // ------------------------------------------------------------------
+      {
+        id: 'docs.generate',
+        tool: 'docs_generate',
+        description:
+          'Generate a full document from LLM Markdown (Pandoc: .docx/.pdf/.pptx/.html/.epub, --reference-doc templates, Mermaid→images). Whole-document generation ONLY. artifact_gen job (AD-8), F-06 post-R2',
+        writeScopes: ['artifact:write'],
+        readScopes: ['knowledge:read'],
+        destructive: false,
+        requiresConfirmation: false,
+        offlineClass: 'online-required',
+        dependencies: ['pandoc'],
+      },
+      {
+        id: 'docs.refine',
+        tool: 'docs_refine',
+        description:
+          'Surgical precision edits on an existing .docx (python-docx: complex data tables, invoices pixel-precise, dynamic styles). NOT for first-time generation. Output = new artifact revision (supersedes, artifacts §24). artifact_gen job (AD-8)',
+        writeScopes: ['artifact:write'],
+        readScopes: ['artifact:read'],
+        destructive: false,
+        requiresConfirmation: false,
+        offlineClass: 'online-required',
+        dependencies: ['python-docx'],
+      },
+      {
+        id: 'docs.inspect',
+        tool: 'docs_inspect',
+        description:
+          'Quickly read / inspect an existing .docx (mammoth: clean HTML/Markdown content, structure outline, typo scan). READ-ONLY source, .docx ONLY (PDF/PPTX/XLSX → docs.parse). Light artifact_gen job (AD-8)',
+        writeScopes: ['artifact:write'], // the parsed representation row only (Artifact module applies, AD-7)
+        readScopes: ['artifact:read'],
+        destructive: false,
+        requiresConfirmation: false,
+        offlineClass: 'online-required',
+        dependencies: ['mammoth'],
+      },
+      {
+        id: 'docs.parse',
+        tool: 'docs_parse',
+        description:
+          'Parse a complex document (Docling: scanned PDF / PPTX / XLSX / HTML / images → structured Markdown/JSON, table reconstruction). READ-ONLY source; DOC→TEXT direction only. Heavy artifact_gen job (AD-8); degraded fallback = pandoc extraction, raw scans → ocr job',
+        writeScopes: ['artifact:write'], // the parsed representation row only (Artifact module applies, AD-7)
+        readScopes: ['artifact:read', 'knowledge:read'],
+        destructive: false,
+        requiresConfirmation: false,
+        offlineClass: 'online-required',
+        dependencies: ['docling'],
+      },
     ];
     for (const b of base) {
       this.register({

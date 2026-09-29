@@ -1,0 +1,6 @@
+# Aurora doc-tools — Python engines (SSoT: docs/agent/document-tools.md S6)
+# docs.refine  = python-docx (surgical .docx precision)
+# docs.parse   = docling (complex document extraction; heavy — model cache
+#                 lives outside the repo, gitignored; AD-3: never on device)
+python-docx==1.2.0
+docling==2.131.0

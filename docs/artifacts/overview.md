@@ -43,7 +43,10 @@ Status: `DESIGNED_NOT_IMPLEMENTED` (wave 2). Authority: ADR §16, `01-backend` �
     pending OQ-05 ratification); consumes `JobCompleted` (success states, F-08
     `jobId`+`jobKind`).
 13. **Jobs** — `artifact_gen`, `ocr`, `transcription` kinds (04 §3.3); export
-    rendering (sheets → MD/PDF/DOCX/PNG, ADR §17).
+    rendering (sheets → MD/PDF/DOCX/PNG, ADR §17). Document tools
+    (Pandoc / python-docx / mammoth / Docling) run as `artifact_gen` jobs
+    with a `payload.docTool` discriminator (docs/agent/document-tools.md
+    §2 — the job-kind vocabulary is unchanged, AD-15).
 14. **Permissions** — none beyond user scope (presigned, per-user scoping).
 15. **Security** — private bucket + presigned URLs; no key in bundle (04 §7.2b test);
     unsupported formats never crash the viewer (graceful, ADR §16).

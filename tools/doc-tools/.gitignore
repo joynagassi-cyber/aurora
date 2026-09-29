@@ -1,0 +1,6 @@
+# doc-tools local state — never committed (AD-3: no model weights / binaries)
+node_modules/
+smoke.md
+smoke.docx
+.model-cache/
+__pycache__/
