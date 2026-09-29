@@ -111,9 +111,8 @@ Every fallback is traceable via `AIResponseEnvelope.fallbackUsed` (AD-5).
 - Machine state (dev box, 2026-09-29, evidence-based): pandoc 3.12 ✓
   (scoop), typst 0.15.1 ✓ (scoop, default PDF engine), Python 3.12.10 +
   pip ✓, Node 22.20.0 ✓, mammoth 1.13.0 ✓ (npm, local to this dir),
-  python-docx 1.2.0 ✓ (pip), docling 2.131.0 = install in progress
-  (heavy deps — torch; verify with `pip show docling` after
-  `install-pip.log` reaches PIP_DONE). Round-trip smoke PASSED:
+  python-docx 1.2.0 ✓ (pip), docling 2.131.0 ✓ (pip, import verified
+  — torch loads). Round-trip smoke PASSED:
   pandoc md→.docx → mammoth .docx→Markdown ("# Smoke") → python-docx
   read ("Smoke") — 2026-09-29. Caveat: a stale `AppData\Local\pandoc`
   shim shadowed the scoop install on this box (install.ps1 guards now).
