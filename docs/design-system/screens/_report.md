@@ -94,6 +94,7 @@ delta du repo = `docs/design-system/screens/` (non-tracked, **fichiers .md
 uniquement**, ce chantier) + `_gen_oq.py` (script de génération du registre
 `_open-questions.md`, racine du repo, artefact de ce chantier — l'humain
 décide s'il committe ou l'ignore).
+> **B0-8 (décision 2026-09-30)** : `_gen_oq.py` = **registre maintenu main** — le script reste hors repo (pas commité, pas gitignoré) ; ré-export owner possible si souhaité. Le 8ᵉ `cc/screens:` (§5 ci-dessous) porte cette décision.
 
 ## 5. Commits (l'humain committe — liste proposée, aucune commit exécutée ici)
 
