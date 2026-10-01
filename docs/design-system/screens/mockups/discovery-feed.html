@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aurora — discovery-feed</title>
+<link rel="stylesheet" href="aurora.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="frame">
+  <div class="safe content">
+    <div class="topbar" style="padding-top:0">
+      <h1 style="font-size:20px">Découverte</h1>
+      <button class="iconbtn focus-ring" aria-label="Rechercher"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+    </div>
+    <div class="sub mono" style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Sélectionnée à partir de ta progression · 3 sources</div>
+
+    <!-- Item 1 : job en cours (01 §6 loading : state "research running") -->
+    <div class="card elevated" style="border-left:3px solid var(--primary)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span class="badge primary mono">Analyse en cours</span>
+        <span class="mono" style="font-size:11px;color:var(--text-muted)">il y a 4 min</span>
+      </div>
+      <div style="font-size:15px;font-weight:600;line-height:1.4;margin-bottom:6px">Pourquoi les révisions espacées battent le sur-apprentissage</div>
+      <div style="font-size:13px;color:var(--text-2);line-height:1.5;margin-bottom:12px">Synthèse de 3 articles sur la courbe d'oubli et la planification FSRS optimale — reliée à ton objectif « Thermo dynamique ».</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+        <span class="badge muted mono">12 passages</span><span class="badge muted">Pédagogie</span><span class="badge success">fiable</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary focus-ring" style="height:40px;flex:1;font-size:13px">Voir la fiche</button>
+        <button class="btn btn-ghost focus-ring" style="height:40px" aria-label="Ajouter à la bibliothèque"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+      </div>
+    </div>
+
+    <!-- Item 2 : uncertain (dégradation 01 §6) -->
+    <div class="card" style="border-left:3px solid var(--warning)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span class="badge warning mono">Confiance incertaine</span>
+        <span class="mono" style="font-size:11px;color:var(--text-muted)">hier</span>
+      </div>
+      <div style="font-size:15px;font-weight:600;line-height:1.4;margin-bottom:6px">La méthode Feynman appliquée aux maths avancées</div>
+      <div style="font-size:13px;color:var(--text-2);line-height:1.5;margin-bottom:12px">Explication par l'enseignement — mais 1 des 2 sources n'est pas encore vérifiée (en cours).</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+        <span class="badge muted mono">8 passages</span><span class="badge muted">Méthode</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline focus-ring" style="height:40px;flex:1;font-size:13px">Voir la fiche</button>
+        <button class="btn btn-ghost focus-ring" style="height:40px;font-size:13px">Plus tard</button>
+      </div>
+    </div>
+
+    <!-- Item 3 : prêt -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span class="badge success mono">Prête</span>
+        <span class="mono" style="font-size:11px;color:var(--text-muted)">il y a 1 j</span>
+      </div>
+      <div style="font-size:15px;font-weight:600;line-height:1.4;margin-bottom:6px">Fiche de révision — Équilibre thermodynamique</div>
+      <div style="font-size:13px;color:var(--text-2);line-height:1.5;margin-bottom:12px">Générée depuis ton cours de chimie : 14 cartes + 2 QCM prêts à étudier.</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+        <span class="badge muted mono">14 cartes</span><span class="badge muted">2 QCM</span>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary focus-ring" style="height:40px;flex:1;font-size:13px">Travailler dessus</button>
+      </div>
+    </div>
+  </div>
+  <nav class="bottomnav">
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Accueil</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8"/></svg>Tâches</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Apprendre</button>
+    <button class="on"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M3 3v18h18"/><path d="m7 14 3-3 3 3 5-5"/></svg>Progression</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 8V4M8 8l2-2M16 8l-2-2"/><circle cx="12" cy="14" r="6"/></svg>Coach</button>
+  </nav>
+</div>
+<span class="pill-label"><span class="dot"></span>Découverte · feed <span class="route">/discovery</span></span>
+</body>
+</html>

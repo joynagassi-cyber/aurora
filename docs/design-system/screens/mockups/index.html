@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aurora — Mockups (navigateur)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0B1120;--surface:#131B2E;--surface-2:#1B2438;--text:#F1F5F9;--muted:#94A3B8;--dim:#64748B;--border:#263248;--primary:#3678F6;--cyan:#22C7D6;--violet:#7B61FF}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 600px at 50% -10%,#16223c 0%,#0B1120 55%);color:var(--text);font-family:"Inter",system-ui,sans-serif;min-height:100vh}
+.mono{font-family:"JetBrains Mono",monospace}
+header{position:sticky;top:0;z-index:50;background:rgba(11,17,32,.8);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:22px 28px}
+.wrap{max-width:1200px;margin:0 auto}
+.brandrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--primary) 0%,var(--cyan) 55%,var(--violet) 100%);display:grid;place-items:center;box-shadow:0 12px 30px -8px rgba(54,120,246,.6);flex:0 0 auto}
+.logo svg{width:24px;height:24px}
+.brandrow h1{font-size:19px;font-weight:700;margin:0;letter-spacing:-.3px}
+.brandrow .tag{font-size:12.5px;color:var(--muted);margin-top:2px}
+.desc{color:var(--muted);font-size:14px;margin:16px 0 0;max-width:760px;line-height:1.6}
+.legend{display:flex;gap:16px;margin-top:14px;flex-wrap:wrap;font-size:12px;color:var(--dim)}
+.legend span{display:flex;align-items:center;gap:7px}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+/* groups */
+main{max-width:1200px;margin:0 auto;padding:26px 28px 60px}
+.group{margin-bottom:30px}
+.ghead{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.ghead .chip{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.ghead .line{flex:1;height:1px;background:var(--border)}
+.ghead .count{font-size:11.5px;color:var(--dim)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.card{display:block;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;text-decoration:none;color:inherit;transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease;position:relative;overflow:hidden}
+.card:hover{transform:translateY(-3px);border-color:#33445f;box-shadow:0 18px 40px -20px rgba(0,0,0,.6)}
+.card .route{font-size:11px;color:var(--dim);display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.card .route .open{color:var(--cyan);font-weight:600;opacity:0;transform:translateX(-4px);transition:all .14s ease}
+.card:hover .open{opacity:1;transform:translateX(0)}
+.card h3{font-size:15.5px;font-weight:600;margin:0 0 6px;letter-spacing:-.2px}
+.card p{font-size:12.5px;color:var(--muted);margin:0;line-height:1.55}
+.card .mod{position:absolute;top:16px;right:-34px;transform:rotate(45deg);background:var(--surface-2);font-size:9.5px;font-weight:700;letter-spacing:.5px;padding:5px 40px;color:var(--muted);text-transform:uppercase}
+.card.accent .mod{color:#fff;background:linear-gradient(135deg,var(--primary),var(--violet))}
+.dark-tag{position:absolute;bottom:16px;left:18px;font-size:10px;color:var(--violet);font-weight:600}
+footer{max-width:1200px;margin:8px auto 0;padding:24px 28px;border-top:1px solid var(--border);color:var(--dim);font-size:12px;line-height:1.7}
+footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brandrow">
+      <div class="logo"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2 14 10l8-2-7 5 3 8-6-4-6 4 3-8L2 8l8 2z"/></svg></div>
+      <div style="flex:1;min-width:180px">
+        <h1>Aurora · Mockups d'écrans</h1>
+        <div class="tag">Direction « Technical Calm » — 12 écrans, thème Aurora (light) + Nocturne (dark)</div>
+      </div>
+    </div>
+    <p class="desc">Mockups HTML haute-fidélité, générés depuis les docs SSoT du design system
+      (<code class="mono">docs/design-system/screens/</code>), les tokens figés de
+      <code class="mono">packages/ui/src/themes/neutral.ts</code> et le thème par défaut
+      <code class="mono">aurora.json</code> (primary <span class="mono">#3678F6</span>).
+      Chaque écran est autonome (frame mobile 390×844) : ouvre-les dans un nouvel onglet
+      pour les comparer et décider de ceux qui t'intéressent vraiment.</p>
+    <div class="legend">
+      <span><i style="background:var(--primary)"></i> Primaire #3678F6</span>
+      <span><i style="background:var(--cyan)"></i> Secondaire #22C7D6</span>
+      <span><i style="background:var(--violet)"></i> Accent #7B61FF</span>
+      <span><i style="background:linear-gradient(135deg,#0A0E1A,#27324d)"></i> Nocturne (dark)</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- PRODUCTIVITÉ -->
+  <section class="group">
+    <div class="ghead"><span class="chip">Productivité</span><span class="line"></span><span class="count">5</span></div>
+    <div class="grid">
+      <a class="card accent" href="home.html" target="_blank"><span class="mod">Home</span>
+        <div class="route"><span class="mono">/home</span><span class="open">Ouvrir ↗</span></div>
+        <h3>Home (welcome)</h3><p>L'écran racine · 7 blocs fixes (AD-14) · agenda, prochaine action, Focus, Coach.</p></a>
+      <a class="card" href="taches-liste.html" target="_blank"><span class="mod">Tâches</span>
+        <div class="route"><span class="mono">/tasks</span><span class="open">Ouvrir ↗</span></div>
+        <h3>Tâches · liste</h3><p>Liste plate triée par priorité, badges de statut, CTA « Ouvrir le Kanban ».</p></a>
+      <a class="card" href="eisenhower.html" target="_blank"><span class="mod">Tâches</span>
+        <div class="route"><span class="mono">/tasks → vue</span><span class="open">Ouvrir ↗</span></div>
+        <h3>Eisenhower · quadrants</h3><p>Matrice 4×2 (urgent/important), compteurs et couleurs d'état.</p></a>
+      <a class="card" href="calendrier-jour.html" target="_blank"><span class="mod">Calendrier</span>
+        <div class="route"><span class="mono">/calendar</span><span class="open">Ouvrir ↗</span></div>
+        <h3>Calendrier · jour</h3><p>Pager jour/semaine/mois, time-blocks, ligne « maintenant » (rouge).</p></a>
+      <a class="card accent" href="themes.html" target="_blank"><span class="mod">Thèmes</span>
+        <div class="route"><span class="mono">/themes</span><span class="open">Ouvrir ↗</span></div>
+        <h3>Variantes de thème</h3><p>Comptoir des 10 thèmes + 3 presets (05 §5.5, AD-17) : sélection live + toggle Nocturne, écrans Home.</p></a>
+    </div>
+  </section>
+
+  <!-- FOCUS (dark) -->
+  <section class="group">
+    <div class="ghead"><span class="chip">Focus</span><span class="line"></span><span class="count">1 · dark</span></div>
+    <div class="grid">
+      <a class="card accent" href="focus-mode.html" target="_blank"><span class="mod">Focus</span>
+        <div class="route"><span class="mono">/focus</span><span class="open">Ouvrir ↗</span></div>
+        <h3>Focus mode (Nocturne)</h3><p>Chrome retiré, ring 208 px, timer 3xl, SegmentedControl, tâches liées. <span style="color:var(--violet);font-weight:600">Dark.</span></p>
+        <span class="dark-tag">● Nocturne · fond #0A0E1A</span></a>
+    </div>
+  </section>
+
+  <!-- OBJECTIFS -->
+  <section class="group">
+    <div class="ghead"><span class="chip">Objectifs</span><span class="line"></span><span class="count">1</span></div>
+    <div class="grid">
+      <a class="card accent" href="objectifs-detail.html" target="_blank"><span class="mod">Objectifs</span>
+        <div class="route"><span class="mono">/goals/:id</span><span class="open">Ouvrir ↗</span></div>
+        <h3>Objectif · mission-control</h3><p>Header band, workflow de features (nœuds + SVG), contexte + suggestion NL, CTA unique.</p></a>
+    </div>
+  </section>
+
+  <!-- LEARNING -->
+  <section class="group">
+    <div class="ghead"><span class="chip">Learning</span><span class="line"></span><span class="count">2</span></div>
+    <div class="grid">
+      <a class="card" href="cours-detail.html" target="_blank"><span class="mod">Cours</span>
+        <div class="route"><span class="mono">/learn/:id</span><span class="open">Ouvrir ↗</span></div>
+        <h3>Cours · détail</h3><p>Lecture hors-ligne (AD-7), bloc maths mono, tuiles fiches / QCM / flashcards / exercices.</p></a>
+      <a class="card" href="flashcards.html" target="_blank"><span class="mod">Flashcards</span>
+        <div class="route"><span class="mono">/learn/:id → FSRS</span><span class="open">Ouvrir ↗</span></div>
+        <h3>Flashcards · FSRS</h3><p>Carte centrale, 4 boutons de réponse (trouvée/difficile/à revoir/sauter), progression de session.</p></a>
+    </div>
+  </section>
+
+  <!-- KNOWLEDGE / PROGRESS / DISCOVERY -->
+  <section class="group">
+    <div class="ghead"><span class="chip">Knowledge · Progress · Discovery</span><span class="line"></span><span class="count">3</span></div>
+    <div class="grid">
+      <a class="card" href="knowledge-tree.html" target="_blank"><span class="mod">Knowledge</span>
+        <div class="route"><span class="mono">/knowledge</span><span class="open">Ouvrir ↗</span></div>
+        <h3>Arbre sémantique</h3><p>Arbre de connaissances (AD-10), nœuds par état (maîtrisé/fragile/oublié), branches lazy.</p></a>
+      <a class="card" href="progress-dashboard.html" target="_blank"><span class="mod">Progress</span>
+        <div class="route"><span class="mono">/progress</span><span class="open">Ouvrir ↗</span></div>
+        <h3>Progression · dashboard</h3><p>Stat tiles + sparklines, graphique focus par jour (G2), compétences critiques.</p></a>
+      <a class="card" href="discovery-feed.html" target="_blank"><span class="mod">Discovery</span>
+        <div class="route"><span class="mono">/discovery</span><span class="open">Ouvrir ↗</span></div>
+        <h3>Découverte · feed</h3><p>Items de recherche : en cours / incertain (dégradation) / prêts, avec niveaux de confiance.</p></a>
+    </div>
+  </section>
+
+  <!-- AGENT / SETTINGS / SHELL -->
+  <section class="group">
+    <div class="ghead"><span class="chip">Agent · Settings · Shell</span><span class="line"></span><span class="count">3</span></div>
+    <div class="grid">
+      <a class="card accent" href="agent-chat.html" target="_blank"><span class="mod">Agent</span>
+        <div class="route"><span class="mono">/agent</span><span class="open">Ouvrir ↗</span></div>
+        <h3>Agent · chat</h3><p>Conversation, appels d'outils (tool-call renderers), loader « réfléchit », composer + garde de confirmation.</p></a>
+      <a class="card" href="settings.html" target="_blank"><span class="mod">Settings</span>
+        <div class="route"><span class="mono">/settings</span><span class="open">Ouvrir ↗</span></div>
+        <h3>Réglages</h3><p>Profil, sélecteur de thème (10 + 3 presets), prévisualisation, fenêtres de silence.</p></a>
+      <a class="card" href="not-found.html" target="_blank"><span class="mod">Shell</span>
+        <div class="route"><span class="mono">* (wildcard)</span><span class="open">Ouvrir ↗</span></div>
+        <h3>Not found / feature-disabled</h3><p>404 d'état entier · logo coloré au centre, jamais d'écran blanc.</p></a>
+    </div>
+  </section>
+
+  <!-- ONBOARDING -->
+  <section class="group">
+    <div class="ghead"><span class="chip">Onboarding</span><span class="line"></span><span class="count">1</span></div>
+    <div class="grid">
+      <a class="card" href="onboarding.html" target="_blank"><span class="mod">Onboarding</span>
+        <div class="route"><span class="mono">/onboarding · S1/3</span><span class="open">Ouvrir ↗</span></div>
+        <h3>Onboarding · « Qui es-tu ? »</h3><p>Slide 1/3, choix de profil + aperçu des thèmes (Aurora / Lagoon / Nocturne).</p></a>
+    </div>
+  </section>
+
+  <footer>
+    Sources : <code class="mono">docs/design-system/screens/</code> (44 docs) ·
+    <code class="mono">packages/ui/src/themes/neutral.ts</code> (tokens figés 05 §2.1) ·
+    <code class="mono">packages/ui/src/themes/aurora.json</code> (thème par défaut) ·
+    <code class="mono">aurora.css</code> (shell commun, 1 seul fichier CSS partagé par tous les écrans).
+    Ouvrir un écran : clic sur « Ouvrir ↗ ».
+  </footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aurora — progress-dashboard</title>
+<link rel="stylesheet" href="aurora.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--shadow-1)}
+.stat .l{font-size:11px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--text-muted)}
+.stat .v{font-family:"JetBrains Mono",monospace;font-size:26px;font-weight:600;letter-spacing:-.5px;margin-top:6px;color:var(--text-1)}
+.stat .v small{font-size:13px;color:var(--text-2);font-weight:500}
+.stat .d{font-size:11.5px;margin-top:4px}
+.d.up{color:var(--success)}.d.flat{color:var(--text-muted)}
+.spark{display:flex;align-items:flex-end;gap:3px;height:34px;margin-top:10px}
+.spark i{flex:1;background:linear-gradient(180deg,var(--primary),var(--secondary));border-radius:2px;opacity:.9}
+.chart{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:var(--shadow-1)}
+.bars{display:flex;align-items:flex-end;gap:8px;height:90px;margin-top:6px}
+.bars i{flex:1;border-radius:4px 4px 0 0;background:var(--primary);opacity:.85}
+.bars i.a{background:var(--secondary)}
+.legend{display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--text-muted)}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:9px;height:9px;border-radius:3px;display:inline-block}
+.skillrow{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--border)}
+.skillrow:last-child{border-bottom:0}
+.skillrow .nm{flex:1;min-width:0}.skillrow .nm b{font-size:13px;font-weight:600;display:block}
+.skillrow .nm span{font-size:11px;color:var(--text-muted)}
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="safe content">
+    <div class="topbar" style="padding-top:0">
+      <h1 style="font-size:20px">Progression</h1>
+      <button class="iconbtn focus-ring" aria-label="Filtres"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg></button>
+    </div>
+
+    <!-- Segmented : today/week/month/trajectory -->
+    <div class="seg" style="margin-bottom:16px">
+      <button>Aujourd'hui</button><button class="on">Semaine</button><button>Mois</button><button>Trajet</button>
+    </div>
+
+    <!-- 4 stat tiles -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="stat"><div class="l">Focus total</div><div class="v">3<small> h</small> <small>24</small></div><div class="d up">▲ +38 % vs semaine passée</div>
+        <div class="spark"><i style="height:40%"></i><i style="height:55%"></i><i style="height:48%"></i><i style="height:70%"></i><i style="height:64%"></i><i style="height:88%"></i><i style="height:100%"></i></div></div>
+      <div class="stat"><div class="l">Cartes révisées</div><div class="v">142</div><div class="d up">▲ +12 %</div>
+        <div class="spark"><i style="height:30%"></i><i style="height:44%"></i><i style="height:58%"></i><i style="height:52%"></i><i style="height:74%"></i><i style="height:86%"></i><i style="height:94%"></i></div></div>
+      <div class="stat"><div class="l">Précision QCM</div><div class="v">84<small> %</small></div><div class="d up">▲ +3 pts</div></div>
+      <div class="stat"><div class="l">Série de révisions</div><div class="v">12<small> j</small></div><div class="d flat">record 14 j</div></div>
+    </div>
+
+    <!-- Chart (G2 bar) -->
+    <div class="section-title">Focus par jour</div>
+    <div class="chart">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-2);font-weight:600">
+        <span>Heures de focus</span><span class="mono">Lun → Dim</span>
+      </div>
+      <div class="bars">
+        <i style="height:45%"></i><i style="height:62%"></i><i class="a" style="height:90%"></i><i style="height:30%"></i><i style="height:72%"></i><i style="height:40%"></i><i class="a" style="height:100%"></i>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--primary)"></i> Focus</span>
+        <span><i style="background:var(--secondary)"></i> Meilleur jour</span>
+      </div>
+    </div>
+
+    <!-- Skills (SkillStateBadge : 3 couleurs figées) -->
+    <div class="section-title">Compétences critiques</div>
+    <div class="card" style="padding:4px 12px">
+      <div class="skillrow">
+        <span style="width:10px;height:10px;border-radius:50%;background:var(--node-fragile);display:inline-block"></span>
+        <div class="nm"><b>Thermodynamique · 1ᵉʳ principe</b><span>fragmentaire · réviser sous 2 j</span></div>
+        <span class="badge warning mono">fragile</span>
+      </div>
+      <div class="skillrow">
+        <span style="width:10px;height:10px;border-radius:50%;background:var(--node-mastered);display:inline-block"></span>
+        <div class="nm"><b>Mécanique · statique</b><span>maîtrisée · stable 3 semaines</span></div>
+        <span class="badge success mono">niveau 7/8</span>
+      </div>
+      <div class="skillrow">
+        <span style="width:10px;height:10px;border-radius:50%;background:var(--node-forgotten);display:inline-block"></span>
+        <div class="nm"><b>Algèbre · déterminants</b><span>oublié · à rebrancher</span></div>
+        <span class="badge danger mono">oublié</span>
+      </div>
+    </div>
+
+    <!-- offline badge (mirrors AD-7) -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:11px;color:var(--text-muted)">
+      <span class="badge info mono">Hors-ligne · dernière synchro 08:12</span><span class="mono">mirrors skill_states</span>
+    </div>
+  </div>
+  <nav class="bottomnav">
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Accueil</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8"/></svg>Tâches</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Apprendre</button>
+    <button class="on"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M3 3v18h18"/><path d="m7 14 3-3 3 3 5-5"/></svg>Progression</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 8V4M8 8l2-2M16 8l-2-2"/><circle cx="12" cy="14" r="6"/></svg>Coach</button>
+  </nav>
+</div>
+<span class="pill-label"><span class="dot"></span>Progression · dashboard <span class="route">/progress</span></span>
+</body>
+</html>

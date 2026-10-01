@@ -1,0 +1,133 @@
+/*
+ * Aurora — floating surfaces (05 §3.5 SSoT stacking) + transverses.
+ *
+ * The stacking order is FROZEN here (the DS is the single owner, AD-13):
+ *   contenu 0 < TopBar/BottomNav 10 < sheet/menu/drawer 30 < Modal 40
+ *   < Toast 50 < Splash 60. A screen NEVER redefines it — it only opens a
+ *   surface. Token-driven, focus-trap friendly, 44px targets.
+ */
+:root {
+  --aurora-z-content: 0;
+  --aurora-z-chrome: 10;
+  --aurora-z-sheet: 30;
+  --aurora-z-modal: 40;
+  --aurora-z-toast: 50;
+  --aurora-z-splash: 60;
+}
+
+/* ---- Floating Action Button (the 6th surface, _floating-surfaces §6) */
+.aurora-fab {
+  position: absolute;
+  right: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  z-index: var(--aurora-z-chrome);
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: var(--aurora-accent-primary);
+  color: var(--aurora-accent-on-primary);
+  box-shadow: var(--aurora-shadow-float);
+  transition: transform 0.18s ease;
+}
+.aurora-fab:active {
+  transform: scale(0.94);
+}
+
+/* ---- Bottom sheet (the "sheet" surface, 05 §3.5 z-30) --------------- */
+.aurora-sheet-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--aurora-z-sheet);
+  background: rgba(15, 23, 42, 0.4);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.aurora-sheet {
+  width: 100%;
+  max-height: 80vh;
+  padding: 16px 16px calc(24px + env(safe-area-inset-bottom));
+  background: var(--aurora-surface);
+  border-radius: 16px 16px 0 0;
+  box-shadow: var(--aurora-shadow-float);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.aurora-sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--aurora-border-strong);
+  margin: 0 auto 8px;
+}
+.aurora-sheet-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--aurora-text-primary);
+}
+.aurora-sheet-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--aurora-tap-target, 44px);
+  padding: 8px;
+  border-radius: var(--aurora-radius, 0.5rem);
+  color: var(--aurora-text-primary);
+  font-size: 15px;
+  text-align: left;
+}
+.aurora-sheet-item svg {
+  color: var(--aurora-accent-primary);
+  flex: none;
+}
+.aurora-sheet-item:active {
+  background: var(--aurora-bg-subtle);
+}
+
+/* ---- Modal / dialog surface (z-40) ---------------------------------- */
+.aurora-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--aurora-z-modal);
+  display: grid;
+  place-items: center;
+  background: rgba(15, 23, 42, 0.4);
+  padding: 24px;
+}
+.aurora-overlay-card {
+  width: 100%;
+  max-width: 360px;
+  padding: 16px;
+  background: var(--aurora-surface);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-float);
+}
+
+/* ---- Toast / snackbar (z-50) --------------------------------------- */
+.aurora-toaster {
+  position: fixed;
+  left: 50%;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: var(--aurora-z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+.aurora-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: var(--aurora-radius, 0.5rem);
+  background: var(--aurora-text-primary);
+  color: var(--aurora-bg);
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: var(--aurora-shadow-float);
+}

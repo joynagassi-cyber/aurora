@@ -18,6 +18,7 @@
  */
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import type { ThemeName } from '@aurora/ui';
 
 export type TabId = 'home' | 'tasks' | 'learn' | 'progress' | 'agent';
 
@@ -32,6 +33,13 @@ export interface UiStateStore {
   knowledgeExpanded: Record<string, boolean>;
   /** AD-17 theme override (skin only, 05 §2.1.3). */
   theme: 'auto' | 'light' | 'dark';
+  /**
+   * AD-17 layer-2 expressive theme / preset name (05 §5, G-M5 SSoT:
+   * `packages/ui` catalog). Skin only — changing it = changing the JSON
+   * tokens the provider injects, never the components (ui-libraries §4).
+   * 'auto' = the default (aurora) theme.
+   */
+  auroraTheme: ThemeName | 'auto';
   /** focus session active flag (drives 5 UX states + notification scope). */
   focusActive: boolean;
   /** killed = app was force-killed; re-hydrate on open (04 S6.1, G-M2). */
@@ -42,6 +50,7 @@ export interface UiStateStore {
   setProgressPeriod: (period: UiStateStore['progressPeriod']) => void;
   toggleKnowledgeNode: (nodeId: string, expanded: boolean) => void;
   setTheme: (theme: UiStateStore['theme']) => void;
+  setAuroraTheme: (theme: UiStateStore['auroraTheme']) => void;
   setFocusActive: (active: boolean) => void;
   /** called at boot when the lifecycle adapter detects a return-from-kill. */
   markKilled: (killed: boolean) => void;
@@ -55,6 +64,7 @@ export const useUiStateStore = create<UiStateStore>()(
       progressPeriod: 'today',
       knowledgeExpanded: {},
       theme: 'auto',
+      auroraTheme: 'auto',
       focusActive: false,
       killed: false,
       setActiveTab: (activeTab) => set({ activeTab }),
@@ -63,6 +73,7 @@ export const useUiStateStore = create<UiStateStore>()(
       toggleKnowledgeNode: (nodeId, expanded) =>
         set((s) => ({ knowledgeExpanded: { ...s.knowledgeExpanded, [nodeId]: expanded } })),
       setTheme: (theme) => set({ theme }),
+      setAuroraTheme: (auroraTheme) => set({ auroraTheme }),
       setFocusActive: (focusActive) => set({ focusActive }),
       markKilled: (killed) => set({ killed }),
     }),
@@ -77,6 +88,7 @@ export const useUiStateStore = create<UiStateStore>()(
         progressPeriod: s.progressPeriod,
         knowledgeExpanded: s.knowledgeExpanded,
         theme: s.theme,
+        auroraTheme: s.auroraTheme,
       }),
     },
   ),

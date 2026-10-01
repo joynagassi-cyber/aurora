@@ -1,0 +1,124 @@
+/*
+ * Aurora — Agent conversation (02 S6.1, F-09: the device sees ONLY
+ * AgentRunState).
+ *
+ * The chat is a calm two-pane surface: a scrolling transcript + a pinned
+ * composer. The "thinking" state is the organic organism (ui-libraries
+ * §9.3, AgentThinkingLoader @aurora/ui); while no real run streams yet,
+ * this file styles the token-native `.agent-thinking` fallback so the
+ * surface reads premium even in the empty/thinking state.
+ */
+
+.agent-chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.agent-transcript {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+/* Empty state = a calm invitation, not a search box (02 §6.2). */
+.agent-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 48vh;
+  text-align: center;
+  padding: 24px;
+}
+.agent-empty p {
+  margin: 0;
+  font-size: 15px;
+  color: var(--aurora-text-secondary);
+  max-width: 28ch;
+}
+
+/* The thinking organism (organic, NOT a three-dot spinner — §9.3). */
+.agent-thinking {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px;
+}
+.agent-thinking-blobs {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+}
+.agent-thinking-blobs::before,
+.agent-thinking-blobs::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--aurora-accent-primary);
+  opacity: 0.35;
+  animation: agent-blob 3.4s ease-in-out infinite;
+}
+.agent-thinking-blobs::after {
+  background: var(--aurora-accent-secondary);
+  animation-delay: 1.1s;
+  animation-duration: 2.6s;
+}
+@keyframes agent-blob {
+  0%,
+  100% {
+    transform: scale(0.7);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+}
+.agent-thinking-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--aurora-text-muted);
+}
+
+/* Composer (pinned). */
+.agent-composer {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: var(--aurora-surface);
+  border-top: 1px solid var(--aurora-border);
+}
+.agent-composer input {
+  flex: 1;
+  min-height: var(--aurora-tap-target, 44px);
+  padding: 0 14px;
+  font-size: 15px;
+  color: var(--aurora-text-primary);
+  background: var(--aurora-bg-subtle);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+}
+.agent-composer input::placeholder {
+  color: var(--aurora-text-muted);
+}
+.agent-composer button {
+  flex: none;
+  width: var(--aurora-tap-target, 44px);
+  min-height: var(--aurora-tap-target, 44px);
+  display: grid;
+  place-items: center;
+  border-radius: var(--aurora-radius, 0.5rem);
+  background: var(--aurora-accent-primary);
+  color: var(--aurora-accent-on-primary);
+}
+.agent-composer button:disabled {
+  opacity: 0.5;
+}

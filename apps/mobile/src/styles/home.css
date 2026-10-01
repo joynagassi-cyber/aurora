@@ -1,0 +1,129 @@
+/*
+ * Aurora — Home page (AD-14 fixed composition, goal-dashboard-ui S1).
+ *
+ * Home always answers "Qu'est-ce qui compte maintenant ?" — 7 fixed slots,
+ * NEVER a widget dashboard (AD-14). Each slot is a titled card (05 §4.1):
+ * clean, single-surface, token-driven. Cards never exceed the screen's
+ * comfortable measure; fixed height per slot (02 §9: no layout shift).
+ */
+
+.aurora-slot {
+  margin: 12px 16px;
+  padding: 16px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+}
+.aurora-slot h3 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--aurora-text-muted);
+}
+.aurora-slot p {
+  margin: 0;
+  font-size: 15px;
+  color: var(--aurora-text-secondary);
+}
+
+/* The 7 slots stack into a single scroll (IonContent); tighten the gap. */
+.aurora-slot + .aurora-slot {
+  margin-top: 4px;
+}
+
+/* ---- GoalProject cards (critical-progress slot, goal-dashboard-ui S1) */
+.goal-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Ionic renders IonItem with `.goal-project-card`; style it as a premium
+ * card row (a single tappable surface, 02 S9: fixed height, no shift). */
+.goal-project-card {
+  padding: 12px 4px;
+  min-height: var(--aurora-tap-target, 44px);
+}
+.goal-project-card ion-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.goal-project-card strong {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+  line-height: 1.3;
+}
+.goal-project-card em {
+  font-style: normal;
+  font-size: 13px;
+  color: var(--aurora-text-muted);
+}
+
+/* Per-goal-shape icon: a small color chip in the accent family (S1
+ * target/loop/tree/milestone/spiral — the DERIVED shape, not a literal icon). */
+.goal-project-card [data-shape-icon] {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  background: var(--aurora-accent-primary);
+  align-self: flex-start;
+}
+
+/* Progress bar — `info` semantic token (AD-17: progress = info, theme = skin). */
+.goal-progress {
+  position: relative;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--aurora-bg-subtle);
+  overflow: hidden;
+}
+.goal-progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 9999px;
+  background: var(--aurora-info);
+  transition: width 0.2s ease;
+}
+
+/* ---- Next-actions slot (AD-14 slot 7, real tasks mirror) ------------ */
+.next-actions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.next-action-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--aurora-tap-target, 44px);
+  padding: 8px 12px;
+  border-radius: var(--aurora-radius, 0.5rem);
+  background: var(--aurora-surface-alt);
+  color: var(--aurora-text-primary);
+  font-size: 14px;
+}
+.next-action-row::before {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--aurora-accent-primary);
+}
+.next-action-row:hover {
+  background: var(--aurora-accent-selected-surface);
+}
+
+/* Home header badge (offline) sits inside IonHeader; keep it quiet. */
+.aurora-header a,
+.aurora-header span {
+  color: var(--aurora-text-primary);
+}

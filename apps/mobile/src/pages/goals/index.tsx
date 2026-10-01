@@ -1,20 +1,20 @@
 /**
  * Goals family (05 §4.3, goal-dashboard-ui.md S2).
  *
- * /goals — list of all GoalProjects (active + completed).
- * /goals/:id — the Goal Dashboard ("mission control", NOT a feature list).
- * /goals/:id/features/:fid — feature detail deep link, with goal context
- * in query (?goalId=X&subGoalId=Y — context-preserving, 02 S6.1).
+ * /goals — list of all GoalProjects (active). /goals/:id — the Goal
+ * Dashboard ("mission control", NOT a feature list). /goals/:id/features/:fid
+ * — feature deep link with goal context in query (?goalId=X, 02 §6.2).
  *
- * The dashboard is an adaptive layout per goal shape (Preparation/Practice/
- * Curation/Delivery/Adaptation, goal-dashboard-ui.md S2). Feature nodes'
- * position = meaning; the active node pulses (AD-10 AnimationController).
- * Read-only local mirror (AD-7, 03 §4.2) — no network on tap.
+ * Every async surface carries the full 6 UX states + killed (AD-13,
+ * G-M2, ui-libraries S6). Read-only local mirror (AD-7, 03 §4.2).
  */
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import type { AppError, GoalProject } from '@aurora/domain';
 import { useGoals, useGoal } from '../../query/hooks';
-import type { GoalProject } from '@aurora/domain';
+import { UxStates, type UxStateFlags } from '../../ux-states';
+import { useKilledDetection } from '../../hooks/use-killed';
+import { useOnlineStatus } from '../../hooks/use-online';
 import {
   GoalDashboard,
   GoalHeader,
@@ -28,20 +28,13 @@ import {
 } from '@aurora/goal-engine';
 
 /**
- * The 5 adaptive goal-shape layouts, rendered from the goal's composition
- * data (goal-dashboard-ui.md S2: "the layout is NOT the same for every
- * goal. The agent's composition pattern drives the VISUAL."). The
- * dashboard component itself picks the renderer; this table is the S5
- * Agent->UI contract: DATA in, LAYOUT out — the user never sees a
- * feature list, they see the goal's shape.
+ * The Agent -> UI contract (goal-dashboard-ui.md S5): DATA in, LAYOUT out.
+ * Kept as an export so the dashboard is testable without a route.
  */
 export function renderGoalDashboard(
   goal: GoalProject,
   shapeOverride?: ReturnType<typeof layoutTagFor>,
 ) {
-  // The dashboard derives its LAYOUT from goal data (Agent->UI contract,
-  // goal-dashboard-ui.md S5): shape tag from the composition pattern,
-  // layout computed O(n) over the feature count (S8).
   const shape = shapeOverride ?? layoutTagFor(goal);
   const layout = computeGoalDashboardLayout(goal, shape);
   return (
@@ -54,7 +47,18 @@ export function renderGoalDashboard(
 }
 
 export function GoalsPage() {
-  const { data: goals, isPending } = useGoals();
+  const { data: goals, isPending, isError, refetch } = useGoals();
+  const online = useOnlineStatus();
+  const killed = useKilledDetection(() => refetch());
+  const flags: UxStateFlags = { offline: !online, killed, onRetry: () => refetch() };
+
+  const goalState = isError
+    ? ({ status: 'error', error: { code: 'goal/load_failed', message: 'Objectifs indisponibles' } as AppError } as const)
+    : isPending
+      ? ({ status: 'loading' } as const)
+      : goals.length === 0
+        ? ({ status: 'empty' } as const)
+        : ({ status: 'success', data: goals } as const);
 
   return (
     <>
@@ -62,24 +66,23 @@ export function GoalsPage() {
         <IonTitle>Objectifs</IonTitle>
       </IonHeader>
       <IonContent>
-        {isPending && <div data-state="loading" />}
-        {goals && goals.length === 0 && <div data-state="empty">Aucun objectif + capture CTA</div>}
-        <ul className="goals-list">
-          {goals?.map((g: GoalProject) => {
-            // context-preserving deep link target (goal-dashboard-ui.md S6):
-            // /goals/:id/features/:fid carries ?goalId=X — the feature screen
-            // shows the goal breadcrumb and back returns here (02 S6.2).
-            const shape = layoutTagFor(g);
-            return (
-              <li key={g.id}>
-                <a href={`/goals/${g.id}?shape=${shape}`} data-shape={shape}>
-                  <span className="goals-list-label">{featureLabel(g.features[0]?.featureId ?? '')}</span>
-                  {g.objective}
-                </a>
-              </li>
-            );
-          })}
-        </ul>
+        <UxStates state={goalState} flags={flags} label="Objectifs" emptyCta="Créer un objectif">
+          <div data-goal-list className="goals-list-wrap">
+            {goals?.map((g) => (
+              <a
+                key={g.id}
+                className="goal-row aurora-tap"
+                href={`/goals/${g.id}`}
+                data-shape={layoutTagFor(g)}
+              >
+                <span className="goals-list-label">
+                  {featureLabel(g.features[0]?.featureId ?? '')}
+                </span>
+                <span className="goal-row-title">{g.objective}</span>
+              </a>
+            ))}
+          </div>
+        </UxStates>
       </IonContent>
     </>
   );
@@ -87,8 +90,19 @@ export function GoalsPage() {
 
 export function GoalDashboardPage() {
   const { id } = useParams<{ id: string }>();
-  const { data: goal, isPending } = useGoal(id);
+  const { data: goal, isPending, isError, refetch } = useGoal(id);
   const navigate = useNavigate();
+  const online = useOnlineStatus();
+  const killed = useKilledDetection(() => refetch());
+
+  const dashState = isPending
+    ? ({ status: 'loading' } as const)
+    : isError
+      ? ({ status: 'error', error: { code: 'goal/load_failed', message: 'Objectif indisponible' } as AppError } as const)
+      : !goal
+        ? ({ status: 'empty' } as const)
+        : ({ status: 'success', data: goal } as const);
+  const flags: UxStateFlags = { offline: !online, killed, onRetry: () => refetch() };
 
   return (
     <>
@@ -96,22 +110,17 @@ export function GoalDashboardPage() {
         <IonTitle>{goal?.objective ?? 'Objectif'}</IonTitle>
       </IonHeader>
       <IonContent>
-        {isPending && <div data-state="loading" />}
-        {goal && (
-          <GoalDashboard
-            goal={goal}
-            onNodeTap={(fid) =>
-              // context-preserving deep link (goal-dashboard-ui.md S6):
-              // ?goalId=X&subGoalId=Y — the feature screen shows the
-              // goal breadcrumb and back returns here (02 S6.2).
-              navigate(`/goals/${goal.id}/features/${fid}?goalId=${goal.id}`)
-            }
-            onSuggestionTap={() =>
-              // NL suggestion = agent chat with the goal in context (S6).
-              navigate(`/agent?goalId=${goal.id}`)
-            }
-          />
-        )}
+        <UxStates state={dashState} flags={flags} label="Objectif">
+          {goal && (
+            <GoalDashboard
+              goal={goal}
+              onNodeTap={(fid) =>
+                navigate(`/goals/${goal.id}/features/${fid}?goalId=${goal.id}`)
+              }
+              onSuggestionTap={() => navigate(`/agent?goalId=${goal.id}`)}
+            />
+          )}
+        </UxStates>
       </IonContent>
     </>
   );
@@ -120,16 +129,26 @@ export function GoalDashboardPage() {
 export function GoalFeatureDetailPage() {
   const { id, fid } = useParams<{ id: string; fid: string }>();
   const [searchParams] = useSearchParams();
-  // context-preserving: goalId + subGoalId in the query string (02 S6.2)
   const goalId = searchParams.get('goalId') ?? id;
+  const subGoalId = searchParams.get('subGoalId') ?? '';
 
   return (
     <IonContent>
       <IonHeader>
         <IonTitle>{fid}</IonTitle>
       </IonHeader>
-      <div data-goal-context={goalId} data-sub-goal={searchParams.get('subGoalId') ?? ''}>
-        <span className="breadcrumb">Objectif &gt; {fid}</span>
+      <div
+        data-goal-context={goalId}
+        data-sub-goal={subGoalId}
+        data-feature-detail
+      >
+        <span className="breadcrumb">Objectif &rsaquo; {fid}</span>
+        {/* Feature node detail (AD-7 local read). Rendered by the feature
+            module when wired; 6 states covered by the parent dashboard. */}
+        <div data-feature-body>
+          <h2 className="feature-title">{fid}</h2>
+          <p className="feature-desc">Détails de la feature (lecture locale).</p>
+        </div>
       </div>
     </IonContent>
   );

@@ -1,0 +1,158 @@
+/* THEMES.css — Système de theming Aurora à 3 couches (05 §5.5, AD-17).
+   ── Couche 1 : le STYLE (10 thèmes expressifs) détermine l'IDENTITÉ COULEUR
+      (primary / secondary / accent / chart / sel-surface).
+   ── Couche 2 : le PRESET (Light / Dark-Spotify / High-Contrast) détermine
+      CANVAS + SURFACES + TEXT + les tokens d'état FROZEN (§2.1.2 light / §2.1.3 dark).
+   ── Couche 3 (Éditions Premium) : une image de défilement + une couleur
+      dominante auto-extraitée viennent enrichir le thème.
+   ── Couche 4 : image personnalisée (upload) → extraction canvas → dominante.
+   Règle bloquante 05 §5.1 : UN THÈME ne redéfinit JAMAIS success/warning/danger/info ;
+   seuls les PRESETS (couche 2) changent ces tokens d'état.
+
+   Application dans le DOM :
+     body[data-preset="dark"]            → couche 2
+     [data-style="lagoon"] .frame       → couche 1 (data-style sur .frame)
+     [data-edition="noel"] .frame        → couche 3
+     .frame.style-custom                 → couche 4 (JS : --edition-dyn) */
+
+/* ═══════════════════════════════════════════════════════════
+   COUCHE 2 — PRESETS (surface + tokens d'état)
+   Dark "type Spotify" : canvas #0A0E1A, surfaces montées #1E2430/#28313F,
+   état saturé. C'est le SEUL niveau qui change success/warning/danger/info.
+   ═══════════════════════════════════════════════════════════ */
+
+/* LIGHT (défaut) : canvas clair, surfaces blanches, tokens d'état pastel */
+body[data-preset="light"] .frame,
+body:not([data-preset]) .frame{
+  --bg:#F8FAFC; --bg-subtle:#EEF3F9; --surface:#FFFFFF; --surface-alt:#F5F8FC;
+  --text-1:#0F172A; --text-2:#334155; --text-muted:#94A3B8; --text-disabled:#CBD5E1;
+  --border:#E2E8F0; --border-strong:#CBD5E1;
+  --success:#10B981; --success-surface:#E8FAF0;
+  --warning:#F59E0B; --warning-surface:#FFF4E0;
+  --danger:#EF4444;  --danger-surface:#FEECEC;
+  --info:#0EA5E9;    --info-surface:#E6F4FD;
+  --node-mastered:#10B981; --node-fragile:#F59E0B; --node-forgotten:#EF4444;
+  --skeleton:#E2E8F0;
+  --shadow-1:0 1px 2px rgba(15,23,42,.06); --shadow-2:0 2px 8px rgba(15,23,42,.08); --shadow-4:0 12px 32px rgba(15,23,42,.14);
+}
+
+/* DARK — Spotify : surblanc + surface sombre + état saturé */
+body[data-preset="dark"] .frame{
+  --bg:#0A0E1A; --bg-subtle:#0F1524;
+  --surface:#1E2430; --surface-alt:#28313F;
+  --text-1:#F1F5F9; --text-2:#B4BFCF; --text-muted:#7B8698; --text-disabled:#4A5568;
+  --border:#334155; --border-strong:#4A5568;
+  --success:#2ED573; --success-surface:#12402B;
+  --warning:#FFB84D; --warning-surface:#4A3210;
+  --danger:#FF5B5B;  --danger-surface:#4A1616;
+  --info:#38BDF8;    --info-surface:#0E3A4A;
+  --node-mastered:#2ED573; --node-fragile:#FFB84D; --node-forgotten:#FF5B5B;
+  --skeleton:#28313F;
+  --shadow-1:0 1px 2px rgba(0,0,0,.45); --shadow-2:0 2px 10px rgba(0,0,0,.5); --shadow-4:0 16px 40px rgba(0,0,0,.55);
+}
+body[data-preset="dark"] .frame::before{color:#F1F5F9}
+body[data-preset="dark"] .frame::after{background:rgba(241,245,249,.28)}
+body[data-preset="dark"] .bottomnav{background:rgba(30,36,48,.94)}
+body[data-preset="dark"] .badge.info{color:#7DD3FC}
+body[data-preset="dark"] .badge.success{color:#6EE7B7}
+body[data-preset="dark"] .badge.warning{color:#FCD34D}
+body[data-preset="dark"] .badge.danger{color:#FCA5A5}
+body[data-preset="dark"] .badge.primary{color:#93C5FD}
+body[data-preset="dark"] .badge.accent{color:#C4B5FD}
+body[data-preset="dark"] .badge.muted{color:#B4BFCF}
+body[data-preset="dark"] .callout.info{color:#7DD3FC}
+body[data-preset="dark"] .callout.danger{color:#FCA5A5}
+body[data-preset="dark"] .btn-outline{border-color:#4A5568;color:#E2E8F0;background:rgba(40,49,63,.5)}
+body[data-preset="dark"] .btn-ghost{color:#B4BFCF}
+body[data-preset="dark"] .skel{background:var(--skeleton)}
+body[data-preset="dark"] .progress{background:var(--surface-alt)}
+
+/* HIGH CONTRAST (05 §5.5 §4) : light à contrastes renforcés */
+body[data-preset="high-contrast"] .frame{
+  --bg:#FFFFFF; --bg-subtle:#F1F5F9; --surface:#FFFFFF; --surface-alt:#F8FAFC;
+  --text-1:#020617; --text-2:#0F172A; --text-muted:#334155; --text-disabled:#64748B;
+  --border:#0F172A; --border-strong:#0F172A;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   COUCHE 1 — 10 STYLES expressifs (couleur d'identité)
+   Appliqués sur .frame via [data-style]. Le preset (couche 2) gère canvas/
+   surfaces/text/tokens d'état ; ici on ne change QUE l'identité couleur.
+   Valeurs officielles : `packages/ui/src/themes/*.json`.
+   ═══════════════════════════════════════════════════════════ */
+[data-style="aurora"]  .frame{--primary:#3678F6;--primary-600:#2563EB;--on-primary:#FFFFFF;--secondary:#22C7D6;--accent:#7B61FF;--chart:#5A67F2;--sel-surface:#B8DFFF;--grad:linear-gradient(135deg,#3678F6 0%,#22C7D6 55%,#7B61FF 100%)}
+[data-style="lagoon"]  .frame{--primary:#007C91;--primary-600:#0B6376;--on-primary:#FFFFFF;--secondary:#18B7A0;--accent:#50D8C0;--chart:#2FB59C;--sel-surface:#D9F5EF;--grad:linear-gradient(135deg,#007C91 0%,#18B7A0 55%,#50D8C0 100%)}
+[data-style="boreal"]  .frame{--primary:#2E5C8A;--primary-600:#234A70;--on-primary:#FFFFFF;--secondary:#4A8C6A;--accent:#8DC7D9;--chart:#3E7CA0;--sel-surface:#DCEAF2;--grad:linear-gradient(135deg,#2E5C8A 0%,#4A8C6A 55%,#8DC7D9 100%)}
+[data-style="sakura"]  .frame{--primary:#D85B86;--primary-600:#B83E69;--on-primary:#FFFFFF;--secondary:#E98EAD;--accent:#9B78C9;--chart:#C77DA8;--sel-surface:#F8DCE7;--grad:linear-gradient(135deg,#D85B86 0%,#E98EAD 55%,#9B78C9 100%)}
+[data-style="vesper"]  .frame{--primary:#6554C0;--primary-600:#4E3EA6;--on-primary:#FFFFFF;--secondary:#8C5BD6;--accent:#D05AA8;--chart:#D05AA8;--sel-surface:#E7DDF8;--grad:linear-gradient(135deg,#6554C0 0%,#8C5BD6 55%,#D05AA8 100%)}
+[data-style="solara"]  .frame{--primary:#D99A24;--primary-600:#B87F18;--on-primary:#1A1206;--secondary:#F0B83F;--accent:#E86F42;--chart:#E8A430;--sel-surface:#FFF0C2;--grad:linear-gradient(135deg,#D99A24 0%,#F0B83F 55%,#E86F42 100%)}
+[data-style="terra"]   .frame{--primary:#B85C38;--primary-600:#9A4526;--on-primary:#FFFFFF;--secondary:#C9823B;--accent:#D8AE72;--chart:#C06A44;--sel-surface:#F2E1C3;--grad:linear-gradient(135deg,#B85C38 0%,#C9823B 55%,#D8AE72 100%)}
+[data-style="verdant"] .frame{--primary:#247A55;--primary-600:#185E40;--on-primary:#FFFFFF;--secondary:#42A96B;--accent:#8CCF8A;--chart:#3A9E6E;--sel-surface:#DFF3E3;--grad:linear-gradient(135deg,#247A55 0%,#42A96B 55%,#8CCF8A 100%)}
+[data-style="citrus"]  .frame{--primary:#F28C28;--primary-600:#D8731A;--on-primary:#1A1206;--secondary:#F7C948;--accent:#B7D83D;--chart:#F2A04C;--sel-surface:#FFF0B8;--grad:linear-gradient(135deg,#F28C28 0%,#F7C948 55%,#B7D83D 100%)}
+[data-style="cosmos"]  .frame{--primary:#3B3FA7;--primary-600:#2A2E8A;--on-primary:#FFFFFF;--secondary:#18BFD4;--accent:#E95BAA;--chart:#5964E8;--sel-surface:#C7CBF0;--grad:linear-gradient(135deg,#3B3FA7 0%,#18BFD4 55%,#E95BAA 100%)}
+
+/* Dark Spotify : l'accent monte légèrement en luminosité pour rester lisible
+   (règle de lisibilité 05 §5.4) — SEULEMENT dans le preset dark.
+   On combine les 2 attributs (preset sur body, style sur .frame). */
+body[data-preset="dark"][data-style="solara"]  .frame{--primary:#F0B83F;--primary-600:#F0B83F;--on-primary:#1A1206}
+body[data-preset="dark"][data-style="citrus"]  .frame{--primary:#F7C948;--primary-600:#F7C948;--on-primary:#1A1206}
+body[data-preset="dark"][data-style="lagoon"]  .frame{--primary:#22D3EE;--primary-600:#06B6D4;--sel-surface:#16403D}
+body[data-preset="dark"][data-style="verdant"] .frame{--primary:#34D399;--primary-600:#10B981;--sel-surface:#0E3B28}
+
+/* ═══════════════════════════════════════════════════════════
+   COUCHE 3 — ÉDITIONS PREMIUM (image de défilement + dominante)
+   L'image est posée EN ARRIÈRE de la frame (floutée, légère), la couleur
+   dominante (auto-extraitée par le JS) est appliquée en teinte en haut +
+   liseré. Le JS écrit --edition-dyn sur .frame ; ici on a les teintes
+   de base (fallback si l'extracteur n'a pas encore tourné).
+   ═══════════════════════════════════════════════════════════ */
+
+/* Teinte dégradée en haut de la frame : couleur dominante + fondu vers le canvas */
+.frame[data-edition]:not([data-edition="none"]){
+  background:
+    linear-gradient(180deg, var(--edition-dyn, var(--edition, rgba(54,120,246,.25))) 0%,
+      rgba(0,0,0,0) 42%),
+    var(--bg);
+}
+/* Bandeau image : l'heure reste lisible sur l'image (text-shadow) */
+.frame[data-edition]:not([data-edition="none"])::before{
+  color:#FFFFFF;
+  text-shadow:0 1px 4px rgba(0,0,0,.5);
+}
+/* La barre du bas passe en blanc translucide sur l'image */
+.frame[data-edition]:not([data-edition="none"])::after{
+  background:rgba(255,255,255,.35);
+}
+
+/* Teintes de base par édition (fallback, en production remplacée par --edition-dyn) */
+.frame[data-edition="noel"]     {--edition:rgba(200,32,32,.40)}
+.frame[data-edition="paques"]   {--edition:rgba(216,91,134,.34)}
+.frame[data-edition="an"]       {--edition:rgba(123,97,255,.40)}
+.frame[data-edition="fete"]     {--edition:rgba(233,91,170,.34)}
+.frame[data-edition="paix"]     {--edition:rgba(36,122,85,.30)}
+.frame[data-edition="paris"]    {--edition:rgba(30,58,138,.42)}
+.frame[data-edition="tokyo"]    {--edition:rgba(216,91,134,.30)}
+.frame[data-edition="newyork"]  {--edition:rgba(30,64,175,.42)}
+.frame[data-edition="londres"]  {--edition:rgba(63,74,90,.44)}
+.frame[data-edition="dubai"]    {--edition:rgba(201,130,59,.34)}
+.frame[data-edition="sydney"]   {--edition:rgba(14,165,233,.32)}
+.frame[data-edition="afrique"]  {--edition:rgba(184,92,56,.34)}
+
+/* Édition AFRIQUE : on force aussi le style (brun terre-cuite + motifs wax) */
+.frame[data-edition="afrique"]{
+  --primary:#B85C38; --primary-600:#9A4526; --on-primary:#FFFFFF;
+  --secondary:#C9823B; --accent:#D8AE72; --chart:#C06A44; --sel-surface:#F2E1C3;
+  --grad:linear-gradient(135deg,#B85C38 0%,#C9823B 55%,#D8AE72 100%);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   COUCHE 4 — IMAGE PERSONNALISÉE (upload, extraction locale)
+   Le JS écrit --edition-dyn + data-edition="custom" sur .frame.
+   Le style par défaut reste actif (la teinte se superpose sans le remplacer).
+   ═══════════════════════════════════════════════════════════ */
+.frame[data-edition="custom"]{
+  background:
+    linear-gradient(180deg, var(--edition-dyn, rgba(54,120,246,.25)) 0%,
+      rgba(0,0,0,0) 42%),
+    var(--bg);
+}

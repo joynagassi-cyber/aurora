@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aurora — onboarding</title>
+<link rel="stylesheet" href="aurora.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+.oh{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;text-align:center;padding:0 34px}
+.oh .logo{width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,var(--primary) 0%,var(--secondary) 55%,var(--accent) 100%);display:grid;place-items:center;box-shadow:0 18px 44px -10px rgba(54,120,246,.55);margin-bottom:26px}
+.oh .logo svg{width:38px;height:38px}
+.oh h1{font-size:26px;font-weight:800;letter-spacing:-.6px;margin:0 0 10px}
+.oh p{font-size:14px;color:var(--text-2);line-height:1.6;margin:0}
+.dots{display:flex;gap:6px;justify-content:center;margin:30px 0}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--border-strong)}
+.dots i.on{width:20px;border-radius:99px;background:var(--primary)}
+.opt{width:100%;display:flex;align-items:center;gap:12px;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;text-align:left;font-family:inherit}
+.opt.on{border-color:var(--primary);background:var(--sel-surface)}
+.opt .oi{width:40px;height:40px;border-radius:11px;background:var(--bg-subtle);display:grid;place-items:center;color:var(--text-2);flex:0 0 auto}
+.opt.on .oi{background:var(--primary);color:#fff}
+.opt .ot{flex:1;min-width:0}
+.opt .ot b{font-size:14px;font-weight:600;color:var(--text-1)}
+.opt .ot span{font-size:12px;color:var(--text-muted)}
+.opt .radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--border-strong);flex:0 0 auto}
+.opt.on .radio{border-color:var(--primary);background:var(--primary);box-shadow:inset 0 0 0 3px var(--sel-surface)}
+.themerow{display:flex;gap:12px;margin-top:16px}
+.themerow button{flex:1;height:54px;border-radius:12px;border:2px solid var(--border);cursor:pointer;position:relative;overflow:hidden}
+.themerow button::after{content:"";position:absolute;inset:0;border-radius:10px;background:linear-gradient(120deg,rgba(255,255,255,.55),transparent)}
+.themerow .tA{background:linear-gradient(135deg,#3678F6,#22C7D6)}
+.themerow .tL{background:linear-gradient(135deg,#0E9E9E,#7ADFCB)}
+.themerow .tN{background:linear-gradient(135deg,#0A0E1A,#27324d)}
+.themerow button.on{border-color:var(--primary)}
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="safe content" style="display:flex;flex-direction:column;padding-top:12px">
+    <div class="topbar" style="padding-top:0">
+      <span class="mono" style="font-size:12px;color:var(--text-muted);font-weight:500">1 / 3</span>
+      <button class="iconbtn focus-ring" aria-label="Passer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6v12h12"/></svg></button>
+    </div>
+
+    <div class="oh">
+      <div class="logo"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2 14 10l8-2-7 5 3 8-6-4-6 4 3-8L2 8l8 2z"/></svg></div>
+      <h1>Qui es-tu ?</h1>
+      <p>Aurora s'adapte à ton rythme d'apprentissage.<br>Choisis le profil le plus proche du tien.</p>
+      <div class="dots"><i class="on"></i><i></i><i></i></div>
+    </div>
+
+    <div style="padding:0 6px">
+      <button class="opt on"><span class="oi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></span>
+        <span class="ot"><b>Étudiant</b><span>Cours, révisions, examens</span></span><span class="radio"></span></button>
+      <button class="opt"><span class="oi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
+        <span class="ot"><b>Professionnel</b><span>Projet, objectifs, production</span></span><span class="radio"></span></button>
+      <button class="opt"><span class="oi"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg></span>
+        <span class="ot"><b>Curieux</b><span>Apprendre par curiosité</span></span><span class="radio"></span></button>
+
+      <div class="themerow" aria-label="Thème">
+        <button class="tA on" aria-label="Aurora"></button>
+        <button class="tL" aria-label="Lagoon"></button>
+        <button class="tN" aria-label="Nocturne"></button>
+      </div>
+
+      <button class="btn btn-primary lg focus-ring" style="margin-top:22px">Continuer</button>
+    </div>
+  </div>
+</div>
+<span class="pill-label"><span class="dot"></span>Onboarding · S1/3 <span class="route">/onboarding</span></span>
+</body>
+</html>

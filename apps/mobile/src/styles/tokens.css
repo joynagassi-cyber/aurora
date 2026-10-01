@@ -1,0 +1,174 @@
+/*
+ * Aurora — mobile page layer, global baseline (AD-17, 05 §2.1 / §5.8).
+ *
+ * Two jobs, both token-driven (zéro valeur brute hors token, ui-libraries §4):
+ *   1. A `:root` FALLBACK for every `--aurora-*` variable, so the app is
+ *      never unstyled even before <AuroraThemeProvider> runs its effect
+ *      (or in a test harness without a provider). The provider writes the
+ *      SAME var names on <html> with inline style (higher precedence), so
+ *      the active expressive theme / preset / dark style wins at runtime;
+ *      this block is only the pre-hydration + default (light, blanc-par-défaut).
+ *   2. Base resets + global a11y (focus ring, reduced-motion, tap targets).
+ *
+ * Value format: the tokens are FULL colors (hex / rgba), matching
+ * packages/ui/themes/neutral.ts + the theme JSONs — `var(--aurora-bg)` is
+ * used directly, NOT `hsl(var(…))`.
+ */
+
+/* ---- Token fallback (light neutral + default "aurora" accents, 05 §5.4) --- */
+:root {
+  /* Surfaces (neutral style, G-H2: #F8FAFC light canvas) */
+  --aurora-bg: #f8fafc;
+  --aurora-bg-subtle: #e2e8f0;
+  --aurora-surface: #ffffff;
+  --aurora-surface-alt: #f8fafc;
+  --aurora-surface-overlay: rgba(255, 255, 255, 0.85);
+
+  /* Text */
+  --aurora-text-primary: #0f172a;
+  --aurora-text-secondary: #334155;
+  --aurora-text-muted: #94a3b8;
+  --aurora-text-disabled: #cbd5e1;
+
+  /* Borders */
+  --aurora-border: #e2e8f0;
+  --aurora-border-strong: #94a3b8;
+
+  /* Semantic states — theme-INDEPENDENT (05 §5.1 blocking rule) */
+  --aurora-success: #10b981;
+  --aurora-success-surface: #e8faf0;
+  --aurora-warning: #f59e0b;
+  --aurora-warning-surface: #fff4e0;
+  --aurora-danger: #ef4444;
+  --aurora-danger-surface: #feecec;
+  --aurora-info: #0ea5e9;
+
+  /* Node states (knowledge tree, AD-6) */
+  --aurora-node-mastered: #10b981;
+  --aurora-node-fragile: #f59e0b;
+  --aurora-node-forgotten: #ef4444;
+
+  /* Habit streaks (05 §2.1.2) */
+  --aurora-habit-weak: #e2e8f0;
+  --aurora-habit-med: #9aa4f4;
+  --aurora-habit-strong: #4f5ae8;
+
+  /* Skeleton */
+  --aurora-skeleton: #e2e8f0;
+
+  /* Expressive accents (default "aurora", 05 §5.4.1) */
+  --aurora-accent-primary: #3678f6;
+  --aurora-accent-secondary: #22c7d6;
+  --aurora-accent-punctual: #7b61ff;
+  --aurora-accent-selected-surface: #b8dfff;
+  --aurora-accent-on-primary: #ffffff;
+  --aurora-accent-focus-ring: #3678f6;
+  --aurora-accent-surface: #b8dfff;
+
+  /* Geometry (DS convention 05 §3: border radius capped 0.5rem = 8px) */
+  --radius: 0.5rem;
+  --aurora-radius: 0.5rem;
+
+  /* Geometry overrides a preset may carry (05 §5.5) — defaults */
+  --aurora-focus-ring-width: 2px;
+  --aurora-tap-target: 44px;
+
+  /* Elevation (Technical Calm 05 §1: subtle, never heavy) */
+  --aurora-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.06),
+    0 1px 3px rgba(15, 23, 42, 0.1);
+  --aurora-shadow-float: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+/* ---- Base resets ------------------------------------------------------ */
+html,
+body {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background: var(--aurora-bg);
+  color: var(--aurora-text-primary);
+  margin: 0;
+  overflow-x: hidden;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+code,
+.mono,
+.tabular-nums {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Reset native controls to the DS surface language (05 §3). */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+/* No-color accent-only rule: interactive accents follow the active theme. */
+a {
+  color: var(--aurora-accent-primary);
+  text-decoration: none;
+}
+
+/* ---- Global a11y (05 §6.3) ------------------------------------------- */
+
+/* Visible focus: 2px accent ring + offset (High Contrast preset → 3px via
+ * the token; `var` fallback keeps 2px when no preset is active). */
+:focus-visible {
+  outline: var(--aurora-focus-ring-width, 2px) solid
+    var(--aurora-accent-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--aurora-radius, 0.5rem);
+}
+
+/* Global tap-target floor (05 §6.3: ≥ 44px; High Contrast → 56px via token).
+ * Applied to the interactive elements the screen layer marks `.aurora-tap`. */
+.aurora-tap {
+  min-height: var(--aurora-tap-target, 44px);
+  min-width: var(--aurora-tap-target, 44px);
+}
+
+/* Reduced motion (05 §2.6 rule 2 — MANDATORY): everything → instant. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---- Scroll chrome (Technical Calm: thin, theme-following) ------------ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--aurora-border-strong);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

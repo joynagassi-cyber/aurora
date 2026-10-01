@@ -1,0 +1,115 @@
+/*
+ * Aurora — Slide-Ascent (docs/ascent/overview S11–S14).
+ *
+ * The screen is a slide DECK over the mirrored AscentLearningIR. The slide
+ * card is one calm surface; the 5 Active-Reading actions are a compact
+ * token-button row. Badges (depth + source hierarchy) are quiet chips.
+ * All the screen's structure is marked with `data-*` — we style here.
+ */
+
+[data-ascent-state="ready"] {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Level-1 disclosure header (S11: current + next ONLY, never the path). */
+[data-ascent-level="1"] {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+}
+[data-ascent-goal] {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--aurora-text-muted);
+}
+[data-ascent-current] {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--aurora-text-primary);
+}
+[data-ascent-next] {
+  font-size: 13px;
+  color: var(--aurora-text-secondary);
+}
+
+/* Slide card — the one card-like surface of the screen. */
+[data-slide-type] {
+  padding: 14px 16px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+}
+[data-slide-label] {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+  margin-bottom: 12px;
+}
+
+/* Active-reading actions (S14: exactly 5 cover 90% of needs). */
+[data-active-reading] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+[data-active-reading] button {
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+  background: var(--aurora-bg-subtle);
+  border: 1px solid var(--aurora-border);
+  border-radius: 9999px;
+  transition: background-color 0.18s ease;
+}
+[data-active-reading] button:hover {
+  background: var(--aurora-accent-selected-surface);
+  border-color: var(--aurora-accent-primary);
+}
+
+/* Analogy + source-conflict chips (AD-11: never silent over A). */
+[data-analogy-label],
+[data-source-conflict] {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  margin-bottom: 8px;
+}
+[data-analogy-label] {
+  color: var(--aurora-accent-punctual);
+  background: var(--aurora-surface-alt);
+}
+[data-source-conflict] {
+  color: var(--aurora-warning);
+  background: var(--aurora-warning-surface);
+}
+
+/* Disclosure levels section (S11: 1=now+next, 2=+depth, 3=+source). */
+[data-ascent-disclosure] {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+[data-disclosure-level] {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--aurora-text-secondary);
+  background: var(--aurora-surface-alt);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+}

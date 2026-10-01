@@ -23,6 +23,21 @@ import '@ionic/react/css/normalize.css';
 import '@ionic/react/css/structure.css';
 import '@ionic/react/css/typography.css';
 
+// Aurora page layer (AD-17): the token baseline + premium per-family
+// stylesheets that style the screens' custom classes. Every value is a
+// `var(--aurora-*)` token — the <AuroraThemeProvider> (via FocusThemeAdapter)
+// re-writes the same vars at runtime for the active theme/preset/style.
+// Order: global baseline → shared atoms → screen families.
+import './styles/tokens.css';
+import './styles/atoms.css';
+import './styles/home.css';
+import './styles/goals.css';
+import './styles/focus.css';
+import './styles/agent.css';
+import './styles/ascent.css';
+import './styles/data.css';
+import './styles/floating.css';
+
 import { AuroraApp } from './app';
 import { FocusThemeAdapter } from './ux/theme-adapter';
 import { MobileDataCtx } from './query/context';
@@ -43,11 +58,14 @@ const dataProvider = mobileDataProviderFrom(provider);
 function Root() {
   const focusActive = useUiStateStore((s) => s.focusActive);
   const theme = useUiStateStore((s) => s.theme);
+  const auroraTheme = useUiStateStore((s) => s.auroraTheme);
   // A7 (AD-17): DARK only when the user explicitly chose it — 'auto' resolves
   // to light (blanc-par-défaut), never a silent theme switch on foreground.
   const style = theme === 'dark' ? 'dark' : 'light';
+  // Layer-2 expressive theme / preset (05 §5). 'auto' = the default theme.
+  const themeName = auroraTheme === 'auto' ? 'aurora' : auroraTheme;
   return (
-    <FocusThemeAdapter focusActive={focusActive} style={style}>
+    <FocusThemeAdapter focusActive={focusActive} style={style} theme={themeName}>
       <MobileDataCtx value={dataProvider}>
         <AuroraApp dataProvider={dataProvider} />
       </MobileDataCtx>

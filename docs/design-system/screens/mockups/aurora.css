@@ -1,0 +1,139 @@
+/* ============================================================
+   AURORA — DESIGN SYSTEM COMMON MOCKUP SHELL
+   Direction: "Technical Calm" (05 §1). Tokens FROZEN (05 §2.1):
+   - Light: canvas #F8FAFC, surface #FFFFFF
+   - Dark  : canvas #0A0E1A, surface #151C2C (surfaces-alt #1B2438)
+   Theme: Aurora (default) — primary #3678F6, cyan #22C7D6, violet #7B61FF
+   Fonts: Inter (body) + JetBrains Mono (data/hours/percent).
+   Radii: md 8px, lg 16px, full 999px. Shadows subtle. No decoration.
+   ============================================================ */
+:root{
+  --bg:#F8FAFC; --bg-subtle:#EEF3F9; --surface:#FFFFFF; --surface-alt:#F5F8FC;
+  --text-1:#0F172A; --text-2:#334155; --text-muted:#94A3B8; --text-disabled:#CBD5E1;
+  --border:#E2E8F0; --border-strong:#CBD5E1;
+  --success:#10B981; --success-surface:#E8FAF0;
+  --warning:#F59E0B; --warning-surface:#FFF4E0;
+  --danger:#EF4444;  --danger-surface:#FEECEC;
+  --info:#0EA5E9;    --info-surface:#E6F4FD;
+  --node-mastered:#10B981; --node-fragile:#F59E0B; --node-forgotten:#EF4444;
+  --primary:#3678F6; --primary-600:#2563EB; --on-primary:#FFFFFF;
+  --secondary:#22C7D6; --accent:#7B61FF; --chart:#5A67F2;
+  --sel-surface:#B8DFFF; --skeleton:#E2E8F0;
+  --shadow-1:0 1px 2px rgba(15,23,42,.06);
+  --shadow-2:0 2px 8px rgba(15,23,42,.08);
+  --shadow-4:0 12px 32px rgba(15,23,42,.14);
+  --radius:8px; --radius-lg:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:#0B1120; color:var(--text-1);
+  font-family:"Inter",system-ui,Roboto,sans-serif; font-size:15px; line-height:1.45;
+  -webkit-font-smoothing:antialiased; display:flex; flex-direction:column; align-items:center;
+  padding:20px 0;
+}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+/* Device frame (mobile 390x844) */
+.frame{
+  width:390px; height:844px; background:var(--bg); position:relative; overflow:hidden;
+  border-radius:44px; box-shadow:0 40px 90px -20px rgba(2,6,23,.55), inset 0 0 0 11px #0f172a;
+  border:1px solid #1e293b; display:flex; flex-direction:column;
+}
+.frame::before{ /* status bar */
+  content:"9:41"; position:absolute; top:12px; left:0; right:0; text-align:center;
+  font-size:13px; font-weight:600; color:var(--text-1); z-index:40;
+}
+.frame::after{ /* home indicator */
+  content:""; position:absolute; bottom:8px; left:50%; transform:translateX(-50%);
+  width:130px; height:5px; border-radius:99px; background:rgba(15,23,42,.28); z-index:40;
+}
+/* Top safe area inside content */
+.safe{padding-top:38px}
+/* ---------- TopBar ---------- */
+.topbar{display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 16px;flex:0 0 auto}
+.topbar h1{font-size:19px;font-weight:700;margin:0;letter-spacing:-.2px}
+.topbar .sub{font-size:12px;color:var(--text-muted);margin-top:1px}
+.iconbtn{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;color:var(--text-2);background:transparent;border:0;cursor:pointer}
+.iconbtn svg{width:20px;height:20px}
+/* ---------- Content ---------- */
+.content{flex:1 1 auto;overflow-y:auto;padding:0 16px 24px;scrollbar-width:none}
+.content::-webkit-scrollbar{display:none}
+.section-title{font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--text-muted);margin:20px 0 10px}
+/* ---------- Card / ListItem ---------- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:12px;box-shadow:var(--shadow-1)}
+.card.elevated{box-shadow:var(--shadow-2)}
+.listitem{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--border)}
+.listitem:last-child{border-bottom:0}
+.li-icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto}
+.li-body{flex:1;min-width:0}
+.li-title{font-size:14px;font-weight:500;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+.li-chev{color:var(--text-disabled)}
+/* ---------- Buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;border:1px solid transparent;transition:transform .12s ease,box-shadow .12s ease;font-family:inherit}
+.btn:active{transform:scale(.97)}
+.btn svg{width:18px;height:18px}
+.btn-primary{background:var(--primary);color:var(--on-primary);box-shadow:0 4px 12px rgba(54,120,246,.35)}
+.btn-primary.lg{height:56px;width:100%;font-size:15px}
+.btn-ghost{background:transparent;color:var(--text-2)}
+.btn-outline{background:transparent;border-color:var(--border-strong);color:var(--text-1)}
+/* ---------- Badges / chips ---------- */
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;line-height:1.1}
+.badge.info{background:var(--info-surface);color:#0369A1}
+.badge.success{background:var(--success-surface);color:#047857}
+.badge.warning{background:var(--warning-surface);color:#B45309}
+.badge.danger{background:var(--danger-surface);color:#B91C1C}
+.badge.primary{background:var(--sel-surface);color:var(--primary-600)}
+.badge.accent{background:#EEEBFF;color:var(--accent)}
+.badge.muted{background:var(--bg-subtle);color:var(--text-2)}
+/* ---------- Progress ---------- */
+.progress{height:8px;border-radius:99px;background:var(--surface-alt);overflow:hidden}
+.progress>span{display:block;height:100%;border-radius:99px}
+/* ---------- Callout ---------- */
+.callout{display:flex;gap:10px;padding:12px;border-radius:var(--radius);font-size:13px;align-items:flex-start}
+.callout svg{width:18px;height:18px;flex:0 0 auto;margin-top:1px}
+.callout.info{background:var(--info-surface);color:#075985}
+.callout.danger{background:var(--danger-surface);color:#B91C1C}
+.callout strong{font-weight:600}
+/* ---------- Skeleton ---------- */
+.skel{background:var(--skeleton);border-radius:8px;animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+/* ---------- Focus ring ---------- */
+.focus-ring{outline:none}
+.focus-ring:focus-visible{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--primary)}
+/* ---------- Bottom nav (5 tabs: Accueil/Tâches/Apprendre/Progression/Coach) ---------- */
+.bottomnav{flex:0 0 auto;display:flex;height:64px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-top:1px solid var(--border);padding-bottom:14px}
+.bottomnav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:0;border:0;color:var(--text-muted);font-size:10.5px;font-weight:500;cursor:pointer;font-family:inherit}
+.bottomnav button svg{width:21px;height:21px}
+.bottomnav button.on{color:var(--primary)}
+/* ---------- FAB ---------- */
+.fab{position:absolute;right:20px;bottom:84px;width:56px;height:56px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;box-shadow:0 8px 20px rgba(54,120,246,.45);z-index:30;border:0;cursor:pointer}
+.fab svg{width:24px;height:24px}
+/* ---------- Segmented control ---------- */
+.seg{display:flex;background:var(--bg-subtle);border-radius:99px;padding:4px;gap:4px}
+.seg button{flex:1;padding:8px 4px;border:0;background:transparent;border-radius:99px;font-size:12.5px;font-weight:600;color:var(--text-2);cursor:pointer;font-family:inherit}
+.seg button.on{background:var(--surface);color:var(--primary-600);box-shadow:var(--shadow-1)}
+/* ---------- Dark theme (Nocturne preset) ---------- */
+.dark{
+  --bg:#0A0E1A; --bg-subtle:#0F1524; --surface:#151C2C; --surface-alt:#1B2438;
+  --text-1:#F1F5F9; --text-2:#94A3B8; --text-muted:#64748B; --text-disabled:#475569;
+  --border:#334155; --border-strong:#64748B;
+  --success:#34D399; --success-surface:#064E3B;
+  --warning:#FBBF24; --warning-surface:#7C3A08;
+  --danger:#F87171;  --danger-surface:#7F1D1D;
+  --info:#38BDF8;    --info-surface:#083344;
+  --node-mastered:#34D399; --node-fragile:#FBBF24; --node-forgotten:#F87171;
+  --primary:#3678F6; --primary-600:#60A5FA; --on-primary:#FFFFFF;
+  --sel-surface:#1E3A5F; --skeleton:#1B2438;
+  --shadow-1:0 1px 2px rgba(0,0,0,.5); --shadow-2:0 2px 10px rgba(0,0,0,.55); --shadow-4:0 16px 40px rgba(0,0,0,.6);
+}
+.dark .frame::before{color:#F1F5F9}
+.dark .frame::after{background:rgba(241,245,249,.3)}
+.dark .bottomnav{background:rgba(21,28,44,.92)}
+.dark .badge.info{color:#7DD3FC}.dark .badge.success{color:#6EE7B7}
+.dark .badge.warning{color:#FCD34D}.dark .badge.danger{color:#FCA5A5}
+.dark .badge.primary{color:#93C5FD}.dark .callout.info{color:#7DD3FC}.dark .callout.danger{color:#FCA5A5}
+/* ---------- Page label (top of frame, for the mockup browser) ---------- */
+.pill-label{margin-top:4px;margin-bottom:12px;display:inline-flex;gap:8px;align-items:center;font-size:12.5px;font-weight:600;color:#CBD5E1}
+.pill-label .dot{width:8px;height:8px;border-radius:50%;background:var(--primary)}
+.pill-label .route{color:#64748B;font-weight:500;font-family:"JetBrains Mono",monospace}

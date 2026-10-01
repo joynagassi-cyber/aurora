@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aurora — objectifs-detail (mission-control)</title>
+<link rel="stylesheet" href="aurora.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="frame">
+  <div class="safe content">
+    <!-- Header band (full-width, no card — S4) -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <div style="width:20px;height:20px;border-radius:5px;background:linear-gradient(135deg,var(--primary),var(--secondary),var(--accent));display:grid;place-items:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M12 2 14 10l8-2-7 5 3 8-6-4-6 4 3-8L2 8l8 2z"/></svg></div>
+      <div style="flex:1;min-width:0">
+        <h1 style="font-size:20px;font-weight:700;margin:0;letter-spacing:-.3px">Préparer l'oral de soutenance</h1>
+        <div class="mono" style="font-size:11.5px;color:var(--text-muted);margin-top:2px">Horizon 3 mois · cible 14 déc. 2026</div>
+      </div>
+    </div>
+    <!-- Global progress (info token, 8px, radius full) -->
+    <div style="display:flex;align-items:center;gap:10px;margin:12px 0 4px">
+      <div class="progress" style="flex:1"><span style="width:45%;background:var(--info)"></span></div>
+      <span class="mono" style="font-size:12px;color:var(--text-2)">45 %</span>
+    </div>
+
+    <!-- Feature workflow (node grid + SVG lines) -->
+    <div class="section-title">Workflow</div>
+    <div class="card" style="padding:14px;position:relative">
+      <!-- SVG connectors (1px, 40% opacity, rounded joints, aria-hidden) -->
+      <svg aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none">
+        <g stroke="var(--text-2)" stroke-opacity=".35" stroke-width="1" stroke-linecap="round" fill="none">
+          <path d="M54 38 h20"/><path d="M150 38 h20"/><path d="M54 66 v18"/><path d="M150 66 v18"/><path d="M102 94 h-2 v22"/><path d="M102 94 h2 v22"/>
+        </g>
+      </svg>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 12px;position:relative;z-index:1">
+        <!-- nodes 96×56 -->
+        <div class="nodedone"><span class="n-tag">done</span><div class="n-ic" style="background:var(--success-surface);color:var(--success)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg></div><span>Consignes</span></div>
+        <div class="nnode"><div class="n-ic" style="background:var(--sel-surface);color:var(--primary-600)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16v16H4z"/><path d="M4 9h16"/></svg></div><span>Programme</span></div>
+        <div class="nodeactive"><div class="n-ic" style="background:var(--primary);color:#fff"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="10"/></svg></div><span>Slides</span><i class="pulse-dot"></i></div>
+        <div class="nnode"><div class="n-ic" style="background:var(--surface-alt);color:var(--text-muted)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 2v4M16 2v4M3 9h18"/><rect x="3" y="5" width="18" height="16" rx="2"/></svg></div><span>Oral J-2</span></div>
+        <div class="nnode" style="grid-column:1/-1;justify-self:start"><div class="n-ic" style="background:var(--danger-surface);color:var(--danger)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg></div><span style="text-decoration:none">Q&amp;A · bloqué</span></div>
+      </div>
+    </div>
+
+    <!-- Context strip (inline, no card — S4) : stats + NL agent suggestion -->
+    <div class="section-title">Cette semaine</div>
+    <div style="padding:2px 4px">
+      <div class="mono" style="font-size:12px;color:var(--text-2)">3/5 focus · 2 QCM faits · 1 jalon atteint</div>
+      <p style="font-size:13px;color:var(--text-2);margin:10px 0 0;cursor:pointer;line-height:1.5">
+        « Les slides sont bloqués sur la Q&amp;A. Veux-tu que je te suggère 3 questions probables pour te dégager ? »
+        <span style="color:var(--primary-600);font-weight:600">→ Ouvrir le Coach</span>
+      </p>
+    </div>
+
+    <!-- CTA unique -->
+    <button class="btn btn-primary lg focus-ring" style="margin-top:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg> Ouvrir le projet</button>
+  </div>
+  <nav class="bottomnav">
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Accueil</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8"/></svg>Tâches</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Apprendre</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="m7 14 3-3 3 3 5-5"/></svg>Progression</button>
+    <button class="on"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 8V4M8 8l2-2M16 8l-2-2"/><circle cx="12" cy="14" r="6"/></svg>Coach</button>
+  </nav>
+<style>
+.nnode,.nnodeactive,.nnode,{background:var(--surface);border:1px solid var(--border);border-radius:8px;width:96px;height:56px;display:flex;flex-direction:column;justify-content:center;gap:4px;padding:8px;position:relative}
+.nodeactive{border-color:var(--primary);background:var(--sel-surface);box-shadow:0 0 0 3px rgba(54,120,246,.18)}
+.nodeblocked{border-color:var(--danger-surface)}
+.nodeactive .pulse-dot{position:absolute;top:-4px;right:-4px;width:9px;height:9px;border-radius:50%;background:var(--primary);animation:pulse 1.6s ease-in-out infinite}
+.nnode span{font-size:11.5px;font-weight:600;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nodeactive span{color:var(--primary-600)}
+.nodeblocked span{color:var(--text-2)}
+.nodeblocked .n-ic{background:var(--danger-surface)}
+</style>
+</body>
+</html>

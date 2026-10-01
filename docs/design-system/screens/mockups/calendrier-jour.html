@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aurora — calendrier-jour</title>
+<link rel="stylesheet" href="aurora.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+.pager{display:flex;align-items:center;justify-content:space-between;padding:6px 2px;margin-bottom:12px}
+.pager .seg{width:auto}
+.pager .seg button{padding:7px 14px;font-size:12px}
+.pager .date{text-align:center}
+.pager .date b{font-size:14px;font-weight:700;display:block}
+.pager .date span{font-size:11px;color:var(--text-muted)}
+.timeline{position:relative;padding-left:2px}
+.trow{display:grid;grid-template-columns:46px 1fr;gap:10px;margin-bottom:8px}
+.thour{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--text-muted);text-align:right;padding-top:12px}
+.slot{border-radius:12px;padding:10px 12px;border-left:3px solid var(--primary);background:var(--surface);border:1px solid var(--border);border-left-width:3px}
+.slot.now{background:var(--sel-surface);border-color:var(--primary)}
+.slot .s-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.slot .s-title{font-size:13.5px;font-weight:600}
+.slot .s-time{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--text-2)}
+.slot.free{background:transparent;border:1px dashed var(--border-strong)}
+.slot.free .s-title{color:var(--text-muted);font-weight:500}
+.nowline{position:relative;height:0;margin:2px 0 2px 56px}
+.nowline::before{content:"";position:absolute;left:-56px;right:0;height:2px;background:var(--danger);border-radius:2px}
+.nowline::after{content:"9:41";position:absolute;left:-52px;top:-9px;font-family:"JetBrains Mono",monospace;font-size:9px;color:#fff;background:var(--danger);padding:1px 5px;border-radius:6px}
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="safe content">
+    <div class="topbar" style="padding-top:0">
+      <h1 style="font-size:20px">Calendrier</h1>
+      <button class="iconbtn focus-ring" aria-label="Créer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+    </div>
+
+    <!-- Pager (jour/semaine/mois) -->
+    <div class="pager">
+      <div style="width:44px;height:44px;display:grid;place-items:center"><button class="iconbtn" style="width:40px;height:40px" aria-label="Précédent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button></div>
+      <div class="date"><b>30 septembre</b><span class="mono">lundi</span></div>
+      <div style="width:44px;height:44px;display:grid;place-items:center"><button class="iconbtn" style="width:40px;height:40px" aria-label="Suivant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></button></div>
+    </div>
+    <div class="seg" style="margin-bottom:16px">
+      <button class="on">Jour</button><button>Semaine</button><button>Mois</button>
+    </div>
+
+    <!-- time-block list -->
+    <div class="timeline">
+      <div class="trow"><div class="hour">09:00</div>
+        <div class="slot" style="border-left-color:var(--primary)">
+          <div class="s-head"><span class="s-title">Point sprint — équipe mobile</span><span class="s-time">45 min</span></div>
+          <div style="font-size:12px;color:var(--text-muted)">Teams · 5 participants</div>
+        </div></div>
+      <div class="trow"><div class="hour">10:00</div>
+        <div class="slot now" style="border-left-color:var(--accent)">
+          <div class="s-head"><span class="s-title">Focus · Slides de soutenance</span><span class="s-time mono">25:00</span></div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--primary-600);font-weight:600"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 2a10 10 0 1 0 10 10"/></svg> en cours · interruptions 0</div>
+        </div></div>
+      <div class="trow"><div class="hour">11:00</div>
+        <div class="slot free"><div class="s-head"><span class="s-title">Créneau libre</span></div>
+          <div style="font-size:12px;color:var(--text-muted)">Glisse pour bloquer un créneau</div></div></div>
+      <div class="trow"><div class="hour">12:00</div>
+        <div class="slot" style="border-left-color:var(--success)">
+          <div class="s-head"><span class="s-title">Déjeuner — avec Léa</span><span class="s-time">1 h</span></div>
+          <div style="font-size:12px;color:var(--text-muted)">Café du parc</div></div></div>
+      <div class="nowline"></div>
+      <div class="trow"><div class="hour">14:00</div>
+        <div class="slot" style="border-left-color:var(--warning)">
+          <div class="s-head"><span class="s-title">Rédiger le rapport d'avancement</span><span class="s-time">60 min</span></div>
+          <div style="display:flex;gap:6px;margin-top:4px"><span class="badge primary">Aurora</span><span class="badge muted mono">2/4</span></div></div></div>
+      <div class="trow"><div class="hour">16:30</div>
+        <div class="slot" style="border-left-color:var(--danger)">
+          <div class="s-head"><span class="s-title">Review code PR #248</span><span class="s-time">45 min</span></div>
+          <div style="font-size:12px;color:var(--text-muted)">github.com/aurora-2</div></div></div>
+    </div>
+  </div>
+  <button class="fab" aria-label="Nouvel événement"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  <nav class="bottomnav">
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Accueil</button>
+    <button class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8"/></svg>Tâches</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Apprendre</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="m7 14 3-3 3 3 5-5"/></svg>Progression</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 8V4M8 8l2-2M16 8l-2-2"/><circle cx="12" cy="14" r="6"/></svg>Coach</button>
+  </nav>
+</div>
+<span class="pill-label"><span class="dot"></span>Calendrier · jour <span class="route">/calendar</span></span>
+</body>
+</html>

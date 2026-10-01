@@ -1,0 +1,250 @@
+/*
+ * Aurora — shared primitives (atoms) for the mobile page layer.
+ *
+ * The generic building blocks every screen reuses: skeleton, offline badge,
+ * per-`data-state` empty/loading/error blocks, breadcrumb, primary/ghost
+ * buttons, and the global 404 / feature-disabled surface (OQ-48: ONE 404,
+ * reused by 5+ screens — AD-15, 1 pattern = 1 owner).
+ *
+ * All values = `var(--aurora-*)` tokens (ui-libraries §4, zéro valeur brute
+ * hors token). 44px tap floor on interactive elements (05 §6.3).
+ */
+
+/* ---- Skeleton shimmer (05 §3.7 loading state) ------------------------ */
+.aurora-skeleton {
+  height: 16px;
+  border-radius: var(--aurora-radius, 0.5rem);
+  background: linear-gradient(
+    90deg,
+    var(--aurora-skeleton) 25%,
+    var(--aurora-surface-alt) 37%,
+    var(--aurora-skeleton) 63%
+  );
+  background-size: 400% 100%;
+  animation: aurora-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+.aurora-skeleton[role="status"] {
+  min-height: 56px;
+}
+@keyframes aurora-skeleton-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+/* ---- Offline / state badge (03 §3.2) --------------------------------- */
+.aurora-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--aurora-text-primary);
+  background: var(--aurora-bg-subtle);
+  border: 1px solid var(--aurora-border);
+}
+.aurora-badge[data-badged="true"] {
+  color: var(--aurora-warning);
+  background: var(--aurora-warning-surface);
+  border-color: var(--aurora-warning);
+}
+
+/* ---- Generic per-`data-state` block (used across placeholder screens) */
+/* Each placeholder screen renders `<div data-state="…">…</div>`; give the
+ * three terminal states a consistent, premium card affordance. */
+[data-state="empty"],
+[data-state="error"] {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  border-radius: var(--aurora-radius, 0.5rem);
+  border: 1px dashed var(--aurora-border);
+  color: var(--aurora-text-secondary);
+  font-size: 14px;
+  text-align: center;
+  align-items: center;
+}
+[data-state="error"] {
+  border-color: var(--aurora-danger);
+  background: var(--aurora-danger-surface);
+  color: var(--aurora-danger);
+}
+[data-state="error"] button {
+  margin-top: 4px;
+  min-height: var(--aurora-tap-target, 44px);
+  padding: 0 16px;
+  border-radius: var(--aurora-radius, 0.5rem);
+  background: var(--aurora-danger);
+  color: var(--aurora-surface);
+  font-weight: 600;
+}
+[data-state="empty"] button[data-capture],
+[data-state="empty"] button[data-cta] {
+  margin-top: 8px;
+  min-height: var(--aurora-tap-target, 44px);
+  padding: 0 18px;
+  border-radius: var(--aurora-radius, 0.5rem);
+  background: var(--aurora-accent-primary);
+  color: var(--aurora-accent-on-primary);
+  font-weight: 600;
+}
+
+/* Loading block = the skeleton alone (no card chrome). */
+[data-state="loading"] {
+  min-height: 56px;
+}
+
+/* ---- Breadcrumb (goal-feature-detail, 02 §6.2) ----------------------- */
+.breadcrumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--aurora-text-muted);
+  padding: 8px 0;
+}
+.breadcrumb::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--aurora-accent-primary);
+  flex: none;
+}
+
+/* ---- Buttons (premium surface language, 05 §3.1) --------------------- */
+.aurora-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--aurora-tap-target, 44px);
+  padding: 0 18px;
+  border-radius: var(--aurora-radius, 0.5rem);
+  font-size: 14px;
+  font-weight: 600;
+  transition: opacity 0.18s ease, transform 0.18s ease,
+    background-color 0.18s ease;
+}
+.aurora-btn--primary {
+  background: var(--aurora-accent-primary);
+  color: var(--aurora-accent-on-primary);
+}
+.aurora-btn--primary:hover {
+  opacity: 0.92;
+}
+.aurora-btn--ghost {
+  background: transparent;
+  color: var(--aurora-text-primary);
+  border: 1px solid var(--aurora-border);
+}
+.aurora-btn--ghost:hover {
+  background: var(--aurora-bg-subtle);
+}
+.aurora-btn:active {
+  transform: scale(0.98);
+}
+.aurora-btn:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ---- Global 404 / feature-disabled surface (OQ-48, logo COLORÉ centre) */
+[data-state="feature-disabled"] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 60vh;
+  padding: 24px;
+  text-align: center;
+}
+[data-state="feature-disabled"] p {
+  color: var(--aurora-text-secondary);
+  font-size: 15px;
+}
+[data-state="feature-disabled"] a {
+  display: inline-flex;
+  min-height: var(--aurora-tap-target, 44px);
+  align-items: center;
+  padding: 0 20px;
+  border-radius: var(--aurora-radius, 0.5rem);
+  background: var(--aurora-accent-primary);
+  color: var(--aurora-accent-on-primary);
+  font-weight: 600;
+}
+
+/* ---- Segmented control (05 §3.4 Pager, T4 in-page view switch) ------- */
+.segmented {
+  display: flex;
+  gap: 4px;
+  margin: 12px 16px;
+  padding: 4px;
+  background: var(--aurora-bg-subtle);
+  border-radius: 9999px;
+}
+.segmented-item {
+  flex: 1;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--aurora-text-secondary);
+  background: transparent;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+.segmented-item.active {
+  background: var(--aurora-surface);
+  color: var(--aurora-text-primary);
+  box-shadow: var(--aurora-shadow-card);
+}
+
+/* The in-app logo (S9: no-background variant, centered on the 404 + empty
+ * states). When the real asset is pinned via `data-asset` it renders as an
+ * <img>; until then a token emblem stands in — the S9 "A" in the accent. */
+[data-state="feature-disabled"] .aurora-logo-center,
+.a404-logo {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  filter: none; /* S9: the color asset, not a monochrome mark, on the 404. */
+  background: radial-gradient(
+    circle at 30% 30%,
+    var(--aurora-accent-secondary),
+    var(--aurora-accent-primary) 70%
+  );
+  color: var(--aurora-accent-on-primary);
+  font-size: 40px;
+  font-weight: 800;
+  border-radius: 24px;
+}
+.a404-logo::before {
+  content: "A";
+}
+.a404-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+.a404-secondary {
+  min-height: var(--aurora-tap-target, 44px);
+  display: inline-flex;
+  align-items: center;
+  padding: 0 20px;
+  border-radius: var(--aurora-radius, 0.5rem);
+  color: var(--aurora-text-primary);
+  border: 1px solid var(--aurora-border);
+}

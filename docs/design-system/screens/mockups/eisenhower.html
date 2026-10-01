@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aurora — eisenhower</title>
+<link rel="stylesheet" href="aurora.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="frame">
+  <div class="safe content">
+    <div class="topbar" style="padding-top:0">
+      <h1 style="font-size:18px">Priorités</h1>
+      <button class="iconbtn focus-ring" aria-label="Voir liste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
+    </div>
+    <div class="sub" style="font-size:12.5px;color:var(--text-muted);margin-bottom:14px">Matrice Eisenhower · <span class="mono">9</span> tâches</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <!-- Q1 -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--danger);border-radius:14px;padding:12px;box-shadow:var(--shadow-1)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:13px;font-weight:700">Urgent &amp; important</span><span class="badge danger mono">4</span>
+        </div>
+        <div class="listitem" style="padding:9px 0;gap:9px"><div class="li-icon" style="width:30px;height:30px;font-size:11px;background:var(--danger-surface);color:var(--danger)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="li-body"><div class="li-title" style="font-size:12.5px">Migration v2</div><div class="li-sub" style="font-size:10.5px">auj. 18:00</div></div></div>
+        <div class="listitem" style="padding:9px 0;gap:9px;border-bottom:0"><div class="li-icon" style="width:30px;height:30px;font-size:11px;background:var(--danger-surface);color:var(--danger)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="li-body"><div class="li-title" style="font-size:12.5px">PR #248</div><div class="li-sub" style="font-size:10.5px">auj. 16:30</div></div></div>
+      </div>
+      <!-- Q2 -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--primary);border-radius:14px;padding:12px;box-shadow:var(--shadow-1)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:13px;font-weight:700">Important</span><span class="badge primary mono">3</span>
+        </div>
+        <div class="listitem" style="padding:9px 0;gap:9px"><div class="li-icon" style="width:30px;height:30px;font-size:11px;background:var(--sel-surface);color:var(--primary-600)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 1 0 10 10"/></svg></div><div class="li-body"><div class="li-title" style="font-size:12.5px">Slides oral</div><div class="li-sub" style="font-size:10.5px">J-3</div></div></div>
+        <div class="listitem" style="padding:9px 0;gap:9px;border-bottom:0"><div class="li-icon" style="width:30px;height:30px;font-size:11px;background:var(--sel-surface);color:var(--primary-600)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 1 0 10 10"/></svg></div><div class="li-body"><div class="li-title" style="font-size:12.5px">Rétro hebdo</div><div class="li-sub" style="font-size:10.5px">vend.</div></div></div>
+      </div>
+      <!-- Q3 -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--warning);border-radius:14px;padding:12px;box-shadow:var(--shadow-1)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:13px;font-weight:700">Urgent</span><span class="badge warning mono">1</span>
+        </div>
+        <div class="listitem" style="padding:9px 0;gap:9px;border-bottom:0"><div class="li-icon" style="width:30px;height:30px;font-size:11px;background:var(--warning-surface);color:var(--warning)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg></div><div class="li-body"><div class="li-title" style="font-size:12.5px">Relire Q&amp;A</div><div class="li-sub" style="font-size:10.5px">délai court</div></div></div>
+        <div style="font-size:11.5px;color:var(--text-muted);padding:6px 0">À déléguer ou à simplifier.</div>
+      </div>
+      <!-- Q4 -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--text-disabled);border-radius:14px;padding:12px;box-shadow:var(--shadow-1)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:13px;font-weight:700">Le reste</span><span class="badge muted mono">1</span>
+        </div>
+        <div class="listitem" style="padding:9px 0;gap:9px;border-bottom:0"><div class="li-icon" style="width:30px;height:30px;font-size:11px;background:var(--bg-subtle);color:var(--text-muted)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16v16H4z"/></svg></div><div class="li-body"><div class="li-title" style="font-size:12.5px">Organiser notes</div><div class="li-sub" style="font-size:10.5px">basse</div></div></div>
+        <div style="font-size:11.5px;color:var(--text-muted);padding:6px 0">À programmer ou à supprimer.</div>
+      </div>
+    </div>
+  </div>
+  <button class="fab" aria-label="Ajouter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  <nav class="bottomnav">
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Accueil</button>
+    <button class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8"/></svg>Tâches</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Apprendre</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="m7 14 3-3 3 3 5-5"/></svg>Progression</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 8V4M8 8l2-2M16 8l-2-2"/><circle cx="12" cy="14" r="6"/></svg>Coach</button>
+  </nav>
+</div>
+<span class="pill-label"><span class="dot"></span>Eisenhower · quadrants <span class="route">/tasks → vue</span></span>
+</body>
+</html>

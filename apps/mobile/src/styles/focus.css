@@ -1,0 +1,75 @@
+/*
+ * Aurora — Focus session screen (05 §4.4.2, focus-mode spec S6/S10).
+ *
+ * The Focus theme (OQ-15) is the ONLY local adaptation: secondary nodes
+ * attenuate (40%), active + progress at full contrast. The screen chrome
+ * itself is a calm, centered surface — one system, token-driven.
+ */
+
+.focus-setup,
+.focus-live {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  min-height: 56vh;
+  padding: 24px 24px 40px;
+}
+.focus-setup svg,
+.focus-live svg {
+  color: var(--aurora-accent-primary);
+  width: 48px;
+  height: 48px;
+}
+.focus-setup p {
+  margin: 0;
+  max-width: 30ch;
+  font-size: 15px;
+  color: var(--aurora-text-secondary);
+}
+.focus-setup ion-button,
+.focus-live ion-button {
+  --background: var(--aurora-accent-primary);
+  --color: var(--aurora-accent-on-primary);
+  --border-radius: var(--aurora-radius, 0.5rem);
+  min-height: var(--aurora-tap-target, 44px);
+  font-weight: 600;
+}
+
+/* Active session: the timer is the hero (system clock is the SSoT). */
+.focus-live [data-role="timer"] {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--aurora-text-primary);
+}
+
+/* DPC / restriction fallback callouts (spec S2/S10: detection, not a
+ * constant — the CTA is only rendered when blocking is actually available). */
+[data-state="dpc-available"],
+[data-state="restriction-fallback"] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  min-height: 44px;
+  border-radius: var(--aurora-radius, 0.5rem);
+  font-size: 13px;
+  font-weight: 500;
+}
+[data-state="dpc-available"] {
+  color: var(--aurora-success);
+  background: var(--aurora-success-surface);
+}
+[data-state="restriction-fallback"] {
+  color: var(--aurora-warning);
+  background: var(--aurora-warning-surface);
+}
+[data-state="dpc-available"] svg,
+[data-state="restriction-fallback"] svg {
+  width: 20px;
+  height: 20px;
+}

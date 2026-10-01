@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aurora — App complète (navigation + thèmes + éditions)</title>
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Lucide icons (vraies icônes, pas de picto nul) -->
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   AURORA — DESIGN SYSTEM SINGLE-FILE PROTOTYPE
+   Direction : "Technical Calm" (05 §1).
+   Thème 3 couches (AD-17, 05 §5.5) :
+   - Couche 1 : 10 styles expressifs (couleur d'identité)
+   - Couche 2 : 2 presets (Light / Dark-Spotify) — seuls à changer les tokens d'état
+   - Couche 3 : 12 éditions Premium (image de défilement + couleur dominante auto-extraitée)
+   Règle bloquante 05 §5.1 : un style ne redéfinit JAMAIS success/warning/danger/info.
+   Sources SSoT : docs/design-system/screens/*.md · packages/ui/src/themes/*.json
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Base ── */
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font-family:"Inter",system-ui,sans-serif; font-size:15px; line-height:1.45;
+  background:#0B1120; color:#F1F5F9;
+  -webkit-font-smoothing:antialiased;
+  display:flex; flex-direction:row; align-items:stretch; padding:0;
+}
+.mainwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 20px;min-width:0;overflow-y:auto}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+
+/* ═══════════ PAGE D'ENCADRREMENT (non app) ═══════════ */
+.topwrap{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
+.appbar{width:100%;max-width:440px;display:flex;align-items:center;justify-content:space-between;padding:2px 0}
+.appbar .brand{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:700;color:#E2E8F0}
+.appbar .brand .l{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,#3678F6,#22C7D6 55%,#7B61FF);display:grid;place-items:center;box-shadow:0 8px 18px -6px rgba(54,120,246,.5)}
+.appbar .brand .l svg{width:16px;height:16px}
+.appbar .r{display:flex;gap:8px;align-items:center}
+.appbar .r button{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;background:#131B2E;border:1px solid #263248;color:#94A3B8;cursor:pointer}
+.appbar .r button:hover{border-color:#33445f;color:#F1F5F9}
+.appbar .r button.on{border-color:#3678F6;color:#fff;background:rgba(54,120,246,.12)}
+.appbar .r button svg{width:17px;height:17px}
+
+/* Panel de thèmes (slide-over) */
+.theme-panel{position:fixed;left:0;top:0;bottom:0;width:340px;background:#0B1120;
+  z-index:200;transform:translateX(0);transition:transform .28s cubic-bezier(.4,0,.2,1);
+  overflow-y:auto;padding:18px 18px 60px;border-right:1px solid #1E293B}
+.theme-panel.closed{transform:translateX(-100%)}
+@media (max-width:760px){
+  .theme-panel{transform:translateX(-100%);border-left:1px solid #1E293B}
+  .theme-panel.open{transform:translateX(0)}
+}
+.theme-panel h2{font-size:16px;font-weight:800;margin:0 0 4px;letter-spacing:-.2px}
+.theme-panel .sub{font-size:11.5px;color:#94A3B8;margin-bottom:18px;line-height:1.5}
+.tp-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:9px;display:grid;place-items:center;
+  background:#131B2E;border:1px solid #263248;color:#94A3B8;cursor:pointer}
+.tp-close svg{width:18px;height:18px}
+.tp-section{margin-bottom:22px}
+.tp-section .lbl{font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:#64748B;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.tp-section .lbl .ln{flex:1;height:1px;background:#1E293B}
+
+/* Mode toggle */
+.mode-row{display:flex;background:#131B2E;border:1px solid #263248;border-radius:11px;padding:4px}
+.mode-row button{flex:1;border:0;background:transparent;color:#94A3B8;font-family:inherit;font-size:12.5px;font-weight:600;
+  padding:9px 6px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.mode-row button svg{width:15px;height:15px}
+.mode-row button.on{background:#1E2A3E;color:#fff}
+
+/* Styles grid */
+.style-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sty{background:#131B2E;border:1px solid #263248;border-radius:11px;padding:10px 11px;cursor:pointer;color:inherit;
+  font-family:inherit;text-align:left;transition:transform .12s,border-color .12s,box-shadow .12s}
+.sty:hover{transform:translateY(-1px);border-color:#33445f}
+.sty.on{border-color:#3678F6;box-shadow:0 0 0 2px rgba(54,120,246,.22)}
+.sty .sw{display:flex;gap:4px;margin-bottom:7px}
+.sty .sw span{width:16px;height:16px;border-radius:5px;display:inline-block;border:1px solid rgba(0,0,0,.2)}
+.sty .n{font-size:12px;font-weight:700}
+.sty .d{font-size:10px;color:#64748B;margin-top:1px}
+
+/* Éditions grid */
+.edi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.edi{background:#131B2E;border:1px solid #263248;border-radius:11px;padding:10px;cursor:pointer;color:inherit;
+  font-family:inherit;text-align:left;transition:transform .12s,border-color .12s,box-shadow .12s;position:relative}
+.edi:hover{transform:translateY(-1px);border-color:#33445f}
+.edi.on{border-color:#7B61FF;box-shadow:0 0 0 2px rgba(123,97,255,.22)}
+.edi .em{font-size:22px;line-height:1;display:block;margin-bottom:6px}
+.edi .n{font-size:12px;font-weight:700}
+.edi .d{font-size:9.5px;color:#64748B;margin-top:2px;line-height:1.35}
+.edi .prem{position:absolute;top:9px;right:9px;font-size:8.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;
+  color:#F7C948;background:rgba(247,201,72,.14);border:1px solid rgba(247,201,72,.35);padding:1.5px 6px;border-radius:99px}
+.edi.custom{background:#0E1524}
+.edi .drop{display:flex;flex-direction:column;align-items:center;gap:6px;padding:4px 0;min-height:60px;justify-content:center}
+.edi .drop svg{width:22px;height:22px;color:#64748B}
+.edi .drop b{font-size:11px;font-weight:700}
+.edi .drop span{font-size:9px;color:#94A3B8;text-align:center;line-height:1.3}
+
+/* ═══════════ FRAME + THÈMES ═══════════ */
+/* La frame a ses variables ; le body n'a JAMAIS de variables de thème pour
+   qu'elles soient définies au bon niveau. Le theme-panel est hors frame,
+   donc il a ses couleurs directes (#131B2E, #0B1120). */
+.frame{
+  position:relative;width:390px;height:844px;overflow:hidden;
+  border-radius:44px;box-shadow:0 40px 90px -20px rgba(2,6,23,.55), inset 0 0 0 11px #0F172A;
+  border:1px solid #1E293B;display:flex;flex-direction:column;
+  background:var(--bg,#F8FAFC);isolation:isolate;
+}
+/* L'image d'édition est posée DERRIÈRE le contenu mais DEVANT le fond de la frame */
+.frame .edition-img{position:absolute;inset:0;z-index:0;overflow:hidden;border-radius:44px}
+.frame .edition-img img{width:100%;height:100%;object-fit:cover;opacity:.5;filter:blur(8px) brightness(.82) saturate(1.15);transform:scale(1.08)}
+.frame .edition-img::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.5) 0%,rgba(0,0,0,.15) 32%,rgba(0,0,0,.1) 100%)}
+.frame .edition-bar{position:absolute;top:0;left:0;right:0;height:6px;z-index:60;border-radius:44px 44px 0 0}
+/* Contenu de la frame (z-index 1) */
+.frame > *{position:relative;z-index:1}
+.frame::before{ /* status bar */
+  content:"9:41";position:absolute;top:14px;left:0;right:0;text-align:center;
+  font-size:13px;font-weight:700;color:var(--text-1,#0F172A);z-index:55;
+  text-shadow:0 1px 3px rgba(0,0,0,.15);pointer-events:none;font-family:"Inter",sans-serif;
+}
+.frame::after{ /* home indicator */
+  content:"";position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  width:130px;height:5px;border-radius:99px;background:rgba(15,23,42,.3);z-index:55;pointer-events:none;
+}
+.frame.dark::before{color:#F1F5F9;text-shadow:none}
+.frame.dark::after{background:rgba(241,245,249,.3)}
+
+/* ═══════════ COUCHE 1 — 10 STYLES (couleur) ═══════════ */
+.frame[data-style="aurora"]  {--primary:#3678F6;--primary-600:#2563EB;--on-primary:#fff;--secondary:#22C7D6;--accent:#7B61FF;--sel-surface:#B8DFFF}
+.frame[data-style="lagoon"]  {--primary:#007C91;--primary-600:#0B6376;--on-primary:#fff;--secondary:#18B7A0;--accent:#50D8C0;--sel-surface:#D9F5EF}
+.frame[data-style="boreal"]  {--primary:#2E5C8A;--primary-600:#234A70;--on-primary:#fff;--secondary:#4A8C6A;--accent:#8DC7D9;--sel-surface:#DCEAF2}
+.frame[data-style="sakura"]  {--primary:#D85B86;--primary-600:#B83E69;--on-primary:#fff;--secondary:#E98EAD;--accent:#9B78C9;--sel-surface:#F8DCE7}
+.frame[data-style="vesper"]  {--primary:#6554C0;--primary-600:#4E3EA6;--on-primary:#fff;--secondary:#8C5BD6;--accent:#D05AA8;--sel-surface:#E7DDF8}
+.frame[data-style="solara"]  {--primary:#D99A24;--primary-600:#B87F18;--on-primary:#1A1206;--secondary:#F0B83F;--accent:#E86F42;--sel-surface:#FFF0C2}
+.frame[data-style="terra"]   {--primary:#B85C38;--primary-600:#9A4526;--on-primary:#fff;--secondary:#C9823B;--accent:#D8AE72;--sel-surface:#F2E1C3}
+.frame[data-style="verdant"] {--primary:#247A55;--primary-600:#185E40;--on-primary:#fff;--secondary:#42A96B;--accent:#8CCF8A;--sel-surface:#DFF3E3}
+.frame[data-style="citrus"]  {--primary:#F28C28;--primary-600:#D8731A;--on-primary:#1A1206;--secondary:#F7C948;--accent:#B7D83D;--sel-surface:#FFF0B8}
+.frame[data-style="cosmos"]  {--primary:#3B3FA7;--primary-600:#2A2E8A;--on-primary:#fff;--secondary:#18BFD4;--accent:#E95BAA;--sel-surface:#C7CBF0}
+
+/* ═══════════ COUCHE 2 — PRESETS (Light / Dark-Spotify) ═══════════ */
+/* LIGHT : canvas clair, surfaces blanches, état pastel (05 §2.1.2) */
+.frame:not(.dark){
+  --bg:#F8FAFC;--bg-subtle:#EEF3F9;--surface:#FFFFFF;--surface-alt:#F5F8FC;
+  --text-1:#0F172A;--text-2:#334155;--text-muted:#94A3B8;--text-disabled:#CBD5E1;
+  --border:#E2E8F0;--border-strong:#CBD5E1;
+  --success:#10B981;--success-surface:#E8FAF0;--warning:#F59E0B;--warning-surface:#FFF4E0;
+  --danger:#EF4444;--danger-surface:#FEECEC;--info:#0EA5E9;--info-surface:#E6F4FD;
+  --node-mastered:#10B981;--node-fragile:#F59E0B;--node-forgotten:#EF4444;
+  --skeleton:#E2E8F0;
+  --shadow-1:0 1px 2px rgba(15,23,42,.06);--shadow-2:0 2px 8px rgba(15,23,42,.08);--shadow-4:0 12px 32px rgba(15,23,42,.14);
+}
+/* DARK SPOTIFY : surblanc + surface sombre + état saturé (05 §2.1.3)
+   Ce n'est PAS un simple inverses : canvas #0A0E1A, surfaces montées
+   à #1E2430/#28313F, état saturé (success #2ED573, warning #FFB84D…).
+   L'accent du style reste lisible — on monte légèrement en luminance pour
+   les styles clairs (solara/citrus). */
+.frame.dark{
+  --bg:#0A0E1A;--bg-subtle:#0F1524;--surface:#1E2430;--surface-alt:#28313F;
+  --text-1:#F1F5F9;--text-2:#B4BFCF;--text-muted:#7B8698;--text-disabled:#4A5568;
+  --border:#334155;--border-strong:#4A5568;
+  --success:#2ED573;--success-surface:#12402B;--warning:#FFB84D;--warning-surface:#4A3210;
+  --danger:#FF5B5B;--danger-surface:#4A1616;--info:#38BDF8;--info-surface:#0E3A4A;
+  --node-mastered:#2ED573;--node-fragile:#FFB84D;--node-forgotten:#FF5B5B;
+  --skeleton:#28313F;
+  --shadow-1:0 1px 2px rgba(0,0,0,.45);--shadow-2:0 2px 10px rgba(0,0,0,.5);--shadow-4:0 16px 40px rgba(0,0,0,.55);
+}
+.frame.dark .bottomnav{background:rgba(30,36,48,.94)}
+.frame.dark .badge.info{color:#7DD3FC}
+.frame.dark .badge.success{color:#6EE7B7}
+.frame.dark .badge.warning{color:#FCD34D}
+.frame.dark .badge.danger{color:#FCA5A5}
+.frame.dark .badge.primary{color:#93C5FD}
+.frame.dark .badge.accent{color:#C4B5FD}
+.frame.dark .badge.muted{color:#B4BFCF}
+.frame.dark .callout.info{color:#7DD3FC}
+.frame.dark .callout.danger{color:#FCA5A5}
+.frame.dark .btn-outline{border-color:#4A5568;color:#E2E8F0;background:rgba(40,49,63,.5)}
+.frame.dark .btn-ghost{color:#B4BFCF}
+.frame.dark .li-sub,.frame.dark .sub{color:#7B8698}
+.frame.dark .section-title{color:#7B8698}
+.frame.dark .skel{background:var(--skeleton)}
+.frame.dark .progress{background:var(--surface-alt)}
+
+/* Dark Spotify : monter en luminance les styles clairs pour la lisibilité (05 §5.4) */
+.frame.dark[data-style="solara"]  {--primary:#F0B83F;--primary-600:#F0B83F;--on-primary:#1A1206;--sel-surface:#3A2E12}
+.frame.dark[data-style="citrus"]  {--primary:#F7C948;--primary-600:#F7C948;--on-primary:#1A1206;--sel-surface:#3A2E12}
+.frame.dark[data-style="lagoon"]  {--primary:#22D3EE;--primary-600:#06B6D4;--sel-surface:#16403D}
+.frame.dark[data-style="verdant"] {--primary:#34D399;--primary-600:#10B981;--sel-surface:#0E3B28}
+
+/* ═══════════ COUCHE 3 — ÉDITIONS PREMIUM (image + dominante) ═══════════
+   L'extracteur JS (getImageData) écrit --edition-dyn sur .frame.
+   Chaque édition a sa teinte de base en fallback. */
+.frame:not([data-edition="none"]) .edition-img,.frame:not([data-edition="none"]) .edition-bar{display:block}
+.frame[data-edition="none"] .edition-img,.frame[data-edition="none"] .edition-bar{display:none}
+.frame[data-edition]:not([data-edition="none"]){
+  background:linear-gradient(180deg,var(--edition-dyn,rgba(54,120,246,.25)) 0%,transparent 42%),var(--bg);
+}
+.frame[data-edition="noel"]    {--edition:rgba(200,32,32,.35)}
+.frame[data-edition="paques"]  {--edition:rgba(216,91,134,.30)}
+.frame[data-edition="an"]      {--edition:rgba(123,97,255,.35)}
+.frame[data-edition="fete"]    {--edition:rgba(233,91,170,.30)}
+.frame[data-edition="paix"]    {--edition:rgba(36,122,85,.28)}
+.frame[data-edition="paris"]   {--edition:rgba(30,58,138,.38)}
+.frame[data-edition="tokyo"]   {--edition:rgba(216,91,134,.28)}
+.frame[data-edition="newyork"] {--edition:rgba(30,64,175,.38)}
+.frame[data-edition="londres"] {--edition:rgba(63,74,90,.40)}
+.frame[data-edition="dubai"]   {--edition:rgba(201,130,59,.30)}
+.frame[data-edition="sydney"]  {--edition:rgba(14,165,233,.30)}
+.frame[data-edition="afrique"] {--edition:rgba(184,92,56,.30)}
+/* Édition AFRIQUE = style terra forcé (brun terre-cuite + motifs wax) */
+.frame[data-edition="afrique"]{
+  --primary:#B85C38;--primary-600:#9A4526;--on-primary:#fff;--secondary:#C9823B;--accent:#D8AE72;--sel-surface:#F2E1C3
+}
+/* Édition CUSTOM (image user) : la teinte vient de --edition-dyn extrait par le canvas */
+
+/* ═══════════ COMPOSANTS (05 §3) ═══════════ */
+/* safe area top (frame padding) */
+.safe{padding-top:38px;flex:1 1 auto;overflow-y:auto;scrollbar-width:none;display:flex;flex-direction:column;min-height:0}
+.safe::-webkit-scrollbar{display:none}
+
+/* TopBar (56px) */
+.topbar{display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 16px;flex:0 0 auto}
+.topbar h1{font-size:19px;font-weight:700;margin:0;letter-spacing:-.2px;color:var(--text-1)}
+.topbar .sub{font-size:12px;color:var(--text-muted);margin-top:1px}
+.iconbtn{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;color:var(--text-2);background:transparent;border:0;cursor:pointer}
+.iconbtn svg{width:20px;height:20px}
+.iconbtn .focus{color:var(--text-muted)}
+
+/* Section title */
+.section-title{font-size:11.5px;font-weight:700;letter-spacing:.65px;text-transform:uppercase;color:var(--text-muted);margin:20px 0 10px;padding:0 16px}
+.section-title:first-child{margin-top:4px}
+
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin:0 16px 12px;box-shadow:var(--shadow-1)}
+.card.elevated{box-shadow:var(--shadow-2)}
+.card.tight{padding:4px 12px}
+
+/* ListItem */
+.listitem{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--border)}
+.listitem:last-child{border-bottom:0}
+.li-icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex:0 0 auto;color:#fff}
+.li-icon svg{width:19px;height:19px}
+.li-body{flex:1;min-width:0}
+.li-title{font-size:14px;font-weight:600;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+.li-chev{color:var(--text-disabled);flex:0 0 auto}
+.li-chev svg{width:18px;height:18px}
+
+/* Buttons (05 §3.1) */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;font-weight:600;font-size:14px;
+  cursor:pointer;border:1px solid transparent;font-family:inherit;transition:transform .12s ease,box-shadow .12s ease;
+  padding:0 16px;min-height:44px}
+.btn svg{width:18px;height:18px}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--primary);color:var(--on-primary);box-shadow:0 4px 14px color-mix(in srgb,var(--primary) 38%,transparent)}
+.btn-primary.lg{height:56px;width:100%;font-size:15px}
+.btn-primary.sm{height:38px;padding:0 14px;font-size:13px}
+.btn-ghost{background:transparent;color:var(--text-2)}
+.btn-outline{background:transparent;border-color:var(--border-strong);color:var(--text-1)}
+.btn-ghost.sm,.btn-outline.sm{height:36px;padding:0 12px;font-size:12.5px}
+
+/* Badges / chips (05 §3.3) */
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;line-height:1.1;flex:0 0 auto}
+.badge svg{width:12px;height:12px}
+.badge.info{background:var(--info-surface);color:#0369A1}
+.badge.success{background:var(--success-surface);color:#047857}
+.badge.warning{background:var(--warning-surface);color:#B45309}
+.badge.danger{background:var(--danger-surface);color:#B91C1C}
+.badge.primary{background:var(--sel-surface);color:var(--primary-600)}
+.badge.accent{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent)}
+.badge.muted{background:var(--bg-subtle);color:var(--text-2)}
+
+/* Progress */
+.progress{height:8px;border-radius:99px;background:var(--surface-alt);overflow:hidden}
+.progress>span{display:block;height:100%;border-radius:99px}
+
+/* Callout */
+.callout{display:flex;gap:10px;padding:12px 14px;margin:0 16px;border-radius:12px;font-size:13px;align-items:flex-start;margin-bottom:12px}
+.callout svg{width:18px;height:18px;flex:0 0 auto;margin-top:1px}
+.callout.info{background:var(--info-surface);color:#075985}
+.callout.danger{background:var(--danger-surface);color:#B91C1C}
+.callout.success{background:var(--success-surface);color:#065F46}
+.callout strong{font-weight:700}
+
+/* Segmented control */
+.seg{display:flex;background:var(--bg-subtle);border-radius:99px;padding:4px;gap:4px;margin:0 16px}
+.seg button{flex:1;padding:8px 4px;border:0;background:transparent;border-radius:99px;font-size:12.5px;font-weight:600;
+  color:var(--text-2);cursor:pointer;font-family:inherit}
+.seg button.on{background:var(--surface);color:var(--text-1);box-shadow:var(--shadow-1)}
+
+/* SkillStateBadge (AD-10) — 3 couleurs figées */
+.skillstate{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600}
+.skillstate .dot{width:9px;height:9px;border-radius:50%}
+.skillstate.mastered{color:var(--node-mastered)}
+.skillstate.mastered .dot{background:var(--node-mastered)}
+.skillstate.fragile{color:var(--node-fragile)}
+.skillstate.fragile .dot{background:var(--node-fragile)}
+.skillstate.forgotten{color:var(--node-forgotten)}
+.skillstate.forgotten .dot{background:var(--node-forgotten)}
+
+/* BottomNav (5 items figés) */
+.bottomnav{flex:0 0 auto;display:flex;height:74px;background:var(--surface);border-top:1px solid var(--border);
+  padding:8px 4px 14px;backdrop-filter:blur(14px)}
+.bottomnav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:0;border:0;
+  color:var(--text-muted);font-size:10px;font-weight:500;cursor:pointer;font-family:inherit}
+.bottomnav button svg{width:22px;height:22px}
+.bottomnav button.on{color:var(--primary)}
+.bottomnav button.on .ic-fill{fill:var(--primary);stroke:var(--primary)}
+.bottomnav .ic-fill{fill:none}
+
+/* FAB */
+.fab{position:absolute;right:18px;bottom:88px;width:56px;height:56px;border-radius:50%;
+  background:var(--primary);color:var(--on-primary);display:grid;place-items:center;
+  box-shadow:0 8px 22px color-mix(in srgb,var(--primary) 45%,transparent);z-index:5;border:0;cursor:pointer}
+.fab svg{width:24px;height:24px}
+
+/* Focus ring (timer 208px) */
+.focus-ring{width:208px;height:208px;border-radius:50%;margin:24px auto 16px;display:grid;place-items:center;position:relative}
+.focus-ring .ring{position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(var(--primary) 0% 62%,color-mix(in srgb,var(--primary) 12%,transparent) 62% 100%);
+  -webkit-mask:radial-gradient(farthest-side,transparent 78%,#000 79%);mask:radial-gradient(farthest-side,transparent 78%,#000 79%);
+  transform:rotate(-90deg)}
+.focus-ring .inner{display:flex;flex-direction:column;align-items:center;gap:4px}
+.focus-ring .time{font-family:"JetBrains Mono",monospace;font-size:44px;font-weight:600;letter-spacing:-1px;color:var(--text-1)}
+.focus-ring .lbl{font-size:12px;color:var(--text-muted)}
+
+/* Knowledge tree (AD-10) */
+.ktree{display:flex;flex-direction:column;gap:0}
+.knode{display:flex;align-items:center;gap:10px;padding:10px 16px;position:relative}
+.knode .kline{position:absolute;left:47px;top:0;bottom:0;width:2px;background:var(--border)}
+.knode .kbubble{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;z-index:1;color:#fff;flex:0 0 auto}
+.knode .kbubble svg{width:12px;height:12px}
+.knode.b-mastered .kbubble{background:var(--node-mastered)}
+.knode.b-fragile .kbubble{background:var(--node-fragile)}
+.knode.b-forgotten .kbubble{background:var(--node-forgotten)}
+.knode.b-none .kbubble{background:var(--surface);border:2px solid var(--border-strong)}
+.knode .ktext{flex:1;min-width:0}
+.knode .ktitle{font-size:13.5px;font-weight:600;color:var(--text-1)}
+.knode .ksub{font-size:11px;color:var(--text-muted);margin-top:1px}
+.knode.k-branch{margin-left:26px}
+
+/* Flashcard */
+.flashcard{height:280px;margin:0 16px;border-radius:16px;perspective:1400px;cursor:pointer}
+.flashcard-inner{position:relative;width:100%;height:100%;transition:transform .5s cubic-bezier(.4,0,.2,1);transform-style:preserve-3d}
+.flashcard.flipped .flashcard-inner{transform:rotateY(180deg)}
+.flashcard-face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;padding:22px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:var(--shadow-4)}
+.flashcard-front{background:var(--surface);border:1px solid var(--border)}
+.flashcard-back{background:var(--primary);color:var(--on-primary);transform:rotateY(180deg)}
+.flashcard-face .q{font-size:17px;font-weight:700;line-height:1.5;color:var(--text-1)}
+.flashcard-back .a{font-size:16px;font-weight:600;line-height:1.55}
+.flashcard-face .hint{font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px}
+.flashcard-back .hint{color:color-mix(in srgb,var(--on-primary) 70%,transparent)}
+.fsrs-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px}
+.fsrs-actions button{border:1px solid var(--border);background:var(--surface);color:var(--text-1);font-family:inherit;
+  border-radius:12px;padding:10px 4px;cursor:pointer;font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:4px}
+.fsrs-actions button svg{width:16px;height:16px}
+.fsrs-actions .r-today{border-color:var(--danger);color:var(--danger)}
+.fsrs-actions .r-tomorrow{border-color:var(--warning);color:var(--warning)}
+.fsrs-actions .r-good{border-color:var(--success);color:var(--success)}
+.fsrs-actions .r-easy{border-color:var(--primary);color:var(--primary)}
+
+/* Eisenhower quadrants */
+.eis{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px}
+.eis-q{border-radius:14px;padding:12px;border:1px solid var(--border);background:var(--surface);min-height:92px}
+.eis-q .h{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.eis-q .h b{font-size:12px;font-weight:700}
+.eis-q .h .c{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--text-muted)}
+.eis-q.q1{border-top:3px solid var(--danger)}
+.eis-q.q2{border-top:3px solid var(--primary)}
+.eis-q.q3{border-top:3px solid var(--warning)}
+.eis-q.q4{border-top:3px solid var(--text-disabled)}
+.eis-q .ti{font-size:12px;color:var(--text-2);padding:3px 0;font-weight:500}
+
+/* Calendar day */
+.cal-head{display:flex;align-items:center;justify-content:space-between;padding:0 16px;margin-bottom:12px}
+.cal-head h2{font-size:17px;font-weight:700;margin:0;color:var(--text-1)}
+.cal-now{display:flex;align-items:center;gap:8px;margin:0 16px 10px;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--text-muted)}
+.cal-now .dot-now{width:8px;height:8px;border-radius:50%;background:var(--danger);flex:0 0 auto}
+.tslot{display:flex;gap:10px;padding:8px 16px;align-items:flex-start}
+.tslot .hr{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--text-muted);width:38px;flex:0 0 auto;padding-top:2px}
+.tslot .ev{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow-1)}
+.tslot .ev .t{font-size:13px;font-weight:600;color:var(--text-1)}
+.tslot .ev .s{font-size:11px;color:var(--text-muted);margin-top:2px}
+.tslot .ev.now{border-left:3px solid var(--danger)}
+
+/* Agent chat */
+.chat{padding:0 16px;display:flex;flex-direction:column;gap:12px;min-height:100%}
+.msg{max-width:78%;border-radius:14px;padding:12px 14px;font-size:13.5px;line-height:1.55}
+.msg.user{align-self:flex-end;background:var(--primary);color:var(--on-primary)}
+.msg.ai{align-self:flex-start;background:var(--surface);border:1px solid var(--border);color:var(--text-1);box-shadow:var(--shadow-1)}
+.msg .think{display:flex;gap:5px;align-items:center;font-size:12px;color:var(--text-muted)}
+.msg .think .d{width:6px;height:6px;border-radius:50%;background:var(--primary);animation:th 1.2s infinite}
+.msg .think .d:nth-child(2){animation-delay:.2s}.msg .think .d:nth-child(3){animation-delay:.4s}
+@keyframes th{0%,80%,100%{opacity:.3}40%{opacity:1}}
+.toolcall{display:flex;align-items:center;gap:8px;background:var(--surface-alt);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:12px;color:var(--text-2);margin:6px 0}
+.toolcall svg{width:15px;height:15px;color:var(--primary);flex:0 0 auto}
+.composer{display:flex;gap:8px;padding:12px 16px;background:var(--surface);border-top:1px solid var(--border);margin-top:auto}
+.composer input{flex:1;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:13.5px;background:var(--bg-subtle);color:var(--text-1);outline:none}
+.composer button{width:44px;height:44px;border-radius:10px;border:0;background:var(--primary);color:var(--on-primary);display:grid;place-items:center;cursor:pointer;flex:0 0 auto}
+.composer button svg{width:19px;height:19px}
+
+/* Settings list */
+.setrow{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border)}
+.setrow:last-child{border-bottom:0}
+.setrow .si{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:var(--surface-alt);color:var(--primary);flex:0 0 auto}
+.setrow .si svg{width:19px;height:19px}
+.setrow .sb{flex:1;min-width:0}
+.setrow .sb .t{font-size:13.5px;font-weight:600;color:var(--text-1)}
+.setrow .sb .s{font-size:11.5px;color:var(--text-muted);margin-top:1px}
+.switch{width:44px;height:26px;border-radius:99px;background:var(--text-disabled);position:relative;flex:0 0 auto}
+.switch.on{background:var(--primary)}
+.switch::after{content:"";position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .18s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.switch.on::after{left:20px}
+
+/* Onboarding */
+.onb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 28px;text-align:center;gap:16px}
+.onb .em{font-size:60px;line-height:1}
+.onb h2{font-size:22px;font-weight:800;margin:0;color:var(--text-1);letter-spacing:-.4px}
+.onb p{font-size:13.5px;color:var(--text-2);margin:0;line-height:1.6}
+.onb .dots{display:flex;gap:7px;margin-top:8px}
+.onb .dots i{width:8px;height:8px;border-radius:99px;background:var(--border-strong);display:block}
+.onb .dots i.on{width:26px;background:var(--primary)}
+.chipsrow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.chip-select{border:1.5px solid var(--border);background:var(--surface);color:var(--text-1);border-radius:99px;padding:9px 16px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.chip-select.on{border-color:var(--primary);background:var(--sel-surface);color:var(--primary-600)}
+
+/* Goal dashboard (mission control) */
+.goalhead{background:linear-gradient(135deg,var(--primary) 0%,var(--secondary) 100%);color:var(--on-primary);
+  padding:18px 16px 22px;border-radius:0}
+.goalhead .k{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;opacity:.85;margin-bottom:6px}
+.goalhead h2{font-size:19px;font-weight:800;margin:0 0 8px;letter-spacing:-.3px}
+.goalhead .m{display:flex;gap:18px;margin-top:12px}
+.goalhead .m div{display:flex;flex-direction:column}
+.goalhead .m b{font-family:"JetBrains Mono",monospace;font-size:20px;font-weight:700}
+.goalhead .m span{font-size:10.5px;opacity:.85;margin-top:2px}
+.wfnode{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.wfnode:last-child{border-bottom:0}
+.wfnode .wd{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto}
+.wfnode .wd.done{background:var(--success);color:#fff}
+.wfnode .wd.done svg{width:18px;height:18px}
+.wfnode .wd.doing{background:var(--sel-surface);color:var(--primary-600)}
+.wfnode .wd.doing svg{width:18px;height:18px}
+.wfnode .wd.todo{background:var(--surface-alt);border:1.5px solid var(--border-strong);color:var(--text-muted)}
+.wfnode .wd.todo svg{width:18px;height:18px}
+.wfnode .wb{flex:1;min-width:0}
+.wfnode .wb .t{font-size:13.5px;font-weight:600;color:var(--text-1)}
+.wfnode .wb .s{font-size:11px;color:var(--text-muted);margin-top:1px}
+
+/* Progress dashboard */
+.statgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--shadow-1)}
+.stat .l{font-size:10.5px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--text-muted)}
+.stat .v{font-family:"JetBrains Mono",monospace;font-size:24px;font-weight:700;letter-spacing:-.5px;margin-top:5px;color:var(--text-1)}
+.stat .v small{font-size:12px;color:var(--text-2);font-weight:500}
+.stat .d{font-size:11px;margin-top:3px;color:var(--success)}
+.spark{display:flex;align-items:flex-end;gap:3px;height:32px;margin-top:10px}
+.spark i{flex:1;background:linear-gradient(180deg,var(--primary),var(--secondary));border-radius:2px;opacity:.85}
+.barchart{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin:16px;box-shadow:var(--shadow-1)}
+.bars{display:flex;align-items:flex-end;gap:8px;height:90px;margin-top:8px}
+.bars i{flex:1;border-radius:4px 4px 0 0;background:var(--primary);opacity:.85}
+.bars i.a{background:var(--secondary)}
+
+/* Task list */
+.task{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border)}
+.task .box{width:24px;height:24px;border-radius:8px;border:2px solid var(--border-strong);flex:0 0 auto;display:grid;place-items:center}
+.task.done .box{background:var(--success);border-color:var(--success);color:#fff}
+.task.done .box svg{width:14px;height:14px}
+.task.done .t{text-decoration:line-through;color:var(--text-muted)}
+.task .t{flex:1;font-size:14px;font-weight:500;color:var(--text-1)}
+.task .p{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:99px}
+.task .p.hi{background:var(--danger-surface);color:var(--danger)}
+.task .p.md{background:var(--warning-surface);color:var(--warning)}
+.task .p.lo{background:var(--info-surface);color:var(--info)}
+
+/* Discovery feed */
+.disc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin:0 16px 12px;box-shadow:var(--shadow-1)}
+.disc .h{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.disc .h .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:0 0 auto}
+.disc .h .ic svg{width:16px;height:16px}
+.disc .h .tt{flex:1;font-size:13.5px;font-weight:700;color:var(--text-1)}
+.disc .bd{font-size:12.5px;color:var(--text-2);line-height:1.5}
+
+/* Course detail */
+.mathblock{background:var(--surface-alt);border:1px solid var(--border);border-radius:12px;padding:16px;margin:12px 0;
+  font-family:"JetBrains Mono",monospace;font-size:16px;text-align:center;color:var(--text-1)}
+.tilegrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px}
+.tile{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--shadow-1);
+  display:flex;flex-direction:column;gap:8px;min-height:78px}
+.tile .ic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center}
+.tile .ic svg{width:18px;height:18px}
+.tile .n{font-size:12.5px;font-weight:700;color:var(--text-1)}
+.tile .s{font-size:11px;color:var(--text-muted)}
+
+/* Page label (route) */
+.pill-label{margin-top:6px;font-size:12px;font-weight:600;color:#CBD5E1;display:flex;align-items:center;gap:8px}
+.pill-label .dot{width:8px;height:8px;border-radius:50%;background:#3678F6}
+.pill-label .route{font-family:"JetBrains Mono",monospace;color:#64748B;font-weight:500}
+
+/* Toast */
+.toast{position:absolute;left:16px;right:16px;bottom:96px;background:var(--text-1);color:var(--bg);
+  border-radius:12px;padding:13px 16px;font-size:13px;font-weight:600;z-index:80;display:flex;align-items:center;gap:10px;
+  transform:translateY(140%);opacity:0;transition:transform .25s cubic-bezier(.4,0,.2,1),opacity .25s;box-shadow:var(--shadow-4)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast svg{width:18px;height:18px;flex:0 0 auto}
+
+/* BottomSheet */
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:24px 24px 0 0;z-index:90;
+  transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);box-shadow:0 -8px 30px rgba(0,0,0,.15);max-height:70%}
+.sheet.open{transform:translateY(0)}
+.sheet .grab{width:38px;height:4px;border-radius:99px;background:var(--border-strong);margin:10px auto 4px}
+.sheet .sh{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--border)}
+.sheet .sh h3{font-size:15px;font-weight:700;margin:0;color:var(--text-1)}
+
+/* Not found */
+.nf{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 34px;gap:14px}
+.nf .lg{width:88px;height:88px;border-radius:24px;display:grid;place-items:center;background:linear-gradient(135deg,var(--primary),var(--secondary) 55%,var(--accent));box-shadow:0 20px 44px -10px color-mix(in srgb,var(--primary) 55%,transparent)}
+.nf .lg svg{width:44px;height:44px;color:#fff}
+.nf h1{font-size:21px;font-weight:800;margin:0;color:var(--text-1)}
+.nf p{font-size:13.5px;color:var(--text-2);margin:0;line-height:1.55;max-width:260px}
+.nf .code{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--text-muted);margin-bottom:6px}
+.nf .btn{margin-top:6px;width:100%}
+
+/* Generic helper */
+.hidden{display:none}
+.row{display:flex;align-items:center;gap:10px}
+.between{display:flex;align-items:center;justify-content:space-between}
+.muted{color:var(--text-muted)}
+.gap12{gap:12px}
+.m0{margin:0}
+
+</style>
+</head>
+<body>
+<!-- ═══════════ PANNEAU DE THÈMES (gauche) ═══════════ -->
+<aside class="theme-panel" id="themePanel">
+  <button class="tp-close" id="tpClose" title="Masquer le panneau"><i data-lucide="chevron-left"></i></button>
+  <h2>Aurora · Thèmes</h2>
+  <p class="sub">AD-17 · 3 couches — 10 styles × 2 presets × 12 éditions Premium + image perso. Tout est fonctionnel : chaque clic modifie immédiatement le thème de l'app.</p>
+
+  <div class="tp-section">
+    <div class="lbl">Preset <span class="ln"></span></div>
+    <div class="mode-row" id="modeRow">
+      <button data-preset="light" class="on"><i data-lucide="sun"></i> Light</button>
+      <button data-preset="dark"><i data-lucide="moon"></i> Dark · Spotify</button>
+    </div>
+  </div>
+
+  <div class="tp-section">
+    <div class="lbl">Style · identité couleur <span class="ln"></span></div>
+    <div class="style-grid" id="styleGrid"></div>
+  </div>
+
+  <div class="tp-section">
+    <div class="lbl">Éditions Premium <span class="ln"></span></div>
+    <div class="edi-grid" id="ediGrid"></div>
+  </div>
+
+  <div class="tp-section">
+    <div class="lbl">Image personnelle <span class="ln"></span></div>
+    <label class="edi custom" id="customLabel">
+      <span class="em"><i data-lucide="image"></i></span>
+      <div class="n">Importer une image</div>
+      <div class="d">Couleur dominante extraite localement — aucune donnée envoyée</div>
+      <input type="file" id="customImg" accept="image/*" style="display:none">
+    </label>
+  </div>
+</aside>
+
+<!-- ═══════════ MAIN (frame centrée à droite) ═══════════ -->
+<main class="mainwrap">
+  <div class="topwrap">
+    <div class="appbar">
+      <div class="brand">
+        <div class="l"><i data-lucide="sparkles"></i></div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#E2E8F0">Aurora · prototype complet</div>
+          <div style="font-size:10px;color:#64748B" id="statusLabel">/home · Aurora · Light · Standard</div>
+        </div>
+      </div>
+      <div class="r">
+        <button id="panelToggle" title="Afficher/masquer le panneau"><i data-lucide="palette"></i></button>
+        <button id="resetBtn" title="Réinitialiser"><i data-lucide="rotate-ccw"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ FRAME ═══════════ -->
+  <div class="frame" id="frame" data-style="aurora" data-edition="none">
+    <div class="edition-img"><img id="editionImg" src="" alt="" referrerpolicy="no-referrer"></div>
+    <div class="edition-bar" id="editionBar"></div>
+
+    <!-- ── Vue HOME /home ── -->
+    <div class="safe" data-view="home">
+      <div class="topbar">
+        <div><h1>Bonjour, Sarah</h1><div class="sub">Mardi 14 · 3 priorités · 1 révision due</div></div>
+        <div style="display:flex;gap:4px">
+          <button class="iconbtn" title="Recherche"><i data-lucide="search"></i></button>
+          <button class="iconbtn" title="Menu"><i data-lucide="menu"></i></button>
+        </div>
+      </div>
+
+      <div class="section-title">Agenda du jour</div>
+      <div class="card tight" style="margin-top:0">
+        <div class="listitem" style="border:0;padding:10px 4px">
+          <div class="li-icon" style="background:var(--primary);color:var(--on-primary)"><i data-lucide="calendar-days"></i></div>
+          <div class="li-body"><div class="li-title">Session calculus · 9h–10h30</div><div class="li-sub">42 min · 3 exercices + 1 quiz</div></div>
+          <span class="badge primary">En cours</span>
+        </div>
+        <div class="listitem" style="padding:10px 4px">
+          <div class="li-icon" style="background:var(--accent);color:#fff"><i data-lucide="timer"></i></div>
+          <div class="li-body"><div class="li-title">Focus · 25 min</div><div class="li-sub">Tâche : Rédiger intro TP4</div></div>
+          <span class="badge muted">14h00</span>
+        </div>
+      </div>
+
+      <div class="section-title">Prochaine action</div>
+      <div class="card" style="margin-top:0">
+        <div style="display:flex;align-items:center;gap:14px">
+          <div class="li-icon" style="background:var(--primary);color:var(--on-primary);width:44px;height:44px"><i data-lucide="zap"></i></div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:700;color:var(--text-1)">Réviser le chapitre 7 — Dérivées</div>
+            <div class="li-sub">~12 min · objectif intermédiaire</div>
+          </div>
+          <button class="btn btn-primary sm"><i data-lucide="play"></i> Lancer</button>
+        </div>
+      </div>
+
+      <div class="section-title">Progression critique</div>
+      <div class="card" style="margin-top:0">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-size:13px;font-weight:700;color:var(--text-1)">Examen probabilités</div>
+          <span class="badge warning"><i data-lucide="alert-triangle"></i> Fragile</span>
+        </div>
+        <div class="progress"><span style="width:42%;background:linear-gradient(90deg,var(--primary),var(--secondary))"></span></div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px" class="muted">
+          <span>42 % maîtrisé</span><span class="mono" style="color:var(--primary)">J-21</span>
+        </div>
+      </div>
+
+      <div class="section-title">Révisions dues</div>
+      <div class="card tight" style="margin-top:0">
+        <div class="listitem" style="padding:10px 4px">
+          <div class="li-icon" style="background:var(--danger-surface);color:var(--danger);width:34px;height:34px"><i data-lucide="brain-circuit"></i></div>
+          <div class="li-body"><div class="li-title" style="font-size:13px">Théorème des probabilités totales</div><div class="li-sub">Oublié · réviser aujourd'hui</div></div>
+          <i data-lucide="chevron-right" class="li-chev"></i>
+        </div>
+        <div class="listitem" style="padding:10px 4px;border-bottom:0">
+          <div class="li-icon" style="background:var(--warning-surface);color:var(--warning);width:34px;height:34px"><i data-lucide="file-text"></i></div>
+          <div class="li-body"><div class="li-title" style="font-size:13px">Intégration par parties — fiche 12</div><div class="li-sub">Fragile · J+1</div></div>
+          <i data-lucide="chevron-right" class="li-chev"></i>
+        </div>
+      </div>
+
+      <div class="section-title">Suggestions Coach</div>
+      <div class="card" style="margin-top:0">
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <div class="li-icon" style="background:var(--primary);color:var(--on-primary);width:38px;height:38px"><i data-lucide="sparkles"></i></div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600;color:var(--text-1);margin-bottom:6px">Tu as bien progressé sur les dérivées cette semaine. Je te propose 5 flashcards pour consolider.</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-primary sm"><i data-lucide="check"></i> Générer</button>
+              <button class="btn btn-ghost sm">Plus tard</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Vue TÂCHES /tasks ── -->
+    <div class="safe" data-view="tasks" style="display:none">
+      <div class="topbar">
+        <div><h1>Tâches</h1><div class="sub">7 au total · 3 en cours</div></div>
+        <button class="iconbtn" title="Filtrer"><i data-lucide="filter"></i></button>
+      </div>
+      <div class="seg" style="margin-top:4px">
+        <button class="on">Liste</button><button>Quadrants</button><button>Aujourd'hui</button>
+      </div>
+      <div class="card tight" style="margin-top:12px">
+        <div class="task"><div class="box"><i data-lucide="check"></i></div><div class="t">Réviser dérivées — chap 7</div><span class="p hi">Hi</span></div>
+        <div class="task"><div class="box"><i data-lucide="check"></i></div><div class="t">Rédiger intro TP4</div><span class="p md">Med</span></div>
+        <div class="task done"><div class="box"><i data-lucide="check"></i></div><div class="t">Finaliser bibliographie</div><span class="p lo">Lo</span></div>
+        <div class="task" style="border-bottom:0"><div class="box"></div><div class="t">Planifier session probabilités</div><span class="p hi">Hi</span></div>
+      </div>
+      <div class="section-title">Matrice Eisenhower</div>
+      <div class="card tight" style="margin-top:0">
+        <div class="eis">
+          <div class="eis-q q1"><div class="h"><b>Urgent + Important</b><span class="c">2</span></div><div class="ti">Réviser chap 7</div><div class="ti">Planifier session</div></div>
+          <div class="eis-q q2"><div class="h"><b>Important</b><span class="c">3</span></div><div class="ti">Rédiger intro TP4</div></div>
+          <div class="eis-q q3"><div class="h"><b>Urgent</b><span class="c">1</span></div><div class="ti">Réponse mail</div></div>
+          <div class="eis-q q4"><div class="h"><b>Low</b><span class="c">1</span></div><div class="ti">Nettoyer workspace</div></div>
+        </div>
+      </div>
+      <button class="fab" title="Nouvelle tâche"><i data-lucide="plus"></i></button>
+    </div>
+
+    <!-- ── Vue APPRENDRE /learn ── -->
+    <div class="safe" data-view="learn" style="display:none">
+      <div class="topbar">
+        <div><h1>Apprendre</h1><div class="sub">4 chemins · 12 modules actifs</div></div>
+        <button class="iconbtn" title="Recherche"><i data-lucide="search"></i></button>
+      </div>
+      <div class="section-title" style="margin-top:8px">Mes chemins</div>
+      <div class="card tight">
+        <div class="listitem">
+          <div class="li-icon" style="background:var(--primary);color:var(--on-primary)"><i data-lucide="graduation-cap"></i></div>
+          <div class="li-body"><div class="li-title">Calculus avancé</div><div class="li-sub">Module 3/5 · 62 %</div></div>
+          <i data-lucide="chevron-right" class="li-chev"></i>
+        </div>
+        <div class="listitem">
+          <div class="li-icon" style="background:var(--secondary);color:#fff"><i data-lucide="brain-circuit"></i></div>
+          <div class="li-body"><div class="li-title">Probabilités &amp; statistiques</div><div class="li-sub">Module 1/4 · 18 %</div></div>
+          <i data-lucide="chevron-right" class="li-chev"></i>
+        </div>
+        <div class="listitem" style="border-bottom:0">
+          <div class="li-icon" style="background:var(--accent);color:#fff"><i data-lucide="atom"></i></div>
+          <div class="li-body"><div class="li-title">Physique · oscillations</div><div class="li-sub">Module 2/3 · 44 %</div></div>
+          <i data-lucide="chevron-right" class="li-chev"></i>
+        </div>
+      </div>
+      <div class="section-title">À réviser (FSRS)</div>
+      <div class="card tight">
+        <div class="listitem">
+          <div class="li-icon" style="background:var(--danger-surface);color:var(--danger);width:36px;height:36px"><i data-lucide="layers"></i></div>
+          <div class="li-body"><div class="li-title" style="font-size:13px">Probabilités conditionnelles</div><div class="li-sub">8 flashcards · dues aujourd'hui</div></div>
+          <span class="badge danger">Dû</span>
+        </div>
+        <div class="listitem" style="border-bottom:0">
+          <div class="li-icon" style="background:var(--warning-surface);color:var(--warning);width:36px;height:36px"><i data-lucide="layers"></i></div>
+          <div class="li-body"><div class="li-title" style="font-size:13px">Règle de l'hôpital</div><div class="li-sub">5 flashcards · J+1</div></div>
+          <span class="badge warning">J+1</span>
+        </div>
+      </div>
+      <div class="section-title">Découverte</div>
+      <div class="card" style="margin-top:0">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="li-icon" style="background:var(--primary);color:var(--on-primary)"><i data-lucide="compass"></i></div>
+          <div style="flex:1"><div style="font-size:13.5px;font-weight:600;color:var(--text-1)">Série : Théorèmes limites</div><div class="li-sub">3 nouveaux nœuds · confiance 0.92</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Vue PROGRESSION /progress ── -->
+    <div class="safe" data-view="progress" style="display:none">
+      <div class="topbar">
+        <div><h1>Progression</h1><div class="sub">Semaine du 9–15 mars</div></div>
+        <button class="iconbtn" title="Exporter"><i data-lucide="download"></i></button>
+      </div>
+      <div class="statgrid" style="padding:0 16px;margin-top:12px">
+        <div class="stat">
+          <div class="l">Heures focus</div><div class="v">14<small>h 22m</small></div>
+          <div class="d" style="display:flex;align-items:center;gap:4px"><i data-lucide="arrow-up" style="width:11px;height:11px"></i> 12 % vs sem. préc.</div>
+          <div class="spark"><i style="height:40%"></i><i style="height:62%"></i><i style="height:48%"></i><i style="height:80%"></i><i style="height:58%"></i><i style="height:90%"></i><i style="height:72%"></i></div>
+        </div>
+        <div class="stat">
+          <div class="l">Flashcards</div><div class="v">247</div>
+          <div class="d">38 dues aujourd'hui</div>
+          <div class="spark"><i style="height:55%"></i><i style="height:70%"></i><i style="height:45%"></i><i style="height:85%"></i><i style="height:65%"></i><i style="height:75%"></i><i style="height:90%"></i></div>
+        </div>
+      </div>
+      <div class="barchart">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-size:12.5px;font-weight:700;color:var(--text-1)">Focus par jour</div>
+          <span class="badge muted">heures</span>
+        </div>
+        <div class="bars"><i style="height:44%"></i><i class="a" style="height:62%"></i><i style="height:38%"></i><i class="a" style="height:80%"></i><i style="height:56%"></i><i class="a" style="height:95%"></i><i style="height:70%"></i></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:6px">
+          <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
+        </div>
+      </div>
+      <div class="section-title">Compétences critiques</div>
+      <div class="card tight">
+        <div class="skillstate mastered" style="padding:10px 4px;display:flex;align-items:center"><span class="dot"></span> <span style="flex:1">Dérivées fondamentales</span> <span class="mono" style="font-size:11px" class="muted">92 %</span></div>
+        <div class="skillstate fragile" style="padding:10px 4px;display:flex;align-items:center;border-bottom:1px solid var(--border)"><span class="dot"></span> <span style="flex:1">Probabilités totales</span> <span class="mono" style="font-size:11px" class="muted">54 %</span></div>
+        <div class="skillstate forgotten" style="padding:10px 4px;display:flex;align-items:center"><span class="dot"></span> <span style="flex:1">Intégrales doubles</span> <span class="mono" style="font-size:11px" class="muted">18 %</span></div>
+      </div>
+    </div>
+
+    <!-- ── Vue COACH /agent ── -->
+    <div class="safe" data-view="agent" style="display:none">
+      <div class="topbar">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="background:linear-gradient(135deg,var(--primary),var(--secondary));width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:#fff"><i data-lucide="sparkles" style="width:19px;height:19px"></i></div>
+          <div><h1 style="font-size:16px">Coach</h1><div class="sub" style="font-size:11px">Agent IA · 4 outils actifs</div></div>
+        </div>
+        <button class="iconbtn" title="Historique"><i data-lucide="history"></i></button>
+      </div>
+      <div class="chat" style="margin-top:4px">
+        <div class="msg ai">Bonjour Sarah ! J'ai analysé ta progression : <strong>probabilités totales</strong> est en zone fragile (54 %). Souhaites-tu une session de révision ciblée ?</div>
+        <div class="msg user">Oui, et ajoute-moi 5 flashcards sur le théorème de Bayes.</div>
+        <div class="msg ai">
+          <div class="toolcall"><i data-lucide="search"></i> <span class="mono" style="font-size:10.5px">retrieve_nodes(["bayes","prob_cond"]) → 5 nœuds · conf 0.94</span></div>
+          <div class="toolcall"><i data-lucide="layers"></i> <span class="mono" style="font-size:10.5px">create_flashcards(topic="bayes", n=5) → 5 cartes créées</span></div>
+          <div style="margin-top:8px;font-size:13px">C'est fait ! 5 flashcards Bayes sont dans ton fil. Je recommande aussi de revoir le chapitre 4 avant l'examen.</div>
+        </div>
+      </div>
+      <div class="composer">
+        <input type="text" placeholder="Pose une question à ton coach…">
+        <button title="Envoyer"><i data-lucide="send"></i></button>
+      </div>
+    </div>
+
+    <!-- ═══════════ BOTTOM NAV (5 tabs fixes) ═══════════ -->
+    <nav class="bottomnav" id="bottomnav">
+      <button data-view="home" class="on"><i data-lucide="home" class="ic-fill"></i>Accueil</button>
+      <button data-view="tasks"><i data-lucide="list-checks" class="ic-fill"></i>Tâches</button>
+      <button data-view="learn"><i data-lucide="book-open" class="ic-fill"></i>Apprendre</button>
+      <button data-view="progress"><i data-lucide="trending-up" class="ic-fill"></i>Progression</button>
+      <button data-view="agent"><i data-lucide="sparkles" class="ic-fill"></i>Coach</button>
+    </nav>
+  </div>
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   AURORA — JS : navigation + thème 3 couches
+   ═══════════════════════════════════════════════════════ */
+
+const STYLES=[
+  {id:"aurora", n:"Aurora",  d:"Bleu céleste + cyan + violet",        sw:["#3678F6","#22C7D6","#7B61FF"]},
+  {id:"lagoon", n:"Lagoon",  d:"Turquoise lagon · calme marin",        sw:["#007C91","#18B7A0","#50D8C0"]},
+  {id:"boreal", n:"Boreal",  d:"Bleu Arctique · sapin · ciel",         sw:["#2E5C8A","#4A8C6A","#8DC7D9"]},
+  {id:"sakura", n:"Sakura",  d:"Rose cerisier · lavande",              sw:["#D85B86","#E98EAD","#9B78C9"]},
+  {id:"vesper", n:"Vesper",  d:"Violet crépuscule · magenta",         sw:["#6554C0","#8C5BD6","#D05AA8"]},
+  {id:"solara", n:"Solara",  d:"Or solaire · terracotta",              sw:["#D99A24","#F0B83F","#E86F42"]},
+  {id:"terra",  n:"Terra",   d:"Terre cuite · ocre · sable",           sw:["#B85C38","#C9823B","#D8AE72"]},
+  {id:"verdant",n:"Verdant", d:"Vert forêt · menthe",                  sw:["#247A55","#42A96B","#8CCF8A"]},
+  {id:"citrus", n:"Citrus",  d:"Orange vif · jaune citron",            sw:["#F28C28","#F7C948","#B7D83D"]},
+  {id:"cosmos", n:"Cosmos",  d:"Indigo · cyan · rose",                 sw:["#3B3FA7","#18BFD4","#E95BAA"]},
+];
+
+const EDITIONS=[
+  {id:"none",   n:"Standard",     d:"Aucune édition",       em:"✓",  prem:false, img:"",     dom:null},
+  {id:"noel",   n:"Noël",         d:"Rouge & or · neige",   em:"❄️", prem:true,  img:"https://images.unsplash.com/photo-1512820790803-80f6493ad6e5?w=400&q=70&auto=format&fit=crop", dom:"#C02020"},
+  {id:"paques", n:"Pâques",       d:"Pastels printaniers",  em:"🐣", prem:true,  img:"https://images.unsplash.com/photo-1464722478607-13bf11275554?w=400&q=70&auto=format&fit=crop", dom:"#D85B86"},
+  {id:"an",     n:"Nouvelle An",  d:"Nuit · countdown doré",em:"🎆", prem:true,  img:"https://images.unsplash.com/photo-1549319124-666db8d2b55e?w=400&q=70&auto=format&fit=crop", dom:"#7B61FF"},
+  {id:"fete",   n:"Fête",         d:"Confettis · néons",    em:"🎉", prem:true,  img:"https://images.unsplash.com/photo-1493484662693-195572e15117?w=400&q=70&auto=format&fit=crop", dom:"#E95BAA"},
+  {id:"paix",   n:"Paix",         d:"Vert sauge · apaisant",em:"🕊️", prem:true,  img:"https://images.unsplash.com/photo-1519681393784-d12fd2017298?w=400&q=70&auto=format&fit=crop", dom:"#247A55"},
+  {id:"paris",  n:"Paris",        d:"Bleu nuit · Eiffel",   em:"🗼", prem:true,  img:"https://images.unsplash.com/photo-1502602898657-3e9196373397?w=400&q=70&auto=format&fit=crop", dom:"#1E3A8A"},
+  {id:"tokyo",  n:"Tokyo",        d:"Rose sakura · néons",  em:"⛩️", prem:true,  img:"https://images.unsplash.com/photo-1540959035659-496175840409?w=400&q=70&auto=format&fit=crop", dom:"#D85B86"},
+  {id:"newyork",n:"New York",     d:"Bleu skyline · nuit",  em:"🏙️", prem:true,  img:"https://images.unsplash.com/photo-1496442256676-69545d2bf516?w=400&q=70&auto=format&fit=crop", dom:"#1E40AF"},
+  {id:"londres",n:"Londres",      d:"Gris pluvieux · Big Ben",em:"🇬🇧",prem:true, img:"https://images.unsplash.com/photo-1513635213273-255d14b5e4f6?w=400&q=70&auto=format&fit=crop", dom:"#3F4A5A"},
+  {id:"dubai",  n:"Dubaï",        d:"Doré · skyline futuriste",em:"🌃",prem:true, img:"https://images.unsplash.com/photo-1512453979894-0936644a5358?w=400&q=70&auto=format&fit=crop", dom:"#C9823B"},
+  {id:"sydney", n:"Sydney",       d:"Cyan océan · opéra",   em:"⛵", prem:true,  img:"https://images.unsplash.com/photo-1506929562972-b4361f18b6f5?w=400&q=70&auto=format&fit=crop", dom:"#0EA5E9"},
+  {id:"afrique",n:"Afrique",      d:"Terre cuite · wax",    em:"🦁", prem:true,  img:"https://images.unsplash.com/photo-1523805009344-1f28fae9b814?w=400&q=70&auto=format&fit=crop", dom:"#B85C38"},
+];
+
+const frame=document.getElementById("frame"),
+      edImg=document.getElementById("editionImg"),
+      edBar=document.getElementById("editionBar"),
+      stLabel=document.getElementById("statusLabel"),
+      panel=document.getElementById("themePanel"),
+      sGrid=document.getElementById("styleGrid"),
+      eGrid=document.getElementById("ediGrid"),
+      mRow=document.getElementById("modeRow");
+
+let state={preset:"light",style:"aurora",edition:"none",view:"home"};
+
+/* ── Construire grilles ── */
+STYLES.forEach(st=>{
+  const b=document.createElement("button");
+  b.className="sty"+(st.id===state.style?" on":"");
+  b.dataset.style=st.id;
+  b.innerHTML='<div class="sw">'+st.sw.map(c=>'<span style="background:'+c+'"></span>').join('')+'</div><div class="n">'+st.n+'</div><div class="d">'+st.d+'</div>';
+  b.onclick=()=>{state.style=st.id;apply();};
+  sGrid.appendChild(b);
+});
+
+EDITIONS.forEach(ed=>{
+  const b=document.createElement("button");
+  b.className="edi"+(ed.id===state.edition?" on":"");
+  b.dataset.edition=ed.id;
+  b.innerHTML=(ed.prem?'<span class="prem">Premium</span>':'')+'<span class="em">'+ed.em+'</span><div class="n">'+ed.n+'</div><div class="d">'+ed.d+'</div>';
+  b.onclick=()=>{state.edition=ed.id;apply();};
+  eGrid.appendChild(b);
+});
+
+mRow.querySelectorAll("button").forEach(btn=>{
+  btn.onclick=()=>{
+    state.preset=btn.dataset.preset;
+    mRow.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===btn));
+    apply();
+  };
+});
+
+/* ── Extraction couleur dominante (canvas, 100 % local) ── */
+function hexToRgba(hex,a){
+  const n=parseInt(hex.replace("#",""),16);
+  return "rgba("+(n>>16&255)+","+(n>>8&255)+","+(n&255)+","+a+")";
+}
+async function extractDominant(src){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.crossOrigin="anonymous";
+    img.onload=()=>{
+      const c=document.createElement("canvas");c.width=c.height=64;
+      const ctx=c.getContext("2d");ctx.drawImage(img,0,0,64,64);
+      const d=ctx.getImageData(0,0,64,64).data;
+      let r=0,g=0,b=0,n=0;
+      for(let i=0;i<d.length;i+=4){
+        const R=d[i],G=d[i+1],B=d[i+2];
+        const lum=(R*299+G*587+B*114)/1000;
+        if(lum>240||lum<10)continue;
+        r+=R;g+=G;b+=B;n++;
+      }
+      if(!n)return rej();
+      res("#"+[r,g,b].map(v=>Math.round(v/n).toString(16).padStart(2,"0")).join("").toUpperCase());
+    };
+    img.onerror=rej;
+    img.src=src;
+  });
+}
+
+/* ── Appliquer l'état au DOM ── */
+async function apply(){
+  // Couche 2
+  frame.classList.toggle("dark",state.preset==="dark");
+  document.body.dataset.preset=state.preset;
+  // Couche 1
+  frame.dataset.style=state.style;
+  sGrid.querySelectorAll(".sty").forEach(b=>b.classList.toggle("on",b.dataset.style===state.style));
+  // Couche 3
+  frame.dataset.edition=state.edition;
+  eGrid.querySelectorAll(".edi").forEach(b=>b.classList.toggle("on",b.dataset.edition===state.edition));
+
+  const ed=EDITIONS.find(e=>e.id===state.edition);
+  if(ed&&ed.img){
+    edImg.style.display="";
+    edImg.src=ed.img;
+    edBar.style.background=ed.dom?hexToRgba(ed.dom,.6):"";
+    // Tenter extraction (CORS OK via crossOrigin)
+    try{
+      const hex=await extractDominant(ed.img);
+      frame.style.setProperty("--edition-dyn",hexToRgba(hex,.30));
+      edBar.style.background=hex;
+    }catch{
+      frame.style.setProperty("--edition-dyn",hexToRgba(ed.dom||"#3678F6",.28));
+    }
+  }else if(state.edition==="custom"){
+    edBar.style.background=frame.style.getPropertyValue("--edition-dyn")||"";
+  }else{
+    edImg.style.display="none";
+    edBar.style.background="";
+    frame.style.removeProperty("--edition-dyn");
+  }
+
+  const sn=STYLES.find(s=>s.id===state.style)?.n||state.style;
+  const en=state.edition==="none"?"Standard":(EDITIONS.find(e=>e.id===state.edition)?.n||"Custom");
+  const pl=state.preset==="dark"?"Dark · Spotify":"Light";
+  const routes={home:"/home",tasks:"/tasks",learn:"/learn",progress:"/progress",agent:"/agent"};
+  stLabel.textContent=routes[state.view]+" · "+sn+" · "+pl+" · "+en;
+}
+
+/* ── Navigation bottom-nav ── */
+const views=document.querySelectorAll("[data-view]");
+const navBtns=document.querySelectorAll(".bottomnav button");
+function showView(name){
+  state.view=name;
+  views.forEach(v=>v.style.display=v.dataset.view===name?"":"none");
+  navBtns.forEach(b=>b.classList.toggle("on",b.dataset.view===name));
+  apply();
+}
+navBtns.forEach(b=>b.onclick=()=>showView(b.dataset.view));
+
+/* ── Image personnalisée ── */
+document.getElementById("customImg").onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  const reader=new FileReader();
+  reader.onload=async ev=>{
+    const url=ev.target.result;
+    edImg.style.display="";edImg.src=url;
+    state.edition="custom";frame.dataset.edition="custom";
+    try{
+      const hex=await extractDominant(url);
+      frame.style.setProperty("--edition-dyn",hexToRgba(hex,.30));
+      edBar.style.background=hex;
+    }catch{frame.style.setProperty("--edition-dyn","rgba(54,120,246,.25)");}
+    stLabel.textContent="/"+state.view+" · "+state.style+" · "+(state.preset==="dark"?"Dark":"Light")+" · Custom";
+  };
+  reader.readAsDataURL(f);
+};
+
+/* ── Panel toggle + reset ── */
+document.getElementById("panelToggle").onclick=()=>panel.classList.toggle("closed");
+document.getElementById("tpClose").onclick=()=>panel.classList.add("closed");
+document.getElementById("resetBtn").onclick=()=>{
+  state={preset:"light",style:"aurora",edition:"none",view:"home"};
+  frame.style.removeProperty("--edition-dyn");
+  mRow.querySelectorAll("button").forEach((b,i)=>b.classList.toggle("on",i===0));
+  apply();showView("home");
+};
+
+/* ── Lucide + init ── */
+if(typeof lucide!=="undefined")lucide.createIcons();
+apply();
+</script>
+</body>
+</html>

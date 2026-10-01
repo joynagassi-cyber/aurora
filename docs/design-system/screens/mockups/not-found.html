@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aurora — not-found</title>
+<link rel="stylesheet" href="aurora.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>.center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 34px}
+.logo{width:84px;height:84px;border-radius:22px;background:linear-gradient(135deg,var(--primary) 0%,var(--secondary) 55%,var(--accent) 100%);display:grid;place-items:center;box-shadow:0 22px 46px -12px rgba(54,120,246,.6);margin-bottom:22px}
+.logo svg{width:44px;height:44px}
+h1{font-size:22px;font-weight:800;margin:0 0 8px;letter-spacing:-.3px}
+p{font-size:14px;color:var(--text-2);line-height:1.6;margin:0 0 22px}
+.actions{width:100%;display:flex;flex-direction:column;gap:10px}
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="safe content" style="display:flex;flex-direction:column">
+    <div class="center">
+      <!-- Logo COLORED au centre (ui-libraries §9.1 l.387 — pas monochrome, état vivant) -->
+      <div class="logo"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2 14 10l8-2-7 5 3 8-6-4-6 4 3-8L2 8l8 2z"/></svg></div>
+      <h1>Cette page n'existe pas</h1>
+      <p class="mono" style="font-size:12.5px;color:var(--text-muted);margin-bottom:16px">/goals/old/xyz · code 404</p>
+      <p>Le lien est peut-être obsolète, ou cette fonctionnalité est désactivée sur ton compte. Tes données sont intactes.</p>
+      <div class="actions">
+        <button class="btn btn-primary lg focus-ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg> Retour à l'accueil</button>
+        <button class="btn btn-ghost focus-ring" style="height:48px">Consulter l'écran parent</button>
+      </div>
+    </div>
+    <div style="padding:0 34px 6px;text-align:center;font-size:11px;color:var(--text-disabled)" class="mono">Aurora · ne jamais un écran blanc</div>
+  </div>
+</div>
+<span class="pill-label"><span class="dot"></span>Not found / feature-disabled <span class="route">* (wildcard)</span></span>
+</body>
+</html>

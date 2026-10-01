@@ -1,0 +1,315 @@
+/*
+ * Aurora — Goals family (05 §4.3, goal-dashboard-ui S2–S4).
+ *
+ * /goals = the goal list; /goals/:id = the adaptive "mission control"
+ * dashboard (header band + feature-workflow + context strip). The layout is
+ * DERIVED from the goal's shape (goal-engine `computeGoalDashboardLayout`);
+ * this stylesheet gives it the premium surface language (goal-dashboard-ui
+ * S4: ONE card-like surface = the feature node, 8px radius; header is a
+ * full-width band, NOT a card; connection lines 1px @ 40% opacity).
+ */
+
+/* ---- Goals list (/goals) -------------------------------------------- */
+.goals-list,
+.goals-list-wrap {
+  list-style: none;
+  margin: 12px 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* Card row for the goal list (a single tappable surface). */
+.goal-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  min-height: var(--aurora-tap-target, 44px);
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+  color: var(--aurora-text-primary);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.goal-row:hover {
+  border-color: var(--aurora-accent-primary);
+  box-shadow: var(--aurora-shadow-float);
+}
+.goal-row-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+  line-height: 1.3;
+}
+
+/* ---- Feature detail (/goals/:id/features/:fid) ---------------------- */
+[data-feature-detail] {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+[data-feature-body] {
+  padding: 16px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+}
+.feature-title {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--aurora-text-primary);
+}
+.feature-desc {
+  margin: 0;
+  font-size: 14px;
+  color: var(--aurora-text-secondary);
+  line-height: 1.5;
+}
+.goals-list a {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  min-height: var(--aurora-tap-target, 44px);
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+  color: var(--aurora-text-primary);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.goals-list a:hover {
+  border-color: var(--aurora-accent-primary);
+  box-shadow: var(--aurora-shadow-float);
+}
+.goals-list-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--aurora-accent-primary);
+}
+
+/* ---- Dashboard container -------------------------------------------- */
+.goal-dashboard {
+  padding: 0 16px 16px;
+}
+
+/* Header band — "the what and the how far" (S2 Top). NOT a card. */
+.goal-dashboard-header {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px 4px;
+  border-bottom: 1px solid var(--aurora-border);
+}
+.goal-dashboard-logo {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  object-fit: contain;
+  margin-top: 2px;
+}
+.goal-dashboard-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+.goal-dashboard-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--aurora-text-primary);
+  line-height: 1.25;
+}
+.goal-dashboard-criteria {
+  margin: 0;
+  font-size: 13px;
+  color: var(--aurora-text-secondary);
+}
+.goal-dashboard-horizon {
+  margin: 0;
+  font-size: 12px;
+  color: var(--aurora-text-muted);
+}
+
+/* Progress bar — `info` semantic token (AD-17). */
+.goal-dashboard-progress {
+  position: relative;
+  height: 8px;
+  margin-top: 12px;
+  border-radius: 9999px;
+  background: var(--aurora-bg-subtle);
+  overflow: hidden;
+}
+.goal-dashboard-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--aurora-info);
+}
+.goal-dashboard-progress-pct {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  color: var(--aurora-text-secondary);
+}
+
+/* ---- Feature workflow (S2 Middle, S3) -------------------------------
+ * Grid metrics MUST match dashboard.tsx constants: NODE_W=96, GAP_X=8,
+ * GAP_Y=16, NODE_H=56 — the SVG overlay (.goal-feature-lines) computes its
+ * coordinates from the same values, so rows are fixed 56px tall with a 16px
+ * gap and the workflow keeps a 0 padding origin for both. */
+.goal-feature-workflow {
+  position: relative;
+  padding: 20px 0 24px;
+}
+.goal-feature-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 56px;
+  margin-bottom: 16px;
+}
+.goal-feature-lines {
+  position: absolute;
+  top: 20px; /* align to the workflow's content origin (padding-top 20px) */
+  left: 0;
+  z-index: 0;
+  pointer-events: none;
+  color: var(--aurora-border-strong);
+}
+
+/* Feature node = the ONLY card-like surface (S4). */
+.goal-feature-node {
+  position: relative;
+  z-index: 1;
+  width: 96px;
+  height: 56px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 10px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+  cursor: pointer;
+  overflow: hidden;
+}
+.goal-feature-node-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+  line-height: 1.2;
+}
+.goal-feature-node-detail {
+  font-size: 11px;
+  color: var(--aurora-text-muted);
+}
+
+/* Node states (NodeState, AD-6). */
+.goal-feature-node--done {
+  border-color: var(--aurora-node-mastered);
+  background: var(--aurora-success-surface);
+}
+.goal-feature-node--done .goal-feature-node-label {
+  color: var(--aurora-node-mastered);
+}
+.goal-feature-node-check {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--aurora-node-mastered);
+}
+.goal-feature-node--skipped {
+  border-style: dashed;
+  opacity: 0.6;
+}
+.goal-feature-node--skipped .goal-feature-node-label {
+  color: var(--aurora-text-muted);
+}
+.goal-feature-node--blocked {
+  border-color: var(--aurora-warning);
+  background: var(--aurora-warning-surface);
+}
+.goal-feature-node--error {
+  border-color: var(--aurora-danger);
+  background: var(--aurora-danger-surface);
+}
+.goal-feature-node--error .goal-feature-node-label {
+  color: var(--aurora-danger);
+}
+
+/* Active node = accent ring + elevation (the pulse is motion-only, GPU). */
+.goal-feature-node--active {
+  border-color: var(--aurora-accent-primary);
+  box-shadow: 0 0 0 2px var(--aurora-accent-primary),
+    var(--aurora-shadow-float);
+}
+.goal-feature-node-pulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  box-shadow: 0 0 0 3px var(--aurora-accent-selected-surface);
+}
+
+/* OQ-15 Focus attenuation: the theme adapter writes
+ * `--aurora-node-secondary-opacity` (0.4 while a session is active). */
+.goal-feature-node--attenuated {
+  opacity: var(--aurora-node-secondary-opacity, 1);
+  box-shadow: none;
+}
+
+/* ---- Context strip (S2 Bottom, S4) ----------------------------------- */
+.goal-context-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--aurora-surface-alt);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+}
+.goal-context-strip-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.goal-context-strip-stat {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--aurora-text-secondary);
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: 9999px;
+  padding: 4px 10px;
+}
+.goal-context-strip-suggestion {
+  margin: 0;
+  font-size: 14px;
+  color: var(--aurora-text-primary);
+  line-height: 1.4;
+}
+.goal-context-strip-suggestion[data-interactive="true"] {
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--aurora-accent-primary);
+}

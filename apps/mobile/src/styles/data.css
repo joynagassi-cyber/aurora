@@ -1,0 +1,529 @@
+/*
+ * Aurora — productivity + data families (productivity, progress, calendar,
+ * knowledge, discovery, inbox, projects, settings, artifacts, learn).
+ *
+ * These screens are local-first mirrors (AD-7). Their structure is marked
+ * with `data-*` + a couple of named classes; this gives them a consistent,
+ * premium surface language (cards, KPI tiles, lists, settings rows). The
+ * AD-10 engines (React Flow, G2, KaTeX, FullCalendar, AG Grid) mount here
+ * via the @aurora/ui contracts when wired; the containers are sized for
+ * them (lazy, 30fps budget).
+ */
+
+/* ---- Tasks list (taches-liste) -------------------------------------- */
+.task-list {
+  list-style: none;
+  margin: 0 16px 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.task-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--aurora-tap-target, 44px);
+  padding: 10px 14px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+  color: var(--aurora-text-primary);
+  font-size: 15px;
+  transition: border-color 0.18s ease;
+}
+.task-row:hover {
+  border-color: var(--aurora-accent-primary);
+}
+.task-row-title {
+  flex: 1;
+}
+.task-row-due {
+  font-size: 12px;
+  color: var(--aurora-text-muted);
+}
+.task-row-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--aurora-info);
+}
+.task-row-dot[data-status="done"] {
+  background: var(--aurora-node-mastered);
+}
+.task-row-dot[data-status="blocked"] {
+  background: var(--aurora-danger);
+}
+.task-row-dot[data-status="in_progress"] {
+  background: var(--aurora-accent-primary);
+}
+
+/* ---- Eisenhower (G-L5 ratified, T4 under /tasks) -------------------- */
+.eisenhower {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 0 16px;
+}
+.eisenhower-q {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 96px;
+  padding: 10px;
+  border-radius: var(--aurora-radius, 0.5rem);
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+}
+.eisenhower-q .task-row {
+  min-height: 38px;
+  font-size: 13px;
+  padding: 6px 8px;
+}
+.eisenhower-q-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--aurora-text-muted);
+}
+.eisenhower-q-empty {
+  font-size: 12px;
+  color: var(--aurora-text-disabled);
+}
+.eisenhower-q1 {
+  border-top: 3px solid var(--aurora-danger);
+}
+.eisenhower-q2 {
+  border-top: 3px solid var(--aurora-info);
+}
+.eisenhower-q3 {
+  border-top: 3px solid var(--aurora-warning);
+}
+.eisenhower-q4 {
+  border-top: 3px solid var(--aurora-border-strong);
+}
+
+/* ---- Task detail (/tasks/:id) --------------------------------------- */
+[data-task-detail] {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+[data-task-meta] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.task-status-chip {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: var(--aurora-bg-subtle);
+  color: var(--aurora-text-secondary);
+}
+.task-status-chip[data-status="done"] {
+  color: var(--aurora-node-mastered);
+  background: var(--aurora-success-surface);
+}
+.task-status-chip[data-status="blocked"] {
+  color: var(--aurora-danger);
+  background: var(--aurora-danger-surface);
+}
+.task-due {
+  font-size: 13px;
+  color: var(--aurora-text-muted);
+}
+.task-description {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--aurora-text-secondary);
+}
+
+/* A generic card list used by several placeholder families. */
+.aux-list {
+  list-style: none;
+  margin: 12px 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ---- Progress / analytics (ADR §18.6, 05 §4) ------------------------ */
+[data-period] {
+  padding: 0 0 16px;
+}
+[data-progress-screen] {
+  display: flex;
+  flex-direction: column;
+}
+
+/* KPI tiles (05 §3.3) — 2-up grid on mobile. */
+[data-progress-empty] {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 16px;
+}
+[data-progress-empty] [data-chart-mount] {
+  grid-column: 1 / -1;
+}
+.stat-tile {
+  padding: 14px 16px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.stat-tile .stat-value {
+  margin: 0;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--aurora-text-primary);
+}
+.stat-tile .stat-label,
+[data-progress-empty] .stat-label {
+  margin: 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--aurora-text-muted);
+}
+
+/* Trajectory detail (/progress/:id). */
+[data-progress-detail] {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 40vh;
+}
+
+/* ---- Calendar / knowledge / discovery engine containers -------------
+ * Sized for the AD-10 renderers that mount inside (FullCalendar day/week,
+ * React Flow tree). Home excludes these (perf); they load lazily. */
+[data-calendar="true"],
+[data-semantic-tree="true"] {
+  min-height: 60vh;
+  padding: 12px 16px;
+}
+[data-semantic-tree="true"] {
+  position: relative;
+}
+
+/* ---- Settings (02 §6.1, OQ-47: theme selector + preview + G-D14) ---- */
+[data-settings="true"] {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+[data-settings="true"] section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.settings-section-title {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--aurora-text-muted);
+}
+[data-settings="true"] label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  font-size: 14px;
+  color: var(--aurora-text-secondary);
+}
+[data-settings="true"] select {
+  min-height: var(--aurora-tap-target, 44px);
+  padding: 0 12px;
+  font-size: 15px;
+  color: var(--aurora-text-primary);
+  background: var(--aurora-bg-subtle);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+}
+
+/* Theme-swatch grid (10 expressive themes + 3 presets, 05 §5). Each
+ * swatch = a preview chip using that theme's accent tokens. */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.theme-swatch {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  background: var(--aurora-surface);
+  cursor: pointer;
+  min-height: var(--aurora-tap-target, 44px);
+}
+.theme-swatch[aria-pressed="true"] {
+  border-color: var(--aurora-accent-primary);
+  box-shadow: 0 0 0 1px var(--aurora-accent-primary);
+}
+.theme-swatch-dot {
+  width: 100%;
+  height: 28px;
+  border-radius: 6px;
+}
+.theme-swatch-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--aurora-text-secondary);
+}
+
+/* ---- Calendar surface (FullCalendar mounts here later) --------------- */
+.cal-grid {
+  margin: 12px 16px;
+  padding: 12px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+}
+.cal-dow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 8px;
+}
+.cal-dow span {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--aurora-text-muted);
+}
+.cal-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.cal-cell {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  background: var(--aurora-bg-subtle);
+}
+.cal-empty {
+  margin: 12px 16px;
+  padding: 16px;
+}
+
+/* ---- Inbox (quick capture, 02 §6.1) -------------------------------- */
+.inbox {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.inbox-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+}
+.inbox-composer-input {
+  resize: none;
+  padding: 10px 12px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--aurora-text-primary);
+  background: var(--aurora-bg-subtle);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+}
+.inbox-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  color: var(--aurora-text-muted);
+}
+.inbox-empty svg {
+  color: var(--aurora-node-mastered);
+}
+.inbox-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.inbox-item {
+  padding: 10px 14px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  font-size: 14px;
+  color: var(--aurora-text-primary);
+}
+
+/* ---- Artifacts (ADR §16 preview per format) -------------------------- */
+[data-artifact-id] {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.artifact-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 40vh;
+  padding: 24px;
+  text-align: center;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+}
+.artifact-preview svg {
+  color: var(--aurora-text-muted);
+}
+.artifact-preview p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--aurora-text-secondary);
+}
+
+/* ---- Knowledge (semantic tree, 01 §4.3) ---------------------------- */
+[data-knowledge] {
+  padding: 0 16px 16px;
+}
+.knowledge-tree {
+  min-height: 60vh;
+  display: grid;
+  place-items: center;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+}
+.knowledge-tree-empty {
+  font-size: 14px;
+  color: var(--aurora-text-muted);
+}
+.knowledge-node {
+  margin-top: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+}
+.knowledge-node p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--aurora-text-secondary);
+}
+
+/* ---- Discovery feed (05 §4 / ADR §13.9) ---------------------------- */
+[data-discovery] {
+  padding: 0 16px 16px;
+}
+.discovery-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.discovery-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+  font-size: 14px;
+  color: var(--aurora-text-primary);
+}
+.discovery-item--running svg {
+  color: var(--aurora-accent-primary);
+  animation: discovery-pulse 1.4s ease-in-out infinite;
+}
+@keyframes discovery-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ---- Learning (05 §4.6–4.9) ---------------------------------------- */
+[data-learn-home] {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.learn-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.learn-section-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--aurora-text-muted);
+}
+.learn-section p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--aurora-text-secondary);
+}
+[data-course-detail] {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.learn-detail-hint {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--aurora-text-secondary);
+}
+
+/* ---- Generic screen-content padding for the stub families ------------ */
+ion-content div[data-state],
+ion-content [data-artifact-id] {
+  padding: 16px;
+}

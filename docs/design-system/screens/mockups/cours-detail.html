@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aurora — cours-detail</title>
+<link rel="stylesheet" href="aurora.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="frame">
+  <div class="safe content">
+    <!-- TopBar (overlay over /learn) -->
+    <div class="topbar" style="padding-top:0">
+      <button class="iconbtn focus-ring" aria-label="Retour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="li-body"><h1 style="font-size:16px;font-weight:700;margin:0">Thermodynamique</h1><div class="sub mono">Chapitre 3 · 24 min</div></div>
+      <button class="iconbtn focus-ring" aria-label="Enregistrer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
+    </div>
+
+    <!-- offline badge (AD-7) -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span class="badge info mono" style="font-size:11px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1"/></svg> Lecture hors-ligne</span>
+      <span style="font-size:11.5px;color:var(--text-muted)">chapitre · progress persistée</span>
+    </div>
+
+    <!-- lecture -->
+    <div class="card" style="padding:18px">
+      <h2 style="font-size:18px;font-weight:700;margin:0 0 4px;letter-spacing:-.2px">1ᵉʳ principe : conservation de l'énergie</h2>
+      <div class="mono" style="font-size:11.5px;color:var(--text-muted);margin-bottom:14px">3.2 · 6 min de lecture</div>
+      <p style="font-size:14px;line-height:1.7;color:var(--text-2);margin:0 0 12px">Le système échange de la chaleur <span class="mono">q</span> et un travail <span class="mono">w</span> avec l'extérieur. L'énergie interne <span class="mono">U</span> ne change que de la somme des deux :</p>
+      <div style="background:var(--surface-alt);border:1px solid var(--border);border-radius:12px;padding:14px;margin:0 0 14px;font-family:'JetBrains Mono',monospace;font-size:15px;text-align:center;color:var(--text-1)">ΔU = q + w</div>
+      <p style="font-size:14px;line-height:1.7;color:var(--text-2);margin:0 0 16px">Pour une transformation à volume constant, <span class="mono">w = 0</span> et tout le transfert de chaleur se traduit en variation d'énergie interne : <span class="mono">ΔU = q<sub>v</sub></span>. C'est la base de la calorimétrie.</p>
+      <div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.5 8l5 4-5 4"/></svg>
+        2 points de vigilance signalés par ton coach
+      </div>
+    </div>
+
+    <!-- actions du cours : fiches / QCM / flashcards / exercices -->
+    <div class="section-title">Travailler ce chapitre</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button class="btn focus-ring" style="height:74px;background:var(--surface);border:1px solid var(--border);border-radius:14px;flex-direction:column;gap:6px;align-items:center;justify-content:center;padding:10px;box-shadow:var(--shadow-1)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9h16M9 4v16"/></svg>
+        <span style="font-size:12px;font-weight:600">Fiches <span class="mono" style="color:var(--text-muted)">·14</span></span>
+      </button>
+      <button class="btn focus-ring" style="height:74px;background:var(--surface);border:1px solid var(--border);border-radius:14px;flex-direction:column;gap:6px;align-items:center;justify-content:center;padding:10px;box-shadow:var(--shadow-1)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--secondary)" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8"/></svg>
+        <span style="font-size:12px;font-weight:600">QCM <span class="mono" style="color:var(--text-muted)">·10</span></span>
+      </button>
+      <button class="btn focus-ring" style="height:74px;background:var(--surface);border:1px solid var(--border);border-radius:14px;flex-direction:column;gap:6px;align-items:center;justify-content:center;padding:10px;box-shadow:var(--shadow-1)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9h16M9 4v16"/></svg>
+        <span style="font-size:12px;font-weight:600">Flashcards <span class="mono" style="color:var(--text-muted)">·33</span></span>
+      </button>
+      <button class="btn focus-ring" style="height:74px;background:var(--surface);border:1px solid var(--border);border-radius:14px;flex-direction:column;gap:6px;align-items:center;justify-content:center;padding:10px;box-shadow:var(--shadow-1)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round"><path d="M9 11h6M9 15h4"/><rect x="4" y="3" width="16" height="18" rx="2"/></svg>
+        <span style="font-size:12px;font-weight:600">Exercices</span>
+      </button>
+    </div>
+
+    <!-- progression du chapitre -->
+    <div class="card" style="padding:12px 14px;margin-top:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:12.5px;font-weight:600">Chapitre 3 · progression</span><span class="mono" style="font-size:12px;color:var(--text-2)">8/10</span>
+      </div>
+      <div class="progress"><span style="width:80%;background:linear-gradient(90deg,var(--primary),var(--secondary))"></span></div>
+    </div>
+  </div>
+  <nav class="bottomnav">
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Accueil</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8"/></svg>Tâches</button>
+    <button class="on"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Apprendre</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="m7 14 3-3 3 3 5-5"/></svg>Progression</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 8V4M8 8l2-2M16 8l-2-2"/><circle cx="12" cy="14" r="6"/></svg>Coach</button>
+  </nav>
+</div>
+<span class="pill-label"><span class="dot"></span>Cours · détail <span class="route">/learn/:id</span></span>
+</body>
+</html>

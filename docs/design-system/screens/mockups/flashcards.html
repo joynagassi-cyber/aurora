@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aurora — flashcards</title>
+<link rel="stylesheet" href="aurora.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="frame">
+  <div class="safe content" style="display:flex;flex-direction:column">
+    <div class="topbar" style="padding-top:0">
+      <button class="iconbtn focus-ring" aria-label="Retour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="li-body"><h1 style="font-size:16px;font-weight:700;margin:0">Thermo dynamique</h1><div class="sub mono">fiches FSRS · 12 restantes</div></div>
+      <button class="iconbtn focus-ring" aria-label="Options"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+    </div>
+
+    <!-- session progress -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <div class="progress" style="flex:1"><span style="width:64%;background:linear-gradient(90deg,var(--primary),var(--secondary))"></span></div>
+      <span class="mono" style="font-size:11.5px;color:var(--text-muted)">21/33</span>
+    </div>
+
+    <!-- Card face -->
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center">
+      <div style="width:100%;max-width:330px;background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow-4);min-height:250px;display:flex;flex-direction:column;padding:26px;position:relative">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <span class="badge primary mono">Q · 12/33</span>
+          <button class="iconbtn" style="width:36px;height:36px" aria-label="Retourner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+        </div>
+        <div style="font-size:19px;font-weight:600;line-height:1.4;color:var(--text-1);letter-spacing:-.2px">Quelle est la relation entre l'enthalpie libre de Gibbs ΔG, l'enthalpie ΔH et l'entropie ΔS ?</div>
+        <div style="margin-top:auto;padding-top:20px;display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:12px">
+          <span class="badge warning mono">fragile</span>
+          <span class="mono">réviser dans 2 j</span>
+        </div>
+      </div>
+      <div class="mono" style="font-size:12px;color:var(--text-muted);margin-top:16px">Appuie pour révéler la réponse</div>
+    </div>
+
+    <!-- FSRS answer buttons -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+      <button class="btn" style="height:62px;background:var(--success-surface);color:var(--success);border:1px solid var(--success);flex-direction:column;gap:2px;font-size:15px;font-weight:700"><span class="mono" style="font-size:11px;font-weight:500;opacity:.7">5 j</span>Trouvée</button>
+      <button class="btn" style="height:62px;background:var(--warning-surface);color:var(--warning);border:1px solid var(--warning);flex-direction:column;gap:2px;font-size:15px;font-weight:700"><span class="mono" style="font-size:11px;font-weight:500;opacity:.7">1 j</span>Difficile</button>
+      <button class="btn" style="height:62px;background:var(--danger-surface);color:var(--danger);border:1px solid var(--danger);flex-direction:column;gap:2px;font-size:15px;font-weight:700"><span class="mono" style="font-size:11px;font-weight:500;opacity:.7">0 j</span>À revoir</button>
+      <button class="btn" style="height:62px;background:var(--bg-subtle);color:var(--text-2);border:1px solid var(--border);flex-direction:column;gap:2px;font-size:15px;font-weight:700"><span class="mono" style="font-size:11px;font-weight:500;opacity:.7">−</span>Sauter</button>
+    </div>
+  </div>
+  <nav class="bottomnav">
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Accueil</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8"/></svg>Tâches</button>
+    <button class="on"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Apprendre</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="m7 14 3-3 3 3 5-5"/></svg>Progression</button>
+    <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 8V4M8 8l2-2M16 8l-2-2"/><circle cx="12" cy="14" r="6"/></svg>Coach</button>
+  </nav>
+</div>
+<span class="pill-label"><span class="dot"></span>Flashcards · FSRS <span class="route">/learn/:id → flashcards</span></span>
+</body>
+</html>
