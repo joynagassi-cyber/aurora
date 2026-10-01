@@ -322,7 +322,13 @@
   color: var(--aurora-text-secondary);
 }
 
-/* ---- Calendar surface (FullCalendar mounts here later) --------------- */
+/* ---- Calendar surface (FullCalendar `CalendarView` mounted here) ------ */
+.cal-page {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 .cal-grid {
   margin: 12px 16px;
   padding: 12px;
@@ -446,18 +452,34 @@
 [data-knowledge] {
   padding: 0 16px 16px;
 }
+/* AD-10: the SemanticTreeRenderer (React Flow) mounts here — a definite
+ * height is required for the canvas to size (React Flow reads parent height). */
 .knowledge-tree {
-  min-height: 60vh;
-  display: grid;
-  place-items: center;
+  position: relative;
+  height: 70vh;
+  min-height: 320px;
   background: var(--aurora-surface);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
+  overflow: hidden;
   box-shadow: var(--aurora-shadow-card);
 }
-.knowledge-tree-empty {
+/* Empty-tree CTA centered OVER the (empty) React Flow canvas. */
+.knowledge-tree-cta {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  padding: 16px;
   font-size: 14px;
   color: var(--aurora-text-muted);
+}
+.knowledge-tree-cta p {
+  margin: 0;
 }
 .knowledge-node {
   margin-top: 8px;

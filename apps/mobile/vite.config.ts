@@ -77,6 +77,21 @@ export default defineConfig({
       plugins: [tailwindcss, autoprefixer],
     },
   },
+  optimizeDeps: {
+    // The PowerSync sync engine (`@powersync/web`) spawns a Web Worker
+    // (`worker.js`). Vite's dep optimizer inlines the bundle but drops the
+    // worker file → the browser requests `.vite/deps/worker.js?worker_file`
+    // which doesn't exist ("incompatible with the dep optimizer"), which also
+    // surfaces at runtime as "[PowerSync]: Error in database or sync worker".
+    // Serve the PowerSync family natively (un-optimized) so its worker +
+    // `new URL(…)` references resolve against the real files.
+    exclude: [
+      '@powersync/capacitor',
+      '@powersync/web',
+      '@powersync/common',
+      '@powersync/shared-internals',
+    ],
+  },
   server: {
     // the dev server must read the workspace packages (symlinked TS source).
     fs: { allow: [path.resolve(here, '../..')] },

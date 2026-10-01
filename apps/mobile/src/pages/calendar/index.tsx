@@ -3,44 +3,38 @@
  * detail. View mode (day/week/month/agenda) is a T4 ui-state (cosmetic,
  * persistent). NOT ion-calendar — FullCalendar v6+ (docs/ui-libraries §1).
  *
- * FullCalendar (`CalendarView` @aurora/ui) mounts here once the mobile
- * Tailwind build is stood up; this turn ships the token-styled surface +
- * pager + honest empty state (events mirror not yet wired → AD-7 empty).
+ * AD-10: the calendar is now the real `CalendarView` (@aurora/ui contract,
+ * FullCalendar engine). The view switcher re-mounts on change (`key`) since
+ * FullCalendar's `initialView` is set-once. Events come from the calendar
+ * mirror (AD-7) — not yet wired → the engine renders its honest empty
+ * state ("Aucun événement") and pops in as soon as events land.
  */
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
 import { useState } from 'react';
+import { CalendarView } from '@aurora/ui';
+import type { CalendarViewName, RenderCalendarEvent } from '@aurora/ui';
 
 const CALENDAR_VIEWS = [
-  ['day', 'Jour'],
   ['week', 'Semaine'],
   ['month', 'Mois'],
+  ['day', 'Jour'],
   ['agenda', 'Agenda'],
 ] as const;
 
-type CalendarView = (typeof CALENDAR_VIEWS)[number][0];
+type ViewKey = (typeof CALENDAR_VIEWS)[number][0];
 
-/** A token-styled month grid (the surface FullCalendar replaces). */
-function MonthGrid({ view }: { view: CalendarView }) {
-  const weeks = 6;
-  const days = 7;
-  return (
-    <div className="cal-grid" data-calendar-mount data-view={view}>
-      <div className="cal-dow" aria-hidden>
-        {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => (
-          <span key={i}>{d}</span>
-        ))}
-      </div>
-      <div className="cal-days">
-        {Array.from({ length: weeks * days }, (_, i) => (
-          <span key={i} className="cal-cell" />
-        ))}
-      </div>
-    </div>
-  );
-}
+/** View key → FullCalendar view (docs/ui-libraries.md §1: day/week/month/agenda). */
+const FULLCAL: Record<ViewKey, CalendarViewName> = {
+  week: 'timeGridWeek',
+  month: 'dayGridMonth',
+  day: 'timeGridDay',
+  agenda: 'listWeek',
+};
 
 export function CalendarPage() {
-  const [view, setView] = useState<CalendarView>('week');
+  const [view, setView] = useState<ViewKey>('week');
+  // AD-7: events come from the calendar mirror (not yet wired → empty).
+  const events: RenderCalendarEvent[] = [];
 
   return (
     <>
@@ -48,17 +42,17 @@ export function CalendarPage() {
         <IonTitle>Calendrier</IonTitle>
       </IonHeader>
       <IonContent>
-        <div data-calendar="true">
+        <div data-calendar="true" className="cal-page">
+          {/* T4 view mode (cosmetic, persistent ui-state in a full build). */}
           <div className="segmented" role="tablist" aria-label="Vue calendrier">
             {CALENDAR_VIEWS.map(([value, label]) => (
               <button
                 key={value}
+                type="button"
                 role="tab"
                 aria-selected={view === value}
                 className={
-                  view === value
-                    ? 'segmented-item active'
-                    : 'segmented-item'
+                  view === value ? 'segmented-item active' : 'segmented-item'
                 }
                 onClick={() => setView(value)}
               >
@@ -67,15 +61,20 @@ export function CalendarPage() {
             ))}
           </div>
 
-          <MonthGrid view={view} />
+          {/* AD-10: FullCalendar mounted via the @aurora/ui contract.
+              `key={view}` re-mounts on view switch (initialView is per-view). */}
+          <CalendarView
+            key={view}
+            events={events}
+            initialView={FULLCAL[view]}
+            mobile
+            height={view === 'month' ? 380 : 420}
+            emptyMessage="Aucun événement — planifiez un bloc."
+          />
 
-          {/* Events mirror not wired → the honest empty (AD-7). */}
-          <div data-state="empty" className="cal-empty">
-            <p>Semaine vide</p>
-            <a className="aurora-btn aurora-btn--primary aurora-tap" href="/inbox">
-              Planifier
-            </a>
-          </div>
+          <a className="aurora-btn aurora-btn--primary aurora-tap" href="/inbox">
+            Planifier
+          </a>
         </div>
       </IonContent>
     </>

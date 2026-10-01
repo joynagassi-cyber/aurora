@@ -106,6 +106,67 @@
   --success: var(--aurora-success);
   --warning: var(--aurora-warning);
   --info: var(--aurora-info);
+
+  /* ---- SSoT triplet tokens (`-h`, 05 §2.1.2 light neutral + aurora) ----
+   * The @aurora/ui AD-10 engines (SemanticTreeRenderer edges, CalendarView
+   * blocks, …) style inline as `hsl(var(--aurora-*-h))` (the SSoT
+   * packages/ui/src/styles/aurora.css :root). That file is not loaded by the
+   * mobile build, so these are the light triplet baseline; the dark override
+   * is below. (The runtime provider writes the FULL-value `--aurora-*` for
+   * the shadcn layer; the engines' inline styles read these triplets.) */
+  --aurora-bg-h: 210 40% 98%;
+  --aurora-bg-subtle-h: 210 25% 93%;
+  --aurora-surface-h: 0 0% 100%;
+  --aurora-surface-alt-h: 210 40% 98%;
+  --aurora-text-primary-h: 222 47% 11%;
+  --aurora-text-secondary-h: 215 25% 23%;
+  --aurora-text-muted-h: 215 20% 65%;
+  --aurora-text-disabled-h: 214 32% 84%;
+  --aurora-border-h: 214 32% 92%;
+  --aurora-border-strong-h: 215 25% 47%;
+  --aurora-success-h: 160 84% 39%;
+  --aurora-success-surface-h: 150 85% 95%;
+  --aurora-warning-h: 38 92% 50%;
+  --aurora-warning-surface-h: 43 100% 94%;
+  --aurora-danger-h: 0 84% 60%;
+  --aurora-danger-surface-h: 0 80% 95%;
+  --aurora-info-h: 199 89% 48%;
+  --aurora-skeleton-h: 214 32% 91%;
+  --aurora-node-mastered-h: 160 84% 39%;
+  --aurora-node-fragile-h: 38 92% 50%;
+  --aurora-node-forgotten-h: 0 84% 60%;
+  --aurora-accent-primary-h: 221 91% 59%;
+  --aurora-accent-secondary-h: 184 74% 48%;
+  --aurora-accent-punctual-h: 249 92% 69%;
+  --aurora-accent-selected-surface-h: 208 100% 87%;
+  --aurora-accent-on-primary-h: 0 0% 100%;
+  --aurora-accent-focus-ring-h: 221 91% 59%;
+}
+
+/* Dark neutral style (05 §2.1.3) — triplet override when
+ * <AuroraThemeProvider> sets `data-aurora-style="dark"` on <html>. */
+[data-aurora-style="dark"] {
+  --aurora-bg-h: 224 46% 6%;
+  --aurora-bg-subtle-h: 226 43% 10%;
+  --aurora-surface-h: 220 42% 14%;
+  --aurora-surface-alt-h: 218 34% 19%;
+  --aurora-text-primary-h: 210 40% 96%;
+  --aurora-text-secondary-h: 215 20% 65%;
+  --aurora-text-muted-h: 215 20% 40%;
+  --aurora-text-disabled-h: 215 25% 33%;
+  --aurora-border-h: 215 25% 29%;
+  --aurora-border-strong-h: 215 20% 40%;
+  --aurora-success-h: 160 84% 53%;
+  --aurora-success-surface-h: 161 84% 19%;
+  --aurora-warning-h: 43 94% 61%;
+  --aurora-warning-surface-h: 35 92% 28%;
+  --aurora-danger-h: 0 84% 69%;
+  --aurora-danger-surface-h: 0 65% 29%;
+  --aurora-info-h: 199 85% 62%;
+  --aurora-skeleton-h: 218 34% 19%;
+  --aurora-node-mastered-h: 160 84% 53%;
+  --aurora-node-fragile-h: 43 94% 61%;
+  --aurora-node-forgotten-h: 0 84% 69%;
 }
 
 /* ---- Base resets ------------------------------------------------------ */
