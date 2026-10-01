@@ -23,11 +23,11 @@ import '@ionic/react/css/normalize.css';
 import '@ionic/react/css/structure.css';
 import '@ionic/react/css/typography.css';
 
-// Aurora page layer (AD-17): the token baseline + premium per-family
-// stylesheets that style the screens' custom classes. Every value is a
-// `var(--aurora-*)` token — the <AuroraThemeProvider> (via FocusThemeAdapter)
-// re-writes the same vars at runtime for the active theme/preset/style.
-// Order: global baseline → shared atoms → screen families.
+// Tailwind v3 (shadcn/ui layer, @aurora/ui): generates the utility classes the
+// shadcn components use. Base first (Preflight), then the Aurora token
+// baseline + per-family page styles. Every shadcn color token resolves to a
+// runtime `var(--*)` written by <AuroraThemeProvider> (tailwind.config.js).
+import './styles/tw.css';
 import './styles/tokens.css';
 import './styles/atoms.css';
 import './styles/home.css';

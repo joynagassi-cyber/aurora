@@ -10,11 +10,33 @@
  *
  * Coaching / notification prefs are editable + OPTIMISTIC (OQ-47): the sync
  * is an AD-8 async job — the UI never blocks the render (AD-7).
+ *
+ * Shadcn layer: each section is a `<Card>`; the coaching prefs are real
+ * `@aurora/ui` `<Select>` controls; a `<Badge>` signals the optimistic
+ * AD-8 sync. The theme-swatch grid stays a custom token element (the DS
+ * swatch is not a shadcn control).
  */
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
 import { Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
-import { PRESETS, THEMES, type AuroraTheme, type PresetName, type ThemeName } from '@aurora/ui';
+import {
+  PRESETS,
+  THEMES,
+  type AuroraTheme,
+  type PresetName,
+  type ThemeName,
+  Badge,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@aurora/ui';
 import { useUiStateStore } from '../../state/ui-state';
 
 /** The accent swatch for a theme / preset (its OWN tokens, 05 §5.7). */
@@ -43,105 +65,149 @@ export function SettingsPage() {
         <IonTitle>Paramètres</IonTitle>
       </IonHeader>
       <IonContent>
-        <div data-settings="true">
+        <div data-settings="true" className="settings-page">
           {/* Layer 2 — expressive theme / preset (10 + 3). */}
-          <section>
-            <h2 className="settings-section-title">Thème</h2>
-            <div className="theme-grid" role="radiogroup" aria-label="Thème">
-              {(Object.keys(THEMES) as ThemeName[]).map((name) => (
-                <button
-                  key={name}
-                  type="button"
-                  role="radio"
-                  className="theme-swatch"
-                  aria-pressed={auroraTheme === name}
-                  onClick={() => setAuroraTheme(name)}
-                >
-                  <span
-                    className="theme-swatch-dot"
-                    style={{ background: swatchGradient(THEMES[name]) }}
-                    aria-hidden
-                  />
-                  <span className="theme-swatch-name">
-                    {name.charAt(0).toUpperCase() + name.slice(1)}
-                  </span>
-                </button>
-              ))}
-              {presets.map((name) => (
-                <button
-                  key={name}
-                  type="button"
-                  role="radio"
-                  className="theme-swatch"
-                  aria-pressed={auroraTheme === name}
-                  onClick={() => setAuroraTheme(name)}
-                >
-                  <span
-                    className="theme-swatch-dot"
-                    style={{
-                      background: swatchGradient(PRESETS[name] as unknown as AuroraTheme),
-                    }}
-                    aria-hidden
-                  />
-                  <span className="theme-swatch-name">{name}</span>
-                </button>
-              ))}
-            </div>
-          </section>
+          <Card>
+            <CardHeader>
+              <CardTitle>Thème</CardTitle>
+              <CardDescription>
+                10 thèmes expressifs + 3 presets (AD-17, 05 §5).
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="theme-grid" role="radiogroup" aria-label="Thème">
+                {(Object.keys(THEMES) as ThemeName[]).map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    role="radio"
+                    aria-checked={auroraTheme === name}
+                    className="theme-swatch"
+                    data-pressed={auroraTheme === name}
+                    onClick={() => setAuroraTheme(name)}
+                  >
+                    <span
+                      className="theme-swatch-dot"
+                      style={{ background: swatchGradient(THEMES[name]) }}
+                      aria-hidden
+                    />
+                    <span className="theme-swatch-name">
+                      {name.charAt(0).toUpperCase() + name.slice(1)}
+                    </span>
+                  </button>
+                ))}
+                {presets.map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    role="radio"
+                    aria-checked={auroraTheme === name}
+                    className="theme-swatch"
+                    data-pressed={auroraTheme === name}
+                    onClick={() => setAuroraTheme(name)}
+                  >
+                    <span
+                      className="theme-swatch-dot"
+                      style={{
+                        background: swatchGradient(
+                          PRESETS[name] as unknown as AuroraTheme,
+                        ),
+                      }}
+                      aria-hidden
+                    />
+                    <span className="theme-swatch-name">{name}</span>
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Layer 1 — neutral style (Light default / Dark explicit). */}
-          <section>
-            <h2 className="settings-section-title">Style</h2>
-            <div className="theme-grid" role="radiogroup" aria-label="Style">
-              <button
-                type="button"
-                role="radio"
-                className="theme-swatch"
-                aria-pressed={theme !== 'dark'}
-                onClick={() => setTheme('light')}
-              >
-                <Sun size={20} />
-                <span className="theme-swatch-name">Clair</span>
-              </button>
-              <button
-                type="button"
-                role="radio"
-                className="theme-swatch"
-                aria-pressed={theme === 'dark'}
-                onClick={() => setTheme('dark')}
-              >
-                <Moon size={20} />
-                <span className="theme-swatch-name">Sombre</span>
-              </button>
-            </div>
-          </section>
+          <Card>
+            <CardHeader>
+              <CardTitle>Style</CardTitle>
+              <CardDescription>
+                Clair (défaut) / Sombre — choix explicite, jamais un
+                changement silencieux (05 §2.1).
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="theme-grid" role="radiogroup" aria-label="Style">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={theme !== 'dark'}
+                  className="theme-swatch"
+                  data-pressed={theme !== 'dark'}
+                  onClick={() => setTheme('light')}
+                >
+                  <Sun size={20} />
+                  <span className="theme-swatch-name">Clair</span>
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={theme === 'dark'}
+                  className="theme-swatch"
+                  data-pressed={theme === 'dark'}
+                  onClick={() => setTheme('dark')}
+                >
+                  <Moon size={20} />
+                  <span className="theme-swatch-name">Sombre</span>
+                </button>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Coaching / notification prefs — editable + optimistic. */}
-          <section>
-            <h2 className="settings-section-title">Coaching</h2>
-            <label>
-              Cadence des coachings
-              <select
-                value={cadence}
-                onChange={(e) => setCadence(e.target.value as typeof cadence)}
-              >
-                <option value="daily">Quotidienne</option>
-                <option value="weekly">Hebdomadaire</option>
-                <option value="off">Désactivée</option>
-              </select>
-            </label>
-            <label>
-              Fenêtres de silence
-              <select
-                value={silence}
-                onChange={(e) => setSilence(e.target.value as typeof silence)}
-              >
-                <option value="never">Jamais</option>
-                <option value="nights">Nuit (22h – 7h)</option>
-                <option value="focus">Pendant le Focus</option>
-              </select>
-            </label>
-          </section>
+          <Card>
+            <CardHeader>
+              <CardTitle>Coaching</CardTitle>
+              <CardDescription>
+                Préférences éditables + optimistes (OQ-47 : le sync est un
+                job AD-8 asynchrone, la UI ne bloque jamais le render).
+              </CardDescription>
+              <Badge variant="secondary">Synchronisation optimiste · AD-8</Badge>
+            </CardHeader>
+            <CardContent className="settings-prefs">
+              <div className="settings-field">
+                <span className="settings-field-label">
+                  Cadence des coachings
+                </span>
+                <Select
+                  value={cadence}
+                  onValueChange={(v) => setCadence(v as typeof cadence)}
+                >
+                  <SelectTrigger aria-label="Cadence des coachings" className="w-full">
+                    <SelectValue placeholder="Cadence" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Quotidienne</SelectItem>
+                    <SelectItem value="weekly">Hebdomadaire</SelectItem>
+                    <SelectItem value="off">Désactivée</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="settings-field">
+                <span className="settings-field-label">
+                  Fenêtres de silence
+                </span>
+                <Select
+                  value={silence}
+                  onValueChange={(v) => setSilence(v as typeof silence)}
+                >
+                  <SelectTrigger aria-label="Fenêtres de silence" className="w-full">
+                    <SelectValue placeholder="Fenêtres de silence" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="never">Jamais</SelectItem>
+                    <SelectItem value="nights">Nuit (22h – 7h)</SelectItem>
+                    <SelectItem value="focus">Pendant le Focus</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </IonContent>
     </>

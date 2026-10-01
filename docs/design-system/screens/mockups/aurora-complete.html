@@ -553,7 +553,7 @@ body{
   </div>
 
   <div class="tp-section">
-    <div class="lbl">Éditions Premium <span class="ln"></span></div>
+    <div class="lbl">Éditions Premium · 5 catégories <span class="ln"></span></div>
     <div class="edi-grid" id="ediGrid"></div>
   </div>
 
@@ -830,21 +830,84 @@ const STYLES=[
   {id:"cosmos", n:"Cosmos",  d:"Indigo · cyan · rose",                 sw:["#3B3FA7","#18BFD4","#E95BAA"]},
 ];
 
-const EDITIONS=[
-  {id:"none",   n:"Standard",     d:"Aucune édition",       em:"✓",  prem:false, img:"",     dom:null},
-  {id:"noel",   n:"Noël",         d:"Rouge & or · neige",   em:"❄️", prem:true,  img:"https://images.unsplash.com/photo-1512820790803-80f6493ad6e5?w=400&q=70&auto=format&fit=crop", dom:"#C02020"},
-  {id:"paques", n:"Pâques",       d:"Pastels printaniers",  em:"🐣", prem:true,  img:"https://images.unsplash.com/photo-1464722478607-13bf11275554?w=400&q=70&auto=format&fit=crop", dom:"#D85B86"},
-  {id:"an",     n:"Nouvelle An",  d:"Nuit · countdown doré",em:"🎆", prem:true,  img:"https://images.unsplash.com/photo-1549319124-666db8d2b55e?w=400&q=70&auto=format&fit=crop", dom:"#7B61FF"},
-  {id:"fete",   n:"Fête",         d:"Confettis · néons",    em:"🎉", prem:true,  img:"https://images.unsplash.com/photo-1493484662693-195572e15117?w=400&q=70&auto=format&fit=crop", dom:"#E95BAA"},
-  {id:"paix",   n:"Paix",         d:"Vert sauge · apaisant",em:"🕊️", prem:true,  img:"https://images.unsplash.com/photo-1519681393784-d12fd2017298?w=400&q=70&auto=format&fit=crop", dom:"#247A55"},
-  {id:"paris",  n:"Paris",        d:"Bleu nuit · Eiffel",   em:"🗼", prem:true,  img:"https://images.unsplash.com/photo-1502602898657-3e9196373397?w=400&q=70&auto=format&fit=crop", dom:"#1E3A8A"},
-  {id:"tokyo",  n:"Tokyo",        d:"Rose sakura · néons",  em:"⛩️", prem:true,  img:"https://images.unsplash.com/photo-1540959035659-496175840409?w=400&q=70&auto=format&fit=crop", dom:"#D85B86"},
-  {id:"newyork",n:"New York",     d:"Bleu skyline · nuit",  em:"🏙️", prem:true,  img:"https://images.unsplash.com/photo-1496442256676-69545d2bf516?w=400&q=70&auto=format&fit=crop", dom:"#1E40AF"},
-  {id:"londres",n:"Londres",      d:"Gris pluvieux · Big Ben",em:"🇬🇧",prem:true, img:"https://images.unsplash.com/photo-1513635213273-255d14b5e4f6?w=400&q=70&auto=format&fit=crop", dom:"#3F4A5A"},
-  {id:"dubai",  n:"Dubaï",        d:"Doré · skyline futuriste",em:"🌃",prem:true, img:"https://images.unsplash.com/photo-1512453979894-0936644a5358?w=400&q=70&auto=format&fit=crop", dom:"#C9823B"},
-  {id:"sydney", n:"Sydney",       d:"Cyan océan · opéra",   em:"⛵", prem:true,  img:"https://images.unsplash.com/photo-1506929562972-b4361f18b6f5?w=400&q=70&auto=format&fit=crop", dom:"#0EA5E9"},
-  {id:"afrique",n:"Afrique",      d:"Terre cuite · wax",    em:"🦁", prem:true,  img:"https://images.unsplash.com/photo-1523805009344-1f28fae9b814?w=400&q=70&auto=format&fit=crop", dom:"#B85C38"},
+const CATEGORIES=[
+  {id:"ville", label:"Villes", icon:"building-2", items:[
+    {id:"paris",n:"Paris",d:"Bleu nuit · Eiffel",em:"🗼",prem:true,dom:"#1E3A8A",
+      img:"https://images.unsplash.com/photo-1502602898657-3e9196373397?w=400&q=70&auto=format&fit=crop"},
+    {id:"tokyo",n:"Tokyo",d:"Sakura · néons",em:"⛩️",prem:true,dom:"#D85B86",
+      img:"https://images.unsplash.com/photo-1540959035659-496175840409?w=400&q=70&auto=format&fit=crop"},
+    {id:"newyork",n:"New York",d:"Skyline · bleu nuit",em:"🏙️",prem:true,dom:"#1E40AF",
+      img:"https://images.unsplash.com/photo-1496442256676-69545d2bf516?w=400&q=70&auto=format&fit=crop"},
+    {id:"londres",n:"Londres",d:"Gris pluvieux · Big Ben",em:"🇬🇧",prem:true,dom:"#3F4A5A",
+      img:"https://images.unsplash.com/photo-1513635213273-255d14b5e4f6?w=400&q=70&auto=format&fit=crop"},
+    {id:"dubai",n:"Dubaï",d:"Or désertique · futuriste",em:"🌃",prem:true,dom:"#C9823B",
+      img:"https://images.unsplash.com/photo-1512453979894-0936644a5358?w=400&q=70&auto=format&fit=crop"},
+    {id:"sydney",n:"Sydney",d:"Cyan océan · Opéra",em:"⛵",prem:true,dom:"#0EA5E9",
+      img:"https://images.unsplash.com/photo-1506929562972-b4361f18b6f5?w=400&q=70&auto=format&fit=crop"}
+  ]},
+  {id:"saison", label:"Saisons", icon:"sun", items:[
+    {id:"printemps",n:"Printemps",d:"Cerisiers · vert tendre",em:"🌸",prem:true,dom:"#E98EAD",
+      img:"https://images.unsplash.com/photo-1464722478607-13bf11275554?w=400&q=70&auto=format&fit=crop"},
+    {id:"ete",n:"Été",d:"Côte · sable · turquoise",em:"☀️",prem:true,dom:"#F0B83F",
+      img:"https://images.unsplash.com/photo-1507525428034-b72fa198b309?w=400&q=70&auto=format&fit=crop"},
+    {id:"automne",n:"Automne",d:"Feuillage orange · brume",em:"🍂",prem:true,dom:"#B85C38",
+      img:"https://images.unsplash.com/photo-1476235286386-71d80148c524?w=400&q=70&auto=format&fit=crop"},
+    {id:"hiver",n:"Hiver",d:"Neige · bleu arctique",em:"❄️",prem:true,dom:"#2E5C8A",
+      img:"https://images.unsplash.com/photo-1491007297014-9b8877125f3d?w=400&q=70&auto=format&fit=crop"}
+  ]},
+  {id:"evenement", label:"Événements", icon:"party-popper", items:[
+    {id:"noel",n:"Noël",d:"Rouge & or · neige",em:"🎄",prem:true,dom:"#C02020",
+      img:"https://images.unsplash.com/photo-1512820790803-80f6493ad6e5?w=400&q=70&auto=format&fit=crop"},
+    {id:"paques",n:"Pâques",d:"Pastels · œufs · fleurs",em:"🐣",prem:true,dom:"#D85B86",
+      img:"https://images.unsplash.com/photo-1464722478607-13bf11275554?w=400&q=70&auto=format&fit=crop"},
+    {id:"an",n:"Nouvelle An",d:"Nuit · countdown doré",em:"🎆",prem:true,dom:"#7B61FF",
+      img:"https://images.unsplash.com/photo-1549319124-666db8d2b55e?w=400&q=70&auto=format&fit=crop"},
+    {id:"fete",n:"Fête",d:"Confettis · néons",em:"🎉",prem:true,dom:"#E95BAA",
+      img:"https://images.unsplash.com/photo-1493484662693-195572e15117?w=400&q=70&auto=format&fit=crop"},
+    {id:"paix",n:"Paix",d:"Vert sauge · apaisant",em:"🕊️",prem:true,dom:"#247A55",
+      img:"https://images.unsplash.com/photo-1519681393784-d12fd2017298?w=400&q=70&auto=format&fit=crop"}
+  ]},
+  {id:"art", label:"Art & Culture", icon:"palette", items:[
+    {id:"impressions",n:"Impressionnisme",d:"Chevrefeuille · monneaux · aube",em:"🖼️",prem:true,dom:"#6554C0",
+      img:"https://images.unsplash.com/photo-1518998060811-31f95534a175?w=400&q=70&auto=format&fit=crop"},
+    {id:"jazz",n:"Jazz",d:"Smoky · cuivre · nuit de club",em:"🎷",prem:true,dom:"#D99A24",
+      img:"https://images.unsplash.com/photo-1415216329958-f4a98220b54d?w=400&q=70&auto=format&fit=crop"},
+    {id:"streetart",n:"Street Art",d:"Gris · tag néon · urbain",em:"🖌️",prem:true,dom:"#EF4444",
+      img:"https://images.unsplash.com/photo-1561839585476-7e8b34377f06?w=400&q=70&auto=format&fit=crop"},
+    {id:"ballet",n:"Ballet",d:"Blanc cassé · rose poudré · élégance",em:"🩰",prem:true,dom:"#F8DCE7",
+      img:"https://images.unsplash.com/photo-1508057198495-6558193046ab?w=400&q=70&auto=format&fit=crop"},
+    {id:"sculpture",n:"Sculpture",d:"Grise · marbre · abstrait",em:"🗿",prem:true,dom:"#CBD5E1",
+      img:"https://images.unsplash.com/photo-1554900233-1621482417495?w=400&q=70&auto=format&fit=crop"}
+  ]},
+  {id:"nature", label:"Nature & Ingénierie", icon:"mountain", items:[
+    {id:"volcans",n:"Volcans",d:"Lave · noir basalte · orange",em:"🌋",prem:true,dom:"#EF4444",
+      img:"https://images.unsplash.com/photo-1471048252334-38ac76406739?w=400&q=70&auto=format&fit=crop"},
+    {id:"glacier",n:"Glacier",d:"Bleu profond · blanc · crevasse",em:"🧊",prem:true,dom:"#18BFD4",
+      img:"https://images.unsplash.com/photo-1521252050229-5e4864c4562a?w=400&q=70&auto=format&fit=crop"},
+    {id:"dunes",n:"Dunes",d:"Or sable · erg · minimalisme",em:"🏜️",prem:true,dom:"#C9823B",
+      img:"https://images.unsplash.com/photo-1473584480442-26295b013f84?w=400&q=70&auto=format&fit=crop"},
+    {id:"jungle",n:"Jungle",d:"Vert dense · brume tropicale",em:"🌿",prem:true,dom:"#247A55",
+      img:"https://images.unsplash.com/photo-1441974231531-c6227d7f6807?w=400&q=70&auto=format&fit=crop"},
+    {id:"ponts",n:"Ponts",d:"Acier · bleu industriel · béton",em:"🌉",prem:true,dom:"#2E5C8A",
+      img:"https://images.unsplash.com/photo-1513753088679-245ed4d7e824?w=400&q=70&auto=format&fit=crop"},
+    {id:"afrique",n:"Afrique",d:"Terre cuite · wax · motifs",em:"🦁",prem:true,dom:"#B85C38",
+      img:"https://images.unsplash.com/photo-1523805009344-1f28fae9b814?w=400&q=70&auto=format&fit=crop"}
+  ]}
 ];
+
+/* Flat list pour compatibilité (le JS utilise EDITIONS.all) */
+const EDITIONS={all:[], byId:{}, flat:[]};
+EDITIONS.all=[{id:"none",n:"Standard",d:"Aucune édition",em:"✓",prem:false,dom:null,img:"",cat:"none"}];
+CATEGORIES.forEach(c=>{
+  c.items.forEach(it=>{
+    const ed={...it,cat:c.id};
+    EDITIONS.byId[ed.id]=ed;
+    EDITIONS.flat.push(ed);
+  });
+});
+EDITIONS.all.push(...EDITIONS.flat);
+
+
 
 const frame=document.getElementById("frame"),
       edImg=document.getElementById("editionImg"),
@@ -867,14 +930,34 @@ STYLES.forEach(st=>{
   sGrid.appendChild(b);
 });
 
-EDITIONS.forEach(ed=>{
-  const b=document.createElement("button");
-  b.className="edi"+(ed.id===state.edition?" on":"");
-  b.dataset.edition=ed.id;
-  b.innerHTML=(ed.prem?'<span class="prem">Premium</span>':'')+'<span class="em">'+ed.em+'</span><div class="n">'+ed.n+'</div><div class="d">'+ed.d+'</div>';
-  b.onclick=()=>{state.edition=ed.id;apply();};
-  eGrid.appendChild(b);
+CATEGORIES.forEach(cat=>{
+  const sec=document.createElement("div");
+  sec.style.marginBottom="16px";
+  const head=document.createElement("div");
+  head.style.cssText="font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:#64748B;margin:0 0 8px;display:flex;align-items:center;gap:8px";
+  head.innerHTML='<i data-lucide="'+(cat.icon==="building-2"?"building":cat.icon)+'" style="width:14px;height:14px;color:#64748B"></i> '+cat.label;
+  sec.appendChild(head);
+  const grid=document.createElement("div");
+  grid.className="edi-grid";
+  cat.items.forEach(ed=>{
+    const b=document.createElement("button");
+    b.className="edi"+(ed.id===state.edition?" on":"");
+    b.dataset.edition=ed.id;
+    b.innerHTML='<span class="prem">Premium</span><span class="em">'+ed.em+'</span><div class="n">'+ed.n+'</div><div class="d">'+ed.d+'</div>';
+    b.onclick=()=>{state.edition=ed.id;apply();};
+    grid.appendChild(b);
+  });
+  sec.appendChild(grid);
+  eGrid.appendChild(sec);
 });
+
+const noneBtn=document.createElement("button");
+noneBtn.className="edi"+(state.edition==="none"?" on":"");
+noneBtn.dataset.edition="none";
+noneBtn.innerHTML='<span class="em">✓</span><div class="n">Standard</div><div class="d">Aucune édition · thème pur</div>';
+noneBtn.onclick=()=>{state.edition="none";apply();};
+noneBtn.style.gridColumn="1 / -1";
+eGrid.prepend(noneBtn);
 
 mRow.querySelectorAll("button").forEach(btn=>{
   btn.onclick=()=>{
@@ -924,7 +1007,7 @@ async function apply(){
   frame.dataset.edition=state.edition;
   eGrid.querySelectorAll(".edi").forEach(b=>b.classList.toggle("on",b.dataset.edition===state.edition));
 
-  const ed=EDITIONS.find(e=>e.id===state.edition);
+  const ed=EDITIONS.byId[state.edition];
   if(ed&&ed.img){
     edImg.style.display="";
     edImg.src=ed.img;
@@ -946,7 +1029,7 @@ async function apply(){
   }
 
   const sn=STYLES.find(s=>s.id===state.style)?.n||state.style;
-  const en=state.edition==="none"?"Standard":(EDITIONS.find(e=>e.id===state.edition)?.n||"Custom");
+  const en=state.edition==="none"?"Standard":(EDITIONS.byId[state.edition]?.n||"Custom");
   const pl=state.preset==="dark"?"Dark · Spotify":"Light";
   const routes={home:"/home",tasks:"/tasks",learn:"/learn",progress:"/progress",agent:"/agent"};
   stLabel.textContent=routes[state.view]+" · "+sn+" · "+pl+" · "+en;
@@ -994,6 +1077,8 @@ document.getElementById("resetBtn").onclick=()=>{
 /* ── Lucide + init ── */
 if(typeof lucide!=="undefined")lucide.createIcons();
 apply();
+/* Re-render lucide icons in the newly built category sections */
+if(typeof lucide!=="undefined")lucide.createIcons();
 </script>
 </body>
 </html>

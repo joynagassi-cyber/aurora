@@ -248,3 +248,37 @@
   color: var(--aurora-text-primary);
   border: 1px solid var(--aurora-border);
 }
+
+/* ---- 404 composition (shadcn Card wraps the token emblem) -------------- */
+.a404-root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 24px;
+}
+.a404-card {
+  width: 100%;
+  max-width: 360px;
+}
+.a404-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+/* ---- shadcn Skeleton in a loading/killed stack ------------------------
+ * The Skeleton's `bg-primary/10` degrades to a solid accent under the
+ * full-value token mapping (Tailwind v3, no <alpha-value>), so restyle the
+ * stack's bars to the subtle skeleton token (2-class selector wins the
+ * cascade over the single-class `bg-primary/10`). */
+.aurora-skeleton-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.aurora-skeleton-stack .animate-pulse {
+  background: var(--aurora-skeleton);
+}

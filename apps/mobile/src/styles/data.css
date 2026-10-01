@@ -264,6 +264,31 @@
   border-radius: var(--aurora-radius, 0.5rem);
 }
 
+/* Settings page built from shadcn Card + Select (data.css §settings). The
+ * Card provides the DS surface/border/shadow; these rules lay out the stack
+ * and the preference fields (a visible caption above each shadcn Select). */
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+.settings-prefs {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.settings-field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--aurora-text-secondary);
+}
+
 /* Theme-swatch grid (10 expressive themes + 3 presets, 05 §5). Each
  * swatch = a preview chip using that theme's accent tokens. */
 .theme-grid {
@@ -282,7 +307,7 @@
   cursor: pointer;
   min-height: var(--aurora-tap-target, 44px);
 }
-.theme-swatch[aria-pressed="true"] {
+.theme-swatch[data-pressed="true"] {
   border-color: var(--aurora-accent-primary);
   box-shadow: 0 0 0 1px var(--aurora-accent-primary);
 }

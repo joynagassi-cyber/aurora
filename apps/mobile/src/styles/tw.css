@@ -1,0 +1,15 @@
+/**
+ * Tailwind v3 entry for the shadcn/ui layer (@aurora/ui).
+ *
+ * The `@aurora/ui` shadcn components are plain Radix + Tailwind utilities —
+ * they render styled ONLY when Tailwind generates their utility classes.
+ * These three directives are processed by the Tailwind PostCSS plugin
+ * (wired in vite.config.ts `css.postcss`), which reads tailwind.config.js
+ * (color tokens → the runtime `var(--*)` written by <AuroraThemeProvider>).
+ *
+ * NOTE: this is NOT `@import "tailwindcss"` (that is the v4 syntax used by
+ * packages/ui's own `aurora.css`, which Vite mobile does not process).
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

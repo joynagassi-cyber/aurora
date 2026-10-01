@@ -77,6 +77,35 @@
   --aurora-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.06),
     0 1px 3px rgba(15, 23, 42, 0.1);
   --aurora-shadow-float: 0 8px 24px rgba(15, 23, 42, 0.12);
+
+  /* ---- shadcn alias vars (Tailwind shadcn/ui layer) ---------------------
+   * The @aurora/ui shadcn components map their color tokens to these
+   * `--<shadcn>` vars (tailwind.config.js). <AuroraThemeProvider> writes the
+   * SAME names on <html> at runtime (toShadcnVars) for the active
+   * theme/preset/style — this `:root` block is only the pre-hydration +
+   * no-provider fallback. They reference the full-value `--aurora-*` above. */
+  --background: var(--aurora-bg);
+  --foreground: var(--aurora-text-primary);
+  --card: var(--aurora-surface);
+  --card-foreground: var(--aurora-text-primary);
+  --popover: var(--aurora-surface);
+  --popover-foreground: var(--aurora-text-primary);
+  --primary: var(--aurora-accent-primary);
+  --primary-foreground: var(--aurora-accent-on-primary);
+  --secondary: var(--aurora-surface-alt);
+  --secondary-foreground: var(--aurora-text-primary);
+  --muted: var(--aurora-bg-subtle);
+  --muted-foreground: var(--aurora-text-muted);
+  --accent: var(--aurora-accent-selected-surface);
+  --accent-foreground: var(--aurora-text-primary);
+  --destructive: var(--aurora-danger);
+  --destructive-foreground: var(--aurora-surface);
+  --border: var(--aurora-border);
+  --input: var(--aurora-border-strong);
+  --ring: var(--aurora-accent-focus-ring);
+  --success: var(--aurora-success);
+  --warning: var(--aurora-warning);
+  --info: var(--aurora-info);
 }
 
 /* ---- Base resets ------------------------------------------------------ */
@@ -96,6 +125,16 @@ body {
   margin: 0;
   overflow-x: hidden;
 }
+
+/* Post-Tailwind (Preflight) heading ramp — Preflight flattens h1–h6 to
+ * `font-size/weight: inherit`. Restore a ramp so the earlier token-only
+ * screens (raw <h2>/<h3>) keep their hierarchy; shadcn components set their
+ * own sizes explicitly and are unaffected. Loaded after tw.css → wins. */
+h1 { font-size: 1.75rem; font-weight: 700; line-height: 1.2; margin: 0; }
+h2 { font-size: 1.25rem; font-weight: 600; line-height: 1.3; margin: 0; }
+h3 { font-size: 1rem; font-weight: 600; line-height: 1.4; margin: 0; }
+h4 { font-size: 0.875rem; font-weight: 600; margin: 0; }
+h5 { font-size: 0.8125rem; font-weight: 600; margin: 0; }
 
 *,
 *::before,

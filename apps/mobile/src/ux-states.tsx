@@ -20,6 +20,7 @@
  */
 import type { AsyncState, AppError } from '@aurora/domain';
 import type { ReactNode } from 'react';
+import { Skeleton } from '@aurora/ui';
 
 export type UxStateName = 'loading' | 'empty' | 'success' | 'error' | 'offline' | 'killed';
 
@@ -76,14 +77,17 @@ export function UxStates({
   switch (which) {
     case 'loading':
       return (
-        <div data-ux="loading" role="status" aria-label={label}>
-          <div className="aurora-skeleton" />
+        <div data-ux="loading" role="status" aria-label={label} className="aurora-skeleton-stack">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
         </div>
       );
     case 'killed':
       return (
-        <div data-ux="killed" role="status" aria-label={label ?? 'Reconnexion…'}>
-          <div className="aurora-skeleton" />
+        <div data-ux="killed" role="status" aria-label={label ?? 'Reconnexion…'} className="aurora-skeleton-stack">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-2/3" />
           <p>Reconnexion…</p>
         </div>
       );

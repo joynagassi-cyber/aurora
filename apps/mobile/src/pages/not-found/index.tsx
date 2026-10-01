@@ -7,9 +7,20 @@
  * OQ-7: the logo is COLORED at the center (`05 §9.1`). The S9 in-app asset
  * (logo WITHOUT background) is pinned via `data-asset` so the build can
  * resolve it; until then a token emblem stands in — never a re-invented logo.
+ *
+ * Shadcn layer: the whole surface is a `<Card>` with two `<Button>` CTAs
+ * (asChild → router Link). The emblem + centered layout stay token-driven
+ * (`.a404-*` in atoms.css); only the controls are real @aurora/ui shadcn.
  */
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
 import { useLocation, Link } from 'react-router-dom';
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardTitle,
+} from '@aurora/ui';
 
 export function NotFoundPage() {
   const { pathname } = useLocation();
@@ -20,21 +31,30 @@ export function NotFoundPage() {
         <IonTitle>Indisponible</IonTitle>
       </IonHeader>
       <IonContent>
-        <div data-state="feature-disabled" data-path={pathname}>
-          {/* S9: the in-app logo (colored, centered on the 404 — OQ-7). */}
-          <span
-            className="a404-logo"
-            data-asset="aurora_icon_a_integre_dans_l'applciation"
-            aria-hidden
-          />
-          <p>« {pathname} » n'est pas disponible (fonction désactivée).</p>
-          <div className="a404-actions">
-            <Link to="/home">Retour à l'accueil</Link>
-            {/* OQ-48: secondary CTA (FR S6 libellé — the parent-screen link). */}
-            <Link to="/" className="a404-secondary">
-              Consulter l'écran parent
-            </Link>
-          </div>
+        <div data-state="feature-disabled" data-path={pathname} className="a404-root">
+          <Card className="a404-card">
+            <CardContent className="a404-card-body">
+              {/* S9: the in-app logo (colored, centered on the 404 — OQ-7). */}
+              <span
+                className="a404-logo"
+                data-asset="aurora_icon_a_integre_dans_l'applciation"
+                aria-hidden
+              />
+              <CardTitle>« {pathname} » n'est pas disponible</CardTitle>
+              <CardDescription>
+                Cette fonction est désactivée sur cet appareil.
+              </CardDescription>
+              <div className="a404-actions">
+                <Button asChild>
+                  <Link to="/home">Retour à l'accueil</Link>
+                </Button>
+                {/* OQ-48: secondary CTA (FR S6 libellé — the parent-screen link). */}
+                <Button asChild variant="secondary">
+                  <Link to="/">Consulter l'écran parent</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </IonContent>
     </>
