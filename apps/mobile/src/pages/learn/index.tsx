@@ -46,9 +46,8 @@ export function LearnPage() {
           {/* Due reviews (05 §4.8) — the FSRS read-only mirror. */}
           <UxStates
             state={{ status: 'empty' }}
-            flags={flags}
+            flags={{ ...flags, emptyCta: "Reprendre l'étude" }}
             label="Révisions"
-            emptyCta="Reprendre l'étude"
           >
             <div className="learn-section">
               <h2 className="learn-section-title">Révisions dues</h2>

@@ -27,7 +27,7 @@ function knowledgeFlags(): {
   killed: boolean;
   flags: UxStateFlags;
 } {
-  const knowledgeExpanded = useUiStateStore((s) => s.knowledgeExpanded);
+  const knowledgeExpanded = JSON.stringify(useUiStateStore((s) => s.knowledgeExpanded));
   const online = useOnlineStatus();
   const killed = useUiStateStore((s) => s.killed);
   const flags: UxStateFlags = { offline: !online, killed };
@@ -54,15 +54,14 @@ export function KnowledgePage() {
           {killed ? (
             <UxStates
               state={{ status: 'empty' }}
-              flags={flags}
+              flags={{ ...flags, emptyCta: "Importer un concept" }}
               label="Arbre"
-              emptyCta="Importer un concept"
             />
           ) : (
             <div
               className="knowledge-tree"
               data-semantic-tree="true"
-              data-expanded={JSON.stringify(knowledgeExpanded)}
+              data-expanded={knowledgeExpanded}
               data-online={online ? 'true' : 'false'}
             >
               {/* AD-10: React Flow + Dagre mounted via the @aurora/ui contract. */}

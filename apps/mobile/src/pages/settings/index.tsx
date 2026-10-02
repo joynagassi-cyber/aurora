@@ -23,8 +23,8 @@ import {
   PRESETS,
   THEMES,
   type AuroraTheme,
+  type ExpressiveThemeName,
   type PresetName,
-  type ThemeName,
   Badge,
   Card,
   CardContent,
@@ -45,7 +45,7 @@ function swatchGradient(t: AuroraTheme | Record<string, unknown>): string {
     t && 'colors' in t ? ((t as AuroraTheme).colors ?? {}) : {};
   // A preset may carry only a partial color set — fall back to the
   // default aurora accents (THEMES.aurora) so the swatch is never empty.
-  const base = (THEMES as Record<string, AuroraTheme>).aurora.colors;
+  const base = (THEMES as Record<string, AuroraTheme>).aurora?.colors ?? {};
   const c = { ...base, ...(colors as Partial<AuroraTheme['colors']>) };
   return `linear-gradient(120deg, ${c.primary}, ${c.secondary}, ${c.accent})`;
 }
@@ -76,7 +76,7 @@ export function SettingsPage() {
             </CardHeader>
             <CardContent>
               <div className="theme-grid" role="radiogroup" aria-label="Thème">
-                {(Object.keys(THEMES) as ThemeName[]).map((name) => (
+                {(Object.keys(THEMES) as ExpressiveThemeName[]).map((name) => (
                   <button
                     key={name}
                     type="button"

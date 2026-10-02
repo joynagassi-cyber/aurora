@@ -93,7 +93,7 @@ export function TasksPage() {
             ))}
           </div>
 
-          <UxStates state={taskState} flags={flags} label="Tâches" emptyCta="Capturer une tâche">
+          <UxStates state={taskState} flags={{ ...flags, emptyCta: "Capturer une tâche" }} label="Tâches">
             {view === 'eisenhower' ? (
               <div className="eisenhower" data-state="success">
                 {(

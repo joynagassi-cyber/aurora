@@ -16,7 +16,7 @@ import { useUiStateStore } from '../../state/ui-state';
 export function DiscoveryPage() {
   const online = useOnlineStatus();
   const killed = useUiStateStore((s) => s.killed);
-  const flags: UxStateFlags = { offline: !online, killed };
+  const flags: UxStateFlags = { offline: !online, killed, emptyCta: "Lancer une recherche" };
 
   return (
     <>
@@ -28,7 +28,7 @@ export function DiscoveryPage() {
           {/* The feed: agent-curated DiscoveryItems (gap-triggered).
               No discovery mirror yet → the "recherche en cours" state
               (job state, 01 §6) + a research CTA. */}
-          <UxStates state={{ status: 'empty' }} flags={flags} label="Découverte" emptyCta="Lancer une recherche">
+          <UxStates state={{ status: 'empty' }} flags={flags} label="Découverte">
             <div className="discovery-feed" data-research="running">
               <div className="discovery-item discovery-item--running">
                 <Search size={20} aria-hidden />

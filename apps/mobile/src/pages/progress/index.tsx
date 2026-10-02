@@ -60,9 +60,8 @@ export function ProgressPage() {
               honest empty state (AD-7, 05 §4). G2 mounts here when wired. */}
           <UxStates
             state={{ status: 'empty' }}
-            flags={flags}
+            flags={{ ...flags, emptyCta: "Reprendre l'étude" }}
             label="Progrès"
-            emptyCta="Reprendre l'étude"
           >
             <div data-progress-empty>
               <div className="stat-tile">

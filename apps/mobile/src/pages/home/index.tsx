@@ -60,7 +60,7 @@ function Slot({
   return (
     <section data-slot={slot} className="aurora-slot">
       <h3>{title}</h3>
-      <UxStates state={state} flags={flags} label={title} emptyCta={emptyCta}>
+      <UxStates state={state} flags={emptyCta ? { ...flags, emptyCta } : flags} label={title}>
         {children}
       </UxStates>
     </section>

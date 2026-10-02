@@ -66,7 +66,7 @@ export function GoalsPage() {
         <IonTitle>Objectifs</IonTitle>
       </IonHeader>
       <IonContent>
-        <UxStates state={goalState} flags={flags} label="Objectifs" emptyCta="Créer un objectif">
+        <UxStates state={goalState} flags={{ ...flags, emptyCta: "Créer un objectif" }} label="Objectifs">
           <div data-goal-list className="goals-list-wrap">
             {goals?.map((g) => (
               <a
