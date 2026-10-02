@@ -1,0 +1,34 @@
+{
+  "total": 27,
+  "complete": [
+    "afrique",
+    "automne",
+    "dubai",
+    "dunes",
+    "ete",
+    "fete",
+    "glacier",
+    "hiver",
+    "londres",
+    "new_york",
+    "nouvel_an",
+    "paix",
+    "paris",
+    "ponts",
+    "sculpture",
+    "sydney",
+    "tokyo",
+    "volcans"
+  ],
+  "partial": [
+    "ballet",
+    "impressionnisme",
+    "inconnu",
+    "jazz",
+    "jungle",
+    "noel",
+    "paques",
+    "printemps",
+    "street_art"
+  ]
+}

@@ -1,0 +1,173 @@
+{
+  "jungle": {
+    "label": "Jungle",
+    "anchorColor": "#22B36F",
+    "files": {
+      "paysage": "jungle_paysage.png",
+      "portrait": "jungle_portrait.png"
+    },
+    "complete": true
+  },
+  "paques": {
+    "label": "Pâques",
+    "anchorColor": "#D987B5",
+    "files": {
+      "paysage": "paques_paysage.png",
+      "portrait": "paques_portrait.png"
+    },
+    "complete": true
+  },
+  "noel": {
+    "label": "Noël",
+    "anchorColor": "#C92F50",
+    "files": {
+      "portrait": "noel_portrait.png",
+      "paysage": "noel_paysage.png"
+    },
+    "complete": true
+  },
+  "londres": {
+    "label": "Londres",
+    "anchorColor": "#12A878",
+    "files": {
+      "paysage": "londres_paysage.png",
+      "portrait": "londres_portrait.png"
+    },
+    "complete": true
+  },
+  "paris": {
+    "label": "Paris",
+    "anchorColor": "#3D6FD8",
+    "files": {
+      "portrait": "paris_portrait.png",
+      "paysage": "paris_paysage.png"
+    },
+    "complete": true
+  },
+  "impressionnisme": {
+    "label": "Impressionnisme",
+    "anchorColor": "#62B59F",
+    "files": {
+      "portrait": "impressionnisme_portrait.png",
+      "paysage": "impressionnisme_paysage.png"
+    },
+    "complete": true
+  },
+  "dubai": {
+    "label": "Dubaï",
+    "anchorColor": "#19A7A8",
+    "files": {
+      "paysage": "dubai_paysage.png",
+      "portrait": "dubai_portrait.png"
+    },
+    "complete": true
+  },
+  "afrique": {
+    "label": "Afrique",
+    "anchorColor": "#C96F4A",
+    "files": {
+      "portrait": "afrique_portrait.png",
+      "paysage": "afrique_paysage.png"
+    },
+    "complete": true
+  },
+  "fete": {
+    "label": "Fête",
+    "anchorColor": "#F23DAA",
+    "files": {
+      "paysage": "fete_paysage.png",
+      "portrait": "fete_portrait.png"
+    },
+    "complete": true
+  },
+  "tokyo": {
+    "label": "Tokyo",
+    "anchorColor": "#E23B45",
+    "files": {
+      "paysage": "tokyo_paysage.png",
+      "portrait": "tokyo_portrait.png"
+    },
+    "complete": true
+  },
+  "paix": {
+    "label": "Paix",
+    "anchorColor": "#78B29A",
+    "files": {
+      "portrait": "paix_portrait.png",
+      "paysage": "paix_paysage.png"
+    },
+    "complete": true
+  },
+  "sculpture": {
+    "label": "Sculpture",
+    "anchorColor": "#4E8BCE",
+    "files": {
+      "paysage": "sculpture_paysage.png",
+      "portrait": "sculpture_portrait.png"
+    },
+    "complete": true
+  },
+  "nouvel_an": {
+    "label": "Nouvel An",
+    "anchorColor": "#704CFF",
+    "files": {
+      "portrait": "nouvel_an_portrait.png",
+      "paysage": "nouvel_an_paysage.png"
+    },
+    "complete": true
+  },
+  "ponts": {
+    "label": "Ponts",
+    "anchorColor": "#D8444B",
+    "files": {
+      "portrait": "ponts_portrait.png",
+      "paysage": "ponts_paysage.png"
+    },
+    "complete": true
+  },
+  "ballet": {
+    "label": "Ballet",
+    "anchorColor": "#B69ADF",
+    "files": {
+      "portrait": "ballet_portrait.png",
+      "paysage": "ballet_paysage.png"
+    },
+    "complete": true
+  },
+  "new_york": {
+    "label": "New York",
+    "anchorColor": "#2563EB",
+    "files": {
+      "portrait": "new_york_portrait.png",
+      "paysage": "new_york_paysage.png"
+    },
+    "complete": true
+  },
+  "street_art": {
+    "label": "Street Art",
+    "anchorColor": "#E83D7C",
+    "files": {
+      "paysage": "street_art_paysage.png",
+      "portrait": "street_art_portrait.png"
+    },
+    "complete": true
+  },
+  "jazz": {
+    "label": "Jazz",
+    "anchorColor": "#7657D9",
+    "files": {
+      "paysage": "jazz_paysage.png",
+      "portrait": "jazz_portrait.png"
+    },
+    "complete": true
+  },
+  "sydney": {
+    "label": "Sydney",
+    "anchorColor": "#00A9C7",
+    "files": {
+      "paysage": "sydney_paysage.png",
+      "portrait": "sydney_portrait.png"
+    },
+    "complete": true
+  }
+}

@@ -1,0 +1,288 @@
+{
+  "New York": {
+    "slug": "new_york",
+    "hex": "#2563EB`",
+    "palette": [
+      "#2563EB",
+      "#14B8C4",
+      "#E8F0FF",
+      "#64748B",
+      "#D94B4B"
+    ]
+  },
+  "Tokyo": {
+    "slug": "tokyo",
+    "hex": "#E23B45`",
+    "palette": [
+      "#E23B45",
+      "#F4A6C1",
+      "#20B8D2",
+      "#F8F3E8",
+      "#243A73"
+    ]
+  },
+  "Paris": {
+    "slug": "paris",
+    "hex": "#3D6FD8`",
+    "palette": [
+      "#3D6FD8",
+      "#F6F2E8",
+      "#7B8794",
+      "#6DBB8A",
+      "#D7C08A"
+    ]
+  },
+  "Londres": {
+    "slug": "londres",
+    "hex": "#12A878`",
+    "palette": [
+      "#12A878",
+      "#74BCEB",
+      "#F3F5F2",
+      "#66717C",
+      "#C93E4B"
+    ]
+  },
+  "Dubaï": {
+    "slug": "duba",
+    "hex": "#19A7A8`",
+    "palette": [
+      "#19A7A8",
+      "#DCC79A",
+      "#F5F1E8",
+      "#5A83A6",
+      "#1D2E59"
+    ]
+  },
+  "Sydney": {
+    "slug": "sydney",
+    "hex": "#00A9C7`",
+    "palette": [
+      "#00A9C7",
+      "#4ED3C7",
+      "#FFFFFF",
+      "#4A86C5",
+      "#F28B7A"
+    ]
+  },
+  "Printemps": {
+    "slug": "printemps",
+    "hex": "#68C27B`",
+    "palette": [
+      "#68C27B",
+      "#F19BBC",
+      "#7CCBEB",
+      "#FFF9F1",
+      "#E5C65B"
+    ]
+  },
+  "Été": {
+    "slug": "t",
+    "hex": "#19B8D8`",
+    "palette": [
+      "#19B8D8",
+      "#31D0C0",
+      "#F6EBD2",
+      "#5B9BEA",
+      "#E4C65A"
+    ]
+  },
+  "Automne": {
+    "slug": "automne",
+    "hex": "#C95B43`",
+    "palette": [
+      "#C95B43",
+      "#D98335",
+      "#3F8B72",
+      "#8EA8BF",
+      "#F1E8D8"
+    ]
+  },
+  "Hiver": {
+    "slug": "hiver",
+    "hex": "#74A9E8`",
+    "palette": [
+      "#74A9E8",
+      "#A7D7F2",
+      "#FFFFFF",
+      "#71829A",
+      "#C9D0D8"
+    ]
+  },
+  "Noël": {
+    "slug": "no_l",
+    "hex": "#C92F50`",
+    "palette": [
+      "#C92F50",
+      "#1F7A5B",
+      "#E4C45C",
+      "#F8F4EA",
+      "#4F6EAA"
+    ]
+  },
+  "Pâques": {
+    "slug": "p_ques",
+    "hex": "#D987B5`",
+    "palette": [
+      "#D987B5",
+      "#8DCC86",
+      "#F4D76E",
+      "#F8F5EA",
+      "#78BFE0"
+    ]
+  },
+  "Nouvel An": {
+    "slug": "nouvel_an",
+    "hex": "#704CFF`",
+    "palette": [
+      "#704CFF",
+      "#D5C8FF",
+      "#F4F1FF",
+      "#D8C75E",
+      "#2C3C73"
+    ]
+  },
+  "Fête": {
+    "slug": "f_te",
+    "hex": "#F23DAA`",
+    "palette": [
+      "#F23DAA",
+      "#20C9E8",
+      "#FFCC45",
+      "#6D4DFF",
+      "#F7F4EF"
+    ]
+  },
+  "Paix": {
+    "slug": "paix",
+    "hex": "#78B29A`",
+    "palette": [
+      "#78B29A",
+      "#E8EEE7",
+      "#D8DDE1",
+      "#FFFFFF",
+      "#78A8C8"
+    ]
+  },
+  "Impressionnisme": {
+    "slug": "impressionnisme",
+    "hex": "#62B59F`",
+    "palette": [
+      "#62B59F",
+      "#5B9AD6",
+      "#C894D8",
+      "#F2A8B7",
+      "#F8F2E8"
+    ]
+  },
+  "Jazz": {
+    "slug": "jazz",
+    "hex": "#7657D9`",
+    "palette": [
+      "#7657D9",
+      "#425B92",
+      "#C8875B",
+      "#F2EEE7",
+      "#C85AA5"
+    ]
+  },
+  "Street Art": {
+    "slug": "street_art",
+    "hex": "#E83D7C`",
+    "palette": [
+      "#E83D7C",
+      "#11BFD2",
+      "#F1C62E",
+      "#6E4BEA",
+      "#D7DEE3"
+    ]
+  },
+  "Ballet": {
+    "slug": "ballet",
+    "hex": "#B69ADF`",
+    "palette": [
+      "#B69ADF",
+      "#E8B7D3",
+      "#F7F1E8",
+      "#AEB8C8",
+      "#D5BE78"
+    ]
+  },
+  "Sculpture": {
+    "slug": "sculpture",
+    "hex": "#4E8BCE`",
+    "palette": [
+      "#4E8BCE",
+      "#F3F0E7",
+      "#B5BDC7",
+      "#DDEBFA",
+      "#2F5DA8"
+    ]
+  },
+  "Volcans": {
+    "slug": "volcans",
+    "hex": "#D9473F`",
+    "palette": [
+      "#D9473F",
+      "#FF764A",
+      "#25384A",
+      "#8E9BA8",
+      "#F4EEE3"
+    ]
+  },
+  "Glacier": {
+    "slug": "glacier",
+    "hex": "#2CB9D4`",
+    "palette": [
+      "#2CB9D4",
+      "#286CC4",
+      "#F9FDFF",
+      "#B7C4D8",
+      "#9C8ED8"
+    ]
+  },
+  "Dunes": {
+    "slug": "dunes",
+    "hex": "#C9A76B`",
+    "palette": [
+      "#C9A76B",
+      "#F0E4CC",
+      "#8AB7D6",
+      "#C87964",
+      "#5F7D86"
+    ]
+  },
+  "Jungle": {
+    "slug": "jungle",
+    "hex": "#22B36F`",
+    "palette": [
+      "#22B36F",
+      "#0F7C59",
+      "#8FD85C",
+      "#54B9C7",
+      "#F2E7BF"
+    ]
+  },
+  "Ponts": {
+    "slug": "ponts",
+    "hex": "#D8444B`",
+    "palette": [
+      "#D8444B",
+      "#3C78B8",
+      "#1BA6A6",
+      "#F3EEE4",
+      "#6B8F63"
+    ]
+  },
+  "Afrique": {
+    "slug": "afrique",
+    "hex": "#C96F4A`",
+    "palette": [
+      "#C96F4A",
+      "#2D946B",
+      "#3C9CC7",
+      "#F3E2C5",
+      "#D6A33A"
+    ]
+  }
+}
