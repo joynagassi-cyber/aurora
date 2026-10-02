@@ -42,11 +42,15 @@ teinter le canvas :
 
 ### Image Themes (liste de 26 thèmes visuels — appliqués sur demande utilisateur)
 En plus des 10 thèmes couleur, l'application propose **26 thèmes
-d'illustration** (26 portraits + 26 paysages = 52 images prévues). Batch
-2026-10-B : **19 thèmes téléversés, tous complets P+L (38 fichiers)** —
-les 7 restants (printemps, ete, automne, hiver, volcans, glacier, dunes)
-sont en attente de génération ; voir `.stitch/theme_index.json` pour
-l'état définitif à jour. Sur demande utilisateur,
+d'illustration** (26 portraits + 26 paysages = 52 images, toutes
+générées et téléversées — batch 2026-10-B). Chaque thème image s'applique
+sur demande utilisateur comme **image de fond de l'application** (ni teinte,
+ni flouté), et sa **couleur principale (le « chromatic anchor ») est
+accentuée** dans les accents / primary du design system (ex. thème « jazz » →
+violet royal `#7657D9`). Les 7 thèmes saison/nature (printemps, été, automne,
+hiver, volcans, glacier, dunes) ont été générés via `stitch generate screen`
+avec les prompts de `prompts_v4.md` ; voir `.stitch/theme_index.json` pour
+l'état définitif. Sur demande utilisateur,
 un thème image s'applique en **image de fond de l'application**, et sa
 **couleur principale (le « chromatic anchor » de l'image) est accentuée** dans
 le design system : le canvas reste l'image elle-même (ni teinte, ni flouté),
@@ -136,11 +140,11 @@ dunes, jungle, ponts, afrique.
   solara, terra, verdant, citrus, cosmos — chacun déplace uniquement les
   accents (jamais le canvas, jamais les états sémantiques).
 - **Liste de 26 thèmes image** (`.stitch/images/<slug>_<portrait|paysage>.png`
-  — batch 2026-10-B : 19 thèmes complets P+L / 38 fichiers, 7 en attente de
-  génération) : appliqués sur demande utilisateur comme **image de fond**
-  de l'application, avec **accentuation de la couleur principale de l'image**
-  dans les composants (le `chromatic anchor` de chaque thème, cf.
-  `.stitch/prompts_v4.md` — table des couleurs phares, 26 thèmes).
+  — batch 2026-10-B : les 26 thèmes complets P+L / 52 fichiers) : appliqués
+  sur demande utilisateur comme **image de fond** de l'application, avec
+  **accentuation de la couleur principale de l'image** dans les composants
+  (le `chromatic anchor` de chaque thème, cf. `.stitch/prompts_v4.md` —
+  table des couleurs phares, 26 thèmes).
 - **Prompts composants** : boutons de 36px, radius 6px, fond en couleur
   primaire du thème courant avec ombre discrète ; cartes radius 12px, bordure
   1px, ombre légère, padding 24px ; tuiles KPI avec label mono en majuscules
