@@ -14,7 +14,7 @@ Nothing is masked. Platform limitations and unverified facts are listed as such.
 | ID | Category | Gap | Detail | Action |
 |---|---|---|---|---|
 | G-H1 | Data | FocusSessionBilan SSoT (04/05) | **RESOLVED 2026-09-22**: shape pinned in 05 S3.6.9 + 01 S4.1; 04 S4.1 pt4 points to SSoT | None |
-| G-H2 | Design | 05 canvas-value conflict (C-1) | **RESOLVED 2026-09-22**: 7 stale occurrences corrected to S2.1 values (#F8FAFC / #0A0E1A); SPEC OQ-16 residual #121212 corrected | Residual: theme-JSON regression lint at wave 0 |
+| G-H2 | Design | 05 canvas-value conflict (C-1) | **RESOLVED 2026-09-22**: 7 stale occurrences corrected to S2.1 values (#FFFFFF / #121212); SPEC OQ-16 residual #121212 corrected | Residual: theme-JSON regression lint at wave 0 |
 | G-H3 | Architecture | 5 mustFixForV2 theme binary locks | **VERIFIED APPLIED in packs (2026-09-22)**: 02 S3.3, 02 S5.2, 02 S8, 01 S2.1, 04 O3b | Remaining: G1 / wave-0 ratification of AD-17 block (OQ-14/15/16) |
 
 ## MEDIUM

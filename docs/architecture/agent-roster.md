@@ -175,7 +175,7 @@ REGLES (premium, PAS vieux) :
 - PAS ion-item forms -> Radix UI (headless, accessible, premium)
 - PAS SVG decoratif -> images reelles (Agnes Image 2.5 Flash)
 - 8px max border radius, Lucide icons only, Inter font
-- 10 themes + 3 presets, canvas Light #F8FAFC / Dark #0A0E1A
+- 10 themes + 3 presets, canvas Light #FFFFFF / Dark #121212
 - Tokens semantiques independants du theme (AD-17)
 - Framer Motion : GPU, smooth, NOT bouncy, reduced-motion = static
 - Letter-spacing : 0

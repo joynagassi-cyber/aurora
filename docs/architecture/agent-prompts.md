@@ -118,7 +118,7 @@ TON TRAVAIL (3 sous-agents paralleles) :
 
 === Sous-agent A : packages/ui (W1-E1-1) ===
 1. packages/ui/src/themes/ : 10 themes JSON + 3 presets (Slate,
-   Nocturne, High Contrast). Canvas : Light #F8FAFC, Dark #0A0E1A
+   Nocturne, High Contrast). Canvas : Light #FFFFFF, Dark #121212
    (G-H2 resolved). G-M5: ChartSpec shape publiee ici.
 2. 9 composants data (05 S3.6 DEF) :
    - SemanticTreeRenderer (React Flow + Dagre, lazy, incremental, 30fps)
@@ -415,7 +415,7 @@ REGLES ABSOLUES (design) :
 - Border radius : 8px MAX (DS convention)
 - 10 themes vivants (Aurora default, Lagoon, Boreal, Sakura, Vesper,
   Solara, Terra, Verdant, Citrus, Cosmos) + 3 presets (Slate,
-  Nocturne, High Contrast). Canvas : Light #F8FAFC, Dark #0A0E1A
+  Nocturne, High Contrast). Canvas : Light #FFFFFF, Dark #121212
 - Style neutre x theme expressif x adaptation locale (AD-17, 3 niveaux)
 - Tokens semantiques (success/warning/danger/info) independants du theme
 - Letter-spacing : 0 (pas de tracking negatif)

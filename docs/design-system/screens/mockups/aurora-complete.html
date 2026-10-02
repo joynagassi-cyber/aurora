@@ -106,7 +106,7 @@ body{
   position:relative;width:390px;height:844px;overflow:hidden;
   border-radius:44px;box-shadow:0 40px 90px -20px rgba(2,6,23,.55), inset 0 0 0 11px #0F172A;
   border:1px solid #1E293B;display:flex;flex-direction:column;
-  background:var(--bg,#F8FAFC);isolation:isolate;
+  background:var(--bg,#FFFFFF);isolation:isolate;
 }
 /* L'image d'édition est posée DERRIÈRE le contenu mais DEVANT le fond de la frame */
 .frame .edition-img{position:absolute;inset:0;z-index:0;overflow:hidden;border-radius:44px}
@@ -142,7 +142,7 @@ body{
 /* ═══════════ COUCHE 2 — PRESETS (Light / Dark-Spotify) ═══════════ */
 /* LIGHT : canvas clair, surfaces blanches, état pastel (05 §2.1.2) */
 .frame:not(.dark){
-  --bg:#F8FAFC;--bg-subtle:#EEF3F9;--surface:#FFFFFF;--surface-alt:#F5F8FC;
+  --bg:#FFFFFF;--bg-subtle:#EEF3F9;--surface:#FFFFFF;--surface-alt:#F5F8FC;
   --text-1:#0F172A;--text-2:#334155;--text-muted:#94A3B8;--text-disabled:#CBD5E1;
   --border:#E2E8F0;--border-strong:#CBD5E1;
   --success:#10B981;--success-surface:#E8FAF0;--warning:#F59E0B;--warning-surface:#FFF4E0;
@@ -152,12 +152,12 @@ body{
   --shadow-1:0 1px 2px rgba(15,23,42,.06);--shadow-2:0 2px 8px rgba(15,23,42,.08);--shadow-4:0 12px 32px rgba(15,23,42,.14);
 }
 /* DARK SPOTIFY : surblanc + surface sombre + état saturé (05 §2.1.3)
-   Ce n'est PAS un simple inverses : canvas #0A0E1A, surfaces montées
+   Ce n'est PAS un simple inverses : canvas #121212, surfaces montées
    à #1E2430/#28313F, état saturé (success #2ED573, warning #FFB84D…).
    L'accent du style reste lisible — on monte légèrement en luminance pour
    les styles clairs (solara/citrus). */
 .frame.dark{
-  --bg:#0A0E1A;--bg-subtle:#0F1524;--surface:#1E2430;--surface-alt:#28313F;
+  --bg:#121212;--bg-subtle:#1E1E1E;--surface:#1E2430;--surface-alt:#28313F;
   --text-1:#F1F5F9;--text-2:#B4BFCF;--text-muted:#7B8698;--text-disabled:#4A5568;
   --border:#334155;--border-strong:#4A5568;
   --success:#2ED573;--success-surface:#12402B;--warning:#FFB84D;--warning-surface:#4A3210;

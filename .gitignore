@@ -39,3 +39,14 @@ set-secrets.ps1
 # Generated build artifacts
 # Stripped monochrome logo (ui-libraries §9.2 — node scripts/strip-logo-metadata.mjs)
 apps/mobile/.build/
+
+# Local ephemeral working files (not pushed — see .stitch/ for the
+# theme-image batch, which IS tracked in git so it stays in the repo)
+.stitch_screens.json
+.stitch_screens.err
+.stitch_screen_urls.json
+.stitch_image_map.json
+.stitch_download_plan.json
+.stitch_url_repetoire.txt
+.stitch_url_prompts.txt
+

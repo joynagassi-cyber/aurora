@@ -134,7 +134,7 @@ YES: custom tokens (05 S2.1) + 10 themes (AD-17) +
      Framer Motion (smooth, GPU, reduced-motion aware) +
      Lucide (clean icons) +
      Inter (clean typography) +
-     Dark: #0A0E1A canvas / Light: #F8FAFC canvas (G-H2 resolved)
+     Dark: #121212 canvas / Light: #FFFFFF canvas (G-H2 resolved)
 ```
 
 The premium feel = **tokens + headless components + motion + typography.**

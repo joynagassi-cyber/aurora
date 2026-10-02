@@ -139,7 +139,7 @@ Le `Drawer` **n'existe pas** sur ce slug (05 §3.5 l. 810-821 : réservé aux fi
 
 Comportement par couche (05 §5 l. 2925-3306 ; overview.md §3 l. 27-54) :
 
-- **Couche 1 — Style neutre** (Light `#F8FAFC` / Dark `#0A0E1A`, 05 §5.2 l. 2980-2983) : fournit `surface`, `text-primary/secondary`, `border`, `shadow` — les tokens **géométriques** de la `Card` (id. 4), du `DataTable` (id. 5) et des `RoutineStep` (id. 9-10). Les 10 thèmes vivants **ne redéfinissent jamais** les sémantiques (05 §5.1 l. 2931, règle bloquante : `success`/`warning`/`danger`/`info` = figées).
+- **Couche 1 — Style neutre** (Light `#FFFFFF` / Dark `#121212`, 05 §5.2 l. 2980-2983) : fournit `surface`, `text-primary/secondary`, `border`, `shadow` — les tokens **géométriques** de la `Card` (id. 4), du `DataTable` (id. 5) et des `RoutineStep` (id. 9-10). Les 10 thèmes vivants **ne redéfinissent jamais** les sémantiques (05 §5.1 l. 2931, règle bloquante : `success`/`warning`/`danger`/`info` = figées).
 - **Couche 2 — Expressive** (4 accents + `chartPalette`, 05 §5.4 l. 3010-3045) : le `Badge statut` (id. 6) et les `RoutineStep` cochées suivent l'`accent` du thème courant (ex. `aurora` = bleu électrique `#3678F6`, l. 3036 ; `lagoon` = `#007C91`, l. 3037). **Jamais** de valeur brute par thème (AD-17, l. 2961-2978 ; overview.md §2 l. 15-25).
 - **Couche 3 — Presets** (`slate` / `nocturne` / `high-contrast`, 05 §5.5 l. 3153-3160) : Nocturne = fond sombre (le WDS 06.1 **défaut** = Nocturne, OQ-16 WDS 06.1 §3) ; High Contrast = tap targets **56px** (05 §6.3 l. 3330) ; les `Callout warning`/`Badge danger` = **figés** (l. 2931, §6.2 l. 3321-3325).
 - **Test 10×5** (05 §5.7 l. 3183-3227) : le `revues-semaine` doit passer les 5 styles × 10 thèmes (le `chartPalette` du `DataTable`, l. 3023).

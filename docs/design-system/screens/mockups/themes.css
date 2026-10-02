@@ -17,14 +17,14 @@
 
 /* ═══════════════════════════════════════════════════════════
    COUCHE 2 — PRESETS (surface + tokens d'état)
-   Dark "type Spotify" : canvas #0A0E1A, surfaces montées #1E2430/#28313F,
+   Dark "type Spotify" : canvas #121212, surfaces montées #1E2430/#28313F,
    état saturé. C'est le SEUL niveau qui change success/warning/danger/info.
    ═══════════════════════════════════════════════════════════ */
 
 /* LIGHT (défaut) : canvas clair, surfaces blanches, tokens d'état pastel */
 body[data-preset="light"] .frame,
 body:not([data-preset]) .frame{
-  --bg:#F8FAFC; --bg-subtle:#EEF3F9; --surface:#FFFFFF; --surface-alt:#F5F8FC;
+  --bg:#FFFFFF; --bg-subtle:#EEF3F9; --surface:#FFFFFF; --surface-alt:#F5F8FC;
   --text-1:#0F172A; --text-2:#334155; --text-muted:#94A3B8; --text-disabled:#CBD5E1;
   --border:#E2E8F0; --border-strong:#CBD5E1;
   --success:#10B981; --success-surface:#E8FAF0;
@@ -38,7 +38,7 @@ body:not([data-preset]) .frame{
 
 /* DARK — Spotify : surblanc + surface sombre + état saturé */
 body[data-preset="dark"] .frame{
-  --bg:#0A0E1A; --bg-subtle:#0F1524;
+  --bg:#121212; --bg-subtle:#1E1E1E;
   --surface:#1E2430; --surface-alt:#28313F;
   --text-1:#F1F5F9; --text-2:#B4BFCF; --text-muted:#7B8698; --text-disabled:#4A5568;
   --border:#334155; --border-strong:#4A5568;
@@ -69,7 +69,7 @@ body[data-preset="dark"] .progress{background:var(--surface-alt)}
 
 /* HIGH CONTRAST (05 §5.5 §4) : light à contrastes renforcés */
 body[data-preset="high-contrast"] .frame{
-  --bg:#FFFFFF; --bg-subtle:#F1F5F9; --surface:#FFFFFF; --surface-alt:#F8FAFC;
+  --bg:#FFFFFF; --bg-subtle:#F1F5F9; --surface:#FFFFFF; --surface-alt:#FFFFFF;
   --text-1:#020617; --text-2:#0F172A; --text-muted:#334155; --text-disabled:#64748B;
   --border:#0F172A; --border-strong:#0F172A;
 }

@@ -1,21 +1,28 @@
 /**
  * @aurora/ui — Neutral style catalog (05 §5.2 level 1, G-H2 resolved).
  *
- * Light canvas = #F8FAFC (slate.50, §2.1.2 frozen tokens).
- * Dark canvas = #0A0E1A (blue-tinted near-black, §2.1.3 frozen tokens).
+ * Light canvas = #FFFFFF (plain white, G-H2 re-2026-10).
+ * Dark canvas = #121212 (true dark, G-H2 re-2026-10).
  *
  * These are the FROZEN semantic tokens of 05 §2.1.2/§2.1.3 — normative
  * for wave 1. A theme NEVER redefines success/warning/danger/info
  * (blocking rule 05 §5.1): these values come from here, not from
  * packages/ui/src/themes/*.json.
+ *
+ * 2026-10 (G-H2 re-2026-10): canvas values re-anchored to plain white
+ * (#FFFFFF) light / #121212 dark — the blue-tinted near-black
+ * (#0A0E1A) and slate.50 (#F8FAFC) canvases are deprecated. No tinted
+ * or gradient canvas: the two neutral styles define the only two
+ * canvas values. Theme expressive colors overlay accents only, they
+ * never tint the canvas itself.
  */
 
 import type { NeutralStyleCatalog } from "./types";
 
 export const NEUTRAL_STYLES: NeutralStyleCatalog = {
   light: {
-    "bg": "#F8FAFC",
-    "bg-subtle": "#E2E8F0",
+    "bg": "#FFFFFF",
+    "bg-subtle": "#F1F5F9",
     "surface": "#FFFFFF",
     "surface-alt": "#F8FAFC",
     "surface-overlay": "rgba(255,255,255,0.85)",
@@ -41,11 +48,11 @@ export const NEUTRAL_STYLES: NeutralStyleCatalog = {
     "skeleton": "#E2E8F0",
   },
   dark: {
-    "bg": "#0A0E1A",
-    "bg-subtle": "#0F1524",
-    "surface": "#151C2C",
-    "surface-alt": "#1B2438",
-    "surface-overlay": "rgba(21,28,44,0.88)",
+    "bg": "#121212",
+    "bg-subtle": "#1E1E1E",
+    "surface": "#1E2026",
+    "surface-alt": "#25282F",
+    "surface-overlay": "rgba(24,24,24,0.88)",
     "text-primary": "#F1F5F9",
     "text-secondary": "#94A3B8",
     "text-muted": "#64748B",
@@ -62,9 +69,9 @@ export const NEUTRAL_STYLES: NeutralStyleCatalog = {
     "node-mastered": "#34D399",
     "node-fragile": "#FBBF24",
     "node-forgotten": "#F87171",
-    "habit-weak": "#1B2438",
+    "habit-weak": "#25282F",
     "habit-med": "#818CF8",
     "habit-strong": "#9AA4F4",
-    "skeleton": "#1B2438",
+    "skeleton": "#25282F",
   },
 };

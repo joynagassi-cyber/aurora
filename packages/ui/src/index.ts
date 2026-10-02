@@ -15,6 +15,14 @@ export * from "./themes/types";
 export { THEMES, PRESETS, THEME_CATALOG } from "./themes/index";
 export { NEUTRAL_STYLES } from "./themes/neutral";
 export {
+  IMAGE_THEMES,
+  IMAGE_THEME_FILES,
+  getImageTheme,
+  type ImageThemeEntry,
+  type ImageThemeOrientation,
+  type ImageThemeSlug,
+} from "./themes/image-themes";
+export {
   resolveToken,
   resolveThemeCSSVars,
   toShadcnVars,

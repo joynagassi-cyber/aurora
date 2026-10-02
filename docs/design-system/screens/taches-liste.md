@@ -174,7 +174,7 @@ Module : Productivité · Route : `/tasks` · Statut : **additif** · SSoT écra
 
 | Couche | Comportement par thème | Exemple (non figé par thème, règle 05 §5.2) | SSoT |
 |---|---|---|---|
-| L1 Neutral (fond/texte) | `neutral.light #F8FAFC` / `neutral.dark #0A0E1A` + texte inverse | fond liste + texte titres | 05 §5.1/§5.2 ; AD-17 |
+| L1 Neutral (fond/texte) | `neutral.light #FFFFFF` / `neutral.dark #121212` + texte inverse | fond liste + texte titres | 05 §5.1/§5.2 ; AD-17 |
 | L2 Expressive (brand) | Couleur de marque par thème (aurora/lagoon/…) appliquée au **CTA Kanban** et aux accents du BottomNav tab actif | CTA « Ouvrir le Kanban » = `color.brand.primary` du thème courant | 05 §5.2 (per-layer, jamais per-theme value) |
 | L3 Override local | `--brand-*` override utilisateur sur le CTA | CTA perso si user a personnalisé | 05 §5.2 |
 | **Règle bloquante 05 §5.1** | Les thèmes **ne re-définissent jamais** `success/warning/danger/info` | Les **Badges statut** (§4(b)) restent les couleurs sémantiques fixes, quel que soit le thème | 05 §5.1 |

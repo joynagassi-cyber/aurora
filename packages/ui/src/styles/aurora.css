@@ -8,13 +8,14 @@
  * shadcn/ui components read `var(--aurora-*)` through the Tailwind theme
  * (tailwind.config.ts) — never hardcoded values (docs/ui-libraries.md §4).
  *
- * Dark neutral values (05 §2.1.3, G-H2 resolved): canvas #0A0E1A.
+ * Dark neutral values (05 §2.1.3, G-H2 re-2026-10): canvas #121212,
+ * plain dark, no blue tint. Light canvas = plain white #FFFFFF.
  */
 
 :root {
-  /* Light neutral style (05 §2.1.2 — frozen, G-H2: #F8FAFC) */
-  --aurora-bg-h: 210 40% 98%;
-  --aurora-bg-subtle-h: 210 25% 93%;
+  /* Light neutral style (05 §2.1.2 — G-H2 re-2026-10: #FFFFFF plain white) */
+  --aurora-bg-h: 0 0% 100%;
+  --aurora-bg-subtle-h: 210 40% 95%;
   --aurora-surface-h: 0 0% 100%;
   --aurora-surface-alt-h: 210 40% 98%;
   --aurora-text-primary-h: 222 47% 11%;
@@ -47,11 +48,11 @@
 }
 
 .dark {
-  /* Dark neutral style (05 §2.1.3 — canvas #0A0E1A, surfaces #151C2C) */
-  --aurora-bg-h: 224 46% 6%;
-  --aurora-bg-subtle-h: 226 43% 10%;
-  --aurora-surface-h: 220 42% 14%;
-  --aurora-surface-alt-h: 218 34% 19%;
+  /* Dark neutral style (05 §2.1.3 — G-H2 re-2026-10: canvas #121212, plain) */
+  --aurora-bg-h: 0 0% 7%;
+  --aurora-bg-subtle-h: 0 0% 12%;
+  --aurora-surface-h: 220 12% 12%;
+  --aurora-surface-alt-h: 218 10% 17%;
   --aurora-text-primary-h: 210 40% 96%;
   --aurora-text-secondary-h: 215 20% 65%;
   --aurora-text-muted-h: 215 20% 40%;

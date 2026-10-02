@@ -172,7 +172,7 @@ Module : Productivité · Route : `/habits` · Statut : **détaillé** · SSoT �
 
 | Couche | Comportement par thème (jamais par valeur, 05 §5.2) | Rendu sur cet écran | SSoT |
 |---|---|---|---|
-| L1 **Neutral** (fond/texte) | `neutral.light #F8FAFC` / `neutral.dark #0A0E1A` + texte inverse | Fond liste + texte titres des Cards | 05 §5.1/§5.2 |
+| L1 **Neutral** (fond/texte) | `neutral.light #FFFFFF` / `neutral.dark #121212` + texte inverse | Fond liste + texte titres des Cards | 05 §5.1/§5.2 |
 | L2 **Expressive** (10 thèmes vivants) | Le `accent.primary` du thème actif se lit via `hsl(var(--aurora-accent-primary-h))` (05 §5.4) et **colore le CTA « Marquer aujourd'hui » + le FAB + le pill du tab actif** — la heatmap `HabitStreak` = `habit-weak`/`habit-med`/`habit-strong` (05 §2.1.2 l.155) qui **suivent** le token `habit-*` (pas `accent`) ; le **chiffre de streak** = `font.mono` (JetBrains Mono, 05 §2.2) | CTA + FAB + tab actif = L2 ; heatmap = `habit-*` ; streak = `mono` | 05 §5.2/§5.4 ; 05 §3.6.12 |
 | L3 **Override local** (Focus Mode) | **N/A ici** : le Focus Mode (`[data-focus-mode]`, 05 §2.6 r.3) **bloque** les autres surfaces (WDS 05.1 §5 : « si Horeb est en focus, `/habits` est masqué ») — le L3 override = réservé au Focus (V1, OQ-15 05 §5.6) | N/A (l'écran n'existe pas en Focus Mode) | 05 §2.6 r.3 ; 05 §5.6 |
 | **Règle bloquante 05 §5.1 l.2931** | Les thèmes **ne re-définissent jamais** `success` / `warning` / `danger` / `info` | Le **Badge danger** « à resync » (§4(a) error) + la **success** Toast = couleurs sémantiques **figées**, quel que soit le thème (L2 ne touche pas ces tokens) | 05 §5.1 l.2931 |
@@ -191,7 +191,7 @@ Module : Productivité · Route : `/habits` · Statut : **détaillé** · SSoT �
 | `letter-spacing` | **0** sur tous les corps (pas de tracking positif) | 05 §6.3 |
 | Focus visible | Anneau focus visible (05 §5.10 / `aurora.json` `focusTreatment = ring`) sur CTA, FAB, Card (focusable), tab ; **focus trap** dans le BottomSheet | 05 §6.3 ; `aurora.json` |
 | Heatmap `HabitStreak` | **`role=group`** + `aria-label` = « Adhérence de [habitude], [N] jours de streak » ; les cellules 12×12 px **ne sont PAS** des cibles individuelles (lecture = le chiffre de streak `mono`, non les 49 cellules) — la preuve visuelle = la heatmap, l'information lue = le chiffre (05 §3.6.12) | 05 §3.6.12 l.1226–1228 ; 05 §6.3 |
-| Contraste | Ratios AA (4.5:1 texte, 3:1 UI) sur le Badge danger, le CTA, les tabs ; le monochrome killed = **sur `surface`** (05 §2.1.3), jamais sur le canvas brut #0A0E1A (§9.1 l.399–402, blocking si < 3:1) | 05 §6.3 ; §9.1 l.399–402 |
+| Contraste | Ratios AA (4.5:1 texte, 3:1 UI) sur le Badge danger, le CTA, les tabs ; le monochrome killed = **sur `surface`** (05 §2.1.3), jamais sur le canvas brut #121212 (§9.1 l.399–402, blocking si < 3:1) | 05 §6.3 ; §9.1 l.399–402 |
 | Reduced-motion | Toutes animations §5/§9 → **statique** ; Skeleton = **pas de pulse** ; la heatmap = **toujours** statique (règle 1, 05 §2.6) ; le `useReducedMotion()` (hook `packages/ui`) gâte l'ensemble (05 §2.6 l.330–334) | S5 ; 05 §2.6 r.2 ; `packages/ui` |
 | Ordre de lecture | Card = titre (600) → heatmap (group, `aria-label`) → chiffre streak (mono) → CTA ; jamais de « insight » caché (le lien perturbateur est **affiché** dans le BottomSheet, 05 §4.3.5 l.1766–1768) | 05 §6.3 ; 05 §4.3.5 |
 

@@ -142,11 +142,11 @@
 
 - **Tokens only** : aucune valeur color/spacing/typo/radius brute dans ce doc. Tous les éléments citent leurs tokens (§3).
 - **10 thèmes + 3 presets** = comportement par couche (05 §5.2) :
-  - **Couche 1 (Neutral)** : `light #F8FAFC` / `dark #0A0E1A` — figées, jamais redéfinies par un thème (05 §5.1 blocking rule).
+  - **Couche 1 (Neutral)** : `light #FFFFFF` / `dark #121212` — figées, jamais redéfinies par un thème (05 §5.1 blocking rule).
   - **Couche 2 (Expressive)** : 10 thèmes (Aurora, Lagoon, Boreal, Sakura, Vesper, Solara, Terra, Verdant, Citrus, Cosmos) × 3 presets (Slate, Nocturne, High Contrast) — chacun définit 4 accents + gradient + motion mood + chart palette (05 §5.4/§5.5).
   - **Couche 3 (Local)** : Focus Mode uniquement (OQ-15) — `/settings` n'a pas d'adaptation locale.
 - **Règle bloquante 05 §5.1** : un thème **ne touche jamais** `success`/`warning`/`danger`/`info` (tokens sémantiques = neutral layer uniquement).
-- **Nocturne = preset autonome** (OQ-16 tranché V1, 2026-09-25) : canvas `#0A0E1A`, accents désaturés — pas un alias de Dark.
+- **Nocturne = preset autonome** (OQ-16 tranché V1, 2026-09-25) : canvas `#121212`, accents désaturés — pas un alias de Dark.
 
 ---
 

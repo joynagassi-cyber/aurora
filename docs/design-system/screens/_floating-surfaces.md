@@ -339,7 +339,7 @@ Une surface qui « sort de son rang » = review blocking.
   `agent-thinking-loader.test.tsx`).
 - **Contraste QA** (ui-libraries §9.3 l. 487–489 + §9.3.1
   l. 494–500) : le gris le plus foncé (#131B22) ne doit **jamais
-  s'asseoir** sur le canvas brut #0A0E1A — le loader est **toujours
+  s'asseoir** sur le canvas brut #121212 — le loader est **toujours
   sur un `surface`** (05 §2.1.3) en light ET dark ; **DAPHNE
   vérifie la lisibilité** (blocking si < 3:1, WCAG 1.4.3
   non-text). **TOUS THÈMES SANS EXCEPTION** : le loader doit

@@ -19,20 +19,22 @@ system (05 §5, AD-17 candidate).
   *only* raw swatches; components never touch them — semantic tokens only
   (§2.1.2/§2.1.3, frozen "normatives pour la vague 1"). **Any hardcoded value
   outside a token = blocking finding** (AI_RULES). No ad-hoc CSS.
-- Light default, **Dark is first-class** (05 §2.1: night concentration sessions;
-  `bg` dark = `#0A0E1A` blue-tinted near-black to avoid OLED banding, not `#000`).
+- Light default, **Dark is first-class** (05 §2.1: night concentration
+  sessions; `bg` light = plain white `#FFFFFF`, dark = `#121212` — the two
+  neutral canvas values, no tint or gradient canvas (G-H2 re-2026-10)).
 - Fonts: self-hosted variable Inter (body) + JetBrains Mono (formulas/units/data) —
   embedded, offline-first, no CDN (AI_RULES).
 
 ## 3. Theme system (05 §5–§6, AD-17 candidate)
 
-Three resolution layers (05 §5.2): **Neutral Style** (Light `bg #F8FAFC` / Dark
-`bg #0A0E1A` — the frozen §2.1 tokens) × **Expressive Theme** (10 living themes:
+Three resolution layers (05 §5.2): **Neutral Style** (Light `bg #FFFFFF` / Dark
+`bg #121212` — the G-H2 re-2026-10 tokens; two plain canvas values, no tint or
+gradient) × **Expressive Theme** (10 living themes:
 Aurora default, Lagoon, Boreal, Sakura, Vesper, Solara, Terra, Verdant, Citrus,
 Cosmos — each a full visual universe: 4 colors + gradient + shapes + icon/
 selection/focus treatment + chart palette + motion mood, §5.4) + 3 specialized
 **presets** combining with any theme (§5.5: **Slate**, **Nocturne** = soft dark
-for night, canvas `#0A0E1A`, desaturated accents; **High Contrast** = 7:1,
+for night, canvas `#121212`, desaturated accents; **High Contrast** = 7:1,
 56px targets, 3px focus ring) × **Local Adaptation** (module/screen-scoped token
 overrides, declared — V1 = Focus Mode only, OQ-15; no per-screen theme
 switching, §5.10).
@@ -49,7 +51,8 @@ themes as **JSON in `packages/ui/src/themes/`** (SSoT, AD-15), `resolveToken` +
 (system/time) explicitly exposed in /settings with preview.
 
 **Flagged conflicts (not silently resolved):** canvas values in 05 §5.2/§5.6/§6.1
-(`#F8F9FA`/`#121212`) vs frozen tokens §2.1 (`#F8FAFC`/`#0A0E1A`) → G-H2; SPEC
+(`#F8F9FA`/`#121212`) vs frozen tokens §2.1 (superseded — see G-H2 re-2026-10) →
+G-H2 resolved 2026-10 as plain white `#FFFFFF` / plain dark `#121212`; SPEC
 preset names ("Nocturne, Sable, Forêt") vs 05 §5.5 (Slate/Nocturne/High Contrast)
 → G-M6. Both must be aligned at G1 ratification (OQ-14..16).
 
@@ -100,9 +103,12 @@ pair (wave 7). G1 ratification (02 R8) gates the wave-1 UI cut.
 
 ## 9. Normative inconsistencies verified (mission §56, 2026-09-22)
 
-- **Canvas values** (G-H2/C-1, RESOLVED): 05 §5.2/§5.6/§5.7.1/§6.1 aligned to the
-  frozen §2.1 tokens (`#F8FAFC`/`#0A0E1A`, surfaces `#151C2C`/`#1B2438`) — the
-  §5 v2 draft carried obsolete `#F8F9FA`/`#121212`; trace note in 05 §5.2.
+- **Canvas values** (G-H2 re-2026-10): the neutral canvas is re-anchored to
+  **plain white `#FFFFFF` (light) / plain dark `#121212`** — no tinted or
+  gradient canvas; two styles only (light white, dark `#121212`). The earlier
+  frozen tokens (`#FFFFFF`/`#121212`, surfaces `#1E2026`/`#25282F`) and the
+  SPEC §5 v2 draft values (`#F8F9FA`/`#121212`) are both superseded.
+  `neutral.ts` + `aurora.css` + `tokens.css` re-anchored 2026-10.
 - **Preset names** (G-M6/C-2, RESOLVED): SPEC now lists **Slate/Nocturne/High
   Contrast** (05 §5.5 = SSoT); OQ-14/15/16 TRANCHÉ V1 (10 themes from V1; local
   adaptation = Focus only; Nocturne = autonomous preset), ratify at G1.

@@ -42,7 +42,7 @@ flagged, not silently resolved. Statuses per mission §2.
 
 | # | Conflict | More recent / normative source | Proposed correction |
 |---|---|---|---|
-| C-1 | Pack 05 §5.2/§5.6/§6.1 describe the neutral canvas as Light `#F8F9FA` / Dark `#121212`; the **frozen normative tokens** (§2.1.2/§2.1.3, "normatives pour la vague 1") define `bg` = `#F8FAFC` (light) and `#0A0E1A` (dark, deliberately blue-tinted to avoid OLED banding). Pack 05 §5.5 (Nocturne preset) already uses the §2.1 values. | §2.1 (frozen tokens) | Editorial alignment of §5.2/§5.6/§6.1 mock values to §2.1.2/§2.1.3 (DS team; no ADR needed — descriptive correction inside a wave-0-draft pack) |
+| C-1 | Pack 05 §5.2/§5.6/§6.1 describe the neutral canvas as Light `#F8F9FA` / Dark `#121212`; the **frozen normative tokens** (§2.1.2/§2.1.3, "normatives pour la vague 1") define `bg` = `#FFFFFF` (light) and `#121212` (dark, deliberately plain dark per G-H2 re-2026-10 (no blue tint)). Pack 05 §5.5 (Nocturne preset) already uses the §2.1 values. | §2.1 (frozen tokens) | Editorial alignment of §5.2/§5.6/§6.1 mock values to §2.1.2/§2.1.3 (DS team; no ADR needed — descriptive correction inside a wave-0-draft pack) |
 | C-2 | SPEC §05 note lists the 3 presets as "Nocturne, Sable, Forêt"; pack 05 §5.5 (owner: Design System team, SSoT of the DS) lists **Slate, Nocturne, High Contrast**. | Pack 05 §5.5 (sooner-ratified, G1-gated) | Correct the SPEC line at OQ-14/15/16 ratification (G1), pending DS team confirmation |
 | C-3 | Coherence review M3/M4: `AppError`/`AppErrorCode` shape lives in pack 02 §10 *body* while 01 §3.1 refuses to restate it → shape not pinned in `packages/domain`. | AD-15 (single SSoT) | Move shape to `packages/domain` (owner Foundation, wave 0); both packs point to `@aurora/domain` |
 | C-4 | Coherence review H1: `FocusSessionBilan` contract is non-carrier across 04↔05 (no type, no ChartSpec, no named DS component). | AD-13/AD-15 | Define `FocusSessionBilan` in `packages/domain` (Productivity) + `ChartSpec` in 05 §3.6.9 + named DS component before wave-1 UI cut (review recommendation, unchanged) |
@@ -55,7 +55,7 @@ The four areas identified as "corrections before launching coding agents" were r
 
 | Area | Pack change | Status |
 |---|---|---|
-| Design System canvas conflict (G-H2/C-1) | 05 §5.2/§5.6/§5.7.1/§6.1 values aligned to frozen §2.1 (`#F8FAFC`/`#0A0E1A`); SPEC OQ-16 wording corrected | RESOLVED |
+| Design System canvas conflict (G-H2/C-1) | 05 §5.2/§5.6/§5.7.1/§6.1 values aligned to frozen §2.1 (`#FFFFFF`/`#121212`); SPEC OQ-16 wording corrected | RESOLVED |
 | `FocusSessionBilan` contract (G-H1) | SSoT shape pinned (`01-backend` §4.1, owner Productivity; 05 §3.6.9 "correction H1" with `focusBilan` ChartSpec); 04 §4.1 pt4 + 02 §5.3 now point to the SSoT, signatures unchanged | RESOLVED |
 | light/dark binary locks (G-H3) | Verified already applied in packs: 02 §3.3/§5.2/§8 (`AuroraTheme` + `themeStyle`), 01 §2.1 (`user_context.theme`), 04 O3b | VERIFIED — ratify at G1 |
 | Mirror Cognitive Mode (G-L3) | Prescriptive section added in `01-backend` §4.2 (flow, data, AD-11 fidelity, F-07 evidence path, tests) | RESOLVED (wave-2 screen = 05 additive) |

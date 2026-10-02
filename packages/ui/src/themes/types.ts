@@ -2,9 +2,10 @@
  * @aurora/ui — Theme system types (AD-17, 05-design-system §5 v2).
  *
  * Architecture: 3 resolution layers (05 §5.2):
- *   Layer 1 — Neutral Style (Light `#F8FAFC` / Dark `#0A0E1A`): frozen
- *     semantic tokens §2.1.2/§2.1.3 (surfaces, text, borders, semantic
- *     states success/warning/danger/info, node states, habit streaks).
+ *   Layer 1 — Neutral Style (Light `#FFFFFF` / Dark `#121212`): plain
+ *     white / plain dark canvas (G-H2 re-2026-10) — frozen semantic
+ *     tokens §2.1.2/§2.1.3 (surfaces, text, borders, semantic states
+ *     success/warning/danger/info, node states, habit streaks).
  *   Layer 2 — Expressive Theme (10 living themes §5.4 or 1 of 3 presets
  *     §5.5): accent colors, gradients, shapes, icon/selection/focus
  *     treatments, chart palette, motion mood, illustration mood.
@@ -149,7 +150,7 @@ export const PRESETS: readonly ["slate", "nocturne", "high-contrast"] = [
   "slate", "nocturne", "high-contrast",
 ] as const;
 
-/** Neutral style catalog: Light (#F8FAFC) / Dark (#0A0E1A) — G-H2 resolved. */
+/** Neutral style catalog: Light (#FFFFFF) / Dark (#121212) — G-H2 re-2026-10. */
 export type NeutralStyleCatalog = Record<NeutralStyle, NeutralTokens>;
 
 /** The theme catalog: expressive themes + presets, keyed by name. */

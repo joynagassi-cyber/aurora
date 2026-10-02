@@ -157,7 +157,7 @@ Mois` + la ligne de navigation avant/après).
 
 Comportement par couche (05 §5 l. 2925-3306 ; overview.md §3 l. 27-54) :
 
-- **Couche 1 — Style neutre** (Light `#F8FAFC` / Dark `#0A0E1A`) : fournit `surface`,
+- **Couche 1 — Style neutre** (Light `#FFFFFF` / Dark `#121212`) : fournit `surface`,
   `text-primary/secondary`, `border`, `shadow` — les tokens **géométriques** des 3
   sections (Cards = `surface`, jalons = `border`, `GanttRow` = `border` lignes).
   Les 10 thèmes vivants **ne redéfinissent jamais** les sémantiques (05 §5.1 l. 2931,

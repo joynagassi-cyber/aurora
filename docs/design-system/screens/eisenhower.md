@@ -164,7 +164,7 @@ La matrice = **lecture locale 100 %** (AD-7) : au kill système, le relaunch **p
 
 | Couche | Comportement par thème | Exemple (non figé par thème, règle 05 §5.2) | SSoT |
 |---|---|---|---|
-| L1 Neutral (fond/texte) | `neutral.light #F8FAFC` / `neutral.dark #0A0E1A` + texte inverse | fond des 4 zones Card + texte titres | 05 §5.1/§5.2 ; AD-17 |
+| L1 Neutral (fond/texte) | `neutral.light #FFFFFF` / `neutral.dark #121212` + texte inverse | fond des 4 zones Card + texte titres | 05 §5.1/§5.2 ; AD-17 |
 | L2 Expressive (brand) | Couleur de marque par thème (aurora/lagoon/…) appliquée aux **accents de zones** Q1/Q2/Q3/Q4 (§3 ci-dessus) et au CTA « Réviser » ; **jamais** aux `Badge` statuts (L1, sémantiques fixes) | Q1 = `color.brand.primary` du thème courant ; Q2 = `color.brand.secondary` | 05 §5.2 (per-layer, jamais per-theme value) |
 | L3 Override local | `--brand-*` override utilisateur sur les accents de zones | Zone Q1 en couleur perso si user a personnalisé | 05 §5.2 |
 | **Règle bloquante 05 §5.1** | Les thèmes **ne re-définissent jamais** `success/warning/danger/info` | Les **Badges statut** (§4b) restent les couleurs sémantiques fixes, quel que soit le thème ; le Q3 (accent `warning` de **zone**, pas sémantique critique) reste un accent L2, pas un danger L1 | 05 §5.1 ; AD-17 l. 159 (spine) |

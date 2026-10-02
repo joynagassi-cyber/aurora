@@ -157,7 +157,7 @@ navigation avant/après + le `Button ghost` « Aujourd'hui »).
 
 Comportement par couche (05 §5 l. 2925-3306 ; overview.md §3 l. 27-54) :
 
-- **Couche 1 — Style neutre** (Light `#F8FAFC` / Dark `#0A0E1A`) : fournit `surface`,
+- **Couche 1 — Style neutre** (Light `#FFFFFF` / Dark `#121212`) : fournit `surface`,
   `text-primary/secondary`, `border`, `shadow` — les tokens **géométriques** de la Card (id. 4)
   et des 5 sections (id. 5-9). Les 10 thèmes vivants **ne redéfinissent jamais** les
   sémantiques (05 §5.1 l. 2931, règle bloquante : un thème **ne touche jamais**

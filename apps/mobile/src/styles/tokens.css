@@ -17,9 +17,9 @@
 
 /* ---- Token fallback (light neutral + default "aurora" accents, 05 §5.4) --- */
 :root {
-  /* Surfaces (neutral style, G-H2: #F8FAFC light canvas) */
-  --aurora-bg: #f8fafc;
-  --aurora-bg-subtle: #e2e8f0;
+  /* Surfaces (neutral style, G-H2 re-2026-10: plain white canvas #FFFFFF) */
+  --aurora-bg: #ffffff;
+  --aurora-bg-subtle: #f1f5f9;
   --aurora-surface: #ffffff;
   --aurora-surface-alt: #f8fafc;
   --aurora-surface-overlay: rgba(255, 255, 255, 0.85);
@@ -114,8 +114,8 @@
    * mobile build, so these are the light triplet baseline; the dark override
    * is below. (The runtime provider writes the FULL-value `--aurora-*` for
    * the shadcn layer; the engines' inline styles read these triplets.) */
-  --aurora-bg-h: 210 40% 98%;
-  --aurora-bg-subtle-h: 210 25% 93%;
+  --aurora-bg-h: 0 0% 100%;
+  --aurora-bg-subtle-h: 210 40% 95%;
   --aurora-surface-h: 0 0% 100%;
   --aurora-surface-alt-h: 210 40% 98%;
   --aurora-text-primary-h: 222 47% 11%;
@@ -143,13 +143,14 @@
   --aurora-accent-focus-ring-h: 221 91% 59%;
 }
 
-/* Dark neutral style (05 §2.1.3) — triplet override when
- * <AuroraThemeProvider> sets `data-aurora-style="dark"` on <html>. */
+/* Dark neutral style (05 §2.1.3, G-H2 re-2026-10: canvas #121212) — triplet
+ * override when <AuroraThemeProvider> sets `data-aurora-style="dark"` on
+ * <html>. */
 [data-aurora-style="dark"] {
-  --aurora-bg-h: 224 46% 6%;
-  --aurora-bg-subtle-h: 226 43% 10%;
-  --aurora-surface-h: 220 42% 14%;
-  --aurora-surface-alt-h: 218 34% 19%;
+  --aurora-bg-h: 0 0% 7%;
+  --aurora-bg-subtle-h: 0 0% 12%;
+  --aurora-surface-h: 220 12% 12%;
+  --aurora-surface-alt-h: 218 10% 17%;
   --aurora-text-primary-h: 210 40% 96%;
   --aurora-text-secondary-h: 215 20% 65%;
   --aurora-text-muted-h: 215 20% 40%;

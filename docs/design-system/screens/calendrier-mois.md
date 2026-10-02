@@ -165,7 +165,7 @@ Le `Popover` date picker FullCalendar et le `Menu` de tri sont dans `calendrier.
 
 Comportement par couche (05 §5 l. 2925-3306 ; overview.md §3 l. 27-54) :
 
-- **Couche 1 — Style neutre** (Light `#F8FAFC` / Dark `#0A0E1A`) : fournit `surface`,
+- **Couche 1 — Style neutre** (Light `#FFFFFF` / Dark `#121212`) : fournit `surface`,
   `surface-alt` (mois voisin), `text-primary/secondary/disabled`, `border` — les tokens
   géométriques de la grille (cases = `surface`, bordures = `border`). Les 10 thèmes
   vivants **ne redéfinissent jamais** les sémantiques (05 §5.1 l. 2931, règle bloquante).

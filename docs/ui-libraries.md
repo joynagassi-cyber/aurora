@@ -397,7 +397,7 @@ Precision (blocking, DAPHNE-enforced — no ambiguity left):
 - Watermark usage = a SINGLE application at 8% opacity over the content
   zone (never a gradient fill, never repeated tiles, never above text).
 - Dark neutral style: the monochrome mark sits on `surface` (05 §2.1.3),
-  NEVER on the raw #0A0E1A canvas; DAPHNE measures the mark's dominant
+  NEVER on the raw #121212 canvas; DAPHNE measures the mark's dominant
   tone vs that surface — blocking if < 3:1 (WCAG 1.4.3 non-text);
   fallback = render on the elevated `surface-alt` tone.
 - Monochrome never animates outside §9.3 (the only animated monochrome
@@ -485,7 +485,7 @@ NEVER modified. Bundle −~125 Ko; no provenance shipped to the device (AD-3).
   réponse) — le loader s'insère inline, il ne surdimensionne pas la
   conversation. L'organisme reste 48 px à gauche (marque, pas texte).
 - Contrast QA: the darkest gray (#131B22) must never sit on the raw
-  #0A0E1A canvas — the loader sits on a `surface` in both neutral styles;
+  #121212 canvas — the loader sits on a `surface` in both neutral styles;
   DAPHNE verifies legibility (blocking if not).
 
 ### 9.3.1 Précisions owner (2026-09-28) — à respecter par TOUT agent UI
@@ -499,7 +499,7 @@ NEVER modified. Bundle −~125 Ko; no provenance shipped to the device (AD-3).
   DAPHNE check bloquant : rendu du loader sur les 13 combinaisons
   (10 + 3 presets) × 2 styles neutres.
 - **BLANC PAR DÉFAUT, NOIR À LA DEMANDE** (owner 2026-09-28) : le style
-  neutre par défaut est LIGHT (#F8FAFC) ; le DARK (#0A0E1A) n'apparaît
+  neutre par défaut est LIGHT (#FFFFFF) ; le DARK (#121212) n'apparaît
   QUE si l'utilisateur le choisit (settings, 05 §2.1 — jamais de
   bascule silencieuse au retour foreground). Le loader ne contient
   AUCUNE hypothèse de fond : il est identique en light et dark (tokens).

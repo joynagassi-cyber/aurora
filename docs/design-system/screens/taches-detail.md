@@ -171,7 +171,7 @@ Module : Productivité · Route : `/tasks/:id` (S-24) · Statut : **additif** ·
 
 | Couche | Comportement par thème (exemples, **jamais** de valeur par thème) | SSoT |
 |---|---|---|
-| L1 Neutral (fond/texte) | `neutral.light #F8FAFC` / `neutral.dark #0A0E1A` (figé) appliqué au fond du sheet, au texte des sections ; les 10 thèmes + 3 presets changent **seulement** L1/L2/L3 (AD-17) | 05 §5.1 l.2931 / §5.2 l.2961 ; AD-17 (ui-libraries) |
+| L1 Neutral (fond/texte) | `neutral.light #FFFFFF` / `neutral.dark #121212` (figé) appliqué au fond du sheet, au texte des sections ; les 10 thèmes + 3 presets changent **seulement** L1/L2/L3 (AD-17) | 05 §5.1 l.2931 / §5.2 l.2961 ; AD-17 (ui-libraries) |
 | L2 Expressive (brand) | Couleur de marque par thème (Aurora `#3678F6`, Lagoon, Sakura…) appliquée au **CTA focus** (fond `primary`) et au surlignage de la **case Q occupée** dans la mini-matrice ; le Nocturne (preset) = L2 désaturé (grayscale, cf. §9.1 row Nocturne) | 05 §5.2 ; WDS 05.5 §5 (variante Nocturne : Q1 = `accent`/`success`) |
 | L3 Override local | `--brand-*` override utilisateur (si l'user a personnalisé) sur le CTA focus et la case Q surlignée | 05 §5.2 l.2961 ; `packages/ui` theme-adapter (OQ-15 V1) |
 | **Règle bloquante 05 §5.1 l.2931** | Les thèmes **ne re-définissent jamais** `success/warning/danger/info` : les **Badges statut** (5 statuts, §4(c)) restent les couleurs sémantiques **fixes** (figées L1), quel que soit le thème (10 + 3) ; le surlignage Q1 = `accent` (thème), **pas** `success` (figé L1) | 05 §5.1 l.2931 ; §5.2 l.2961 |

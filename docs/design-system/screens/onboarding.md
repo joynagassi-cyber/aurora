@@ -58,7 +58,7 @@ Table : élément · composant DS (05 §3) · lib d'implémentation · tokens ut
 | Fenêtre silence 21h00 — 01h00 (S2) | `DateField`/`DurationField` (05 §3.2 l. 412 — pas de format HH:MM) | shadcn/ui (S1) ; `Slider` (05 §3.2) pour la fenêtre | `aurora.space.2` ; heures en `JetBrains Mono` (05 §2.2 tabular-nums l. 190-230) | — | 05 §4.1.1 DS + WDS 04.1 §6 |
 | Presets de silence 23h–01h / 00h–02h (S2) | `Chip` (05 §3.3) | shadcn/ui chip (S1) | `aurora.color.primary` (actif) / `surface` (inactif) | — | WDS 04.1 §6 |
 | Toggles « Notifs : seulement les alertes » (S2) | `Toggle`/`Switch` (05 §3.2 l. 412) — jamais de `loading` animé sur ce type de champ (05 §3.2) ; `Checkbox` ≥ 44px | shadcn/ui switch/checkbox (S1) | `aurora.color.surface`, `border` ; tap ≥ 44px (05 §6.3) | — | WDS 04.1 §6 (S-30) |
-| Thème (S3) | `Toggle` (05 §4.1.1 DS) + preview 2 colonnes Nocturne/Light ; Nocturne = preset autonome (OQ-16, 05 §5.5 l. 3153) | shadcn/ui switch + card preview (S1) ; `AuroraThemeProvider` (packages/ui/src/theme/provider.tsx) — thème = JSON, jamais de changement silencieux au foreground (05 §5.8, design-system/overview.md §3 l. 27-54) | 3 couches : neutre (light #F8FAFC / dark #0A0E1A, design-system/overview.md §2 l. 15-25) × 10 expressifs × 3 presets (05 §5.5) ; règle 05 §5.1 l. 2931-2959 — le thème ne rédefinit JAMAIS success/warning/danger/info | — | 05 §4.1.1 + WDS 04.1 §6 (OQ-16) |
+| Thème (S3) | `Toggle` (05 §4.1.1 DS) + preview 2 colonnes Nocturne/Light ; Nocturne = preset autonome (OQ-16, 05 §5.5 l. 3153) | shadcn/ui switch + card preview (S1) ; `AuroraThemeProvider` (packages/ui/src/theme/provider.tsx) — thème = JSON, jamais de changement silencieux au foreground (05 §5.8, design-system/overview.md §3 l. 27-54) | 3 couches : neutre (light #FFFFFF / dark #121212, design-system/overview.md §2 l. 15-25) × 10 expressifs × 3 presets (05 §5.5) ; règle 05 §5.1 l. 2931-2959 — le thème ne rédefinit JAMAIS success/warning/danger/info | — | 05 §4.1.1 + WDS 04.1 §6 (OQ-16) |
 | CTA « Continuer » (slides 1–2) + « C'est parti » (slide 3) | `Button primary` (05 §3.1 l. 365 — max 1 primary par écran ; `size=lg` 56px pour CTA d'EmptyState/Modal, ici slide 3) | shadcn/ui button (`npx shadcn@latest add button`, S1) | `aurora.color.primary` (fond), `on-primary` (texte), focus ring (05 §2.6, a11yRefs 44px/56px High Contrast) ; pas de radius > 8px (forbidden) | Slide 3 : fixe en bas, 48px height pouce (WDS 04.1 §6) | 05 §4.1.1 footer + WDS 04.1 §6 |
 | CTA « Passer » (slide 3) | `Button ghost` (05 §3.1 l. 365 — jamais à côté de `primary` sans espacement ≥ `space.2`) | shadcn/ui button variant ghost (S1) | `text-secondary` (05 §3.1) ; tap ≥ 44px | — | 05 §4.1.1 footer (verbatim) |
 | Retour (slides 2–3) | `Button ghost` (05 §3.1) | shadcn/ui button variant ghost (S1) | `text-secondary` ; `anim.fast` pressed (05 §2.6) | — | WDS 04.1 §6 (← Retour) |
@@ -192,7 +192,7 @@ n'a pas de BottomNav → aucun détail lourd, aucune `BottomSheet` standard (05 
 
 Comportement des 3 couches (05 §5.2 l. 2961, design-system/overview.md §3 l. 27-54) sur l'onboarding :
 
-- **Couche 1 — Style Neutre** (light `#F8FAFC` / dark `#0A0E1A`, design-system/overview.md §2 l. 15-25,
+- **Couche 1 — Style Neutre** (light `#FFFFFF` / dark `#121212`, design-system/overview.md §2 l. 15-25,
   05 §2.1 l. 124/159) : fond, surfaces, texte, bordures, états sémantiques (`success`/`warning`/
   `danger`/`info` **gelés**, 05 §5.1 l. 2931-2959 — **le thème ne les touche JAMAIS**).
 - **Couche 2 — Thème Expressif** (10 thèmes, 05 §5.4 l. 3010/3032/3047) : `theme_accent[token]` en
