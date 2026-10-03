@@ -203,6 +203,57 @@
   opacity: 0.75;
 }
 
+/* ——— Spotify focus picker (Composio Spotify integration) ——— */
+.focus-spotify-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: var(--aurora-bg-subtle);
+  border: 1px solid var(--aurora-border);
+  border-left: 3px solid var(--aurora-accent-primary);
+  border-radius: var(--aurora-radius, 0.5rem);
+  font-size: 13px;
+  color: var(--aurora-text-muted);
+}
+.focus-spotify-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--aurora-text-primary);
+  cursor: pointer;
+}
+.focus-spotify-toggle input {
+  accent-color: var(--aurora-accent-primary);
+}
+.focus-spotify-picker select {
+  width: 100%;
+  padding: 6px;
+  font-size: 13px;
+  color: var(--aurora-text-primary);
+  background: var(--aurora-bg);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.25rem);
+}
+.focus-spotify-picker input[type='text'] {
+  width: 100%;
+  padding: 6px;
+  font-size: 13px;
+  color: var(--aurora-text-primary);
+  background: var(--aurora-bg);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.25rem);
+}
+.focus-spotify-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--aurora-text-muted);
+  opacity: 0.75;
+}
+
 .focus-live-sound {
   display: flex;
   align-items: center;

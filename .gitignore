@@ -50,3 +50,6 @@ apps/mobile/.build/
 .stitch_url_repetoire.txt
 .stitch_url_prompts.txt
 
+# Supabase CLI link cache (created by `supabase link`, not tracked)
+supabase/.temp/
+

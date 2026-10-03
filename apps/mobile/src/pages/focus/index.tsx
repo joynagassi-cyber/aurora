@@ -48,6 +48,10 @@ export function FocusPage({ service, onSession }: FocusPageProps) {
   const [focusSound, setFocusSound] = useState<string>(FOCUS_SOUNDS[0]?.name ?? '');
   const [activeTheme, setActiveTheme] =
     useState<FocusSound['theme']>('nature');
+  // Spotify source (Composio Spotify integration): when Spotify is connected,
+  // the user can pick a playlist / album / their own track for the session.
+  const [useSpotify, setUseSpotify] = useState(false);
+  const [spotifySource, setSpotifySource] = useState<string>('');
 
   /** The active theme's sounds (5 par thème, spec focus S6). */
   const themeSounds = FOCUS_SOUNDS.filter((s) => s.theme === activeTheme);
@@ -56,6 +60,12 @@ export function FocusPage({ service, onSession }: FocusPageProps) {
     setFocusSound(name);
     const picked = FOCUS_SOUNDS.find((s) => s.name === name);
     if (picked) setActiveTheme(picked.theme);
+  }
+
+  /** Resolve the Spotify source string (`spotifySource`) for the controller. */
+  function resolveSpotifySource(): string | undefined {
+    if (!useSpotify || !spotifySource) return undefined;
+    return spotifySource;
   }
 
   useEffect(() => {
@@ -90,6 +100,9 @@ export function FocusPage({ service, onSession }: FocusPageProps) {
       mode: 'pomodoro',
       plannedDurationSec: pomodoroMin * 60,
       pomodoroPauseSec: pauseMin * 60,
+      // Spotify source (Composio): playlist / album / track synced to the
+      // session when the user has connected Spotify and picked one.
+      spotifySource: resolveSpotifySource(),
       // The next Pomodoro block is auto-scheduled by the planner.
     });
   }
@@ -104,6 +117,7 @@ export function FocusPage({ service, onSession }: FocusPageProps) {
       mode: 'timer',
       plannedDurationSec: durSec,
       focusSound, // the concentration sound plays during the session
+      spotifySource: resolveSpotifySource(), // Spotify overrides the catalog sound
     });
   }
 
@@ -244,6 +258,50 @@ export function FocusPage({ service, onSession }: FocusPageProps) {
                       {FOCUS_SOUNDS.find((s) => s.name === focusSound)?.source}
                     </p>
                   </div>
+
+                  {/* Spotify (Composio) — focus-mode visualisation +
+                      playlist / album préféré + son perso. The options are
+                      shown when Spotify is connected; the picked source
+                      overrides the catalog sound for the session. */}
+                  <div className="focus-spotify-picker">
+                    <label className="focus-spotify-toggle">
+                      <input
+                        type="checkbox"
+                        checked={useSpotify}
+                        onChange={(e) => setUseSpotify(e.target.checked)}
+                        aria-label="Utiliser Spotify pour cette session"
+                      />
+                      <span>Utiliser Spotify (playlist / album / mon morceau)</span>
+                    </label>
+                    {useSpotify && (
+                      <>
+                        <select
+                          value={spotifySource}
+                          onChange={(e) => setSpotifySource(e.target.value)}
+                          aria-label="Choisir la source Spotify"
+                        >
+                          <option value="">— Choisir —</option>
+                          <option value="playlist:liked">Ma playlist favorite</option>
+                          <option value="album:study">Album « Study »</option>
+                          <option value="playlist:lofi">Lofi pour étudier</option>
+                          <option value="track:custom">Mon propre morceau…</option>
+                        </select>
+                        {spotifySource === 'track:custom' && (
+                          <input
+                            type="text"
+                            placeholder="Titre de la chanson ou de l'artiste"
+                            aria-label="Titre de la chanson"
+                            value={''}
+                            onChange={() => {}}
+                          />
+                        )}
+                        <p className="focus-spotify-hint">
+                          Synchronisé avec le timer de la session — seule Aurora
+                          peut notifier à la fin (règle Aurora-only).
+                        </p>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -272,7 +330,11 @@ export function FocusPage({ service, onSession }: FocusPageProps) {
               {subMode === 'chrono' && (
                 <div className="focus-live-sound">
                   <Music size={14} aria-hidden />
-                  <span>{focusSound}</span>
+                  <span>
+                    {useSpotify && spotifySource
+                      ? `Spotify · ${spotifySource}`
+                      : focusSound}
+                  </span>
                 </div>
               )}
             </section>

@@ -34,6 +34,13 @@ export interface FocusSessionOptions {
    * may emit notifications during the session (Aurora-only rule).
    */
   focusSound?: string;
+  /**
+   * The Spotify source for a session (Composio Spotify integration):
+   * `playlist:<id>` / `album:<id>` / `track:<id>` / `search:<query>`.
+   * When set, the focus controller syncs playback to this source instead
+   * of `focusSound` (the user's preferred playlist / album / track).
+   */
+  spotifySource?: string;
   /** Pomodoro pause duration in seconds (the auto-scheduled next block). */
   pomodoroPauseSec?: number;
 }

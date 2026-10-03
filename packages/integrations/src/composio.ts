@@ -151,10 +151,20 @@ export class ComposioIntegrationProvider implements IntegrationProvider {
   private readonly apiKey: string;
   private readonly baseUrl: string;
 
-  constructor() {
-    this.apiKey = process.env.COMPOSIO_API_KEY ?? '';
+  /**
+   * The adapter is runtime-agnostic: keys come from the environment under
+   * Node (`process.env`), but they can ALSO be injected explicitly (the
+   * Deno EF's `Deno.env.get` → `constructor(apiKey, baseUrl)` — AD-3, the
+   * secret store IS the key source, not a hardcode).
+   */
+  constructor(apiKey?: string, baseUrl?: string) {
+    this.apiKey =
+      apiKey ?? (typeof process !== 'undefined' ? process.env.COMPOSIO_API_KEY ?? '' : '');
     this.baseUrl =
-      process.env.COMPOSIO_BASE_URL ?? 'https://api.composio.dev/api/v1';
+      baseUrl ??
+      (typeof process !== 'undefined'
+        ? process.env.COMPOSIO_BASE_URL ?? 'https://api.composio.dev/api/v1'
+        : 'https://api.composio.dev/api/v1');
   }
 
   isConfigured(): boolean {
@@ -308,7 +318,11 @@ export class ComposioIntegrationProvider implements IntegrationProvider {
 
 /** Factory (AD-1): the only way business code obtains the provider.
  *  Unconfigured env → the adapter reports not-configured and every call
- *  degrades (01 §6). */
-export function createIntegrationProvider(): IntegrationProvider {
-  return new ComposioIntegrationProvider();
+ *  degrades (01 §6). Optional explicit key/baseUrl for runtimes without
+ *  `process.env` (the Deno EF). */
+export function createIntegrationProvider(
+  apiKey?: string,
+  baseUrl?: string,
+): IntegrationProvider {
+  return new ComposioIntegrationProvider(apiKey, baseUrl);
 }

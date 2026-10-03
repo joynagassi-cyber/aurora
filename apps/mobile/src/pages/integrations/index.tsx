@@ -11,7 +11,7 @@
  * Composio's server.
  */
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
-import { Check, ExternalLink, Plus } from 'lucide-react';
+import { Check, ExternalLink, Plus, Music } from 'lucide-react';
 import { useState } from 'react';
 
 // ——— Connector catalog (Composio toolkits; Google Workspace = default preset). ———
@@ -31,6 +31,7 @@ const CONNECTORS: Connector[] = [
   { id: 'google-calendar', name: 'Google Calendar', vendor: 'Google Workspace', defaultOn: true, status: 'disconnected' },
   { id: 'google-drive', name: 'Google Drive', vendor: 'Google Workspace', defaultOn: true, status: 'disconnected' },
   { id: 'google-sheets', name: 'Google Sheets', vendor: 'Google Workspace', defaultOn: true, status: 'disconnected' },
+  { id: 'spotify', name: 'Spotify', vendor: 'Spotify', defaultOn: false, status: 'disconnected' },
   { id: 'notion', name: 'Notion', vendor: 'Notion', defaultOn: false, status: 'disconnected' },
   { id: 'slack', name: 'Slack', vendor: 'Slack', defaultOn: false, status: 'disconnected' },
   { id: 'github', name: 'GitHub', vendor: 'GitHub', defaultOn: false, status: 'disconnected' },
@@ -63,7 +64,11 @@ export function IntegrationsPage() {
   }
 
   const google = CONNECTORS.filter((c) => c.vendor === 'Google Workspace');
-  const others = CONNECTORS.filter((c) => c.vendor !== 'Google Workspace');
+  // Spotify gets its own dedicated section (focus-mode visualisation);
+  // the "Autres" bucket excludes it so it is not rendered twice.
+  const others = CONNECTORS.filter(
+    (c) => c.vendor !== 'Google Workspace' && c.vendor !== 'Spotify',
+  );
 
   function renderCard(c: Connector) {
     const on = connected.has(c.id);
@@ -122,6 +127,44 @@ export function IntegrationsPage() {
               </button>
             </div>
             {google.map(renderCard)}
+          </section>
+
+          <section className="integration-group">
+            <h3>Spotify <span className="integration-group-badge">focus mode</span></h3>
+            <p className="integration-group-note">
+              Quand tu connectes Spotify, le mode Focus peut <strong>visualiser
+              ta session</strong> (timer ring synchronisé), te proposer ta
+              <strong> playlist / album préféré</strong> en lecture au lieu du
+              son générique, ou t'inviter à <strong>choisir ton propre
+              morceau</strong> pour la session.
+            </p>
+            <div className="spotify-block">
+              {CONNECTORS.find((c) => c.id === 'spotify') ? (
+                <div className={`integration-card ${connected.has('spotify') ? 'is-connected' : ''}`}>
+                  <div className="integration-card-main">
+                    <div className="integration-card-status">
+                      {connected.has('spotify') ? (
+                        <Check size={16} className="is-ok" />
+                      ) : (
+                        <Music size={14} className="is-muted" />
+                      )}
+                    </div>
+                    <div className="integration-card-text">
+                      <h4>Spotify</h4>
+                      <span>Visualisation · playlist préféré · son perso</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className={`integration-toggle ${connected.has('spotify') ? 'is-on' : ''}`}
+                    onClick={() => toggle('spotify')}
+                    aria-label={connected.has('spotify') ? 'Déconnecter Spotify' : 'Connecter Spotify'}
+                  >
+                    {connected.has('spotify') ? 'Déconnecter' : 'Connecter'}
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </section>
 
           <section className="integration-group">

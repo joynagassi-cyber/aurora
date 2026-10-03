@@ -133,3 +133,19 @@
   background: var(--aurora-accent-primary);
   border-color: var(--aurora-accent-primary);
 }
+
+/* ——— Spotify focus block ——— */
+.integration-group-note {
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--aurora-text-muted);
+}
+.spotify-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.spotify-block .integration-card {
+  border-left: 3px solid var(--aurora-accent-primary);
+}
