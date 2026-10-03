@@ -13,6 +13,7 @@ import { RouterProvider } from 'react-router-dom';
 import { useState } from 'react';
 import { appRouter } from './router';
 import { createMobileQueryClient, type MobileDataProvider } from './query/query-client';
+import { AgentBus } from './shell/AgentBus';
 
 export interface AuroraAppProps {
   dataProvider: MobileDataProvider;
@@ -25,6 +26,10 @@ export function AuroraApp({ dataProvider }: AuroraAppProps) {
 
   return (
     <QueryClientProvider client={client}>
+      {/* The single application Command Bus (02 §4, kernel S15): agent
+          UI effects dispatch here — mounted under the router so the
+          executor can navigate (details over the current tab, §6.1). */}
+      <AgentBus />
       <RouterProvider router={appRouter} />
     </QueryClientProvider>
   );

@@ -297,6 +297,12 @@ export interface TimelineProps {
   events: TimelineEvent[];
   loading?: boolean;
   emptyMessage?: string;
+  /**
+   * Task list mode (05 §4.4.2 — always-on task list under the calendar):
+   * when true, each event renders as a compact task row instead of the
+   * semantic-dot narrative history.
+   */
+  taskList?: boolean;
 }
 
 /** §3.6.4 — one task = one line (mobile-first Gantt, shared date axis). */
@@ -351,11 +357,17 @@ export interface RenderCalendarEvent {
   allDay?: boolean;
 }
 
-/** The 4 views (docs/ui-libraries.md §1: day, week, month, agenda). */
+/**
+ * The 5 views (docs/ui-libraries.md §1: day, week, month, year, agenda).
+ * `threeDayGrid` = the 3-day view (inspiration pattern; custom overlay on
+ * the default `timeGridWeek` — see CalendarView.tsx).
+ */
 export type CalendarViewName =
   | "dayGridMonth"
   | "timeGridWeek"
   | "timeGridDay"
+  | "threeDayGrid"
+  | "yearGrid"
   | "listWeek";
 
 export interface CalendarViewProps {

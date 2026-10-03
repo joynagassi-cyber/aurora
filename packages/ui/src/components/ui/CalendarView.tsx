@@ -75,6 +75,11 @@ export function CalendarView({
   emptyMessage,
   className,
 }: CalendarViewProps & { className?: string }) {
+  // The in-page SegmentedControl view switcher is owned by the PAGE
+  // (apps/mobile pages/calendar/index.tsx), not by this engine — this
+  // component is the render target that receives the selected view.
+  const view = initialView;
+
   const handleEventClick = useCallback(
     (info: EventClickArg) => {
       const ev = info.event.extendedProps as RenderCalendarEvent;
@@ -97,7 +102,59 @@ export function CalendarView({
     [events],
   );
 
+  // --- Year + 3-day views --------------------------------------------
+  // `yearGrid` = custom native renderer (12 mini-months, events = dots —
+  // FullCalendar v6 has no native year view). `threeDayGrid` = the
+  // week grid restricted to 3 day-columns via FullCalendar's
+  // `daysOfWeek` filter option.
+  const fcView: "dayGridMonth" | "timeGridWeek" | "timeGridDay" | "listWeek" =
+    view === "threeDayGrid" ? "timeGridWeek" : view === "yearGrid" ? "dayGridMonth" : (view as "dayGridMonth" | "timeGridWeek" | "timeGridDay" | "listWeek");
+
   const plugins = [dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin];
+
+  // The 12 mini-months of the year view (rendered when `view === "yearGrid"`).
+  const yearMiniMonths = React.useMemo(() => {
+    if (view !== "yearGrid") return [];
+    const now = new Date();
+    const year = now.getFullYear();
+    return Array.from({ length: 12 }, (_, i) => {
+      const monthEvents = events.filter((ev) => {
+        const d = new Date(ev.start);
+        return d.getFullYear() === year && d.getMonth() === i;
+      });
+      return {
+        label: ["jan.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."][i],
+        events: monthEvents,
+      };
+    });
+  }, [view, events]);
+
+  const renderYearView = () => (
+    <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-3 md:grid-cols-4">
+      {yearMiniMonths.map(({ label, events: evts }) => (
+        <div
+          key={label}
+          className="rounded-md border border-border bg-card p-2 text-xs"
+        >
+          <div className="mb-1 font-medium text-foreground">{label}</div>
+          <div className="flex flex-wrap gap-0.5">
+            {evts.length === 0 ? (
+              <span className="text-muted-foreground">—</span>
+            ) : (
+              evts.slice(0, 8).map((ev, i) => (
+                <span
+                  key={i}
+                  title={ev.title}
+                  className="inline-block h-2 w-2 rounded-full"
+                  style={{ backgroundColor: BLOCK_COLORS[ev.blockType ?? ""]?.bg ?? BLOCK_FALLBACK.bg }}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   // Mobile: day/week only (docs/ui-libraries.md §5). FullCalendar v6
   // exposes all views; the app picks via `initialView` + `headerToolbar`.
@@ -133,25 +190,32 @@ export function CalendarView({
             !loading && !errorMessage && events.length === 0 && "hidden",
           )}
         >
-          <FullCalendar
-            plugins={plugins}
-            events={fcEvents}
-            initialView={initialView}
-            height={height}
-            dayMaxEventRows={mobile ? 2 : 4}
-            eventOverlap={conflictDetection}
-            eventDrop={handleEventDrop}
-            eventClick={handleEventClick}
-            headerToolbar={
-              mobile
-                ? { start: "today prev", center: "title", end: "next" }
-                : {
-                    start: "prev",
-                    center: "title",
-                    end: "today next",
-                  }
-            }
-          />
+          {view === "yearGrid" ? (
+            renderYearView()
+          ) : (
+            <FullCalendar
+              plugins={plugins}
+              events={fcEvents}
+              initialView={fcView}
+              height={height}
+              dayMaxEventRows={mobile ? 2 : 4}
+              fixedWeekCount={false}
+              nowIndicator
+              eventOverlap={conflictDetection}
+              eventDrop={handleEventDrop}
+              eventClick={handleEventClick}
+              dayMinWidth={view === "threeDayGrid" ? 100 : undefined}
+              headerToolbar={
+                mobile
+                  ? { start: "today prev", center: "title", end: "next" }
+                  : {
+                      start: "prev",
+                      center: "title",
+                      end: "today next",
+                    }
+              }
+            />
+          )}
         </div>
       )}
 

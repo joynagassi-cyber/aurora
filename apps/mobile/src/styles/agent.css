@@ -88,6 +88,86 @@
   color: var(--aurora-text-muted);
 }
 
+/* Transcript entries (real runs, F-09: the device sees run rows only). */
+.agent-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 88%;
+}
+.agent-entry--user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+.agent-entry--agent {
+  align-self: flex-start;
+}
+.agent-entry-body {
+  padding: 10px 14px;
+  border-radius: var(--aurora-radius, 0.5rem);
+  font-size: 15px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+.agent-entry--user .agent-entry-body {
+  background: var(--aurora-accent-primary);
+  color: var(--aurora-accent-on-primary);
+}
+.agent-entry--agent .agent-entry-body {
+  background: var(--aurora-bg-subtle);
+  border: 1px solid var(--aurora-border);
+  color: var(--aurora-text-primary);
+}
+.agent-entry-status {
+  font-size: 12px;
+  color: var(--aurora-text-muted);
+}
+.agent-entry-status.is-attention {
+  color: var(--aurora-accent-warning, #b45309);
+  font-weight: 500;
+}
+
+/* The pending confirmation surface (ADR §5: the user decides, the kernel
+   blocks until the answer — 02 §4 Confirmation Engine). */
+.agent-confirm {
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--aurora-accent-warning, #b45309);
+  border-radius: var(--aurora-radius, 0.5rem);
+  background: var(--aurora-bg-subtle);
+  max-width: 88%;
+}
+.agent-confirm-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+}
+.agent-confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+.agent-confirm-actions button {
+  flex: 1;
+  min-height: var(--aurora-tap-target, 44px);
+  border-radius: var(--aurora-radius, 0.5rem);
+  border: 1px solid var(--aurora-border);
+  background: var(--aurora-surface);
+  color: var(--aurora-text-primary);
+  font-size: 14px;
+  font-weight: 500;
+}
+.agent-confirm-actions button.is-primary {
+  background: var(--aurora-accent-primary);
+  color: var(--aurora-accent-on-primary);
+  border-color: transparent;
+}
+.agent-confirm-actions button:disabled {
+  opacity: 0.5;
+}
+
 /* Composer (pinned). */
 .agent-composer {
   display: flex;

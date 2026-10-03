@@ -372,6 +372,289 @@ export const docsParse: KernelTool = tool({
   }),
 });
 
+// ---------------------------------------------------------------------------
+// Feature-agentability-matrix.md — the remaining agentable families.
+//
+// Each tool is a THIN AD-7 command / AD-8 job emitter: the kernel NEVER
+// writes a module table — it emits a typed `<module>.<action>` command
+// (the owning module applies the mutation) or persists a job (the
+// dispatcher runs it). The owning module per family:
+//   Productivity  : task / habit / review / eisenhower / planning.replan
+//   Learning      : course.search / flashcard / learning.session / import
+//   Knowledge     : knowledge.add (OCR / ingest)
+//   Progress      : progress.analyze / trajectories / cause
+//   Artifact      : artifact.generate / preview (deep-link only, user-only read)
+//   Scientific    : scientific.evaluate (light, offline-capable sibling of
+//                   the heavy scientific.verify job)
+//   Identity      : settings.theme / preferences (user_context commands)
+//   Integrations  : integrations.automation.toggle, notification.*
+//                   (Composio / OneSignal vendor SDKs, AD-1)
+//   Agent (coach) : coach.checkin (proactive, cadence-bounded)
+//
+// The matrix's USER_ONLY row (artifact.preview) is NOT a writing tool:
+// it only emits the `show_artifact` UI command + a deep-link
+// NavigationIntent (the device opens the preview, the kernel never
+// touches the artifact — AD-7 / F-06).
+// ---------------------------------------------------------------------------
+
+/** task.create / task.update — one thin mutation tool (AD-7 Productivity). */
+export const taskUpdate: KernelTool = tool({
+  description:
+    'Create / update / complete / archive a task (matrix row "task.create / task.update"). Thin command → productivity.task_update; the Productivity module applies the write (AD-7).',
+  inputSchema: z.object({
+    /** task ids (update / complete / archive) */
+    taskIds: z.array(z.string()).min(1),
+    /** the new state (or the task to create, when `create` + title set) */
+    action: z.enum(['update', 'complete', 'archive', 'create']),
+    /** required for create */
+    title: z.string().optional(),
+    /** fields to patch */
+    patch: z.record(z.unknown()).optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'productivity.task_update', payload: input }),
+});
+
+/** habit.checkin — "I did X" (matrix row habit.checkin; Productivity). */
+export const habitCheckin: KernelTool = tool({
+  description:
+    'Log a habit / routine check-in ("j\'ai fait X") — matrix row habit.checkin. Thin command → productivity.habit_checkin (AD-7).',
+  inputSchema: z.object({
+    habitId: z.string(),
+    /** an optional note ("météo", "contexte" — the journal line) */
+    note: z.string().optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'productivity.habit_checkin', payload: input }),
+});
+
+/** planning.replan — "recalcul du planning restant" (ADR S13, Productivity). */
+export const planningReplan: KernelTool = tool({
+  description:
+    'Re-plan / reorder the remaining day when context changes (matrix row planning.daily / planning.replan, ADR S13: "recalcul du planning restant sans détruire l\'historique"). Thin command → productivity.replan (executed blocks keep their results, AD-7).',
+  inputSchema: z.object({
+    /** what changed (new task, freed slot, energy drop…) */
+    trigger: z.string(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'productivity.replan', payload: input }),
+});
+
+/** course.search — "find my course on X" (Learning + Knowledge, read-only). */
+export const courseSearch: KernelTool = tool({
+  description:
+    'Find a course / resource on a topic (matrix row course.search): local mirror + server retrieval. READ-ONLY (no job, no write — AD-7: no module mutation). Online-required for retrieval; offline degrades to mirror-only (AD-1).',
+  inputSchema: z.object({
+    topic: z.string(),
+    limit: z.number().int().positive().default(5),
+  }),
+  execute: async (input) => ({ ok: true, command: 'learning.course_search', payload: input }),
+});
+
+/** flashcard.generate — sibling of qcm_generate (matrix rows qcm.generate / flashcard.generate). */
+export const flashcardGenerate: KernelTool = tool({
+  description:
+    'Generate flashcards for a skill / course (matrix row flashcard.generate, Learning). Heavy step → artifact_gen job (AD-8), the items render via the AD-10 engines when the artifact lands.',
+  inputSchema: z.object({
+    skillId: z.string(),
+    difficulty: z.enum(['easy', 'medium', 'hard', 'adaptive']).optional(),
+    count: z.number().int().positive().default(10),
+  }),
+  execute: async (input) => ({ ok: true, jobKind: 'artifact_gen', payload: input }),
+});
+
+/** learning.session.start — mirror-mode session (matrix row learning.session.start / learning.mirror.analyze). */
+export const learningSession: KernelTool = tool({
+  description:
+    'Start a mirror-mode learning session ("quiz me / explain what I understand") — matrix row learning.session.start. Heavy step → agent_run job (AD-8); the kernel runs the mirror on the session transcript when it closes.',
+  inputSchema: z.object({
+    skillId: z.string(),
+    mode: z.enum(['quiz', 'explain', 'teach']).default('quiz'),
+  }),
+  execute: async (input) => ({
+    ok: true,
+    jobKind: 'agent_run',
+    payload: { capability: 'learning_session', ...input },
+  }),
+});
+
+/** learning.import — ingest course materials for the exam (matrix / G-L5 course_import row). */
+export const learningImport: KernelTool = tool({
+  description:
+    'Ingest course materials / resources for a course (matrix row learning.import, G-L5 course_import): split + OCR + FSRS seed as a course_import job (AD-8); the Learning module applies the learning_items rows (AD-7).',
+  inputSchema: z.object({
+    courseId: z.string(),
+    /** the source artifact ids (presigned fetch, AD-3) */
+    artifactIds: z.array(z.string()),
+  }),
+  execute: async (input) => ({ ok: true, jobKind: 'course_import', payload: input }),
+});
+
+/** knowledge.add — ingest a new source into the KB (matrix row knowledge.* family). */
+export const knowledgeAdd: KernelTool = tool({
+  description:
+    'Ingest a new source into the knowledge base (camera / OCR / upload — matrix row knowledge.add, AD-11 provenance): an ocr job (AD-8); the Knowledge module applies the semantic_nodes rows (AD-7 single-writer).',
+  inputSchema: z.object({
+    /** the source artifact (presigned fetch, AD-3) */
+    artifactId: z.string(),
+    /** the source kind (provenance, AD-11) */
+    kind: z.enum(['note', 'course', 'article', 'formula', 'other']).default('other'),
+  }),
+  execute: async (input) => ({ ok: true, jobKind: 'ocr', payload: input }),
+});
+
+/** progress.analyze — "how am I progressing?" (matrix row progress.analyze; mirrors light / S heavy). */
+export const progressAnalyze: KernelTool = tool({
+  description:
+    'Analyze progress across a skill / goal ("comment je progresse ?") — matrix row progress.analyze. Light step reads mirrors + skill_states offline-capable; the deep variant recomputes as a skill_recompute job (AD-8) when `deep: true`.',
+  inputSchema: z.object({
+    skillId: z.string().optional(),
+    goalId: z.string().optional(),
+    /** deep = recompute (heavy job, AD-8); light = mirror read-only */
+    deep: z.boolean().default(false),
+  }),
+  execute: async (input) =>
+    input.deep
+      ? { ok: true, jobKind: 'skill_recompute', payload: input }
+      : { ok: true, command: 'progress.analyze', payload: input },
+});
+
+/** progress.trajectories — read the per-skill time-series (Progress, read-only). */
+export const progressTrajectories: KernelTool = tool({
+  description:
+    'Read the progress trajectory / time-series for a skill (matrix / G-L5 progress.trajectories): READ-ONLY over progress_trajectories (AD-7: the Progress module owns the table, the kernel only reads it).',
+  inputSchema: z.object({
+    skillId: z.string(),
+    /** the period to read (ISO start/end, or "30d" style) */
+    period: z.string().optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'progress.trajectories_read', payload: input }),
+});
+
+/** progress.cause — root-cause a skill gap (heavy S-job, AD-8). */
+export const progressCause: KernelTool = tool({
+  description:
+    'Root-cause a skill gap ("pourquoi ai-je du mal sur X ?") — matrix / G-L5 progress.cause: a heavy skill_recompute job (AD-8) over the gap + the review history; the Progress module applies the diagnosis.',
+  inputSchema: z.object({
+    skillId: z.string(),
+  }),
+  execute: async (input) => ({ ok: true, jobKind: 'skill_recompute', payload: input }),
+});
+
+/** artifact.generate — generic export (matrix row artifact.generate; sibling of the 4 docs.* document tools). */
+export const artifactGenerate: KernelTool = tool({
+  description:
+    'Export a sheet / item as a document (matrix row artifact.generate, e.g. "exporte ce planning en PDF"): an artifact_gen job (AD-8); the Artifact module writes the row (AD-7) + the R2 blob (F-06 post-R2, AD-3: no device keys — presigned only).',
+  inputSchema: z.object({
+    /** the source item / artifact to export */
+    sourceRef: z.string(),
+    outputFormat: z.enum(['docx', 'pdf', 'pptx', 'html', 'epub', 'csv', 'json']).default('pdf'),
+  }),
+  execute: async (input) => ({ ok: true, jobKind: 'artifact_gen', payload: input }),
+});
+
+/**
+ * artifact.preview — matrix row USER_ONLY. The kernel does NOT produce a
+ * preview: it emits the `show_artifact` UI command + a deep-link
+ * NavigationIntent (command-bus.ts AGENT_UI_COMMANDS closed set, AD-12)
+ * — the device opens the preview (local cache, AD-1 graceful degrade:
+ * raw file download fallback). No job, no write.
+ */
+export const artifactPreview: KernelTool = tool({
+  description:
+    '"Show me X" → the Artifact Hub preview (matrix row artifact.preview, USER_ONLY): emits the show_artifact ui-command + a deep-link (AD-12/F-09: the kernel drives the UI through the command bus only — it NEVER reads the artifact, the device does, AD-1 graceful degrade to raw download). No job, no write.',
+  inputSchema: z.object({
+    artifactId: z.string(),
+  }),
+  execute: async (input) => ({
+    ok: true,
+    ui: {
+      command: 'show_artifact',
+      payload: { artifactId: input.artifactId },
+      deepLink: `/artifacts/${input.artifactId}`,
+    },
+  }),
+});
+
+/** scientific.evaluate — light, offline-capable sibling of scientific_verify (matrix row scientific.evaluate / scientific.verify). */
+export const scientificEvaluate: KernelTool = tool({
+  description:
+    'Compute / evaluate a formula locally (matrix row scientific.evaluate, light): the ScientificEngine runs offline-capable (AD-1: "light ops local"); the heavy `scientific_verify` job covers the deterministic full verification. The LLM NEVER solves — it structures the typed inputs.',
+  inputSchema: z.object({
+    domain: z.string(),
+    problemType: z.string(),
+    inputs: z.array(z.object({ key: z.string(), value: z.number(), unit: z.string() })),
+  }),
+  execute: async (input) => ({ ok: true, command: 'engineering.evaluate', payload: input }),
+});
+
+/** coach.checkin — proactive, cadence-bounded (matrix row coach.checkin, PARTIAL by design). */
+export const coachCheckin: KernelTool = tool({
+  description:
+    'A proactive coach check-in ("temps de faire une pause / bonjour, comment va ta révision ?") — matrix row coach.checkin, cadence-limited by design (ADR §13: user-controlled cadence + silence windows). Thin command → productivity.coach_checkin (soft write, AD-7); the notification lands via the server (OneSignal, Integrations) or local.',
+  inputSchema: z.object({
+    /** the message */
+    body: z.string(),
+    /** respect the user's silence window + cadence (ADR §13) */
+    honorSilenceWindow: z.boolean().default(true),
+  }),
+  execute: async (input) => ({ ok: true, command: 'productivity.coach_checkin', payload: input }),
+});
+
+/** settings.theme / preferences — user_context commands (matrix row settings.theme / preferences, PARTIAL). */
+export const settingsTheme: KernelTool = tool({
+  description:
+    'Set the app theme / a preference ("passe l\'app en thème sombre") — matrix row settings.theme / preferences: a user_context command (AD-7: the Identity module owns user_context and applies the write). Light, read-open.',
+  inputSchema: z.object({
+    /** theme id (theme JSON SSoT, G-H2) */
+    themeId: z.string(),
+    style: z.enum(['light', 'dark', 'auto']).default('auto'),
+  }),
+  execute: async (input) => ({ ok: true, command: 'identity.set_theme', payload: input }),
+});
+
+/** review.run — daily / weekly / monthly (matrix row review.run, CONFIRMATION_REQUIRED on priority changes). */
+export const reviewRun: KernelTool = tool({
+  description:
+    'Run a productivity review (daily / weekly / monthly — matrix row review.run, CONFIRMATION_REQUIRED on priority changes): a light command over the journal + decisions; the Productivity module applies the review outcome (AD-7).',
+  inputSchema: z.object({
+    horizon: z.enum(['daily', 'weekly', 'monthly']).default('weekly'),
+  }),
+  execute: async (input) => ({ ok: true, command: 'productivity.review_run', payload: input }),
+});
+
+/** integrations.automation.toggle — Composio automation (matrix row integrations.automation.toggle, CONFIRMATION_REQUIRED). */
+export const automationToggle: KernelTool = tool({
+  description:
+    'Start / stop an automation ("stoppe l\'automatisation X") — matrix row integrations.automation.toggle, CONFIRMATION_REQUIRED: a thin command → integrations.automation_update (AD-7: the Integrations module owns automations + the vendor SDKs, AD-1).',
+  inputSchema: z.object({
+    automationId: z.string(),
+    enabled: z.boolean(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'integrations.automation_update', payload: input }),
+});
+
+/** notification.subscribe / silence — user prefs (matrix row notification.subscribe / silence, PARTIAL). */
+export const notificationPref: KernelTool = tool({
+  description:
+    'Subscribe / silence a notification channel ("silence les push de révision") — matrix row notification.subscribe / silence: a user-prefs command (AD-7: the Integrations module owns notification_preferences).',
+  inputSchema: z.object({
+    channel: z.enum(['push', 'in-app', 'email']).default('push'),
+    /** true = subscribe, false = silence */
+    enabled: z.boolean(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'integrations.notification_pref', payload: input }),
+});
+
+/** eisenhower — quadrant prioritization (matrix / G-L5 eisenhower row). */
+export const eisenhowerPrioritize: KernelTool = tool({
+  description:
+    'Priorize tasks into the 4 Eisenhower quadrants ("priorise mes tâches") — matrix / G-L5 eisenhower row: a thin command → productivity.eisenhower (AD-7: the Productivity module applies the quadrant / priority fields on tasks).',
+  inputSchema: z.object({
+    taskIds: z.array(z.string()).min(1),
+    /** the suggested quadrant per task (Q1 urgent+important … Q4) */
+    quadrants: z.record(z.enum(['Q1', 'Q2', 'Q3', 'Q4'])),
+  }),
+  execute: async (input) => ({ ok: true, command: 'productivity.eisenhower', payload: input }),
+});
+
 /**
  * The full kernel tool set, keyed by the canonical tool ids the Planner's
  * `resolveTool` + `ExecutionEngine.invoke` address them by
@@ -384,8 +667,11 @@ export const KERNEL_TOOLS = {
   blockApps,
   research,
   qcm_generate: qcmGenerate,
+  flashcard_generate: flashcardGenerate,
   mirror_analyze: mirrorAnalyze,
+  learning_session: learningSession,
   scientific_verify: scientificVerify,
+  scientific_evaluate: scientificEvaluate,
   goal_create: goalCreate,
   goal_status: goalStatus,
   goal_recompose: goalRecompose,
@@ -399,6 +685,24 @@ export const KERNEL_TOOLS = {
   docs_refine: docsRefine,
   docs_inspect: docsInspect,
   docs_parse: docsParse,
+  // Feature-agentability-matrix.md — the remaining agentable families
+  task_update: taskUpdate,
+  habit_checkin: habitCheckin,
+  planning_replan: planningReplan,
+  course_search: courseSearch,
+  learning_import: learningImport,
+  knowledge_add: knowledgeAdd,
+  progress_analyze: progressAnalyze,
+  progress_trajectories: progressTrajectories,
+  progress_cause: progressCause,
+  artifact_generate: artifactGenerate,
+  artifact_preview: artifactPreview,
+  coach_checkin: coachCheckin,
+  settings_theme: settingsTheme,
+  review_run: reviewRun,
+  automation_toggle: automationToggle,
+  notification_pref: notificationPref,
+  eisenhower_prioritize: eisenhowerPrioritize,
 };
 
 export type KernelToolId = keyof typeof KERNEL_TOOLS;

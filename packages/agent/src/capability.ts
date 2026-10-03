@@ -281,6 +281,215 @@ export class DefaultCapabilityRegistry {
         offlineClass: 'online-required',
         dependencies: ['docling'],
       },
+      // ------------------------------------------------------------------
+      // Feature-agentability-matrix.md — the remaining agentable
+      // families (AD-7: every entry EMITS a typed command / job; the
+      // owning module applies the mutation — the kernel NEVER writes a
+      // module table). Owner per family: Productivity / Learning /
+      // Knowledge / Progress / Artifact / Identity / Integrations /
+      // Agent (coach). call.policy is NOT_AGENT_ENABLED (V1, opt-in
+      // role-gated) → deliberately NOT registered here.
+      // ------------------------------------------------------------------
+      {
+        id: 'task.update',
+        tool: 'task_update',
+        description: 'Create / update / complete / archive a task (Productivity, AD-7 command)',
+        writeScopes: ['productivity:write'],
+        readScopes: ['productivity:read'],
+        destructive: false,
+        requiresConfirmation: false, // bulk / delete path = confirmation at module level
+      },
+      {
+        id: 'habit.checkin',
+        tool: 'habit_checkin',
+        description: 'Log a habit / routine check-in ("j\'ai fait X") (Productivity)',
+        writeScopes: ['productivity:write'],
+        readScopes: ['productivity:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      {
+        id: 'planning.replan',
+        tool: 'planning_replan',
+        description:
+          'Re-plan / reorder the remaining day on context change (ADR S13: "recalcul du planning restant sans détruire l\'historique")',
+        writeScopes: ['productivity:write'],
+        readScopes: ['productivity:read'],
+        destructive: false,
+        requiresConfirmation: true, // discarding an active plan = important
+      },
+      {
+        id: 'course.search',
+        tool: 'course_search',
+        description: 'Find a course / resource on a topic (local mirror + server retrieval, READ-ONLY)',
+        writeScopes: [],
+        readScopes: ['learning:read', 'knowledge:read'],
+        destructive: false,
+        requiresConfirmation: false,
+        offlineClass: 'hybrid', // offline = mirror only (AD-1 degrade)
+      },
+      {
+        id: 'flashcard.generate',
+        tool: 'flashcard_generate',
+        description: 'Generate flashcards for a skill / course (Learning, artifact_gen job AD-8)',
+        writeScopes: ['learning:write'],
+        readScopes: ['learning:read', 'knowledge:read'],
+        destructive: false,
+        requiresConfirmation: false,
+        offlineClass: 'online-required',
+      },
+      {
+        id: 'learning.session.start',
+        tool: 'learning_session',
+        description: 'Start a mirror-mode learning session ("quiz me / explain") (agent_run job AD-8)',
+        writeScopes: ['learning:write'],
+        readScopes: ['learning:read', 'knowledge:read'],
+        destructive: false,
+        requiresConfirmation: false,
+        dependencies: ['knowledge-base'],
+      },
+      {
+        id: 'learning.import',
+        tool: 'learning_import',
+        description: 'Ingest course materials for a course (G-L5 course_import job, AD-8)',
+        writeScopes: ['learning:write'],
+        readScopes: ['learning:read', 'artifact:read'],
+        destructive: false,
+        requiresConfirmation: false,
+        offlineClass: 'online-required',
+        dependencies: ['course-importer'],
+      },
+      {
+        id: 'knowledge.add',
+        tool: 'knowledge_add',
+        description: 'Ingest a new source into the KB (camera / OCR / upload — ocr job, AD-11 provenance)',
+        writeScopes: ['knowledge:write'],
+        readScopes: ['artifact:read'],
+        destructive: false,
+        requiresConfirmation: false,
+        offlineClass: 'online-required',
+        dependencies: ['ocr'],
+      },
+      {
+        id: 'progress.analyze',
+        tool: 'progress_analyze',
+        description:
+          'Analyze progress across a skill / goal (mirrors light read-only; deep = skill_recompute job AD-8)',
+        writeScopes: ['progress:write'],
+        readScopes: ['progress:read', 'knowledge:read'],
+        destructive: false,
+        requiresConfirmation: false,
+        offlineClass: 'hybrid',
+      },
+      {
+        id: 'progress.trajectories',
+        tool: 'progress_trajectories',
+        description: 'Read the progress trajectory / time-series for a skill (READ-ONLY, Progress-owned)',
+        writeScopes: [],
+        readScopes: ['progress:read'],
+        destructive: false,
+        requiresConfirmation: false,
+        offlineClass: 'offline-capable',
+      },
+      {
+        id: 'progress.cause',
+        tool: 'progress_cause',
+        description: 'Root-cause a skill gap ("pourquoi ai-je du mal sur X ?") — heavy skill_recompute job',
+        writeScopes: ['progress:write'],
+        readScopes: ['progress:read', 'knowledge:read'],
+        destructive: false,
+        requiresConfirmation: false,
+        offlineClass: 'online-required',
+      },
+      {
+        id: 'artifact.generate',
+        tool: 'artifact_generate',
+        description: 'Export a sheet / item as a document (artifact_gen job, AD-8; F-06 post-R2 blob)',
+        writeScopes: ['artifact:write'],
+        readScopes: ['artifact:read', 'productivity:read'],
+        destructive: false,
+        requiresConfirmation: false,
+        offlineClass: 'online-required',
+      },
+      {
+        id: 'artifact.preview',
+        tool: 'artifact_preview',
+        description:
+          '"Show me X" → Artifact Hub preview (USER_ONLY: emits show_artifact ui-command + deep link, the kernel NEVER reads the artifact — device-side local cache, AD-1 degrade to raw download)',
+        writeScopes: [],
+        readScopes: ['artifact:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      {
+        id: 'scientific.evaluate',
+        tool: 'scientific_evaluate',
+        description:
+          'Compute / evaluate a formula locally (ScientificEngine light ops, offline-capable; the heavy scientific_verify job covers full verification)',
+        writeScopes: [],
+        readScopes: ['engineering:read', 'knowledge:read'],
+        destructive: false,
+        requiresConfirmation: false,
+        offlineClass: 'offline-capable',
+        dependencies: ['scientific-engine'],
+      },
+      {
+        id: 'coach.checkin',
+        tool: 'coach_checkin',
+        description:
+          'Proactive coach check-in (cadence + silence-window bounded, ADR §13 — PARTIAL by design)',
+        writeScopes: ['productivity:write'],
+        readScopes: ['productivity:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      {
+        id: 'settings.theme',
+        tool: 'settings_theme',
+        description: 'Set the app theme / a preference (user_context command, AD-7 Identity)',
+        writeScopes: ['identity:write'],
+        readScopes: ['identity:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      {
+        id: 'review.run',
+        tool: 'review_run',
+        description:
+          'Run a productivity review (daily / weekly / monthly; priority changes = confirmation)',
+        writeScopes: ['productivity:write'],
+        readScopes: ['productivity:read', 'progress:read'],
+        destructive: false,
+        requiresConfirmation: true, // priority changes are important
+      },
+      {
+        id: 'integrations.automation.toggle',
+        tool: 'automation_toggle',
+        description: 'Start / stop an automation (Composio, vendor SDK AD-1 — Integrations-owned)',
+        writeScopes: ['integrations:write'],
+        readScopes: ['integrations:read'],
+        destructive: false,
+        requiresConfirmation: true,
+        dependencies: ['composio'],
+      },
+      {
+        id: 'notification.prefs',
+        tool: 'notification_pref',
+        description: 'Subscribe / silence a notification channel (user prefs, Integrations-owned)',
+        writeScopes: ['integrations:write'],
+        readScopes: [],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      {
+        id: 'task.prioritize',
+        tool: 'eisenhower_prioritize',
+        description: 'Prioritize tasks into the 4 Eisenhower quadrants (Productivity, G-L5)',
+        writeScopes: ['productivity:write'],
+        readScopes: ['productivity:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
     ];
     for (const b of base) {
       this.register({

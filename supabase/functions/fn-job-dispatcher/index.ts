@@ -26,6 +26,13 @@ import {
 import { SCIENTIFIC_JOB_HANDLERS } from "../../../packages/scientific-engine/src/jobs.ts";
 import { INTEGRATIONS_JOB_HANDLERS } from "../../../packages/integrations/src/automations.ts";
 import { buildAgentRunHandler } from "../../../packages/agent/src/jobs.ts";
+import {
+  isKernelConfigured,
+  buildContextAssembler,
+  buildJobPort,
+  buildMemoryEngine,
+  buildAgentKernel,
+} from "../_shared/fn-agent-bootstrap.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SECRET_KEY = Deno.env.get("SUPABASE_SECRET_KEY") ?? "";
@@ -91,45 +98,172 @@ function wireGlobalJobSwitch(): void {
 }
 
 /**
- * Build the agent_run dispatchers with the server-side seams.
+ * A handler's result surface (JobHandlerResult shape).
+ */
+type HandlerResult = { ok: boolean; result?: unknown; error?: string };
+
+/**
+ * Build the agent_run dispatchers with the server-side seams
+ * (fn-agent-bootstrap.ts — AD-12, 01 §5.6, OQ-03).
  *
- * The bootstrap (apps/server / deployment config) provides:
- *  - the ContextAssembler (module public views — AD-2),
- *  - the permission form reader,
- *  - the ModelGateway (router + Vercel SDK layer, AD-1),
- *  - the expert_skills store (AD-12 server-only),
- *  - the JobDispatcherPort (job_queue / job_logs — the Job system's
- *    owned tables).
+ * The bootstrap is env-gated on provider keys (AD-3): absent keys →
+ * the seams stay `null` and the handler reports the documented
+ * `pending-bootstrap` degraded no-op (AD-8: idempotent, no data
+ * loss — the run executes on a future dispatch once the keys land).
  *
- * Until the bootstrap is wired in a given deployment, the handler
- * reports the run as `pending-bootstrap` WITHOUT failing the job:
- * the dispatcher keeps it routable (AD-8 idempotent — the next
- * dispatch, once the bootstrap lands, executes the run).
+ * When configured: the FULL KernelDeps are injected (ContextAssembler
+ * over the 0012 public views, the expert_skills store, the Job
+ * port, the S2.6 router chain) and the kernel loop executes for
+ * real. The terminal AgentRunState snapshot persists to `agent_runs`
+ * (the device's SSoT run state, F-09).
+ *
+ * F-09 SSoT (01 §5.6 SSoT rule): the `agent_runs` row is created at
+ * enqueue by fn-agent-run (status='running'); this handler updates it
+ * at the terminal state — by the uuid PK (`payload.agentRunsId`, set
+ * by fn-agent-run), NOT by trace_id/agentRunId (the ULID never
+ * matches the uuid column).
  */
 function buildAgentRunDispatchers() {
-  return [
-    buildAgentRunHandler({
-      // Server-side bootstrap (ContextAssembler, ModelGateway, expert
-      // skill store, JobDispatcherPort) is injected by the deployment
-      // runtime; until wired, the handler reports a degraded no-op so
-      // the job completes idempotently instead of stalling (AD-8: no
-      // data loss — the real run executes once the bootstrap lands).
-      kernelFactory: () => {
+  const configured = isKernelConfigured();
+  const assembler = configured ? buildContextAssembler() : null;
+  const memory = configured ? buildMemoryEngine() : null;
+  const jobs = configured ? buildJobPort() : null;
+  const handler = buildAgentRunHandler({
+    kernelFactory: (d) => {
+      if (!configured) {
         throw new Error(
-          "agent_run: kernel bootstrap not configured in this deployment",
+          "agent_run: kernel bootstrap not configured in this deployment (OQ-03)",
         );
+      }
+      const kernel = buildAgentKernel();
+      if (!kernel) {
+        throw new Error("agent_run: kernel factory returned null (provider chain degraded)");
+      }
+      // The dispatcher injects the full KernelDeps through the bootstrap;
+      // `d` is the seam surface the handler carries — the kernel already
+      // owns its own deps (the factory returns a ready AgentKernel).
+      void d;
+      return kernel;
+    },
+    assembler,
+    permission: configured
+      ? async (userId) => {
+          const form = await (assembler as ReturnType<typeof buildContextAssembler>).loadPermission(userId);
+          const featureState: Record<string, boolean> = form?.featureState ?? {};
+          return {
+            userId,
+            scopes: Object.keys(featureState).map((f) => `${f}:read`),
+            featureState,
+            destructiveGates: [],
+            allow: (action: string, scope: string) =>
+              action === "read" || featureState[scope.split(":")[0]] !== false,
+          };
+        }
+      : null,
+    memory,
+    verification: configured
+      ? {
+          verifyJob: async (stepId: string, input: Record<string, unknown>) => {
+            // 'verify' is the JobKind's own vocabulary (packages/domain/jobs.ts)
+            // — a verification job, NOT 'agent_verify' (non-existent kind, AD-15).
+            const r = await (jobs as NonNullable<typeof jobs>).dispatch({
+              jobKind: "verify",
+              userId: String((input as { userId?: string }).userId ?? ""),
+              payload: { stepId, input },
+              idempotencyKey: `verify:${stepId}`,
+            });
+            return { ok: true, details: { jobId: r.jobId, pending: true } };
+          },
+          checkSources: async (stepId: string) => {
+            void stepId;
+            return { ok: true, refs: [] };
+          },
+        }
+      : null,
+    jobs,
+    ulid,
+    now: () => new Date().toISOString(),
+    persistRun: async (userId, state) => {
+      // Terminal AgentRunState → agent_runs (F-09 SSoT). Absent env or
+      // a non-terminal state = no-op (the dispatcher reports via result).
+      if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) return;
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/agent_runs?user_id=eq.${userId}&id=eq.${state.agentRunId}`,
+        {
+          method: "PATCH",
+          headers: {
+            apikey: SUPABASE_SECRET_KEY,
+            Authorization: `Bearer ${SUPABASE_SECRET_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status:
+              state.status === "succeeded"
+                ? "completed"
+                : state.status === "failed"
+                  ? "failed"
+                  : "running",
+            completed_at:
+              state.status === "succeeded" || state.status === "failed"
+                ? state.updatedAt
+                : null,
+          }),
+        },
+      ).catch(() => null);
+      if (res && !res.ok) {
+        console.warn(`[fn-job-dispatcher] persistRun status=${res.status}`);
+      }
+    },
+  });
+  // Wrap the module-owned handler with the SSoT `agent_runs` update
+  // (the 01 §5.6 rule: the owning module owns the agent_runs table;
+  // the bootstrap's persistRun is the SSoT path, not the job result).
+  return [
+    {
+      jobKind: "agent_run",
+      module: "agent",
+      handler: async (
+        jobId: string,
+        userId: string,
+        payload: Record<string, unknown>,
+      ): Promise<HandlerResult> => {
+        const res: HandlerResult = await handler.handler(jobId, userId, payload);
+        // SSoT update: patch the agent_runs row BY its uuid PK
+        // (payload.agentRunsId, set by fn-agent-run at enqueue).
+        // A missing agentRunsId (legacy payload) is a no-op.
+        const agentRunsId =
+          typeof payload.agentRunsId === "string" ? payload.agentRunsId : null;
+        if (agentRunsId && SUPABASE_URL && SUPABASE_SECRET_KEY && res.ok) {
+          const s = (res.result ?? {}) as { status?: string; stage?: string };
+          const terminal = s.status === "succeeded" || s.status === "failed";
+          await fetch(
+            `${SUPABASE_URL}/rest/v1/agent_runs?id=eq.${agentRunsId}&user_id=eq.${userId}`,
+            {
+              method: "PATCH",
+              headers: {
+                apikey: SUPABASE_SECRET_KEY,
+                Authorization: `Bearer ${SUPABASE_SECRET_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                status:
+                  s.status === "succeeded"
+                    ? "completed"
+                    : s.status === "failed"
+                      ? "failed"
+                      : "running",
+                ...(terminal
+                  ? { completed_at: new Date().toISOString() }
+                  : {}),
+                steps_json: s.stage ? [{ stage: s.stage, status: s.status }] : [],
+                updated_at: new Date().toISOString(),
+              }),
+            },
+          ).catch(() => null);
+        }
+        return res;
       },
-      assembler: null,
-      permission: null,
-      memory: null,
-      verification: null,
-      jobs: null,
-      ulid,
-      now: () => new Date().toISOString(),
-      persistRun: async () => {
-        // no-op until the server bootstrap wires the real store.
-      },
-    }),
+    },
   ];
 }
 

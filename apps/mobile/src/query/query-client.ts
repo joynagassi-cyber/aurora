@@ -13,6 +13,7 @@
 import { QueryClient } from '@tanstack/react-query';
 import type { LocalQueryRepository, LocalFilter } from '@aurora/data';
 import type { AscentLearningIR, GoalProject, Task } from '@aurora/domain';
+import type { AgentClient } from '../lib/agent-client';
 
 /** The injected data provider — one repository per entity family. */
 export interface MobileDataProvider {
@@ -20,6 +21,12 @@ export interface MobileDataProvider {
   tasks: LocalQueryRepository<Task>;
   /** Ascent local mirror (wave 3): the read-only `ascent_paths` table. */
   ascent?: LocalQueryRepository<AscentLearningIR>;
+  /**
+   * The device-side agent client (AD-3: publishable scope only). Present
+   * when the shell has Supabase env values — the /agent page enqueues
+   * kernel runs through it (`fn-agent-run`, AD-12/F-09).
+   */
+  agent?: AgentClient;
   /** optional: reactive channel that invalidates the QueryClient on upsync. */
   onLocalChange?: (invalidate: () => void) => void;
 }
@@ -45,6 +52,12 @@ export const qk = {
   ascent: {
     all: () => ['ascent'] as const,
     list: (userId?: string) => [...qk.ascent.all(), 'list', userId ?? 'me'] as const,
+  },
+  // agent_runs mirror (AD-7 read side, 0008): per-run polling while
+  // the kernel job is in flight (02 §4 / F-09).
+  agent: {
+    all: () => ['agent'] as const,
+    run: (runId: string) => [...qk.agent.all(), 'run', runId] as const,
   },
 };
 
@@ -85,12 +98,15 @@ export function createMobileQueryClient(provider: MobileDataProvider): QueryClie
  */
 export function mobileDataProviderFrom(
   provider: import('../lib/boot-data').AuroraDataProvider,
+  agent?: AgentClient,
 ): MobileDataProvider {
   return {
     goals: provider.goals,
     tasks: provider.tasks,
     // A2: expose the Ascent local-mirror repo (snake→camel-mapped, AD-15).
     ascent: provider.ascent,
+    // AD-3: the publishable-scope agent client (kernel enqueue + mirror read).
+    agent,
     onLocalChange: (invalidate) => {
       // The bridge watches the mirror tables; invalidate on downstream
       // batches (03 S5.8). goals + the ascent_paths read-only mirror (A2).

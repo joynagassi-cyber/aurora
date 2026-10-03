@@ -43,7 +43,9 @@ import { FocusThemeAdapter } from './ux/theme-adapter';
 import { MobileDataCtx } from './query/context';
 import { mobileDataProviderFrom } from './query/query-client';
 import { createAuroraDataProvider, type AuroraDataEnv } from './lib/boot-data';
+import { createAgentClient } from './lib/agent-client';
 import { useUiStateStore } from './state/ui-state';
+import { createAuroraSupabaseClient } from '@aurora/data';
 
 const env: AuroraDataEnv = {
   supabaseUrl: import.meta.env.VITE_SUPABASE_URL ?? '',
@@ -53,7 +55,23 @@ const env: AuroraDataEnv = {
 
 // The local-mirror data provider (A2: `ascent` is wired through here).
 const provider = createAuroraDataProvider(env);
-const dataProvider = mobileDataProviderFrom(provider);
+// AD-3: the agent client runs on the SAME publishable-scope client — the
+// device enqueues kernel runs (`fn-agent-run`) and reads the `agent_runs`
+// mirror; zero provider keys cross this boundary (F-09). Absent env values
+// (OQ-03) leave `agent` undefined → the /agent page shows the honest
+// "agent indisponible" empty state (AD-7), never a fake run.
+const agent =
+  env.supabaseUrl && env.supabasePublishableKey
+    ? createAgentClient(
+        createAuroraSupabaseClient({
+          env: {
+            supabaseUrl: env.supabaseUrl,
+            supabasePublishableKey: env.supabasePublishableKey,
+          },
+        }),
+      )
+    : undefined;
+const dataProvider = mobileDataProviderFrom(provider, agent);
 
 function Root() {
   const focusActive = useUiStateStore((s) => s.focusActive);
