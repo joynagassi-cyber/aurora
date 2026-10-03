@@ -45,7 +45,7 @@ test('KERNEL_TOOLS exposes the full agentable tool set (matrix + 8 kernel + goal
     'artifact_generate', 'artifact_preview', 'coach_checkin', 'settings_theme',
     'review_run', 'automation_toggle', 'notification_pref', 'eisenhower_prioritize',
     // focus planning + skills (focus-mode spec, ADR S14)
-    'pomodoro_schedule', 'focus_sound', 'focus_profile',
+    'pomodoro_schedule', 'focus_sound', 'focus_profile', 'focus_sound_catalog',
     'skill_activate', 'skill_create',
   ];
   for (const id of expected) {

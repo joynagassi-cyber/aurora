@@ -681,6 +681,89 @@ export const pomodoroSchedule: KernelTool = tool({
 });
 
 /**
+ * The focus-sound catalog (kernel read-only surface, AD-11 provenance).
+ *
+ * The actual audio URLs live in the MOBILE package (apps/mobile/src/lib/
+ * focus-sounds.ts) — they are device-side assets (streamed/looped by the
+ * Focus controller), never server secrets. This kernel tool exposes the
+ * catalog shape (theme buckets + sound ids + names) so the planner can
+ * address a sound by `soundId` in `focus_sound` / `focus_profile`
+ * (deterministic reference resolution — AD-15 closed vocabulary:
+ * `sound` is a NAME; the id is the stable reference).
+ */
+export interface FocusSoundCatalogEntry {
+  id: string;
+  name: string;
+  theme: 'nature' | 'bruit-blanc' | 'ambiance' | 'lointain' | 'musique';
+  loop: boolean;
+}
+
+/** The 5-theme / 25-sound catalog (spec focus S6: min 15, 5 par thème). */
+export const FOCUS_SOUND_CATALOG: readonly FocusSoundCatalogEntry[] = [
+  { id: 'rain-gentle', name: 'Pluie douce', theme: 'nature', loop: true },
+  { id: 'forest-night', name: 'Forêt apaisante (nuit)', theme: 'nature', loop: true },
+  { id: 'river-birds', name: 'Rivière & oiseaux', theme: 'nature', loop: true },
+  { id: 'ocean-waves', name: 'Vagues douces', theme: 'nature', loop: true },
+  { id: 'tropical-beach', name: 'Plage tropicale', theme: 'nature', loop: true },
+  { id: 'white-noise', name: 'Bruit blanc', theme: 'bruit-blanc', loop: true },
+  { id: 'cabin-brown-noise', name: 'Bruit brun (cabine)', theme: 'bruit-blanc', loop: true },
+  { id: 'rain-steady', name: 'Pluie stable (boucle)', theme: 'bruit-blanc', loop: true },
+  { id: 'fireflies', name: 'Brouhaha nocturne', theme: 'bruit-blanc', loop: true },
+  { id: 'wind-light', name: 'Vent léger', theme: 'bruit-blanc', loop: true },
+  { id: 'cafe-bossa', name: 'Café (bossa vintage)', theme: 'ambiance', loop: true },
+  { id: 'cafe-rain-window', name: 'Café sous la pluie', theme: 'ambiance', loop: true },
+  { id: 'lofi-dreamscape', name: 'Lofi rêveur', theme: 'ambiance', loop: true },
+  { id: 'lofi-chill', name: 'Lofi chill', theme: 'ambiance', loop: true },
+  { id: 'chill-relax', name: 'Chill & relax', theme: 'ambiance', loop: true },
+  { id: 'space-drone', name: 'Drone spatial', theme: 'lointain', loop: true },
+  { id: 'ambient-classics', name: 'Classiques ambiantes', theme: 'lointain', loop: true },
+  { id: 'midnight-radio', name: 'Radio minuit', theme: 'lointain', loop: true },
+  { id: 'calm-radio', name: 'Session calme', theme: 'lointain', loop: true },
+  { id: 'zen-radio', name: 'Zen radio', theme: 'lointain', loop: true },
+  { id: 'sundown-loop', name: 'Lundi doux (boucle)', theme: 'musique', loop: true },
+  { id: 'sundown-loop-2', name: 'Lundi doux II', theme: 'musique', loop: true },
+  { id: 'lofi-mellow', name: 'Mellow visions (boucle)', theme: 'musique', loop: true },
+  { id: 'lofi-sunbeam', name: 'Sunbeam dream (boucle)', theme: 'musique', loop: true },
+  { id: 'lofi-soochrys', name: 'Lo-Fi zen', theme: 'musique', loop: true },
+];
+
+export const FOCUS_SOUND_THEMES = [
+  'nature',
+  'bruit-blanc',
+  'ambiance',
+  'lointain',
+  'musique',
+] as const satisfies readonly FocusSoundCatalogEntry['theme'][];
+
+/**
+ * focus_sound_catalog — READ-ONLY listing of the available concentration
+ * sounds (spec focus S6: 5 thèmes × 5 sons, min 15 total). The planner
+ * uses this to ground a `focus_sound` / `focus_profile` payload in a
+ * known `sound` name (AD-11 provenance; AD-15 closed vocabulary: the 5
+ * theme ids above are the ONLY valid `theme` discriminators).
+ */
+export const focusSoundCatalog: KernelTool = tool({
+  description:
+    'List the available concentration sounds (spec focus S6: 5 themes x 5 sounds, 25 total, Internet Archive / Jamendo sourced, CC / public-domain licensed). READ-ONLY - no write, no job. Use it to pick a `sound` name for focus_sound / focus_profile (the kernel enforces the closed 5-theme vocabulary).',
+  inputSchema: z.object({
+    /** optional theme filter (nature / bruit-blanc / ambiance / lointain / musique) */
+    theme: z
+      .enum(FOCUS_SOUND_THEMES)
+      .optional(),
+  }),
+  execute: async (input) => ({
+    ok: true,
+    command: 'focus.sound_catalog_read',
+    payload: {
+      theme: input.theme,
+      sounds: input.theme
+        ? FOCUS_SOUND_CATALOG.filter((s) => s.theme === input.theme)
+        : FOCUS_SOUND_CATALOG,
+    },
+  }),
+});
+
+/**
  * focus_sound — set the concentration sound for a focus session
  * (focus-mode spec, "sons de concentration"). 15+ sounds organized
  * in themes; only Aurora may emit notifications during the session.
@@ -809,6 +892,7 @@ export const KERNEL_TOOLS = {
   pomodoro_schedule: pomodoroSchedule,
   focus_sound: focusSound,
   focus_profile: focusProfile,
+  focus_sound_catalog: focusSoundCatalog,
   // Skills (ADR S14 user skills, separate from expert skills)
   skill_activate: skillActivate,
   skill_create: skillCreate,

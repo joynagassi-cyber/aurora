@@ -301,6 +301,7 @@ export function buildContextAssembler(): ContextAssembler {
           "eisenhower_prioritize",
           "progress_trajectories",
           "progress_cause",
+          "focus_sound_catalog",
         ],
         providers: Object.keys(chain.settings).map((p) => ({
           provider: p,
