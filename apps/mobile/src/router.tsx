@@ -44,6 +44,8 @@ import { AgentPage } from './pages/agent';
 import { SlideAscentPage } from './pages/ascent';
 import { SettingsPage } from './pages/settings';
 import { NotFoundPage } from './pages/not-found';
+import { SkillsPage } from './pages/skills';
+import { IntegrationsPage } from './pages/integrations';
 
 // Explicit annotation (TS2742): the inferred return type of
 // `createBrowserRouter` pulls in @remix-run/router's Router type through
@@ -94,6 +96,12 @@ export const appRouter: AppRouter = createBrowserRouter([
       // --- Discovery feed ---
       { path: '/discovery', element: <DiscoveryPage /> },
 
+      // --- Skills (ADR S14, ClawHub marketplace + expert skills) ---
+      { path: '/skills', element: <SkillsPage /> },
+
+      // --- Integrations (Composio, Google Workspace default preset) ---
+      { path: '/integrations', element: <IntegrationsPage /> },
+
       // --- Flashcards / QCM / exercises: /learn/:id overlays (05 §4.8) ---
       // (already registered under details above; no second registration)
 
@@ -107,4 +115,5 @@ export const appRouter: AppRouter = createBrowserRouter([
 export type AppRoute = '/home' | '/tasks' | '/learn' | '/progress' | '/agent'
   | '/tasks/:id' | '/learn/:id' | '/progress/:id' | '/knowledge' | '/knowledge/:nodeId'
   | '/artifacts/:id' | '/inbox' | '/settings' | '/goals' | '/goals/:id'
-  | '/goals/:id/features/:fid' | '/goals/:id/ascent' | '/focus' | '/calendar' | '/projects' | '/discovery';
+  | '/goals/:id/features/:fid' | '/goals/:id/ascent' | '/focus' | '/calendar' | '/projects' | '/discovery'
+  | '/skills' | '/integrations';

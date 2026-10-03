@@ -44,6 +44,9 @@ test('KERNEL_TOOLS exposes the full agentable tool set (matrix + 8 kernel + goal
     'knowledge_add', 'progress_analyze', 'progress_trajectories', 'progress_cause',
     'artifact_generate', 'artifact_preview', 'coach_checkin', 'settings_theme',
     'review_run', 'automation_toggle', 'notification_pref', 'eisenhower_prioritize',
+    // focus planning + skills (focus-mode spec, ADR S14)
+    'pomodoro_schedule', 'focus_sound', 'focus_profile',
+    'skill_activate', 'skill_create',
   ];
   for (const id of expected) {
     assert.ok(id in KERNEL_TOOLS, `KERNEL_TOOLS is missing the tool "${id}"`);

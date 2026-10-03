@@ -33,6 +33,13 @@ export interface RawModelResponse {
   expectedQuality: 'full' | 'degraded';
   /** the server-side trace id (AD-5) */
   traceId: string;
+  /**
+   * Optional device-preference trace (thinking level, research mode,
+   * agent mode — the `TaskProfile` fields the device set). Carried in
+   * the envelope for observability (AD-16d), never affects the AD-5
+   * fallback chain.
+   */
+  meta?: Record<string, unknown>;
 }
 
 /**

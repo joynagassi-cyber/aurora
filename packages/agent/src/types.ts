@@ -48,6 +48,27 @@ export interface TaskProfile {
    */
   preferredProvider?: string;
   preferredModel?: string;
+  /**
+   * Thinking effort level (Vercel AI SDK reasoning tier, ADR v1.7 S9):
+   * low = fast, medium = balanced, high = deep reasoning, max = full
+   * chain-of-thought + tool use. Default = medium.
+   */
+  thinkingLevel?: 'low' | 'medium' | 'high' | 'max';
+  /**
+   * Research mode (the kernel activates the Discovery port):
+   *   off       = no research job, use only local context
+   *   standard  = ResearchProvider (Exa/Tavily/You.com) for one round
+   *   deep      = multi-round research + source verification (01 §6.1)
+   */
+  researchMode?: 'off' | 'standard' | 'deep';
+  /**
+   * The agent's interaction mode (kernel §4 user surface):
+   *   chat    = free-form conversation, no autonomous tool loop
+   *   agent   = autonomous: plan → tools → verify → act (full kernel)
+   *   mirror  = teach-the-AI mode: user explains what they learned,
+   *             the agent stores it as an expert skill (ADR S14)
+   */
+  agentMode?: 'chat' | 'agent' | 'mirror';
 }
 
 /** The routing level a TaskProfile resolves to (ADR v1.7 S7 levels). */

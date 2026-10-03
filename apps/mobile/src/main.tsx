@@ -37,6 +37,8 @@ import './styles/agent.css';
 import './styles/ascent.css';
 import './styles/data.css';
 import './styles/floating.css';
+import './styles/skills.css';
+import './styles/integrations.css';
 
 import { AuroraApp } from './app';
 import { FocusThemeAdapter } from './ux/theme-adapter';

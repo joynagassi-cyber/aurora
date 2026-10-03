@@ -34,7 +34,18 @@ export interface AgentClientEnv {
 export interface AgentRunRequest {
   intent: string;
   contextRefs?: string[];
-  taskProfile?: Record<string, unknown>;
+  /**
+   * The typed task profile (AD-3 public config). The kernel enforces
+   * AD-5 fallback + the agent's capabilities server-side; these fields
+   * are device preferences, never secrets.
+   */
+  taskProfile?: {
+    preferredProvider?: string;
+    preferredModel?: string;
+    thinkingLevel?: 'low' | 'medium' | 'high' | 'max';
+    researchMode?: 'off' | 'standard' | 'deep';
+    agentMode?: 'chat' | 'agent' | 'mirror';
+  };
 }
 
 /** The `fn-agent-run` 202 response handle (the run id the device follows). */

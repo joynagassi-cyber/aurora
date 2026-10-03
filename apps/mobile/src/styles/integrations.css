@@ -1,0 +1,135 @@
+/* integrations.css — Integrations page (Composio, docs/integrations/composio.md).
+   Google Workspace = the default preset; all other connectors optional. */
+
+.integrations-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 16px;
+}
+
+.integrations-hint {
+  padding: 12px;
+  background: var(--aurora-bg-subtle);
+  border-radius: var(--aurora-radius, 0.5rem);
+}
+.integrations-hint p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--aurora-text-muted);
+}
+
+.integration-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.integration-group h3 {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--aurora-text-muted);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.integration-group-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  color: var(--aurora-accent-on-primary);
+  background: var(--aurora-accent-primary);
+  border-radius: 999px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.integration-group-preset {
+  padding: 4px 0;
+}
+.integration-preset-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--aurora-accent-on-primary);
+  background: var(--aurora-accent-surface);
+  border: 1px solid var(--aurora-accent-primary);
+  border-radius: var(--aurora-radius, 0.5rem);
+  cursor: pointer;
+  width: 100%;
+}
+.integration-preset-btn:hover {
+  background: var(--aurora-accent-primary);
+}
+
+/* ——— Individual connector cards ——— */
+.integration-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: var(--aurora-bg);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius-lg, 0.75rem);
+}
+.integration-card.is-connected {
+  border-color: var(--aurora-accent-primary);
+  background: var(--aurora-accent-surface);
+}
+.integration-card-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+.integration-card-status {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--aurora-bg-subtle);
+  color: var(--aurora-text-muted);
+}
+.integration-card.is-connected .integration-card-status {
+  background: var(--aurora-accent-primary);
+  color: var(--aurora-accent-on-primary);
+}
+.integration-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.integration-card-text h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+}
+.integration-card-text span {
+  font-size: 12px;
+  color: var(--aurora-text-muted);
+}
+
+.integration-toggle {
+  flex: none;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--aurora-text-primary);
+  background: var(--aurora-bg-subtle);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  cursor: pointer;
+  min-width: 110px;
+}
+.integration-toggle.is-on {
+  color: var(--aurora-accent-on-primary);
+  background: var(--aurora-accent-primary);
+  border-color: var(--aurora-accent-primary);
+}

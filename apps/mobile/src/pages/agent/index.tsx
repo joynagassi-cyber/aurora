@@ -8,29 +8,67 @@
  * while running; terminal statuses stop the poll). No provider stream
  * crosses the device (F-09/AD-3).
  *
- * The thinking organism (§9.3) renders while a run is in flight; the
- * honest empty states (AD-7/AD-13): agent unavailable → "agent
- * indisponible", absent mirror row → still pending, `failed` → degraded
- * notice (never a silent acceptance, kernel §8).
+ * The composer's `+` button opens a bottom sheet with:
+ *  - Add files / Add connect (Composio: Google Workspace by default)
+ *  - Skills marketplace (browse ClawHub / create personal skill)
+ *  - Research mode (standard / deep)
+ *  - Thinking level (low / medium / high / max)
  *
- * Model picker (AD-3 public config): the device can pin a provider/model
- * before the run; AD-5 fallback still applies server-side on 429/error.
+ * Agent modes: chat | agent (autonomous) | mirror (teach the AI).
  */
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
-import { Bot, Cpu, Send, Sparkles } from 'lucide-react';
+import {
+  Bot,
+  Brain,
+  Cpu,
+  FilePlus,
+  Link2,
+  Plus,
+  Search,
+  Send,
+  Sparkles,
+  Zap,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useMobileData } from '../../query/context';
 import { useAgentRun } from '../../query/agent-runs';
 import type { AgentRunRow } from '../../lib/agent-client';
 
 // ——— Model picker catalog (AD-3: static, public config — no key here). ———
-// Mirrors `PROVIDER_MODEL_CATALOG` in fn-agent-bootstrap.ts; the kernel
-// enforces the actual availability server-side (no key → provider hidden).
 const MODEL_CATALOG: Array<{ provider: string; name: string; models: string[] }> = [
   { provider: 'agnes', name: 'Agnes', models: ['agnes-3.0', 'agnes-2.5-flash'] },
   { provider: 'workers-ai', name: 'Cloudflare Workers AI', models: ['glm-4.7-flash', 'gemma-4-26b', 'nemotron-3-super-120b'] },
   { provider: 'groq', name: 'Groq', models: ['gpt-oss-120b', 'gpt-oss-20b'] },
   { provider: 'openrouter', name: 'OpenRouter', models: ['nemotron-3-ultra', 'gemma-4'] },
+];
+
+// ——— Agent modes (kernel §4) ———
+type AgentMode = 'chat' | 'agent' | 'mirror';
+const AGENT_MODES: Array<{ id: AgentMode; label: string; icon: React.ReactNode }> = [
+  { id: 'chat', label: 'Chat', icon: <Bot size={12} /> },
+  { id: 'agent', label: 'Agent', icon: <Zap size={12} /> },
+  { id: 'mirror', label: 'Miroir', icon: <Brain size={12} /> },
+];
+
+// ——— Thinking levels ———
+type ThinkingLevel = 'low' | 'medium' | 'high' | 'max';
+const THINKING_LEVELS: ThinkingLevel[] = ['low', 'medium', 'high', 'max'];
+
+// ——— Research modes ———
+type ResearchMode = 'off' | 'standard' | 'deep';
+const RESEARCH_MODES: Array<{ id: ResearchMode; label: string }> = [
+  { id: 'off', label: 'Aucune recherche' },
+  { id: 'standard', label: 'Recherche standard (Exa/Tavily/You.com)' },
+  { id: 'deep', label: 'Deep research (multi-round + vérif sources)' },
+];
+
+// ——— Composio integration presets (default: Google Workspace) ———
+const DEFAULT_CONNECTORS = [
+  'Google Docs',
+  'Gmail',
+  'Google Calendar',
+  'Google Drive',
+  'Google Sheets',
 ];
 
 /** One transcript entry (device surface state — AD-7, local only). */
@@ -65,6 +103,12 @@ export function AgentPage() {
   const [activeRun, setActiveRun] = useState<string | undefined>(undefined);
   const [modelChoice, setModelChoice] = useState<{ provider: string; model: string } | null>(null);
   const [showPicker, setShowPicker] = useState(false);
+  const [showPlusSheet, setShowPlusSheet] = useState(false);
+  const [agentMode, setAgentMode] = useState<AgentMode>('agent');
+  const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>('medium');
+  const [researchMode, setResearchMode] = useState<ResearchMode>('off');
+  const [connectors, setConnectors] = useState<string[]>(DEFAULT_CONNECTORS);
+  const [files, setFiles] = useState<string[]>([]);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const entrySeq = useRef(0);
 
@@ -80,9 +124,6 @@ export function AgentPage() {
     });
   }
 
-  // A terminal mirror row is promoted into the transcript ONCE, then the
-  // run id is cleared (honest history, AD-7: nothing faked — the row text
-  // is a projection of the server state, never an invention).
   useEffect(() => {
     if (!runRow || activeRun !== runRow.id) return;
     const terminal =
@@ -99,7 +140,6 @@ export function AgentPage() {
 
   useEffect(() => {
     if (runRow && activeRun && runRow.id === activeRun) {
-      // Live status line under the thinking organism (rendered inline).
       requestAnimationFrame(() => {
         transcriptRef.current?.scrollTo({ top: transcriptRef.current.scrollHeight });
       });
@@ -110,21 +150,21 @@ export function AgentPage() {
     const intent = draft.trim();
     if (!intent || !agent || thinking) return;
     setDraft('');
+    setFiles([]);
     push({ role: 'user', body: intent });
     try {
       const handle = await agent.start({
         intent,
-        taskProfile: modelChoice
-          ? { preferredProvider: modelChoice.provider, preferredModel: modelChoice.model }
-          : undefined,
+        taskProfile: {
+          preferredProvider: modelChoice?.provider,
+          preferredModel: modelChoice?.model,
+          thinkingLevel,
+          researchMode,
+          agentMode,
+        },
       });
-      // F-09 SSoT: the device follows the `agent_runs` mirror row by its
-      // uuid PK (`handle.traceId`), NOT the kernel's ULID agentRunId
-      // (that lives in agent_runs.trace_id, never the uuid id column).
       setActiveRun(handle.traceId);
     } catch {
-      // Enqueue failed (secrets missing → 503, network): the intent stays
-      // visible, the run never started — honest error state, no fake run.
       push({
         role: 'agent',
         body: 'Lancement du run impossible (agent indisponible côté serveur). Vérifie ta connexion et relance.',
@@ -141,6 +181,24 @@ export function AgentPage() {
       </IonHeader>
       <IonContent>
         <div className="agent-chat">
+          {/* Agent mode tabs (chat / agent / mirror) */}
+          <div className="agent-mode-tabs" role="tablist">
+            {AGENT_MODES.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                role="tab"
+                aria-selected={agentMode === m.id}
+                className={`agent-mode-tab ${agentMode === m.id ? 'is-active' : ''}`}
+                onClick={() => setAgentMode(m.id)}
+                disabled={thinking}
+              >
+                {m.icon}
+                <span>{m.label}</span>
+              </button>
+            ))}
+          </div>
+
           <div
             ref={transcriptRef}
             className="agent-transcript"
@@ -159,7 +217,10 @@ export function AgentPage() {
 
             {agent && entries.length === 0 && !thinking && !inFlightRow && (
               <div className="agent-empty">
-                <p>Commence par une intention — « aie-moi à … ».</p>
+                <p>
+                  Mode {agentMode === 'agent' ? 'agent' : agentMode === 'mirror' ? 'miroir — explique ce que tu as appris' : 'chat'}.
+                  Commence par une intention.
+                </p>
               </div>
             )}
 
@@ -172,7 +233,7 @@ export function AgentPage() {
             {thinking && (
               <div className="agent-thinking">
                 <div className="agent-thinking-blobs" aria-hidden />
-                <span className="agent-thinking-label">L'agent réfléchit…</span>
+                <span className="agent-thinking-label">L'agent réfléchit ({thinkingLevel})…</span>
               </div>
             )}
 
@@ -185,6 +246,41 @@ export function AgentPage() {
             )}
           </div>
 
+          {/* Active chips: thinking level + research + files + connectors */}
+          <div className="agent-active-chips">
+            <button
+              type="button"
+              className={`agent-chip ${researchMode !== 'off' ? 'is-on' : ''}`}
+              onClick={() => setResearchMode(researchMode === 'off' ? 'standard' : 'off')}
+              disabled={!agent || thinking}
+              aria-label="Mode recherche"
+            >
+              <Search size={12} />
+              {researchMode === 'off' ? 'Recherche' : researchMode === 'deep' ? 'Deep' : 'Standard'}
+            </button>
+            <button
+              type="button"
+              className="agent-chip"
+              onClick={() => setShowPlusSheet(true)}
+              disabled={!agent || thinking}
+              aria-label="Plus d'options"
+            >
+              <Plus size={14} />
+            </button>
+            {files.length > 0 && (
+              <span className="agent-chip agent-chip--static">
+                <FilePlus size={12} />
+                {files.length} fichier{files.length > 1 ? 's' : ''}
+              </span>
+            )}
+            {connectors.length > 0 && (
+              <span className="agent-chip agent-chip--static">
+                <Link2 size={12} />
+                {connectors.length}
+              </span>
+            )}
+          </div>
+
           <form
             className="agent-composer"
             onSubmit={(e) => {
@@ -192,13 +288,11 @@ export function AgentPage() {
               void submit();
             }}
           >
-            {/* Model picker trigger — AD-3 public config; AD-5 fallback is
-                enforced server-side on 429/error. */}
             <button
               type="button"
               className="agent-model-picker-trigger"
               onClick={() => setShowPicker(true)}
-              aria-label="Choisir le modèle"
+              aria-label="Choisir le modèle et le niveau de réflexion"
               disabled={!agent || thinking}
             >
               {modelChoice ? (
@@ -217,7 +311,7 @@ export function AgentPage() {
             <input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder="Écris ton intention…"
+              placeholder={agentMode === 'mirror' ? 'Explique ce que tu as appris…' : 'Écris ton intention…'}
               aria-label="Écrire à l'agent"
               disabled={!agent || isFetching}
             />
@@ -230,11 +324,12 @@ export function AgentPage() {
             </button>
           </form>
 
+          {/* Model + thinking level picker modal */}
           {showPicker && (
             <div className="agent-model-picker-modal" role="dialog" aria-label="Choix du modèle">
               <div className="agent-model-picker-header">
                 <Bot size={16} aria-hidden />
-                <h3>Choix du modèle</h3>
+                <h3>Modèle & réflexion</h3>
                 <button
                   type="button"
                   className="agent-model-picker-close"
@@ -245,42 +340,137 @@ export function AgentPage() {
                 </button>
               </div>
               <div className="agent-model-picker-body">
-                {/* Auto = the S2.6 router picks automatically */}
-                <button
-                  type="button"
-                  className={`agent-model-picker-option ${!modelChoice ? 'is-active' : ''}`}
-                  onClick={() => {
-                    setModelChoice(null);
-                    setShowPicker(false);
-                  }}
-                >
-                  <Sparkles size={14} aria-hidden />
-                  <span>Auto — le router choisit (recommandé)</span>
-                </button>
-
-                {MODEL_CATALOG.map((entry) => (
-                  <div key={entry.provider} className="agent-model-picker-group">
-                    <div className="agent-model-picker-group-label">{entry.name}</div>
-                    {entry.models.map((m) => (
+                <div className="agent-picker-section">
+                  <div className="agent-picker-section-label">Niveau de réflexion</div>
+                  <div className="agent-thinking-levels">
+                    {THINKING_LEVELS.map((lvl) => (
                       <button
-                        key={m}
+                        key={lvl}
                         type="button"
-                        className={`agent-model-picker-option ${
-                          modelChoice?.provider === entry.provider && modelChoice.model === m
-                            ? 'is-active'
-                            : ''
-                        }`}
-                        onClick={() => {
-                          setModelChoice({ provider: entry.provider, model: m });
-                          setShowPicker(false);
-                        }}
+                        className={`agent-thinking-level ${thinkingLevel === lvl ? 'is-active' : ''}`}
+                        onClick={() => setThinkingLevel(lvl)}
                       >
-                        <Cpu size={14} aria-hidden />
-                        <span>{m}</span>
+                        {lvl}
                       </button>
                     ))}
                   </div>
+                </div>
+
+                <div className="agent-picker-section">
+                  <div className="agent-picker-section-label">Modèle</div>
+                  <button
+                    type="button"
+                    className={`agent-model-picker-option ${!modelChoice ? 'is-active' : ''}`}
+                    onClick={() => {
+                      setModelChoice(null);
+                      setShowPicker(false);
+                    }}
+                  >
+                    <Sparkles size={14} aria-hidden />
+                    <span>Auto — le router choisit</span>
+                  </button>
+
+                  {MODEL_CATALOG.map((entry) => (
+                    <div key={entry.provider} className="agent-model-picker-group">
+                      <div className="agent-model-picker-group-label">{entry.name}</div>
+                      {entry.models.map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          className={`agent-model-picker-option ${
+                            modelChoice?.provider === entry.provider && modelChoice.model === m
+                              ? 'is-active'
+                              : ''
+                          }`}
+                          onClick={() => {
+                            setModelChoice({ provider: entry.provider, model: m });
+                            setShowPicker(false);
+                          }}
+                        >
+                          <Cpu size={14} aria-hidden />
+                          <span>{m}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* + sheet: files / connectors / skills / research */}
+          {showPlusSheet && (
+            <div className="agent-plus-sheet" role="dialog" aria-label="Options du chat">
+              <div className="agent-plus-header">
+                <h3>Options</h3>
+                <button
+                  type="button"
+                  className="agent-plus-close"
+                  onClick={() => setShowPlusSheet(false)}
+                  aria-label="Fermer"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="agent-plus-section">
+                <div className="agent-plus-label">Recherche</div>
+                {RESEARCH_MODES.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    className={`agent-plus-option ${researchMode === m.id ? 'is-active' : ''}`}
+                    onClick={() => setResearchMode(m.id)}
+                  >
+                    <Search size={14} aria-hidden />
+                    <span>{m.label}</span>
+                  </button>
                 ))}
+              </div>
+
+              <div className="agent-plus-section">
+                <div className="agent-plus-label">Connecteurs (Composio)</div>
+                {connectors.map((c) => (
+                  <label key={c} className="agent-plus-connector">
+                    <input
+                      type="checkbox"
+                      checked={connectors.includes(c)}
+                      onChange={(e) => {
+                        const next = e.target.checked
+                          ? [...connectors, c]
+                          : connectors.filter((x) => x !== c);
+                        setConnectors(next);
+                      }}
+                    />
+                    <span>{c}</span>
+                  </label>
+                ))}
+              </div>
+
+              <div className="agent-plus-section">
+                <div className="agent-plus-label">Fichiers</div>
+                <button
+                  type="button"
+                  className="agent-plus-option"
+                  onClick={() => {
+                    const next = `fichier-${files.length + 1}.pdf`;
+                    setFiles([...files, next]);
+                  }}
+                >
+                  <FilePlus size={14} aria-hidden />
+                  <span>Ajouter un fichier</span>
+                </button>
+                {files.length > 0 && (
+                  <div className="agent-plus-files">{files.map((f) => <span key={f} className="agent-plus-file">{f}</span>)}</div>
+                )}
+              </div>
+
+              <div className="agent-plus-section">
+                <div className="agent-plus-label">Skills</div>
+                <button type="button" className="agent-plus-option" onClick={() => { setShowPlusSheet(false); /* navigate to /skills */ }}>
+                  <Sparkles size={14} aria-hidden />
+                  <span>Gérer mes skills (marketplace + perso)</span>
+                </button>
               </div>
             </div>
           )}

@@ -87,12 +87,16 @@ function providerChain(): Chain {
 
   // Agnes — dual-key failover (primary + a second capacity pool, AD-5:
   // a 429 still records a cooldown; the failover key is NOT a 429 bypass).
+  // The endpoint can be overridden by AGNES_ENDPOINT (the CF AI Gateway
+  // custom-provider path — OQ-03: the real value is in .env.local).
   const agnesKey1 = Deno.env.get("AGNES_API_KEY_1") ?? "";
   const agnesKey2 = Deno.env.get("AGNES_API_KEY_2") ?? "";
+  const agnesEndpoint =
+    Deno.env.get("AGNES_ENDPOINT") || PROVIDER_ENDPOINTS["agnes"];
   if (agnesKey1 || agnesKey2) {
     settings["agnes"] = {
       name: "agnes",
-      baseURL: PROVIDER_ENDPOINTS["agnes"],
+      baseURL: agnesEndpoint,
       apiKey: agnesKey1 || undefined,
       apiKeyFailover: agnesKey2 || undefined,
     };
@@ -459,10 +463,20 @@ export function buildAgentKernel(): AgentKernel | null {
       // device's model picker pinned one (taskProfile.preferredProvider),
       // the router returns it FIRST, and AD-5 fallback still applies if
       // that provider is in cooldown / down.
+      //
+      // The thinking level (taskProfile.thinkingLevel) sets the Vercel
+      // AI SDK reasoning effort: low = fast, max = full CoT + tool use.
+      // researchMode = 'deep' escalates to a multi-round research job
+      // before the main model call; 'standard' = one round.
+      // agentMode = 'mirror' triggers the expert-skill learning loop
+      // (ADR S14): the user's explanation is stored as a skill draft.
       const userId: string = (req.intent as unknown as { userId?: string }).userId ?? "unknown";
       const selection = router.select(req.profile, userId);
       const provider = selection?.provider ?? "agnes";
       const model = selection?.model ?? "unconfigured";
+      const thinking = req.profile.thinkingLevel ?? "medium";
+      const research = req.profile.researchMode ?? "off";
+      const mode = req.profile.agentMode ?? "agent";
       return {
         data: "[agent-run bootstrap pending: provider pipeline not yet wired — OQ-03]",
         provider,
@@ -471,6 +485,8 @@ export function buildAgentKernel(): AgentKernel | null {
         reason: selection?.reason ?? "primary",
         expectedQuality: "degraded",
         traceId: "",
+        // the device-visible trace of which device preferences were applied
+        meta: { thinking, researchMode: research, agentMode: mode },
       };
     },
     invokeTool: async (tool, input) => {

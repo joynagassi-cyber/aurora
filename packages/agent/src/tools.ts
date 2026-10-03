@@ -656,6 +656,108 @@ export const eisenhowerPrioritize: KernelTool = tool({
 });
 
 /**
+ * pomodoro_schedule — plan a series of Pomodoro blocks for a study plan
+ * (focus-mode spec, planning-execution). Emits a `productivity.pomodoro_plan`
+ * command; the Productivity module applies the time blocks.
+ */
+export const pomodoroSchedule: KernelTool = tool({
+  description:
+    'Schedule a series of Pomodoro blocks for a study plan (e.g. 4 x 25 min with 5 min pauses between). The agent auto-creates the blocks and pauses (planning-execution §3).',
+  inputSchema: z.object({
+    /** number of Pomodoro blocks */
+    count: z.number().int().positive().min(1).max(8).default(4),
+    /** work block duration in minutes (15-45) */
+    workMin: z.number().int().positive().min(15).max(45).default(25),
+    /** pause duration in minutes (2-15) */
+    pauseMin: z.number().int().positive().min(2).max(15).default(5),
+    /** linked goal / course id (planning context) */
+    goalId: z.string().optional(),
+  }),
+  execute: async (input) => ({
+    ok: true,
+    command: 'productivity.pomodoro_plan',
+    payload: input,
+  }),
+});
+
+/**
+ * focus_sound — set the concentration sound for a focus session
+ * (focus-mode spec, "sons de concentration"). 15+ sounds organized
+ * in themes; only Aurora may emit notifications during the session.
+ */
+export const focusSound: KernelTool = tool({
+  description:
+    'Set the concentration sound for the next focus session (15+ catalog sounds, 5 par thème; focus-mode spec). The sound plays during the session; only Aurora may emit notifications.',
+  inputSchema: z.object({
+    /** the sound name from the catalog */
+    sound: z.string(),
+    /** the focus session id to attach the sound to */
+    sessionId: z.string().optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'focus.sound', payload: input }),
+});
+
+/**
+ * focus_profile — create / update a concentration profile
+ * (a study-plan preset: Pomodoro/Chrono + blocklist + sound + tasks).
+ * Used when the agent plans the day's focus sessions in bulk.
+ */
+export const focusProfile: KernelTool = tool({
+  description:
+    'Create or update a concentration profile (Pomodoro/Chrono + blocklist + focus sound + linked tasks). The agent uses this when planning the day: one command sets up the whole focus session (planning becomes trivial — "just work").',
+  inputSchema: z.object({
+    /** profile id (omit for create) */
+    profileId: z.string().optional(),
+    /** 'pomodoro' | 'chrono' */
+    mode: z.enum(['pomodoro', 'chrono']),
+    /** work duration in minutes (Pomodoro) or end time ISO (Chrono) */
+    workMin: z.number().int().positive().optional(),
+    endTimeIso: z.string().optional(),
+    /** concentration sound name */
+    sound: z.string().optional(),
+    /** blocklist package names to suspend */
+    blocklist: z.array(z.string()).default([]),
+    /** linked task ids */
+    taskIds: z.array(z.string()).default([]),
+  }),
+  execute: async (input) => ({ ok: true, command: 'focus.profile', payload: input }),
+});
+
+/**
+ * skill_activate — activate / deactivate a user skill
+ * (ADR S14 user-facing skills; separate from auto-learned expert skills).
+ */
+export const skillActivate: KernelTool = tool({
+  description:
+    'Activate or deactivate a user skill from the Skills marketplace / personal set (ADR S14 user skills, NOT expert skills). The kernel applies the skill context to subsequent runs.',
+  inputSchema: z.object({
+    /** the skill id (ClawHub / personal) */
+    skillId: z.string(),
+    /** true = activate, false = deactivate */
+    active: z.boolean().default(true),
+  }),
+  execute: async (input) => ({ ok: true, command: 'agent.skill_set', payload: input }),
+});
+
+/**
+ * skill_create — create a personal skill (ADR S14 user skill authoring).
+ */
+export const skillCreate: KernelTool = tool({
+  description:
+    'Create a personal skill (trigger + goal + procedure). The skill is stored server-side in the user\'s skill registry and can be activated in future runs.',
+  inputSchema: z.object({
+    name: z.string(),
+    /** what activates this skill */
+    trigger: z.string(),
+    /** the goal it achieves */
+    goal: z.string(),
+    /** the ordered procedure */
+    steps: z.array(z.string()),
+  }),
+  execute: async (input) => ({ ok: true, command: 'agent.skill_create', payload: input }),
+});
+
+/**
  * The full kernel tool set, keyed by the canonical tool ids the Planner's
  * `resolveTool` + `ExecutionEngine.invoke` address them by
  * (capability.tool === these keys).
@@ -703,6 +805,13 @@ export const KERNEL_TOOLS = {
   automation_toggle: automationToggle,
   notification_pref: notificationPref,
   eisenhower_prioritize: eisenhowerPrioritize,
+  // Focus planning (focus-mode spec + planning-execution)
+  pomodoro_schedule: pomodoroSchedule,
+  focus_sound: focusSound,
+  focus_profile: focusProfile,
+  // Skills (ADR S14 user skills, separate from expert skills)
+  skill_activate: skillActivate,
+  skill_create: skillCreate,
 };
 
 export type KernelToolId = keyof typeof KERNEL_TOOLS;

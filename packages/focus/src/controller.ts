@@ -28,6 +28,14 @@ export interface FocusSessionOptions {
   taskIds?: string[];
   /** the notification policy for the session (04 S3.4) */
   notificationPolicy?: FocusNotificationPolicy;
+  /**
+   * The concentration sound id (focus-mode spec, "sons de concentration").
+   * A focused profile picks one of the 15+ catalog sounds; only Aurora
+   * may emit notifications during the session (Aurora-only rule).
+   */
+  focusSound?: string;
+  /** Pomodoro pause duration in seconds (the auto-scheduled next block). */
+  pomodoroPauseSec?: number;
 }
 
 /**
