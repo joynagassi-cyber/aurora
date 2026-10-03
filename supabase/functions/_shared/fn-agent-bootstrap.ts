@@ -34,8 +34,43 @@ import type { TaskProfile } from "../../../packages/agent/src/types.ts";
 import type { RawModelResponse } from "../../../packages/agent/src/result.ts";
 
 // ——— Provider chain (AD-3: keys from env ONLY) ———
-const AGNES_API_KEY = Deno.env.get("AGNES_API_KEY") ?? "";
-const AGNES_BASE_URL = Deno.env.get("AGNES_BASE_URL") ?? "";
+//
+// The LLM chain (A): providers that feed the AI SDK router, in
+// failover order. Cerebras is removed (no key, OQ-03). Workers AI
+// (F) is wired via the CF token. Each provider = 1 primary key;
+// Agnes carries a SECOND key (dual-key failover, 01 §5.6 / AD-5).
+//
+// Public (non-secret) config — endpoints + available models for the
+// device-side model picker (AD-3: no key ever crosses this surface).
+export const PROVIDER_ENDPOINTS: Record<string, string> = {
+  agnes: "https://apihub.agnes-ai.com/v1",
+  "workers-ai": "https://api.cloudflare.com",
+  groq: "https://api.groq.com/openai/v1",
+  openrouter: "https://openrouter.ai/api/v1",
+};
+
+/** The model picker catalog (device-facing, AD-3: no keys here). */
+export const PROVIDER_MODEL_CATALOG: Array<{
+  provider: string;
+  name: string;
+  role: "primary" | "fallback" | "last_resort";
+  models: string[];
+}> = [
+  { provider: "agnes", name: "Agnes", role: "primary", models: ["agnes-3.0", "agnes-2.5-flash"] },
+  {
+    provider: "workers-ai",
+    name: "Cloudflare Workers AI",
+    role: "fallback",
+    models: ["glm-4.7-flash", "gemma-4-26b", "nemotron-3-super-120b"],
+  },
+  { provider: "groq", name: "Groq", role: "fallback", models: ["gpt-oss-120b", "gpt-oss-20b"] },
+  {
+    provider: "openrouter",
+    name: "OpenRouter",
+    role: "last_resort",
+    models: ["nemotron-3-ultra", "gemma-4"],
+  },
+];
 
 interface Chain {
   settings: Record<string, ProviderSettings>;
@@ -43,25 +78,78 @@ interface Chain {
   budget: BudgetGate;
   policy: DataPolicyGate;
   configured: boolean;
+  /** providers with a key, in failover order (device picker). */
+  configuredIds: string[];
 }
 
 function providerChain(): Chain {
   const settings: Record<string, ProviderSettings> = {};
-  if (AGNES_BASE_URL && AGNES_API_KEY) {
-    settings["agnes"] = { name: "agnes", baseURL: AGNES_BASE_URL, apiKey: AGNES_API_KEY };
+
+  // Agnes — dual-key failover (primary + a second capacity pool, AD-5:
+  // a 429 still records a cooldown; the failover key is NOT a 429 bypass).
+  const agnesKey1 = Deno.env.get("AGNES_API_KEY_1") ?? "";
+  const agnesKey2 = Deno.env.get("AGNES_API_KEY_2") ?? "";
+  if (agnesKey1 || agnesKey2) {
+    settings["agnes"] = {
+      name: "agnes",
+      baseURL: PROVIDER_ENDPOINTS["agnes"],
+      apiKey: agnesKey1 || undefined,
+      apiKeyFailover: agnesKey2 || undefined,
+    };
   }
+
+  // Cloudflare Workers AI — CF token with the workers-ai scope (AD-3).
+  const workersToken = Deno.env.get("CF_API_WORKERS_AI_TOKEN") ?? "";
+  if (workersToken) {
+    settings["workers-ai"] = { name: "workers-ai", baseURL: PROVIDER_ENDPOINTS["workers-ai"], apiKey: workersToken };
+  }
+
+  // Groq + OpenRouter — optional fallbacks (wire when a key exists).
+  const groqKey = Deno.env.get("GROQ_API_KEY") ?? "";
+  if (groqKey) {
+    settings["groq"] = { name: "groq", baseURL: PROVIDER_ENDPOINTS["groq"], apiKey: groqKey };
+  }
+  const openrouterKey = Deno.env.get("OPENROUTER_API_KEY") ?? "";
+  if (openrouterKey) {
+    settings["openrouter"] = { name: "openrouter", baseURL: PROVIDER_ENDPOINTS["openrouter"], apiKey: openrouterKey };
+  }
+
   return {
     settings,
     health: new ProviderHealth(),
     budget: new BudgetGate(),
     policy: new DataPolicyGate(),
     configured: Object.keys(settings).length > 0,
+    configuredIds: Object.keys(settings),
   };
 }
 
 /** The kernel is bootstrap-able when at least one provider is configured. */
 export function isKernelConfigured(): boolean {
   return providerChain().configured;
+}
+
+/**
+ * The device-facing model picker (AD-3: public config only — no key,
+ * no baseURL secret; the kernel enforces AD-5 fallback server-side).
+ * `auto` = the S2.6 router picks; a provider/model pair pins the run.
+ */
+export function modelPicker(): Array<{ id: string; label: string; provider: string; model: string }> {
+  const chain = providerChain();
+  const out: Array<{ id: string; label: string; provider: string; model: string }> = [];
+  out.push({ id: "auto", label: "Auto (le router choisit)", provider: "", model: "" });
+  for (const entry of PROVIDER_MODEL_CATALOG) {
+    if (!chain.configuredIds.includes(entry.provider)) continue; // no key → hidden
+    for (const m of entry.models) {
+      out.push({
+        id: `${entry.provider}:${m}`,
+        label: `${entry.name} · ${m}`,
+        provider: entry.provider,
+        model: m,
+      });
+    }
+  }
+  return out;
 }
 
 // ——— Supabase REST (service_role — env-only, AD-3) ———
@@ -367,10 +455,10 @@ export function buildAgentKernel(): AgentKernel | null {
       dataPolicy: chain.policy,
     },
     invokeModel: async (req): Promise<RawModelResponse> => {
-      // The model seam. `router.select(profile, userId)` picks the
-      // provider/model; the Vercel AI SDK call itself is a documented
-      // stub until the full AI pipeline lands (OQ-03) — the envelope is
-      // marked degraded, never faked (kernel §8: no silent acceptance).
+      // The model seam. The S2.6 router picks the provider/model; if the
+      // device's model picker pinned one (taskProfile.preferredProvider),
+      // the router returns it FIRST, and AD-5 fallback still applies if
+      // that provider is in cooldown / down.
       const userId: string = (req.intent as unknown as { userId?: string }).userId ?? "unknown";
       const selection = router.select(req.profile, userId);
       const provider = selection?.provider ?? "agnes";

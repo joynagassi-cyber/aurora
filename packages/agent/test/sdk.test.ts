@@ -88,7 +88,7 @@ test('Gateway: the S2.6 chain is Agnes-primary, Workers AI + Groq fallback', () 
   // S2.6 PRIORITY 3: Agnes ALWAYS first (alwaysFirst: true).
   assert.equal(chain[0]?.provider, 'agnes', 'Agnes is PRIMARY (S2.6)');
   assert.equal(chain[0]?.reason, 'primary');
-  // the fallback chain follows (Workers AI → Groq → Cerebras → OpenRouter → CF Worker).
+  // the fallback chain follows (Workers AI → Groq → OpenRouter → CF Worker).
   const fallbacks = chain.filter((c) => c.reason === 'fallback').map((c) => c.provider);
   assert.ok(fallbacks.includes('workers-ai'), 'Workers AI is a fallback');
   assert.ok(fallbacks.includes('groq'), 'Groq is a fallback');

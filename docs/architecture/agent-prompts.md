@@ -57,7 +57,7 @@ COMMIT : "wave0: monorepo + domain types (AD-15 SSoT)"
 
 === Sous-agent B : CI/CD + Tests (W0-E1-3/4) ===
 1. GitHub Actions workflow : build + lint + type-check + grep
-2. Grep 1 : noms de vendor (Agnes, Groq, Cerebras, OpenRouter, fal.ai)
+2. Grep 1 : noms de vendor (Agnes, Groq, OpenRouter, fal.ai)
    hors packages/adapters = build failure
 3. Grep 2 : secrets (API keys, tokens) dans le bundle = build failure
    (exception : OneSignal appKey dans capacitor.config.ts)

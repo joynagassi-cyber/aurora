@@ -17,7 +17,7 @@ Before launching the agents, you need to configure:
 | Cloudflare (R2 + AI Gateway + Workers) | dash.cloudflare.com | R2 buckets (3), AI Gateway (provider routing), Worker fallback |
 | Agnes API key | agnes-ai.com | API key (server-side, Supabase secret) |
 | Groq API key (optional) | console.groq.com | API key (server-side) |
-| Cerebras API key (optional) | inference.cerebras.ai | API key (server-side) |
+| ~~Cerebras API key~~ | — | **Removed (no key, OQ-03)** |
 | Exa / Tavily / You.com keys | respective | ResearchProvider keys (server-side) |
 | Composio API key | composio.com | IntegrationProvider key (server-side) |
 | OneSignal app key + server key | onesignal.com | appKey (capacitor.config.ts) + serverKey (supabase secret) |
@@ -94,7 +94,7 @@ LIS :
 
 TACHES :
 1. GitHub Actions : build + lint + type-check + grep (sur chaque push)
-2. Grep 1 : vendor names (Agnes, Groq, Cerebras, OpenRouter, fal.ai)
+2. Grep 1 : vendor names (Agnes, Groq, OpenRouter, fal.ai)
    hors packages/adapters = FAIL
 3. Grep 2 : secrets (API keys, tokens, Bearer) dans le bundle = FAIL
    (exception : OneSignal appKey dans capacitor.config.ts)
@@ -588,7 +588,7 @@ AVANT les agents :
 - PowerSync relay config
 - Cloudflare R2 + AI Gateway + Workers
 - Agnes API key (Supabase secret)
-- Groq/Cerebras/Exa/Tavily/You.com keys (Supabase secrets)
+- Groq/Exa/Tavily/You.com keys (Supabase secrets) [Cerebras removed, no key]
 - Composio API key (Supabase secret)
 - OneSignal appKey + serverKey
 - Sentry DSN (3) + PostHog key (3)

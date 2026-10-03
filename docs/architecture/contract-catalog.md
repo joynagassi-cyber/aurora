@@ -189,7 +189,7 @@ domain contract — it lives in `packages/agent` (server) and
 |---|---|
 | Server | `streamText` / `generateText` in `fn-agent-run` + jobs; `maxSteps` for autonomous tool-calling loop; tool definitions mapped to Aurora ports (ResearchProvider, KnowledgeBase, IntegrationProvider, ScientificEngine, FocusController) |
 | Client | `useChat` hook in `apps/mobile` (Ionic React compatible); streams `AgentRunState`; attachment handling (files -> R2 presigned); tool-call interception -> AD-10 renderers |
-| Router | `aiRouter.selectModel(taskProfile)` returns a `LanguageModel` adapter (Agnes, Workers AI, Groq, Cerebras, etc.); all behind CF AI Gateway (primary) or direct (fallback) |
+| Router | `aiRouter.selectModel(taskProfile)` returns a `LanguageModel` adapter (Agnes, Workers AI, Groq, OpenRouter, etc.); all behind CF AI Gateway (primary) or direct (fallback) |
 | Fallback | Gateway 429/5xx -> next provider; last resort = CF Worker (Workers AI direct); `AIResponseEnvelope` tracks every step |
 | Security | Zero provider keys in device bundle (AD-3); SDK runs server-side; `useChat` calls Supabase Edge Function (authenticated) |
 | Tiptap | Server AI outputs markdown/JSON; client Tiptap editor renders with CorpusBadge (AD-11) + SourceRef; Yjs = future only |

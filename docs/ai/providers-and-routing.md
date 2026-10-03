@@ -31,7 +31,7 @@ secret stores, never on the device (AD-3).
 | **Cloudflare Workers AI** | **Second pool + fallback** (multimodal) | Free tier: 10 000 Neurons/day (some large models require Workers Paid plan) | GLM-4.7 Flash, Gemma 4 26B A4B, Nemotron 3 Super 120B, others | 10 000 Neurons/day; paid-tier models | Core V1 (second operational provider, R5 ready-to-production criterion) |
 | **Cloudflare AI Gateway** | control/observability layer (not a model source) | core features free on all plans (analytics, caching, rate limiting, retries, fallback, dynamic routing) | custom-provider proxying | — | Core V1 |
 | **Groq** | high-speed fallback / light batch | Free plan (quota-limited: e.g. 30 RPM; GPT-OSS 120B/20B 1 000 RPD, 8K TPM, 200K TPD on free) | GPT-OSS 120B/20B, tool calling, voice (per model) | free-plan rate caps | V1 optional (wire as soon as key available) |
-| **Cerebras** | very-fast reasoning fallback / comparison | Free trial/tier (time-limited; 5 RPM, 30K TPM, 1M tokens/day on covered models) | GPT-OSS 120B, GLM-4.7 + free models per account | temporary limits | V1 optional |
+| **Cerebras** | ~~very-fast reasoning fallback / comparison~~ | — | — | — | **Removed (no key, OQ-03)** |
 | **OpenRouter** | experimental free pool / benchmarking / diversification | Free pool (50 req/day, 20 RPM per free account; dynamic pool; some free models have different data-use terms) | Nemotron 3 Ultra/Super, Gemma 4, GPT-OSS 20B, others | account caps + data-policy variance (ADR v1.7 §11) | Staging + fallback |
 | **Cohere** | specialized RAG/reasoning/vision (not a public V1 engine) | Trial key (1 000 calls/month, ~20 req/min on Chat) | Command A Reasoning 111B, Command A+, Command A Vision, North Mini Code | trial for evaluation/POC | Staging |
 | **Mistral** | test alternative | Free mode, no card (low, admin-visible limits; no stable public numbers; check data-use policy settings) | Mistral Small 4, Medium 3.5 | weak public limits | Staging / optional |
@@ -41,7 +41,7 @@ secret stores, never on the device (AD-3).
 | **SambaNova** | — | Free plan now requires payment + credits (official page) | production models with credits | not a reliable free reserve | **Excluded from free matrix** |
 
 Classification discipline (mission §3): *free tier actuel* vs *trial* vs *promo* vs
-*quota limité* vs *provider payant* — Cohere = **trial**; Cerebras = **trial/tier,
+*quota limité* vs *provider payant* — Cohere = **trial**; Cerebras = **removed (no key, OQ-03);
 time-limited**; Groq/Gemini/HF-free = **quota limité**; Agnes = free API with
 account-specific quotas; OpenRouter free pool = quota-limited + data-policy variance.
 
@@ -55,7 +55,7 @@ remaining quota, provider health, task criticality, verification need, data sens
 | Level | Selection (reference strategy, ADR v1.7 §14) |
 |---|---|
 | ROUTINE (fast/cheap) | Agnes 2.5 / GLM-4.7 Flash / Groq GPT-OSS 20B, per availability |
-| AGENT (reasoning/tools) | Agnes 3.0 first, then Nemotron 3 Super / GPT-OSS 120B / Cerebras, per health + quotas |
+| AGENT (reasoning/tools) | Agnes 3.0 first, then Nemotron 3 Super / GPT-OSS 120B, per health + quotas |
 | MULTIMODAL / VISION-DOCUMENT | Gemma 4 or a compatible vision provider |
 | CRITICAL (science etc.) | strong model **+ external/deterministic verification** (KB/source and/or Scientific Engine); optional second "judge" model only when justified |
 | FALLBACK | any compatible provider via `AIFallbackStrategy` chain |
@@ -106,7 +106,7 @@ trial vs limited quota vs paid, pricing, data policy, retention, availability,
 failure modes, 429 behavior, timeout, fallback compatibility, health check,
 **snapshot date + source URL + verification date**): [agnes](./providers/agnes.md) ·
 [workers-ai](./providers/workers-ai.md) · [groq](./providers/groq.md) ·
-[cerebras](./providers/cerebras.md) · [openrouter](./providers/openrouter.md) ·
+[openrouter](./providers/openrouter.md) ·
 [cohere](./providers/cohere.md) · [mistral](./providers/mistral.md) ·
 [gemini](./providers/gemini.md). Excluded: GitHub Models (retired 30 July 2026),
 SambaNova (free plan now paid-credits, ADR v1.7 §13), Hugging Face (test credit only,
@@ -129,7 +129,7 @@ selection = f( TaskProfile(complexity, reasoning, tools, vision, context size,
 | Class | Policy (reference, ADR v1.7 §14) |
 |---|---|
 | ROUTINE | cheapest/fastest healthy model with required capability (Agnes 2.5 / GLM-4.7 Flash / GPT-OSS 20B per availability) |
-| AGENT | reasoning model + tool calling (Agnes 3.0 first; Nemotron 3 Super / GPT-OSS 120B / Cerebras per health + quota) |
+| AGENT | reasoning model + tool calling (Agnes 3.0 first; Nemotron 3 Super / GPT-OSS 120B per health + quota) |
 | VISION/DOCUMENT | multimodal model (Gemma 4 or compatible) |
 | CRITICAL | strong model **+ external/deterministic verification** (KB/source and/or Scientific Engine; second "judge" model only when justified) |
 

@@ -1,4 +1,4 @@
-# Cerebras — Very-Fast Reasoning Fallback
+# Cerebras — Very-Fast Reasoning Fallback (REMOVED, no key — OQ-03)
 
 Provider ID: `cerebras` · Role: **fallback reasoning très rapide / comparison**
 (ADR v1.7 §8: "Provider V1 optionnel") · Classification: **TRIAL (time-limited free

@@ -29,7 +29,7 @@ V1 = Android (consumer, Google Play). Server-side items are included for complet
 |---|---|---|---|
 | Supabase RLS | every table (01 §2.2) | per-module schema + `user_id` policies; cross-user access = denied; `service_role` reads PowerSync views **via RLS policies, not BYPASSRLS** | RLS penetration test on **every** table, blocking for policy migrations (01 §7) |
 | Auth (Supabase Auth) | app ↔ Edge Functions | JWT auto-refresh; expired/failed → login screen; the device **cannot** call Edge Functions without identity (01 §6) | 01 §6 error paths |
-| Secrets | Supabase Secrets / Cloudflare Secrets Store | provider keys (Agnes, Cloudflare, Groq, Cerebras, …) **never** in code, **never** on device (AD-3, 01 §5.6) | CI grep (SPEC wave-0 gate) |
+| Secrets | Supabase Secrets / Cloudflare Secrets Store | provider keys (Agnes, Cloudflare, Groq, OpenRouter, …) **never** in code, **never** on device (AD-3, 01 §5.6) | CI grep (SPEC wave-0 gate) |
 | OneSignal | app vs server key split (04 §3.2.5) | `appKey` (app-specific) = `capacitor.config.ts`, owner Foundation; **server key** lives in `fn-notifications` only; push token issued server-side | 04 §7.2(e): `capacitor.config.ts` contains no server-side key |
 | R2 | `fn-*` presigning (01 §5.4) | presigned URLs, short TTLs; no bucket/key in client | 04 §7.2(b) |
 | Agent tool permissions | kernel (AD-12, ADR §5) | Permission Context: authorized / confirmed / forbidden actions; **confirmation required for important or irreversible actions**; destructive ops always confirmed; read/write/destructive classes explicit | kernel tests wave 3 (01 §7 family + agent/kernel.md §9) |

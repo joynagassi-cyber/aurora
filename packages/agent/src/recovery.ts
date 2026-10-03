@@ -76,7 +76,6 @@ export class ErrorRecovery {
     agnes: 60,
     'workers-ai': 120,
     groq: 60,
-    cerebras: 30,
   };
 
   constructor(opts?: { maxRetries?: number }) {

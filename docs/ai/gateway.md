@@ -8,7 +8,7 @@ Status: design phase. Authority: ADR v1.7 §3/§5/§15, 01 §5.6, spine AD-4.
 Aurora (kernel + all AI calls)
   → Context Builder → Task Classifier → AI Router → AI Policy/Budget (AIBudgetManager)
   → **Cloudflare AI Gateway** (control plane)
-      → provider adapters (Agnes via Custom Provider, Workers AI, Groq, Cerebras,
+      → provider adapters (Agnes via Custom Provider, Workers AI, Groq,
          OpenRouter, Cohere, Mistral, Gemini — the registered pool, ADR v1.7 §2/§8)
 Exception (documented, AD-4 last-resort): if the Gateway/main path is unavailable,
   the dedicated Cloudflare fallback Worker calls **Workers AI directly**

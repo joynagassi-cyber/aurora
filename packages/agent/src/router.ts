@@ -104,6 +104,21 @@ export class AgnesPrimaryRouter {
     const providers = this.registry.list();
     const out: Array<{ provider: string; model: string; reason: ProviderModel['reason'] }> = [];
 
+    // 0. DEVICE PREFER — the model picker pinned a provider/model
+    // (AD-3 public config; AD-5 fallback still applies on 429/error).
+    const prefProv = profile.preferredProvider;
+    const prefModel = profile.preferredModel;
+    if (prefProv) {
+      const entry = providers.find((p) => p.provider === prefProv);
+      if (entry) {
+        const picked: string =
+          prefModel ?? entry.models[entry.models.length - 1] ?? entry.models[0]!;
+        if (this.eligible(entry.provider, picked, profile, userId)) {
+          out.push({ provider: entry.provider, model: picked, reason: 'primary' });
+        }
+      }
+    }
+
     // 1. PRIMARY — Agnes (alwaysFirst) — unless per-task data conflict.
     const primary = providers.find((p) => p.alwaysFirst);
     if (primary) {
@@ -208,13 +223,6 @@ export const AGNES_REGISTRY: Array<{
     onlyWhenPrimaryUnavailable: true,
     cooldownOn429: 60,
     retryOn5xx: 2,
-  },
-  {
-    provider: 'cerebras',
-    models: ['gpt-oss-120b'],
-    role: 'fallback',
-    onlyWhenPrimaryUnavailable: true,
-    zeroDataRetention: true,
   },
   {
     provider: 'openrouter',

@@ -37,6 +37,17 @@ export interface TaskProfile {
   verification: boolean;
   /** 'public' | 'sensitive' — sensitive data prefers local / ZDR providers */
   dataSensitivity: 'public' | 'sensitive';
+  /**
+   * The device's explicit model picker choice (AD-3: the picker is
+   * public config; the kernel enforces AD-5 fallback server-side).
+   * When set, the model layer pins this provider/model as the first
+   * eligible selection in the chain; AD-5 fallback to the next
+   * provider still applies on 429 / error (the pinned provider is
+   * recorded in the health gate, not bypassed).
+   * `undefined` = the S2.6 router picks automatically.
+   */
+  preferredProvider?: string;
+  preferredModel?: string;
 }
 
 /** The routing level a TaskProfile resolves to (ADR v1.7 S7 levels). */

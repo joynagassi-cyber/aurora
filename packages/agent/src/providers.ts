@@ -19,19 +19,31 @@ import {
   type RouterRegistry,
 } from './router.ts';
 
-/** Runtime provider settings. Keys live in the env; the guards check them. */
+/**
+ * Runtime provider settings. Keys live in the env; the guards check them.
+ *
+ * `apiKey` = the primary key. `apiKeyFailover` = a SECOND key for the
+ * SAME provider (Agnes dual-key, 01 §5.6): on a 429 / hard error with
+ * the primary, the model layer tries the failover key BEFORE moving to
+ * the next provider in the chain. This is key-level failover, NOT
+ * 429-bypass rotation (AD-5): a 429 still records a cooldown on the
+ * provider; the failover key is a separate capacity pool, not a way to
+ * dodge the provider's rate limit.
+ */
 export interface ProviderSettings {
   /** the API key (process.env — never a literal, AD-3) */
   apiKey?: string;
+  /** a second key for the same provider (Agnes dual-key failover, AD-5) */
+  apiKeyFailover?: string;
   /** the OpenAI-compatible base URL */
   baseURL: string;
   /** the provider display name (registry id) */
   name: string;
 }
 
-/** A provider is configured only when BOTH url + key are present. */
+/** A provider is configured only when BOTH url + a key are present. */
 export function isConfigured(s: ProviderSettings): boolean {
-  return Boolean(s.baseURL && s.apiKey);
+  return Boolean(s.baseURL && (s.apiKey || s.apiKeyFailover));
 }
 
 /**
@@ -44,10 +56,15 @@ export function isConfigured(s: ProviderSettings): boolean {
 export function buildModel(
   providerModel: ProviderModel,
   settings: Map<string, ProviderSettings> | Record<string, ProviderSettings>,
+  apiKeyOverride?: string,
 ): LanguageModel | undefined {
   const s = settings instanceof Map ? settings.get(providerModel.provider) : settings[providerModel.provider];
   if (!s || !isConfigured(s)) return undefined;
-  const provider = createOpenAICompatible({ name: s.name, baseURL: s.baseURL, apiKey: s.apiKey });
+  // `apiKeyOverride` lets the model layer fail over to the second key
+  // of the same provider (Agnes dual-key, AD-5 key-level failover).
+  const key = apiKeyOverride ?? s.apiKey ?? s.apiKeyFailover;
+  if (!key) return undefined;
+  const provider = createOpenAICompatible({ name: s.name, baseURL: s.baseURL, apiKey: key });
   return provider.chatModel(providerModel.model);
 }
 

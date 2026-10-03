@@ -113,67 +113,86 @@ export async function invokeModel(deps: InvokeModelDeps, call: ModelCall): Promi
     const settings = deps.settings[sel.provider];
     if (!settings) continue; // not configured → next in the chain
 
-    // build the LanguageModel via the OpenAI-compatible adapter (AD-1)
-    let model: LanguageModel | undefined;
-    try {
-      const { createOpenAICompatible } = await import('@ai-sdk/openai-compatible');
-      const provider = createOpenAICompatible({
-        name: settings.name,
-        baseURL: settings.baseURL,
-        apiKey: settings.apiKey,
-      });
-      model = provider.chatModel(sel.model);
-    } catch {
-      continue; // adapter failure → next provider
-    }
+    // The key sequence for this provider: primary, then the failover
+    // key (Agnes dual-key, 01 §5.6). A 429 / error on the primary key
+    // triggers the failover key BEFORE falling through to the next
+    // provider (AD-5: this is key-level failover, not 429-bypass
+    // rotation — a 429 still records a cooldown on the provider).
+    const keySeq = [settings.apiKey, settings.apiKeyFailover].filter(
+      (k): k is string => Boolean(k),
+    );
+    if (keySeq.length === 0) continue;
 
-    let attempt = 0;
-    let lastErr: { status?: number; kind?: string; message?: string; retryAfterSec?: number } = { message: 'unconfigured' };
-    while (true) {
-      attempt++;
+    for (const apiKey of keySeq) {
+      // build the LanguageModel via the OpenAI-compatible adapter (AD-1)
+      let model: LanguageModel | undefined;
       try {
-        const res = await generateText({
-          model,
-          system: call.system,
-          prompt: call.prompt,
-          // v7: the agentic loop cap (the doc's "maxSteps=5") is now
-          // stopWhen: isStepCount(n)
-          stopWhen: isStepCount(5),
+        const { createOpenAICompatible } = await import('@ai-sdk/openai-compatible');
+        const provider = createOpenAICompatible({
+          name: settings.name,
+          baseURL: settings.baseURL,
+          apiKey,
         });
-        return {
-          data: res.text,
-          provider: sel.provider,
-          model: sel.model,
-          attempt,
-          reason: sel.reason,
-          expectedQuality: sel.expectedQuality,
-          traceId: call.traceId,
-          fallbackUsed: sel.reason !== 'primary' || attempt > 1,
-        };
-      } catch (e) {
-        lastErr = {
-          status: (e as { status?: number }).status,
-          kind: (e as { code?: string }).code,
-          message: e instanceof Error ? e.message : String(e),
-          retryAfterSec: Number((e as { headers?: Record<string, string> }).headers?.['retry-after'] ?? 0) || undefined,
-        };
-        const cls = classifyFailure(lastErr) as FailureClass;
-        const decision = recovery.decide(cls, sel, chain, attempt);
-        // bounded retry on the same provider (transient, 5xx)
-        if (decision.action === 'retry' && attempt < 3) continue;
-        // 429: record the cooldown (AD-5: never rotate keys), move on
-        if (decision.action === 'fallback' || decision.action === 'stop' || decision.action === 'degrade') break;
-        // exhausted retries → move to next provider
-        break;
+        model = provider.chatModel(sel.model);
+      } catch {
+        break; // adapter failure → next key / provider
       }
-    }
-    // record the failure so the health gate blocks the provider next
-    // time (S2.6 PRIORITY 3 auto-return when it recovers).
-    if (isHealthMutator(deps.health)) {
-      deps.health.record(sel.provider, false, lastErr.message);
-      if (lastErr.message?.includes('429')) {
-        deps.health.record429?.(sel.provider, lastErr.retryAfterSec);
+
+      let attempt = 0;
+      let lastErr: { status?: number; kind?: string; message?: string; retryAfterSec?: number } = {
+        message: 'unconfigured',
+      };
+      let succeeded = false;
+      while (true) {
+        attempt++;
+        try {
+          const res = await generateText({
+            model,
+            system: call.system,
+            prompt: call.prompt,
+            // v7: the agentic loop cap (the doc's "maxSteps=5") is now
+            // stopWhen: isStepCount(n)
+            stopWhen: isStepCount(5),
+          });
+          succeeded = true;
+          return {
+            data: res.text,
+            provider: sel.provider,
+            model: sel.model,
+            attempt,
+            reason: sel.reason,
+            expectedQuality: sel.expectedQuality,
+            traceId: call.traceId,
+            fallbackUsed: sel.reason !== 'primary' || attempt > 1 || apiKey !== keySeq[0],
+          };
+        } catch (e) {
+          lastErr = {
+            status: (e as { status?: number }).status,
+            kind: (e as { code?: string }).code,
+            message: e instanceof Error ? e.message : String(e),
+            retryAfterSec:
+              Number((e as { headers?: Record<string, string> }).headers?.['retry-after'] ?? 0) ||
+              undefined,
+          };
+          const cls = classifyFailure(lastErr) as FailureClass;
+          const decision = recovery.decide(cls, sel, chain, attempt);
+          // bounded retry on the same key (transient, 5xx)
+          if (decision.action === 'retry' && attempt < 3) continue;
+          // 429 / error → break to the failover key (or next provider)
+          break;
+        }
       }
+      if (succeeded) break;
+
+      // record the failure on the provider so the health gate blocks it
+      // next time (S2.6 PRIORITY 3 auto-return when it recovers).
+      if (isHealthMutator(deps.health)) {
+        deps.health.record(sel.provider, false, lastErr.message);
+        if (lastErr.message?.includes('429')) {
+          deps.health.record429?.(sel.provider, lastErr.retryAfterSec);
+        }
+      }
+      // a hard error on the last key of this provider → next provider
     }
   }
 

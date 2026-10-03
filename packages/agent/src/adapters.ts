@@ -64,7 +64,7 @@ export class ProviderModelAdapter {
 /**
  * The `keyProvider` for fn-agent-run: reads the Supabase env /
  * secret (server-side ONLY, AD-3). Key names (.env.local, 10-AI):
- * AGNES_API_KEY, GROQ_API_KEY, CEREBRAS_API_KEY, OPENROUTER_API_KEY,
+ * AGNES_API_KEY, GROQ_API_KEY, OPENROUTER_API_KEY,
  * EXA_API_KEY / TAVILY_API_KEY / YOU_API_KEY (research providers,
  * consumed by the ResearchProvider port — NOT this layer). No key
  * value ever leaves this function.
@@ -73,7 +73,6 @@ export function envKeyProvider(env: Record<string, string | undefined>): KeyProv
   const map: Record<string, string> = {
     agnes: env.AGNES_API_KEY ?? '',
     groq: env.GROQ_API_KEY ?? '',
-    cerebras: env.CEREBRAS_API_KEY ?? '',
     openrouter: env.OPENROUTER_API_KEY ?? '',
     'workers-ai': env.WORKERS_AI_API_KEY ?? '',
     'cf-worker': env.WORKERS_AI_API_KEY ?? '',

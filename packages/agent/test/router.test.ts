@@ -3,7 +3,7 @@
  *
  * Verifies the FROZEN S2.6 registry (AGNES_REGISTRY) end-to-end:
  *  - Agnes = PRIMARY, alwaysFirst (S2.6 PRIORITY 3)
- *  - Fallback chain: Workers AI → Groq → Cerebras → OpenRouter → CF Worker
+ *  - Fallback chain: Workers AI → Groq → OpenRouter → CF Worker
  *  - return-after-fallback: when Agnes is healthy again, ALL subsequent
  *    tasks go BACK to Agnes (PRIORITY 3, a temporary bridge not a switch)
  *  - data-policy gate (ADR S11): sensitive data prefers ZDR providers
@@ -96,9 +96,9 @@ test('Router: return-to-Agnes — when Agnes is healthy again the NEXT call is p
   assert.equal(back?.reason, 'primary');
 });
 
-test('Router: the frozen S2.6 registry order is agnes → workers-ai → groq → cerebras → openrouter → cf-worker', () => {
+test('Router: the frozen S2.6 registry order is agnes → workers-ai → groq → openrouter → cf-worker', () => {
   const order = AGNES_REGISTRY.map((e) => e.provider);
-  assert.deepEqual(order, ['agnes', 'workers-ai', 'groq', 'cerebras', 'openrouter', 'cf-worker']);
+  assert.deepEqual(order, ['agnes', 'workers-ai', 'groq', 'openrouter', 'cf-worker']);
   // Agnes is the ONLY alwaysFirst provider (S2.6 PRIORITY 3).
   const firsts = AGNES_REGISTRY.filter((e) => e.alwaysFirst).map((e) => e.provider);
   assert.deepEqual(firsts, ['agnes']);

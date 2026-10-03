@@ -19,7 +19,7 @@ opinionated UI layer for Aurora's local-first + 5-state UX model).
 | ADR constraint | Vercel AI SDK behavior | Conforms? |
 |---|---|---|
 | AD-1: domain never knows a vendor name | SDK is behind `AIProvider` port; domain code imports the port, not the SDK | YES |
-| AD-4: multi-provider (Router -> Gateway -> adapters) | SDK's `LanguageModel` abstraction accepts any OpenAI-compatible endpoint (Agnes, Workers AI, Groq, Cerebras via CF AI Gateway or direct) | YES |
+| AD-4: multi-provider (Router -> Gateway -> adapters) | SDK's `LanguageModel` abstraction accepts any OpenAI-compatible endpoint (Agnes, Workers AI, Groq, via CF AI Gateway or direct) | YES |
 | AD-5: fallback + traceability | `streamText` / `generateText` return structured responses; `AIResponseEnvelope` wraps every call (provider, model, attempt, reason, quality) | YES |
 | AD-12/F-09: server-side execution | SDK runs in Supabase Edge Functions (`fn-agent-run`) + CF Workers; device sees only `AgentRunState` | YES |
 | ADR v1.7 S6: typed TaskProfile routing (never prompt keywords) | `aiRouter.selectModel(taskProfile)` returns a `LanguageModel` instance; the SDK call is model-agnostic | YES |
@@ -54,7 +54,7 @@ packages/agent (server-side, wave 3)
   | router.ts:
   |   - aiRouter.selectModel(taskProfile) -> LanguageModel adapter
   |   - per-provider adapters: AgnesAdapter, WorkersAIAdapter, GroqAdapter,
-  |     CerebrasAdapter, OpenRouterAdapter, etc.
+  |     OpenRouterAdapter, etc.
   |   - All adapters behind CF AI Gateway (primary) or direct (fallback)
   |   - Fallback chain: primary -> gateway -> CF Worker (Workers AI direct)
   |
@@ -131,7 +131,7 @@ Device (useChat consumer):
 ```
 Primary: CF AI Gateway -> Agnes (Agnes 3.0 Flash / 2.5 Flash)
 Fallback 1: CF AI Gateway -> Workers AI (GLM-4.7 Flash / Gemma 4)
-Fallback 2: CF AI Gateway -> Groq / Cerebras (high-speed, if quota)
+Fallback 2: CF AI Gateway -> Groq (high-speed, if quota)
 Last resort: CF Worker (direct Workers AI, no Gateway)
 429: respect retry-after; NEVER key rotation (AD-5)
 All steps: AIResponseEnvelope { provider, model, attempt, reason,

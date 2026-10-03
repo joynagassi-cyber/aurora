@@ -16,7 +16,7 @@ Edge Functions without identity (01 §6 auth rule).
 ## 2. Secrets & keys (AD-3)
 
 - **No key or secret ever ships to the device.** Provider keys (Agnes,
-  Cloudflare, Groq, Cerebras, …) live in Supabase Secrets / Cloudflare Secrets
+  Cloudflare, Groq, OpenRouter, …) live in Supabase Secrets / Cloudflare Secrets
   Store (01 §5.6). The client only sees the normalized `AIProvider` contract.
 - OneSignal: `appKey` (app-specific) in `capacitor.config.ts` (owner Foundation,
   AD-16c) ≠ **server key** (push-sending) which lives in `fn-notifications`

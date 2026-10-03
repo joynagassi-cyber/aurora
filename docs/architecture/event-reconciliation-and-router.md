@@ -280,7 +280,6 @@ PRIORITY 2 (FALLBACK): ONLY when Agnes returns an error
      THEN switch to fallback provider:
        - Cloudflare Workers AI (GLM-4.7 Flash / Gemma 4) [second pool]
        - Groq (GPT-OSS 120B / 20B) [high-speed fallback]
-       - Cerebras (GPT-OSS 120B) [reasoning fallback]
        - OpenRouter / Cohere / Mistral / Gemini [optional, last resort]
        - Cloudflare Worker (direct Workers AI, no Gateway) [last resort]
 
@@ -321,7 +320,7 @@ exception, not a permanent switch. The next task with
   "returnAfterFallback": true,
   "cooldownOn429": 60,
   "retryOn5xx": 3,
-  "fallbackTo": ["workers-ai", "groq", "cerebras", "openrouter"]
+  "fallbackTo": ["workers-ai", "groq", "openrouter"]
 }
 
 {
