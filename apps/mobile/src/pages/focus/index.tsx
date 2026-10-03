@@ -17,6 +17,11 @@ import { IonButton, IonButtons, IonContent, IonHeader, IonTitle } from '@ionic/r
 import { Timer, Play, Square, ListX, ShieldCheck, Music, AlarmClock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useUiStateStore } from '../../state/ui-state';
+import {
+  FOCUS_SOUNDS,
+  FOCUS_SOUND_THEMES,
+  type FocusSound,
+} from '../../lib/focus-sounds';
 import type { FocusControllerService, FocusSessionOptions } from '@aurora/focus';
 import type { FocusSession } from '@aurora/domain';
 
@@ -33,16 +38,6 @@ export interface FocusPageProps {
 
 type FocusSubMode = 'pomodoro' | 'chrono';
 
-// Focus sounds (concentration) — in production these come from the
-// "sons de concentration" catalog (min 15, 5 par thème).
-const FOCUS_SOUNDS = [
-  'Pluie douce',
-  'Forêt apaisante',
-  'Bruit blanc',
-  'Rivière',
-  'Vagues',
-];
-
 export function FocusPage({ service, onSession }: FocusPageProps) {
   const { focusActive, setFocusActive } = useUiStateStore();
   const [blocking, setBlocking] = useState<boolean | null>(null);
@@ -50,7 +45,18 @@ export function FocusPage({ service, onSession }: FocusPageProps) {
   const [pomodoroMin, setPomodoroMin] = useState(25);
   const [pauseMin, setPauseMin] = useState(5);
   const [chronosEnd, setChronosEnd] = useState('');
-  const [focusSound, setFocusSound] = useState(FOCUS_SOUNDS[0]);
+  const [focusSound, setFocusSound] = useState<string>(FOCUS_SOUNDS[0]?.name ?? '');
+  const [activeTheme, setActiveTheme] =
+    useState<FocusSound['theme']>('nature');
+
+  /** The active theme's sounds (5 par thème, spec focus S6). */
+  const themeSounds = FOCUS_SOUNDS.filter((s) => s.theme === activeTheme);
+
+  function selectThemeSound(name: string) {
+    setFocusSound(name);
+    const picked = FOCUS_SOUNDS.find((s) => s.name === name);
+    if (picked) setActiveTheme(picked.theme);
+  }
 
   useEffect(() => {
     let live = true;
@@ -203,15 +209,40 @@ export function FocusPage({ service, onSession }: FocusPageProps) {
                   <div className="focus-sound-picker">
                     <Music size={14} aria-hidden />
                     <span>Son de concentration</span>
+                    <div className="focus-sound-themes" role="tablist" aria-label="Thème du son">
+                      {FOCUS_SOUND_THEMES.map((t) => (
+                        <button
+                          key={t.id}
+                          type="button"
+                          role="tab"
+                          aria-selected={activeTheme === t.id}
+                          className={`focus-sound-theme ${
+                            activeTheme === t.id ? 'is-active' : ''
+                          }`}
+                          onClick={() => {
+                            setActiveTheme(t.id);
+                            const first = FOCUS_SOUNDS.find((s) => s.theme === t.id);
+                            if (first) setFocusSound(first.name);
+                          }}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
                     <select
                       value={focusSound}
-                      onChange={(e) => setFocusSound(e.target.value)}
+                      onChange={(e) => selectThemeSound(e.target.value)}
                       aria-label="Choisir le son de concentration"
                     >
-                      {FOCUS_SOUNDS.map((s) => (
-                        <option key={s} value={s}>{s}</option>
+                      {themeSounds.map((s) => (
+                        <option key={s.id} value={s.name}>
+                          {s.name}
+                        </option>
                       ))}
                     </select>
+                    <p className="focus-sound-provenance">
+                      {FOCUS_SOUNDS.find((s) => s.name === focusSound)?.source}
+                    </p>
                   </div>
                 </div>
               )}
