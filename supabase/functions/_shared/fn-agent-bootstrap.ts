@@ -32,6 +32,16 @@ import {
 } from "../../../packages/agent/src/providers.ts";
 import type { TaskProfile } from "../../../packages/agent/src/types.ts";
 import type { RawModelResponse } from "../../../packages/agent/src/result.ts";
+import {
+  invokeModel as invokeModelFn,
+  AGENT_SYSTEM_PROMPT,
+  type HealthChecker,
+  type BudgetChecker,
+  type DataPolicy,
+  type RouterRegistry,
+  type ErrorRecovery,
+  type ProviderSettings,
+} from "../../../packages/agent/src/model.ts";
 
 // ——— Provider chain (AD-3: keys from env ONLY) ———
 //
@@ -460,35 +470,25 @@ export function buildAgentKernel(): AgentKernel | null {
       dataPolicy: chain.policy,
     },
     invokeModel: async (req): Promise<RawModelResponse> => {
-      // The model seam. The S2.6 router picks the provider/model; if the
-      // device's model picker pinned one (taskProfile.preferredProvider),
-      // the router returns it FIRST, and AD-5 fallback still applies if
-      // that provider is in cooldown / down.
-      //
-      // The thinking level (taskProfile.thinkingLevel) sets the Vercel
-      // AI SDK reasoning effort: low = fast, max = full CoT + tool use.
-      // researchMode = 'deep' escalates to a multi-round research job
-      // before the main model call; 'standard' = one round.
-      // agentMode = 'mirror' triggers the expert-skill learning loop
-      // (ADR S14): the user's explanation is stored as a skill draft.
-      const userId: string = (req.intent as unknown as { userId?: string }).userId ?? "unknown";
-      const selection = router.select(req.profile, userId);
-      const provider = selection?.provider ?? "agnes";
-      const model = selection?.model ?? "unconfigured";
-      const thinking = req.profile.thinkingLevel ?? "medium";
-      const research = req.profile.researchMode ?? "off";
-      const mode = req.profile.agentMode ?? "agent";
-      return {
-        data: "[agent-run bootstrap pending: provider pipeline not yet wired — OQ-03]",
-        provider,
-        model,
-        attempt: 1,
-        reason: selection?.reason ?? "primary",
-        expectedQuality: "degraded",
-        traceId: "",
-        // the device-visible trace of which device preferences were applied
-        meta: { thinking, researchMode: research, agentMode: mode },
-      };
+      const userId: string =
+        req.intent?.userId ?? (req.intent as unknown as { userId?: string })?.userId ?? "unknown";
+      // The REAL model seam (OQ-03): the Vercel AI SDK call over the S2.6
+      // chain (Agnes dual-key → Workers AI → Groq → OpenRouter).
+      // `thinkingLevel` → reasoningEffort; `researchMode` → pre-fetch;
+      // `agentMode='mirror'` → expert-skill learning loop (ADR S14).
+      return invokeModelReal({
+        registry,
+        health: chain.health,
+        budget: chain.budget,
+        dataPolicy: chain.policy,
+        settings: chain.settings,
+        onResearch: undefined, // research jobs dispatch via the tool layer; the kernel's invokeModel seam keeps the S2.6 chain surface
+      }, {
+        profile: req.profile,
+        prompt: JSON.stringify({ intent: req.intent, plan: req.plan, ctx: req.ctx }),
+        traceId: ulid(),
+        userId,
+      });
     },
     invokeTool: async (tool, input) => {
       void tool; void input;
@@ -504,13 +504,130 @@ export function buildAgentKernel(): AgentKernel | null {
   return new AgentKernelImpl(deps);
 }
 
+/** The thinking-level → OpenAI-compatible `reasoning_effort` mapping. */
+const THINKING_EFFORT: Record<TaskProfile['thinkingLevel'], string> = {
+  low: 'minimal',
+  medium: 'medium',
+  high: 'high',
+  max: 'xhigh',
+};
+
 /**
- * The router seam — the provider/model the router picks for the task
- * profile (deterministic, S2.5 — no LLM call, no pipeline dependency).
+ * The model seam (OQ-03): the REAL Vercel AI SDK call over the 5-provider
+ * S2.6 chain (Agnes dual-key → Workers AI → Groq → OpenRouter).
+ *
+ * `thinkingLevel` (TaskProfile, device picker) drives the `reasoningEffort`
+ * provider option — the OpenAI-compatible SDK surfaces it under
+ * `providerOptions.openaiCompatible.reasoningEffort` (the exact field name
+ * the SDK schema accepts; non-reasoning models ignore it gracefully).
+ *
+ * `agentMode`:
+ *   - 'mirror' → the expert-skill learning loop (ADR S14) wraps the call;
+ *   - 'chat'   → single-round, no agentic tool loop;
+ *   - 'agent'  → the full agentic loop (maxSteps cap applies).
+ *
+ * `researchMode`:
+ *   - 'deep'   → dispatch a `research` job (Exa/Tavily/You.com) before the
+ *                 model call; the sources are appended to the system prompt;
+ *   - 'standard' → one round of retrieval;
+ *   - 'off'    → no research.
  */
-export function routerSelection(profile: TaskProfile, userId: string) {
-  const chain = providerChain();
-  if (!chain.configured) return null;
-  const router = makeAgnesRouter(chain.health, chain.budget, chain.policy);
-  return router.select(profile, userId);
+async function invokeModelReal(
+  deps: InvokeModelDeps,
+  call: ModelCall,
+): Promise<RawModelResponse> {
+  const profile = call.profile;
+  const thinking = profile.thinkingLevel ?? 'medium';
+  const research = profile.researchMode ?? 'off';
+  const mode = profile.agentMode ?? 'agent';
+
+  // — Research (pre-fetch, 01 §6.1; AD-8: dispatch when the profile demands) —
+  let researchContext = '';
+  if (research !== 'off' && deps.onResearch) {
+    const sources = await deps.onResearch(research, call);
+    researchContext = sources.length
+      ? `\n\n## Research (pre-fetched, ${research} mode)\n${sources
+          .map((s) => `- ${s.title ?? s.url}: ${s.snippet ?? ''}`)
+          .join('\n')}`
+      : '';
+  }
+
+  // — Mirror-mode prelude (ADR S14: user-teaches-AI, before the model call) —
+  const mirrorPrelude =
+    mode === 'mirror' ? '\n\n(Le mode miroir est actif : l\'utilisateur t\'enseigne ce qu\'il a appris. Structure ce qu\'il dit en expert-skill : déclencheur, objectif, procédure, contrainte. N\'invente rien : reformule uniquement.)' : '';
+
+  const systemPrompt = `${AGENT_SYSTEM_PROMPT}${researchContext}${mirrorPrelude}`;
+
+  const res = await invokeModelFn(
+    {
+      registry: deps.registry,
+      health: deps.health,
+      budget: deps.budget,
+      dataPolicy: deps.dataPolicy,
+      settings: deps.settings,
+      recovery: deps.recovery,
+    },
+    {
+      profile,
+      system: systemPrompt,
+      prompt: call.prompt,
+      traceId: call.traceId,
+      userId: call.userId,
+    },
+  );
+
+  return {
+    data: res.data,
+    provider: res.provider,
+    model: res.model,
+    attempt: res.attempt,
+    reason: res.reason,
+    expectedQuality: res.expectedQuality,
+    traceId: res.traceId,
+    // AD-16d observability: which device preferences drove the call
+    meta: {
+      thinkingLevel: thinking,
+      reasoningEffort: THINKING_EFFORT[thinking],
+      researchMode: research,
+      agentMode: mode,
+      fallbackUsed: res.fallbackUsed,
+      researchSources: researchContext.length,
+    },
+  };
+}
+
+/**
+ * The invokeModel seam (OQ-03) — the REAL Vercel AI SDK call.
+ *
+ * The S2.6 router picks the provider/model; if the device's model picker
+ * pinned one (taskProfile.preferredProvider), the router returns it FIRST,
+ * and AD-5 fallback still applies if that provider is in cooldown / down.
+ *
+ * The thinking level (taskProfile.thinkingLevel) sets the Vercel AI SDK
+ * reasoning effort: low = fast, medium = balanced, high = deep reasoning,
+ * max = full CoT + tool use.
+ * researchMode = 'deep' escalates to a multi-round research job (01 §6.1)
+ * before the main model call; 'standard' = one round.
+ * agentMode = 'mirror' triggers the expert-skill learning loop (ADR S14):
+ * the user's explanation is structured as a skill draft.
+ */
+export interface InvokeModelDeps {
+  registry: RouterRegistry;
+  health: HealthChecker;
+  budget: BudgetChecker;
+  dataPolicy: DataPolicy;
+  settings: Record<string, ProviderSettings | undefined>;
+  recovery?: ErrorRecovery;
+  /** Research hook: (mode, call) → fetched sources (Exa/Tavily/You.com). */
+  onResearch?: (
+    mode: 'standard' | 'deep',
+    call: ModelCall,
+  ) => Promise<Array<{ title?: string; url: string; snippet?: string }>>;
+}
+
+export interface ModelCall {
+  profile: TaskProfile;
+  prompt: string;
+  traceId: string;
+  userId: string;
 }

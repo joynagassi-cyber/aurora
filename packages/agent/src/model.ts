@@ -16,6 +16,13 @@ import type { TaskProfile } from './types.ts';
 import type { ProviderSettings } from './providers.ts';
 
 export type { ProviderSettings };
+export type {
+  HealthChecker,
+  BudgetChecker,
+  DataPolicy,
+  RouterRegistry,
+} from './router.ts';
+export type { ErrorRecovery } from './recovery.ts';
 
 /**
  * The health-mutating surface the model layer writes to after a call
@@ -57,7 +64,6 @@ export interface ModelCall {
   traceId: string;
   userId: string;
 }
-
 export interface ModelResult {
   data: string;
   /** the provider that actually served the call (after any fallback) */
@@ -73,11 +79,28 @@ export interface ModelResult {
 }
 
 /**
+ * The thinking-level → OpenAI-compatible `reasoning_effort` mapping
+ * (the SDK's `reasoningEffort` chat option — forwarded to the provider
+ * request body as `reasoning_effort` by the OpenAI-compatible adapter;
+ * non-reasoning models ignore the field gracefully).
+ */
+const THINKING_EFFORT: Record<NonNullable<TaskProfile['thinkingLevel']>, string> = {
+  low: 'minimal',
+  medium: 'medium',
+  high: 'high',
+  max: 'xhigh',
+};
+
+/**
  * `invokeModel` — run the typed S2.6 chain and return the call that
  * actually served. Bounded retry on transient (5xx/timeout), 429 →
  * record cooldown on that provider (AD-5: NEVER key rotation),
  * then fall back through the chain. The moment Agnes is healthy
  * again, the NEXT call returns to Agnes automatically (PRIORITY 3).
+ *
+ * The `thinkingLevel` (TaskProfile, device picker) is forwarded to the
+ * provider as `reasoning_effort` (the OpenAI-compatible chat option
+ * `reasoningEffort` — models that don't support it ignore the field).
  */
 export async function invokeModel(deps: InvokeModelDeps, call: ModelCall): Promise<ModelResult> {
   const router = new AgnesPrimaryRouter(deps.registry, deps.health, deps.budget, deps.dataPolicy);
@@ -150,6 +173,16 @@ export async function invokeModel(deps: InvokeModelDeps, call: ModelCall): Promi
             model,
             system: call.system,
             prompt: call.prompt,
+            // The thinking level (TaskProfile.thinkingLevel, device
+            // picker) → the OpenAI-compatible `reasoningEffort` provider
+            // option (the exact field the SDK schema accepts). Non-
+            // reasoning models ignore it gracefully; Agnes / GLM /
+            // Nemotron surface it as their own thinking-effort knob.
+            providerOptions: {
+              openaiCompatible: {
+                reasoningEffort: THINKING_EFFORT[call.profile.thinkingLevel ?? 'medium'],
+              },
+            },
             // v7: the agentic loop cap (the doc's "maxSteps=5") is now
             // stopWhen: isStepCount(n)
             stopWhen: isStepCount(5),
@@ -218,8 +251,5 @@ export function agnesProviderChain(): Array<{ provider: string; role: string; al
   return AGNES_REGISTRY.map((r) => ({ provider: r.provider, role: r.role, alwaysFirst: r.alwaysFirst }));
 }
 
-/** The system prompt the agent uses (data, not secret). */
-export const AGENT_SYSTEM_PROMPT =
-  "Tu es l'agent Aurora : tu aides l'utilisateur à planifier, apprendre et " +
-  "vérifier. Réponds de façon concise et factuelle; n'invente jamais de résultat — " +
-  "structure le problème et laisse les outils/le moteur calculer.";
+/** The system prompt the agent uses (data, not secret) — re-exported from prompt.ts (single source of truth). */
+export { AGENT_SYSTEM_PROMPT } from './prompt.ts';
