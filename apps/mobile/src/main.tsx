@@ -46,6 +46,7 @@ import { MobileDataCtx } from './query/context';
 import { mobileDataProviderFrom } from './query/query-client';
 import { createAuroraDataProvider, type AuroraDataEnv } from './lib/boot-data';
 import { createAgentClient } from './lib/agent-client';
+import { createIntegrationClient } from './lib/integrations-client';
 import { useUiStateStore } from './state/ui-state';
 import { createAuroraSupabaseClient } from '@aurora/data';
 
@@ -73,7 +74,24 @@ const agent =
         }),
       )
     : undefined;
-const dataProvider = mobileDataProviderFrom(provider, agent);
+// AD-3: the integrations client runs on the SAME publishable-scope client —
+// the device enqueues Composio calls (`fn-integrations`, v3.1 sessions) and
+// reads connected accounts; zero provider / Composio keys cross this
+// boundary (AD-3). Absent env values leave `integrations` undefined → the
+// /integrations page shows the honest "indisponible" state, never a fake
+// connection.
+const integrations =
+  env.supabaseUrl && env.supabasePublishableKey
+    ? createIntegrationClient(
+        createAuroraSupabaseClient({
+          env: {
+            supabaseUrl: env.supabaseUrl,
+            supabasePublishableKey: env.supabasePublishableKey,
+          },
+        }),
+      )
+    : undefined;
+const dataProvider = mobileDataProviderFrom(provider, agent, integrations);
 
 function Root() {
   const focusActive = useUiStateStore((s) => s.focusActive);

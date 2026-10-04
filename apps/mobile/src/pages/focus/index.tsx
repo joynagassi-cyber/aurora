@@ -50,8 +50,11 @@ export function FocusPage({ service, onSession }: FocusPageProps) {
     useState<FocusSound['theme']>('nature');
   // Spotify source (Composio Spotify integration): when Spotify is connected,
   // the user can pick a playlist / album / their own track for the session.
+  // The picker below maps UI choices to REAL Spotify tool slugs (Composio
+  // `SPOTIFY_*`); the controller receives a `{ toolSlug, input }` reference
+  // (never an invented slug).
   const [useSpotify, setUseSpotify] = useState(false);
-  const [spotifySource, setSpotifySource] = useState<string>('');
+  const [spotifySource, setSpotifySource] = useState('');
 
   /** The active theme's sounds (5 par thème, spec focus S6). */
   const themeSounds = FOCUS_SOUNDS.filter((s) => s.theme === activeTheme);
@@ -281,20 +284,10 @@ export function FocusPage({ service, onSession }: FocusPageProps) {
                           aria-label="Choisir la source Spotify"
                         >
                           <option value="">— Choisir —</option>
-                          <option value="playlist:liked">Ma playlist favorite</option>
-                          <option value="album:study">Album « Study »</option>
-                          <option value="playlist:lofi">Lofi pour étudier</option>
-                          <option value="track:custom">Mon propre morceau…</option>
+                          <option value="SPOTIFY_START_RESUME_PLAYBACK">Playlist / album à lancer</option>
+                          <option value="SPOTIFY_SEARCH_FOR_ITEM">Recherche d'un morceau</option>
+                          <option value="SPOTIFY_GET_CURRENT_USER_S_PLAYLISTS">Une de mes playlists</option>
                         </select>
-                        {spotifySource === 'track:custom' && (
-                          <input
-                            type="text"
-                            placeholder="Titre de la chanson ou de l'artiste"
-                            aria-label="Titre de la chanson"
-                            value={''}
-                            onChange={() => {}}
-                          />
-                        )}
                         <p className="focus-spotify-hint">
                           Synchronisé avec le timer de la session — seule Aurora
                           peut notifier à la fin (règle Aurora-only).

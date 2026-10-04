@@ -14,6 +14,7 @@ import { QueryClient } from '@tanstack/react-query';
 import type { LocalQueryRepository, LocalFilter } from '@aurora/data';
 import type { AscentLearningIR, GoalProject, Task } from '@aurora/domain';
 import type { AgentClient } from '../lib/agent-client';
+import type { IntegrationClient } from '../lib/integrations-client';
 
 /** The injected data provider — one repository per entity family. */
 export interface MobileDataProvider {
@@ -27,6 +28,12 @@ export interface MobileDataProvider {
    * kernel runs through it (`fn-agent-run`, AD-12/F-09).
    */
   agent?: AgentClient;
+  /**
+   * The device-side integrations client (AD-3: publishable scope only).
+   * The /integrations page connects external apps through it
+   * (`fn-integrations`, Composio v3.1 sessions).
+   */
+  integrations?: IntegrationClient;
   /** optional: reactive channel that invalidates the QueryClient on upsync. */
   onLocalChange?: (invalidate: () => void) => void;
 }
@@ -99,6 +106,7 @@ export function createMobileQueryClient(provider: MobileDataProvider): QueryClie
 export function mobileDataProviderFrom(
   provider: import('../lib/boot-data').AuroraDataProvider,
   agent?: AgentClient,
+  integrations?: IntegrationClient,
 ): MobileDataProvider {
   return {
     goals: provider.goals,
@@ -107,6 +115,9 @@ export function mobileDataProviderFrom(
     ascent: provider.ascent,
     // AD-3: the publishable-scope agent client (kernel enqueue + mirror read).
     agent,
+    // AD-3: the publishable-scope integrations client (Composio v3.1
+    // sessions via `fn-integrations`; connected accounts + tool execution).
+    integrations,
     onLocalChange: (invalidate) => {
       // The bridge watches the mirror tables; invalidate on downstream
       // batches (03 S5.8). goals + the ascent_paths read-only mirror (A2).

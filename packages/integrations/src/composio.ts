@@ -138,8 +138,28 @@ export function toIntegrationsState(
 }
 
 /**
- * Composio REST adapter. Configured when COMPOSIO_API_KEY is present
- * (server secret store, AD-3); base URL overridable for tests.
+ * Composio REST adapter (v3.1 — sessions + meta-tools).
+ * Configured when COMPOSIO_API_KEY is present (server secret store, AD-3);
+ * base URL overridable for tests.
+ *
+ * v3.1 contract (docs.composio.dev/docs/toolkits.md §3):
+ *   - REST base: `https://backend.composio.dev/api/v3.1`
+ *   - Per-user session: `POST /sessions { user_id }` → session_id
+ *   - Session tools: `GET /sessions/{session_id}/tools` → meta-tools
+ *     (COMPOSIO_SEARCH_TOOLS, COMPOSIO_MULTI_EXECUTE_TOOL,
+ *      COMPOSIO_MANAGE_CONNECTIONS, …)
+ *   - Tool execution: `POST /sessions/{session_id}/tools/execute`
+ *     body `{ tool_slug, input }`
+ *   - Connected accounts: `GET /sessions/{session_id}/connected_accounts`
+ *
+ * The adapter is transport-agnostic (plain `fetch`, no vendor SDK
+ * dependency — AD-1): the Deno EF calls the same `POST /sessions` +
+ * `POST /sessions/{id}/tools/execute` pair via its `session.mcp.url`
+ * variant when it wants a hosted-MCP client (the `session.mcp.url` +
+ * `session.mcp.headers` fields are returned by the create call, so
+ * `fn-integrations` can hand an `MCP url+headers` pair to any
+ * MCP-compatible client without a provider package — the docs §1
+ * "MCP" path).
  *
  * Failure policy (composio.md §7, AD-1): all failures return a degraded
  * result / empty catalog — never throw, never leak a key. 429 honors
@@ -150,6 +170,11 @@ export class ComposioIntegrationProvider implements IntegrationProvider {
   readonly id = 'composio';
   private readonly apiKey: string;
   private readonly baseUrl: string;
+
+  /** Per-user session cache: `userId` → session id (created once per
+   *  user, reused — the docs say the session persists across the
+   *  application; a fresh session per call would burn the quota). */
+  private sessions = new Map<string, string>();
 
   /**
    * The adapter is runtime-agnostic: keys come from the environment under
@@ -163,8 +188,34 @@ export class ComposioIntegrationProvider implements IntegrationProvider {
     this.baseUrl =
       baseUrl ??
       (typeof process !== 'undefined'
-        ? process.env.COMPOSIO_BASE_URL ?? 'https://api.composio.dev/api/v1'
-        : 'https://api.composio.dev/api/v1');
+        ? process.env.COMPOSIO_BASE_URL ??
+          'https://backend.composio.dev/api/v3.1'
+        : 'https://backend.composio.dev/api/v3.1');
+  }
+
+  /**
+   * Create (or reuse) the user's Composio session. The session is the
+   * runtime context that carries identity, connections, and tool scope
+   * for one application user (docs §3 "How sessions behave").
+   *
+   * v3.1 shape: `POST /sessions` body `{ user_id }`, header
+   * `Authorization: ApiToken <COMPOSIO_API_KEY>`. Response:
+   * `{ session_id, mcp: { url, headers }, tools: [meta-tools] }`.
+   */
+  private async sessionFor(userId: string): Promise<string | null> {
+    const cached = this.sessions.get(userId);
+    if (cached) return cached;
+    if (!this.isConfigured()) return null;
+    const res = await this.call('/sessions', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId }),
+    });
+    if (res === null || !res.ok) return null;
+    const data = (await res.json().catch(() => ({}))) as { session_id?: string };
+    const id = data.session_id;
+    if (!id) return null;
+    this.sessions.set(userId, id);
+    return id;
   }
 
   isConfigured(): boolean {
@@ -197,63 +248,66 @@ export class ComposioIntegrationProvider implements IntegrationProvider {
     userId: string,
     opts?: { app?: string; limit?: number },
   ): Promise<ComposioTool[]> {
-    void userId;
+    const sessionId = await this.sessionFor(userId);
+    if (sessionId === null) return [];
     const limit = Math.min(opts?.limit ?? 100, 500);
-    const q = opts?.app !== undefined ? `?app=${encodeURIComponent(opts.app)}&` : '?';
-    const res = await this.call(`/tools${q}limit=${limit}`, { method: 'GET' });
+    const q = opts?.app !== undefined ? `?toolkit=${encodeURIComponent(opts.app)}&` : '?';
+    const res = await this.call(
+      `/sessions/${encodeURIComponent(sessionId)}/tools${q}limit=${limit}`,
+      { method: 'GET' },
+    );
     if (res === null || !res.ok) {
       // catalog drift / unconfigured → degrade: empty tool list,
       // product keeps working (composio.md §3/§10).
       return [];
     }
-    const data = (await res.json()) as
+    const data = (await res.json().catch(() => ({}))) as
       | Array<{
-          id?: string;
-          toolkitName?: string;
+          slug?: string;
+          toolkit_slug?: string;
+          toolkit_name?: string;
           name?: string;
           description?: string;
-          schema?: Record<string, unknown>;
-          authType?: string;
+          input_schema?: Record<string, unknown>;
+          auth_type?: string;
+          tags?: string[];
         }>
-      | { data?: Array<{ id?: string; toolkitName?: string; name?: string; description?: string; schema?: Record<string, unknown>; authType?: string }> };
-    const rows = Array.isArray(data)
-      ? data
-      : (data.data ?? []);
+      | { data?: Array<{ slug?: string; toolkit_slug?: string; toolkit_name?: string; name?: string; description?: string; input_schema?: Record<string, unknown>; auth_type?: string; tags?: string[] }> };
+    const rows = Array.isArray(data) ? data : (data.data ?? []);
     return rows.map((r) => ({
-      toolId: String(r.id ?? ''),
-      app: String(r.toolkitName ?? r.name ?? ''),
+      toolId: String(r.slug ?? r.name ?? ''),
+      app: String(r.toolkit_slug ?? r.toolkit_name ?? ''),
       name: String(r.name ?? ''),
       description: r.description,
-      inputSchema: r.schema,
+      inputSchema: r.input_schema,
       requiredAuth:
-        r.authType === 'API_KEY'
+        r.auth_type === 'API_KEY'
           ? 'api-key'
-          : r.authType === 'OAUTH'
+          : r.auth_type === 'OAUTH2'
             ? 'oauth'
             : 'none',
+      // v3.1 meta-tools carry openWorldHint / destructiveHint / important
+      // tags — the destructive flag feeds the kernel's Confirmation Engine
+      // (composio.md §8: destructive external actions need confirmation).
+      destructive: r.tags?.includes('destructiveHint') ?? false,
     }));
   }
 
   async listConnectedAccounts(userId: string): Promise<ConnectedAccount[]> {
+    const sessionId = await this.sessionFor(userId);
+    if (sessionId === null) return [];
     const res = await this.call(
-      `/accounts?workspaceUserId=${encodeURIComponent(userId)}`,
+      `/sessions/${encodeURIComponent(sessionId)}/connected_accounts`,
       { method: 'GET' },
     );
     if (res === null || !res.ok) return [];
-    const data = (await res.json()) as
-      | Array<{
-          id?: string;
-          toolkit?: string;
-          status?: string;
-          last_checked_at?: string;
-        }>
-      | { data?: Array<{ id?: string; toolkit?: string; status?: string; last_checked_at?: string }> };
-    const rows = Array.isArray(data)
-      ? data
-      : (data.data ?? []);
+    const data = (await res.json().catch(() => ({}))) as
+      | Array<{ id?: string; toolkit_slug?: string; status?: string; last_checked_at?: string }>
+      | { data?: Array<{ id?: string; toolkit_slug?: string; status?: string; last_checked_at?: string }> };
+    const rows = Array.isArray(data) ? data : (data.data ?? []);
     return rows.map((r) => ({
       connectedAccountId: String(r.id ?? ''),
-      app: String(r.toolkit ?? ''),
+      app: String(r.toolkit_slug ?? ''),
       state:
         r.status === 'connected'
           ? 'connected'
@@ -276,17 +330,27 @@ export class ComposioIntegrationProvider implements IntegrationProvider {
     if (!this.isConfigured()) {
       return { ok: false, trace, error: 'composio_not_configured' };
     }
-    const res = await this.call('/tools/execute', {
-      method: 'POST',
-      body: JSON.stringify({
-        tool_id: tool.toolId,
-        user_id: userId,
-        input,
-        ...(opts?.idempotencyKey !== undefined
-          ? { idempotency_key: opts.idempotencyKey }
-          : {}),
-      }),
-    });
+    const sessionId = await this.sessionFor(userId);
+    if (sessionId === null) {
+      return { ok: false, trace, error: 'composio_not_configured' };
+    }
+    // v3.1 session execution: POST /sessions/{id}/tools/execute,
+    // body { tool_slug, input, idempotency_key? }. The docs §1 "Native
+    // Tools" path says `session.execute(tool_slug, arguments)` — this is
+    // the REST equivalent (same shape; `tool_slug` is the v3.1 field name).
+    const res = await this.call(
+      `/sessions/${encodeURIComponent(sessionId)}/tools/execute`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          tool_slug: tool.toolId,
+          input,
+          ...(opts?.idempotencyKey !== undefined
+            ? { idempotency_key: opts.idempotencyKey }
+            : {}),
+        }),
+      },
+    );
     if (res === null) {
       // 429 path or not configured: degraded, bounded retry upstream.
       return { ok: false, trace, error: 'rate_limited_or_unconfigured' };
@@ -303,15 +367,16 @@ export class ComposioIntegrationProvider implements IntegrationProvider {
       return { ok: false, trace, error: `http_${res.status}` };
     }
     const data = (await res.json().catch(() => ({}))) as {
-      success?: boolean;
+      successful?: boolean;
       data?: unknown;
-      message?: string;
+      error?: string;
+      log_id?: string;
     };
     return {
-      ok: data.success !== false,
+      ok: data.successful !== false,
       trace,
       data: data.data,
-      error: data.success === false ? data.message : undefined,
+      error: data.successful === false ? data.error : undefined,
     };
   }
 }

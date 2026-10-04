@@ -1,6 +1,12 @@
 # Composio Integration Specification (master mission S33-35)
 
-**Status:** `DESIGNED_NOT_IMPLEMENTED` (wave 2+, owner Integrations module + Agent).
+**Status:** `IMPLEMENTED_CORE` (wave 2, owner Integrations module + Agent).
+- v3.1 sessions API wired into `packages/integrations/src/composio.ts` +
+  `supabase/functions/fn-integrations` (migration 2026-10-04).
+- Device-side `integrations-client.ts` + `/integrations` page wired (AD-3
+  publishable scope only).
+- **External blocker (open):** Spotify custom OAuth app (not managed by
+  Composio, §2.2). Everything else is code-complete.
 Authority: ADR S7/S8 (`IntegrationProvider`), `01-backend` S4.7/S5.2, `03-sync` S4.2
 (`Automation` owner = Integrations), `04-mobile` S3.4.
 **Rule (mission S33):** Composio is a **tool/integration layer**, NOT an AI provider.
@@ -22,11 +28,10 @@ Agent Kernel (server)
   |
   | tool call (typed, via Tool Registry)
   v
-Composio Tool Router (server-side, packages/integrations adapter)
-  |
-  | resolved tool schema + auth check
+Composio adapter (server-side, packages/integrations)
+  |  sessions API v3.1 + meta-tools
   v
-Composio API (external)
+Composio API (external, backend.composio.dev/api/v3.1)
   |
   | execution result (normalized)
   v
@@ -44,6 +49,57 @@ owning module applies domain command / emits AD-9 event
 - **AD-1:** business code imports `IntegrationProvider` (port), never the
   Composio SDK. A vendor swap = adapter swap.
 - **AD-3:** no external secrets in the mobile bundle.
+
+### 2.1 Composio v3.1 — sessions API (migration 2026-10-04)
+
+> **v3.1 est le contrat courant** (REST `backend.composio.dev/api/v3.1`).
+> Le v1 (`/tools`, execute plat) est **gelé (legacy)** — ne pas réutiliser.
+> La migration de 2026-10-04 a aligné `composio.ts` + `fn-integrations` sur
+> v3.1 (sessions + meta-tools).
+
+**Sessions** (identités) :
+```
+POST /sessions          { user_id }                     → { session_id }
+GET  /sessions/{id}/tools?toolkit=SPOTIFY&limit=10     → meta-tools + catalog
+GET  /sessions/{id}/connected_accounts                  → comptes connectés
+POST /sessions/{id}/tools/execute { tool_slug, input, idempotency_key? }
+```
+
+**Meta-tools** (exposés par la session au client MCP/agent) :
+`COMPOSIO_SEARCH_TOOLS`, `COMPOSIO_MULTI_EXECUTE_TOOL`,
+`COMPOSIO_MANAGE_CONNECTIONS`, `COMPOSIO_WAIT_FOR_CONNECTIONS`,
+`COMPOSIO_GET_TOOL_SCHEMAS`, `COMPOSIO_REMOTE_WORKBENCH`,
+`COMPOSIO_REMOTE_BASH_TOOL`.
+
+**Slug des outils** : `{TOOLKIT}_{ACTION}` en MAJUSCULES. Outils Spotify
+réels (catalogue, 88 outils) : `SPOTIFY_START_RESUME_PLAYBACK`,
+`SPOTIFY_SEARCH_FOR_ITEM`, `SPOTIFY_GET_CURRENT_USER_S_PLAYLISTS`, …
+L'UI **n'invente jamais** un slug — elle pioche dans le catalogue runtime
+(skill composio §4).
+
+### 2.2 Spotify & OAuth non géré (gotcha majeur)
+
+**Spotify est le SEUL toolkit des 14 (Gmail, Google Calendar, Google Docs,
+Google Drive, Google Sheets, Outlook, Notion, Slack, GitHub, Todoist,
+ClickUp, Trello, YouTube — 13) qui n'a PAS d'OAuth géré par Composio.**
+
+Conséquences :
+- Les 13 autres toolkits : « Composio-managed OAuth available? **Yes** » →
+  le connect utilise uniquement `COMPOSIO_API_KEY` du projet (platform),
+  sans app maison. Le connect est un `POST /sessions/{id}/connections`
+  (Connect Link) qui retourne une URL à ouvrir (Composio gère le callback,
+  le refresh, le token store — AD-3).
+- **Spotify** : « Composio-managed OAuth available? **No** » → il faut créer
+  une **app Spotify Developer** (client_id + secret) + un **Composio
+  AuthConfig** qui référence cette app maison. L'app a les scopes
+  `streaming`, `user-library-read`, `playlist-read-private`, `playlist-modify-private`,
+  `user-read-email`, `user-read-private`. Tant que l'app maison n'est pas
+  déclarée côté Composio, `SPOTIFY_*` reste « non connectable ».
+
+> C'est un **blocage externe** (Spotify Developer Dashboard + Composio
+> AuthConfig) que l'IA ne peut PAS faire elle-même. Tout le reste du pipeline
+> (adapter v3.1, EF, UI, focus page) est code-complet; seul ce point exige
+> une action humaine.
 
 ## 3. Tool discovery & schema
 

@@ -36,9 +36,12 @@ export interface FocusSessionOptions {
   focusSound?: string;
   /**
    * The Spotify source for a session (Composio Spotify integration):
-   * `playlist:<id>` / `album:<id>` / `track:<id>` / `search:<query>`.
-   * When set, the focus controller syncs playback to this source instead
-   * of `focusSound` (the user's preferred playlist / album / track).
+   * a REAL `SPOTIFY_*` tool slug (e.g. `SPOTIFY_START_RESUME_PLAYBACK`,
+   * `SPOTIFY_SEARCH_FOR_ITEM`, `SPOTIFY_GET_CURRENT_USER_S_PLAYLISTS`).
+   * When set, the focus controller syncs playback to this source via
+   * the Composio session instead of `focusSound` (the user's
+   * preferred playlist / album / track). The UI NEVER invents a
+   * slug — it picks from the runtime catalog (composio skill §4).
    */
   spotifySource?: string;
   /** Pomodoro pause duration in seconds (the auto-scheduled next block). */

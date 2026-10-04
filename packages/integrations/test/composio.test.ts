@@ -17,28 +17,28 @@ import type { ComposioTool, ConnectedAccount } from '../src/composio.ts';
 const noTools: ComposioTool[] = [];
 const someTools: ComposioTool[] = [
   {
-    toolId: 'tool_gmail_send',
-    app: 'gmail',
-    name: 'gmail.send',
+    toolId: 'GMAIL_SEND_EMAIL',
+    app: 'GMAIL',
+    name: 'send_email',
     requiredAuth: 'oauth',
   },
   {
-    toolId: 'tool_notion_read',
-    app: 'notion',
-    name: 'notion.read_page',
+    toolId: 'NOTION_READ_PAGE',
+    app: 'NOTION',
+    name: 'read_page',
     requiredAuth: 'oauth',
   },
 ];
 const accounts: ConnectedAccount[] = [
   {
     connectedAccountId: 'ca-1',
-    app: 'gmail',
+    app: 'GMAIL',
     state: 'connected',
     lastCheckedAt: '2026-01-01T00:00:00Z',
   },
   {
     connectedAccountId: 'ca-2',
-    app: 'notion',
+    app: 'NOTION',
     state: 'reauth_required',
   },
 ];
@@ -47,8 +47,8 @@ const accounts: ConnectedAccount[] = [
  *  the kernel degrades, it does not fail. */
 test('composio: filterAvailableTools marks unconnected/reauth apps unavailable', () => {
   const out = filterAvailableTools(someTools, accounts);
-  const gmail = out.find((t) => t.app === 'gmail');
-  const notion = out.find((t) => t.app === 'notion');
+  const gmail = out.find((t) => t.app === 'GMAIL');
+  const notion = out.find((t) => t.app === 'NOTION');
   assert.equal(gmail?.available, true);
   assert.equal(notion?.available, false);
   assert.equal(notion?.reason, 'reauth_required');
@@ -70,7 +70,7 @@ test('composio: toIntegrationsState maps to SSoT IntegrationsState', () => {
   const s = toIntegrationsState('u-1', accounts[0]);
   assert.equal(s.userId, 'u-1');
   assert.equal(s.vendor, 'composio');
-  assert.equal(s.connection, 'gmail');
+  assert.equal(s.connection, 'GMAIL');
   assert.equal(s.status, 'connected');
 });
 

@@ -5,36 +5,43 @@
  * (AD-1 vendor isolation). This page lets the user connect external apps
  * (Google Workspace by default) and see which connected accounts are live.
  *
- * AD-3: no external credentials on the device — connected-account state
- * is read from `integrations_state` (RLS user-isolated, server-side);
- * the OAuth flow happens in a WebView / deep link, tokens stay in
- * Composio's server.
+ * AD-3: no external credentials on the device — connected-account state is
+ * read from `integrations_state` (RLS user-isolated, server-side); the
+ * OAuth flow happens in a WebView / deep link, tokens stay in Composio's
+ * server.
+ *
+ * The page is wired to the REAL server seam: `useMobileData().integrations`
+ * (a `fn-integrations` EF, Composio v3.1 sessions). When the client is absent
+ * (no Supabase env, AD-7) the page degrades to the honest
+ * "intégrations indisponibles" empty state — it never fakes a connection.
  */
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
-import { Check, ExternalLink, Plus, Music } from 'lucide-react';
-import { useState } from 'react';
+import { Check, ExternalLink, Plus, Music, Loader2, CircleOff } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useMobileData } from '../../query/context';
+import type { IntegrationAccount } from '../../lib/integrations-client';
 
-// ——— Connector catalog (Composio toolkits; Google Workspace = default preset). ———
+// ——— Connector catalog (Composio toolkits; slugs are the v3.1
+// ———  `toolkit_slug` values; the UI NEVER invents a toolkit/tool slug —
+// ———  the skill §4 + the runtime catalog are the SSoT). ———
 interface Connector {
-  id: string;
+  id: string; // toolkit_slug (v3.1)
   name: string;
   vendor: string;
   defaultOn: boolean; // Google Workspace preset = true
   status: 'connected' | 'disconnected' | 'token_expired' | 'reauth_required';
 }
 
-// In production this reads `integrations_state` (server, RLS); here the
-// preset seed mirrors the documented default (Google Workspace full).
 const CONNECTORS: Connector[] = [
-  { id: 'google-docs', name: 'Google Docs', vendor: 'Google Workspace', defaultOn: true, status: 'disconnected' },
-  { id: 'gmail', name: 'Gmail', vendor: 'Google Workspace', defaultOn: true, status: 'disconnected' },
-  { id: 'google-calendar', name: 'Google Calendar', vendor: 'Google Workspace', defaultOn: true, status: 'disconnected' },
-  { id: 'google-drive', name: 'Google Drive', vendor: 'Google Workspace', defaultOn: true, status: 'disconnected' },
-  { id: 'google-sheets', name: 'Google Sheets', vendor: 'Google Workspace', defaultOn: true, status: 'disconnected' },
-  { id: 'spotify', name: 'Spotify', vendor: 'Spotify', defaultOn: false, status: 'disconnected' },
-  { id: 'notion', name: 'Notion', vendor: 'Notion', defaultOn: false, status: 'disconnected' },
-  { id: 'slack', name: 'Slack', vendor: 'Slack', defaultOn: false, status: 'disconnected' },
-  { id: 'github', name: 'GitHub', vendor: 'GitHub', defaultOn: false, status: 'disconnected' },
+  { id: 'GOOGLEDOCS', name: 'Google Docs', vendor: 'Google Workspace', defaultOn: true, status: 'disconnected' },
+  { id: 'GMAIL', name: 'Gmail', vendor: 'Google Workspace', defaultOn: true, status: 'disconnected' },
+  { id: 'GOOGLECALENDAR', name: 'Google Calendar', vendor: 'Google Workspace', defaultOn: true, status: 'disconnected' },
+  { id: 'GOOGLEDRIVE', name: 'Google Drive', vendor: 'Google Workspace', defaultOn: true, status: 'disconnected' },
+  { id: 'GOOGLESHEETS', name: 'Google Sheets', vendor: 'Google Workspace', defaultOn: true, status: 'disconnected' },
+  { id: 'SPOTIFY', name: 'Spotify', vendor: 'Spotify', defaultOn: false, status: 'disconnected' },
+  { id: 'NOTION', name: 'Notion', vendor: 'Notion', defaultOn: false, status: 'disconnected' },
+  { id: 'SLACK', name: 'Slack', vendor: 'Slack', defaultOn: false, status: 'disconnected' },
+  { id: 'GITHUB', name: 'GitHub', vendor: 'GitHub', defaultOn: false, status: 'disconnected' },
 ];
 
 function statusIcon(s: Connector['status']) {
@@ -49,29 +56,81 @@ function statusIcon(s: Connector['status']) {
 }
 
 export function IntegrationsPage() {
-  // Optimistic local state — in production each toggle triggers the
-  // Composio OAuth deep-link; the resulting connectedAccountID lands in
-  // `integrations_state` (server). The UI reflects that state.
-  const [connected, setConnected] = useState<Set<string>>(new Set());
+  const { integrations } = useMobileData();
+
+  // Live connection state, read from the server (AD-3: never from the body).
+  const [accounts, setAccounts] = useState<IntegrationAccount[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!integrations) return;
+    let live = true;
+    setLoading(true);
+    integrations
+      .listAccounts()
+      .then((a) => {
+        if (live) setAccounts(a);
+      })
+      .catch(() => {
+        /* degraded: keep the catalog's default 'disconnected' state */
+      })
+      .finally(() => {
+        if (live) setLoading(false);
+      });
+    return () => {
+      live = false;
+    };
+  }, [integrations]);
+
+  const isConnected = (id: string) =>
+    accounts.some((a) => a.app.toUpperCase() === id && a.state === 'connected');
 
   function toggle(id: string) {
-    setConnected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    if (!integrations) return;
+    setConnectError(null);
+    void integrations
+      .connect(id)
+      .then((res) => {
+        if (res.connectLink) {
+          // AD-3 / composio.md §4: the user completes OAuth in the vendor's
+          // Connect Link (opened in a WebView / browser). We do NOT build a
+          // provider OAuth flow. On completion we re-read the accounts.
+          window.open(res.connectLink, '_blank');
+        }
+        return integrations.listAccounts();
+      })
+      .then((a) => setAccounts(a))
+      .catch((e: unknown) => {
+        setConnectError(e instanceof Error ? e.message : 'Connexion indisponible');
+      });
   }
 
   const google = CONNECTORS.filter((c) => c.vendor === 'Google Workspace');
-  // Spotify gets its own dedicated section (focus-mode visualisation);
-  // the "Autres" bucket excludes it so it is not rendered twice.
   const others = CONNECTORS.filter(
     (c) => c.vendor !== 'Google Workspace' && c.vendor !== 'Spotify',
   );
 
+  // AD-7 degrade-first: no Supabase env → the client is undefined → honest
+  // empty state, never a fake "connected".
+  if (!integrations) {
+    return (
+      <>
+        <IonHeader>
+          <IonTitle>Intégrations</IonTitle>
+        </IonHeader>
+        <IonContent>
+          <div className="integrations-page integrations-degraded">
+            <CircleOff size={32} className="is-muted" aria-hidden />
+            <p>Intégrations indisponibles — configure les valeurs Supabase de l'appareil.</p>
+          </div>
+        </IonContent>
+      </>
+    );
+  }
+
   function renderCard(c: Connector) {
-    const on = connected.has(c.id);
+    const on = isConnected(c.id);
     return (
       <div key={c.id} className={`integration-card ${on ? 'is-connected' : ''}`}>
         <div className="integration-card-main">
@@ -100,6 +159,19 @@ export function IntegrationsPage() {
       </IonHeader>
       <IonContent>
         <div className="integrations-page">
+          {loading ? (
+            <div className="integrations-loading">
+              <Loader2 size={16} className="is-spin" aria-hidden />
+              <span>Chargement des comptes connectés…</span>
+            </div>
+          ) : null}
+          {connectError ? (
+            <div className="integrations-error" role="alert">
+              <CircleOff size={14} aria-hidden />
+              <span>{connectError}</span>
+            </div>
+          ) : null}
+
           <div className="integrations-hint">
             <p>
               Connecte des apps externes que l'agent peut utiliser (Gmail, Drive, Calendar…).
@@ -114,12 +186,8 @@ export function IntegrationsPage() {
                 type="button"
                 className="integration-preset-btn"
                 onClick={() => {
-                  // Connect the full Google Workspace preset at once
-                  setConnected((prev) => {
-                    const next = new Set(prev);
-                    google.forEach((g) => next.add(g.id));
-                    return next;
-                  });
+                  // Connect the full Google Workspace preset at once.
+                  google.forEach((g) => toggle(g.id));
                 }}
               >
                 <Check size={14} />
@@ -137,33 +205,36 @@ export function IntegrationsPage() {
               <strong> playlist / album préféré</strong> en lecture au lieu du
               son générique, ou t'inviter à <strong>choisir ton propre
               morceau</strong> pour la session.
+              <br />
+              <span className="integration-group-note-muted">
+                Spotify n'a pas d'OAuth géré par Composio : une app maison est
+                requise (voir docs.composio.dev/toolkits/spotify.md).
+              </span>
             </p>
             <div className="spotify-block">
-              {CONNECTORS.find((c) => c.id === 'spotify') ? (
-                <div className={`integration-card ${connected.has('spotify') ? 'is-connected' : ''}`}>
-                  <div className="integration-card-main">
-                    <div className="integration-card-status">
-                      {connected.has('spotify') ? (
-                        <Check size={16} className="is-ok" />
-                      ) : (
-                        <Music size={14} className="is-muted" />
-                      )}
-                    </div>
-                    <div className="integration-card-text">
-                      <h4>Spotify</h4>
-                      <span>Visualisation · playlist préféré · son perso</span>
-                    </div>
+              <div className={`integration-card ${isConnected('SPOTIFY') ? 'is-connected' : ''}`}>
+                <div className="integration-card-main">
+                  <div className="integration-card-status">
+                    {isConnected('SPOTIFY') ? (
+                      <Check size={16} className="is-ok" />
+                    ) : (
+                      <Music size={14} className="is-muted" />
+                    )}
                   </div>
-                  <button
-                    type="button"
-                    className={`integration-toggle ${connected.has('spotify') ? 'is-on' : ''}`}
-                    onClick={() => toggle('spotify')}
-                    aria-label={connected.has('spotify') ? 'Déconnecter Spotify' : 'Connecter Spotify'}
-                  >
-                    {connected.has('spotify') ? 'Déconnecter' : 'Connecter'}
-                  </button>
+                  <div className="integration-card-text">
+                    <h4>Spotify</h4>
+                    <span>Visualisation · playlist préféré · son perso</span>
+                  </div>
                 </div>
-              ) : null}
+                <button
+                  type="button"
+                  className={`integration-toggle ${isConnected('SPOTIFY') ? 'is-on' : ''}`}
+                  onClick={() => toggle('SPOTIFY')}
+                  aria-label={isConnected('SPOTIFY') ? 'Déconnecter Spotify' : 'Connecter Spotify'}
+                >
+                  {isConnected('SPOTIFY') ? 'Déconnecter' : 'Connecter'}
+                </button>
+              </div>
             </div>
           </section>
 
