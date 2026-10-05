@@ -75,6 +75,14 @@ export interface ContextAssembler {
     /** declared capabilities the user may invoke */
     capabilityIds: string[];
   } | null>;
+  /**
+   * Load the user's ACTIVE skills from `user_skills` (migration 0019).
+   * A builtin row ('builtin:<key>') joins its payload from `skill_catalog`;
+   * a user-created row ('user:<ULID>') is self-contained. The result feeds
+   * prompt layer 1 (Task 1/2). Degrades to `[]` when the table or key is
+   * absent (AD-1: the loop continues without skills).
+   */
+  loadUserSkills?(userId: string): Promise<Array<Record<string, unknown>>>;
 }
 
 /**
@@ -93,7 +101,7 @@ export async function buildAgentContext(
     evidences?: ProgressEvidence[];
   },
 ): Promise<AgentContext> {
-  const [personal, productivity, learning, discovery, semantic, expertSkills, tool, permission] =
+  const [personal, productivity, learning, discovery, semantic, expertSkills, tool, permission, userSkills] =
     await Promise.all([
       safe(a.loadPersonal(userId)),
       safe(a.loadProductivity(userId)),
@@ -103,6 +111,8 @@ export async function buildAgentContext(
       safe(a.loadExpertSkills(userId)),
       safe(a.loadToolContext(userId)),
       safe(a.loadPermission(userId)),
+      // form 10 — Task 1/2: active user skills (optional seam, degrades to []).
+      safe(a.loadUserSkills ? a.loadUserSkills(userId) : Promise.resolve([])),
     ]);
 
   const expertSkillRows = expertSkills ?? [];
@@ -167,6 +177,23 @@ export async function buildAgentContext(
           destructiveGates: ['focus.block', 'course.delete'], // ADR S5 confirmation gates
         }
       : {},
+    // form 10 — Task 1/2: the user's active skills (prompt layer 1). Each
+    // row is self-contained (procedure/constraints/tools) — builtin rows
+    // carry the catalog payload, user-created rows their own.
+    skills: {
+      active: (userSkills ?? [])
+        .filter((s) => s.active !== false)
+        .map((s) => ({
+          key: s.skill_key ?? s.skillKey,
+          domain: s.domain,
+          name: s.name,
+          trigger: s.trigger_ ?? s.trigger,
+          objective: s.objective,
+          procedure: Array.isArray(s.procedure) ? s.procedure : [],
+          constraints: Array.isArray(s.constraints) ? s.constraints : [],
+          tools: Array.isArray(s.tools) ? s.tools : [],
+        })),
+    },
   };
 }
 

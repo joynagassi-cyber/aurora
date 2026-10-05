@@ -47,6 +47,7 @@ import { mobileDataProviderFrom } from './query/query-client';
 import { createAuroraDataProvider, type AuroraDataEnv } from './lib/boot-data';
 import { createAgentClient } from './lib/agent-client';
 import { createIntegrationClient } from './lib/integrations-client';
+import { createSkillClient } from './lib/skills-client';
 import { useUiStateStore } from './state/ui-state';
 import { createAuroraSupabaseClient } from '@aurora/data';
 
@@ -91,7 +92,23 @@ const integrations =
         }),
       )
     : undefined;
-const dataProvider = mobileDataProviderFrom(provider, agent, integrations);
+// AD-3: the skills marketplace client runs on the SAME publishable-scope
+// client — the device reads `fn-skills` (skill_catalog + user_skills). Zero
+// provider keys cross this boundary. Absent env values leave `skills`
+// undefined → the /skills page shows the honest "skills indisponibles"
+// empty state (AD-7), never a fake catalog.
+const skills =
+  env.supabaseUrl && env.supabasePublishableKey
+    ? createSkillClient(
+        createAuroraSupabaseClient({
+          env: {
+            supabaseUrl: env.supabaseUrl,
+            supabasePublishableKey: env.supabasePublishableKey,
+          },
+        }),
+      )
+    : undefined;
+const dataProvider = mobileDataProviderFrom(provider, agent, integrations, skills);
 
 function Root() {
   const focusActive = useUiStateStore((s) => s.focusActive);

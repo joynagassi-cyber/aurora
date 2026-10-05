@@ -1,0 +1,15 @@
+// sql-lots-runner state (skill_catalog seed 0021)
+// Généré/écrit par scripts/sql-lots-runner.mjs — ne pas éditer à la main.
+/*STATE-DO-NOT-EDIT*/
+{
+  "executed": [],
+  "failed": [],
+  "logs": []
+}
+
+// === Règles ===
+// - executed: lots exécutés en base (INSERT ON CONFLICT DO NOTHING, idempotent).
+// - failed: lots en échec (rejouables: les lots sont idempotents).
+// - logs: journal de chaque tentative ({lot, status, rowCount|error, ms, ts}).
+// - finalize: écrit scripts/sql-lots-finalized.json (comptage live + rapport).
+// - Ne JAMAIS réordonner: l'exécution reste séquentielle 000->058.

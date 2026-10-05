@@ -270,3 +270,101 @@
   font-size: 14px;
   color: var(--aurora-text-muted);
 }
+.skills-empty p {
+  margin: 4px 0;
+}
+
+/* ——— Domain filter chips + grouped catalog ——— */
+.skills-domain-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.skill-domain-chip {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--aurora-text-muted);
+  background: transparent;
+  border: 1px solid var(--aurora-border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.skill-domain-chip.is-active {
+  color: var(--aurora-accent-on-primary);
+  background: var(--aurora-accent-primary);
+  border-color: var(--aurora-accent-primary);
+}
+
+.skills-domain-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.skills-domain-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--aurora-text-muted);
+  margin: 4px 0 0;
+}
+
+.skill-source-tag {
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--aurora-text-muted);
+  background: var(--aurora-bg-subtle);
+  border-radius: 999px;
+}
+
+.skill-procedure {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--aurora-text-secondary, var(--aurora-text-muted));
+  line-height: 1.5;
+}
+
+/* ——— Error banner ——— */
+.skills-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--aurora-danger) 10%, var(--aurora-bg));
+  border: 1px solid var(--aurora-danger);
+  border-radius: var(--aurora-radius, 0.5rem);
+  font-size: 13px;
+  color: var(--aurora-text-primary);
+}
+.skills-error p {
+  margin: 0;
+  flex: 1;
+}
+.skills-error button {
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--aurora-accent-on-primary);
+  background: var(--aurora-accent-primary);
+  border: none;
+  border-radius: var(--aurora-radius, 0.5rem);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* ——— Spinner ——— */
+.is-spinning {
+  display: inline-block;
+  animation: skills-spin 1s linear infinite;
+}
+@keyframes skills-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -155,6 +155,14 @@ export {
   scientificVerify,
 } from './tools.ts';
 
+// Builtin skill templates (Task 2, 2026-10-04) — the 15 seeded catalog
+// entries, mirrored in TS for tests / type-checking (the SQL seed is the
+// runtime SSoT, the TS file is NOT embedded in the prompt).
+export {
+  AGENT_SKILL_TEMPLATES,
+  BUILTIN_TOOL_IDS,
+} from './skill-templates.ts';
+
 export {
   streamKernelRun,
   ALL_TOOL_IDS,

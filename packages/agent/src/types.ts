@@ -142,6 +142,10 @@ export interface AgentContext {
   tool: Record<string, unknown>;
   /** form 9 — Permission Context (scopes, destructive gates, feature state) */
   permission: Record<string, unknown>;
+  /** form 10 — Active user skills (user_skills rows, Task 1/2).
+   *  Feeds prompt layer 1. Degrades to {} when the assembler lacks the
+   *  loadUserSkills seam (AD-1: the loop continues without skills). */
+  skills: Record<string, unknown>;
 }
 
 /**

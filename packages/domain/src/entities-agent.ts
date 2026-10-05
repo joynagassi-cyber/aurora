@@ -5,6 +5,69 @@
  * agent memory is never synced to device, AD-3).
  */
 
+// ─── Skill Catalog & User Skills (migration 0019, 2026-10-04) ─────────────
+
+/**
+ * AgentSkillTemplate — a curated, deterministic skill template that tells
+ * the agent HOW to approach a specific task with precision.
+ *
+ * These are NOT auto-learned (unlike ExpertSkill); they are pre-authored
+ * by the Aurora team and seeded into `skill_catalog` (Supabase, public read).
+ * The agent activates a template when the user's intent matches the trigger.
+ */
+export interface AgentSkillTemplate {
+  /** stable key, e.g. 'agent.summaries' | 'agent.qcm-design' */
+  skillKey: string;
+  /** 14 domaines du seed 0021 (scripts/skills-seed.ts DOMAIN_ORDER, ordre manuel). */
+  domain:
+    | 'science' | 'legal' | 'finance' | 'healthcare' | 'students' | 'productivity'
+    | 'business' | 'marketing' | 'documents' | 'research' | 'creative' | 'design'
+    | 'social' | 'coding';
+  /** human-readable name (French) */
+  name: string;
+  /** when the agent should activate this skill (natural language) */
+  trigger: string;
+  /** the result it aims to produce */
+  objective: string;
+  /** recommended steps (3-7 precise actions) */
+  procedure: string[];
+  /** what to avoid (precision constraints) */
+  constraints: string[];
+  /** which KERNEL_TOOLS this skill uses */
+  tools: string[];
+  /** optional: example of a good output */
+  exampleOutput?: string;
+  /** source: 'builtin' | 'marketplace:<name>' */
+  source: 'builtin' | `marketplace:${string}`;
+  /** Full markdown SKILL.md body (0021 marketplace seed). null for builtin. */
+  body?: string | null;
+}
+
+/**
+ * UserSkill — a skill activated by the user in the `user_skills` table.
+ * Either a catalog skill (by skillKey) or a user-created one (user:<random>).
+ */
+export interface UserSkill {
+  id: string;
+  userId: string;
+  /** 'builtin:agent.summaries' | 'user:<random>' | 'marketplace:<name>:<key>' */
+  skillKey: string;
+  domain: string;
+  name: string;
+  trigger?: string;
+  objective?: string;
+  procedure: string[];
+  constraints: string[];
+  tools: string[];
+  source: string;
+  /** whether the skill is currently active for this user */
+  active: boolean;
+  /** Markdown body copied from the catalog at activation (0021). null otherwise. */
+  body?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 /**
  * ExpertSkill — a small, reusable procedural competence the agent distilled
  * from verified recurrent learnings (ADR S14.2: trigger, objective,

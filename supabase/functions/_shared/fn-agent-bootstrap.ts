@@ -42,6 +42,7 @@ import {
   type ErrorRecovery,
   type ProviderSettings,
 } from "../../../packages/agent/src/model.ts";
+import { KERNEL_TOOLS } from "../../../packages/agent/src/tools.ts";
 
 // ——— Provider chain (AD-3: keys from env ONLY) ———
 //
@@ -167,18 +168,30 @@ export function modelPicker(): Array<{ id: string; label: string; provider: stri
 }
 
 // ——— Supabase REST (service_role — env-only, AD-3) ———
+// SUPABASE_SECRET_KEY accepts either the legacy service_role JWT
+// ("eyJhbGciOiJIUzI1NiIs...", works on both apikey + Authorization headers)
+// or the new "sb_secret_..." key (apikey header only — Supabase rejects it
+// on Authorization with "Invalid JWT"). The resolver below picks the
+// correct header set; the EF's Deno.env config supplies the value.
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SECRET_KEY = Deno.env.get("SUPABASE_SECRET_KEY") ?? "";
+function restHeaders(): Record<string, string> {
+  const isLegacyJwt = SUPABASE_SECRET_KEY.startsWith("eyJ");
+  const h: Record<string, string> = { "Content-Type": "application/json" };
+  if (isLegacyJwt) {
+    h.apikey = SUPABASE_SECRET_KEY;
+    h.Authorization = `Bearer ${SUPABASE_SECRET_KEY}`;
+  } else {
+    h.apikey = SUPABASE_SECRET_KEY; // sb_secret_ key: apikey only
+  }
+  return h;
+}
 
 async function rest<T>(method: string, path: string, body?: unknown): Promise<T | null> {
   if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) return null;
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     method,
-    headers: {
-      apikey: SUPABASE_SECRET_KEY,
-      Authorization: `Bearer ${SUPABASE_SECRET_KEY}`,
-      "Content-Type": "application/json",
-    },
+    headers: restHeaders(),
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   if (!res.ok) return null;
@@ -262,57 +275,29 @@ export function buildContextAssembler(): ContextAssembler {
       if (!rows) return [];
       return byUser(rows, userId) as never[];
     },
+    // Task 1/2 (2026-10-04): the user's ACTIVE skills (user_skills, migration
+    // 0019). Builtin rows carry the catalog payload (procedure/constraints/
+    // tools are copied at activation, see fn-skills activate_skill); user-
+    // created rows are self-contained. Feeds prompt layer 1. Degrades to []
+    // when the table is absent (AD-1: the kernel loop continues).
+    async loadUserSkills(userId) {
+      const rows = await rest<Array<Record<string, unknown>>>("GET", sel("user_skills"));
+      if (!rows) return [];
+      return byUser(rows, userId).filter((r) => r.active === true);
+    },
     async loadToolContext(userId) {
       void userId;
       const chain = providerChain();
       // The available tools = the canonical tool-id set the kernel's
       // Planner / Tool Resolver address steps by (packages/agent/src/tools.ts
       // KERNEL_TOOLS, the tool field of the DefaultCapabilityRegistry
-      // entries). Kept in sync with capability.ts seedDefaults: when a
-      // new capability is seeded, its tool key is added here too
-      // (kernel S14: the kernel discovers capabilities, never hardcodes).
+      // entries). Derived, never hand-typed: `Object.keys(KERNEL_TOOLS)`
+      // is the single source of truth — when a new capability is seeded in
+      // capability.ts, its tool key lands in tools.ts first, so this list
+      // stays in sync automatically (kernel S14: the kernel discovers
+      // capabilities, never hardcodes).
       return {
-        available: [
-          "planDay",
-          "schedule",
-          "startFocus",
-          "blockApps",
-          "research",
-          "qcm_generate",
-          "flashcard_generate",
-          "mirror_analyze",
-          "scientific_verify",
-          "learning_session",
-          "knowledge_add",
-          "course_search",
-          "goal_create",
-          "goal_status",
-          "goal_recompose",
-          "goal_pause",
-          "goal_complete",
-          "goal_abandon",
-          "goal_feature_add",
-          "goal_feature_remove",
-          "docs_generate",
-          "docs_refine",
-          "docs_inspect",
-          "docs_parse",
-          "task_update",
-          "habit_checkin",
-          "planning_replan",
-          "progress_analyze",
-          "artifact_generate",
-          "scientific_evaluate",
-          "coach_checkin",
-          "settings_theme",
-          "review_run",
-          "automation_toggle",
-          "notification_pref",
-          "eisenhower_prioritize",
-          "progress_trajectories",
-          "progress_cause",
-          "focus_sound_catalog",
-        ],
+        available: Object.keys(KERNEL_TOOLS),
         providers: Object.keys(chain.settings).map((p) => ({
           provider: p,
           model: "any",
@@ -476,6 +461,18 @@ export function buildAgentKernel(): AgentKernel | null {
       // chain (Agnes dual-key → Workers AI → Groq → OpenRouter).
       // `thinkingLevel` → reasoningEffort; `researchMode` → pre-fetch;
       // `agentMode='mirror'` → expert-skill learning loop (ADR S14).
+      //
+      // Task 1/2 — prompt layering: the context forms carry the user's
+      // active skills (form 10) and expert skills (form 7). We surface them
+      // here so invokeModelReal can assemble the layered system prompt
+      // (layer 1 = user_skills, layer 2 = expert_skills, layer 3 = ctx).
+      const ctx = req.ctx as Record<string, unknown> | undefined;
+      const skillsForm = (ctx?.skills ?? {}) as Record<string, unknown>;
+      const expertForm = (ctx?.expertSkills ?? {}) as Record<string, unknown>;
+      const activeSkills = Array.isArray(skillsForm.active)
+        ? (skillsForm.active as ModelCall["activeSkills"])
+        : undefined;
+      const expertSkillIds = Array.isArray(expertForm.active) ? (expertForm.active as string[]) : [];
       return invokeModelReal({
         registry,
         health: chain.health,
@@ -488,6 +485,11 @@ export function buildAgentKernel(): AgentKernel | null {
         prompt: JSON.stringify({ intent: req.intent, plan: req.plan, ctx: req.ctx }),
         traceId: ulid(),
         userId,
+        activeSkills,
+        // Layer 2 at the ID level (token economy: the full expert-skill
+        // procedure is NOT inlined — the Planner + Tool Registry already
+        // carry the capability details, matching today's ID-level form 7).
+        expertSkills: expertSkillIds.map((id) => ({ id })),
       });
     },
     invokeTool: async (tool, input) => {
@@ -556,7 +558,45 @@ async function invokeModelReal(
   const mirrorPrelude =
     mode === 'mirror' ? '\n\n(Le mode miroir est actif : l\'utilisateur t\'enseigne ce qu\'il a appris. Structure ce qu\'il dit en expert-skill : déclencheur, objectif, procédure, contrainte. N\'invente rien : reformule uniquement.)' : '';
 
-  const systemPrompt = `${AGENT_SYSTEM_PROMPT}${researchContext}${mirrorPrelude}`;
+  // — Task 1/2 (2026-10-04): prompt layering —
+  // Layer 0 = AGENT_SYSTEM_PROMPT (identity, fixed).
+  // Layer 1 = active user skills (user_skills, self-contained rows).
+  // Layer 2 = expert skills (ID-level, token economy).
+  // Layer 3/4 = research pre-fetch + mirror prelude (existing).
+  // Each layer is '' when empty — assembly order is deterministic.
+  const skillsLayer = call.activeSkills?.length
+    ? '\n\n[SKILLS ACTIVES]\n' +
+      call.activeSkills
+        .slice(0, 8) // hard cap: 8 skills max in-prompt (token budget)
+        .map((s) => {
+          const head = `• ${s.name ?? s.key} (domaine: ${s.domain ?? '—'})`;
+          const trigger = s.trigger ? ` Déclencheur : ${s.trigger}.` : '';
+          const obj = s.objective ? ` Objectif : ${s.objective}.` : '';
+          const proc = s.procedure.length ? ` Procédure : ${s.procedure.join(' → ')}.` : '';
+          const cons = s.constraints.length ? ` Contraintes : ${s.constraints.join(' ; ')}.` : '';
+          return head + trigger + obj + proc + cons;
+        })
+        .join('\n')
+    : '';
+  const expertLayer = call.expertSkills?.length
+    ? '\n\n[SKILLS EXPERTES (acquises)]\n' +
+      call.expertSkills
+        .slice(0, 10)
+        .map((s) => {
+          const conf = typeof s.confidence === 'number' ? ` (${Math.round(s.confidence * 100)}%)` : '';
+          const trig = s.trigger ? ` : ${s.trigger}` : '';
+          const obj = s.objective ? ` → ${s.objective}` : '';
+          return `- ${s.key ?? s.id}${conf}${trig}${obj}`;
+        })
+        .join('\n')
+    : '';
+
+  const systemPrompt =
+    `${AGENT_SYSTEM_PROMPT}` +
+    skillsLayer +
+    expertLayer +
+    researchContext +
+    mirrorPrelude;
 
   const res = await invokeModelFn(
     {
@@ -630,4 +670,27 @@ export interface ModelCall {
   prompt: string;
   traceId: string;
   userId: string;
+  /**
+   * Task 1/2 — prompt layer 1: the user's ACTIVE skills (user_skills rows,
+   * self-contained: key/name/trigger/objective/procedure/constraints/tools).
+   * Absent → layer 1 renders empty (AD-1: the call proceeds without skills).
+   */
+  activeSkills?: Array<{
+    key: string;
+    domain?: string;
+    name?: string;
+    trigger?: string | null;
+    objective?: string | null;
+    procedure: string[];
+    constraints: string[];
+    tools: string[];
+  }>;
+  /** Task 2 — prompt layer 2: active expert skills (ID + trigger + objective + confidence). */
+  expertSkills?: Array<{
+    id: string;
+    key?: string;
+    trigger?: string;
+    objective?: string;
+    confidence?: number;
+  }>;
 }
