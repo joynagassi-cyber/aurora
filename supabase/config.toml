@@ -46,9 +46,11 @@ progress-evidences-recompute:
   job: "INSERT INTO job_queue (id, user_id, kind, payload, due_at, idempotency_key) SELECT gen_random_uuid()::text, user_id, 'evidence_recompute', '{}'::jsonb, now(), 'evidence_recompute|' || user_id::text FROM (SELECT DISTINCT user_id FROM progress_events WHERE occurred_at > now() - interval '25 hours') u WHERE not exists (select 1 from job_queue j where j.kind='evidence_recompute' and j.idempotency_key = 'evidence_recompute|' || u.user_id::text and j.status in ('pending','running'))"
 
 # ---------------------------------------------------------------------------
-# Edge Functions (01 §5.1) — wave 0 delivers STUBS: they read their secrets
-# from env (SUPABASE_SECRET_KEY / SUPABASE_URL / ONESIGNAL_*), log, and
-# return 200 / ApiEnvelope. Real dispatch lands in wave 1.
+# Edge Functions (01 §5.1) — wave 0: fn-notifications now performs the real
+# OneSignal REST v2 send (app_id + include_external_user_ids from
+# notification_preferences); the quiet-hours / coaching-silence gate lands
+# in wave 1. All functions read their secrets from env
+# (SUPABASE_SECRET_KEY / SUPABASE_URL / ONESIGNAL_*).
 # ---------------------------------------------------------------------------
 edge_functions:
   - name: fn-job-dispatcher      # the ONLY dispatcher (01 §5.2)

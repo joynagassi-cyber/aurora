@@ -574,7 +574,14 @@ async function invokeModelReal(
           const obj = s.objective ? ` Objectif : ${s.objective}.` : '';
           const proc = s.procedure.length ? ` Procédure : ${s.procedure.join(' → ')}.` : '';
           const cons = s.constraints.length ? ` Contraintes : ${s.constraints.join(' ; ')}.` : '';
-          return head + trigger + obj + proc + cons;
+          // 0021 marketplace seed: when the row carries a full markdown SKILL.md
+          // body (marketplace source), it inlines the procedure in place of the
+          // meta summary — the body IS the skill (prompt-only skills have empty
+          // procedure/constraints/tools by design).
+          const bodySection = s.body
+            ? `\n\n${s.body}\n`
+            : proc + cons;
+          return head + trigger + obj + bodySection;
         })
         .join('\n')
     : '';
@@ -684,6 +691,8 @@ export interface ModelCall {
     procedure: string[];
     constraints: string[];
     tools: string[];
+    /** 0021 marketplace seed: full markdown SKILL.md body (null for builtin/user-created). */
+    body?: string | null;
   }>;
   /** Task 2 — prompt layer 2: active expert skills (ID + trigger + objective + confidence). */
   expertSkills?: Array<{

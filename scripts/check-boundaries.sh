@@ -95,7 +95,7 @@ g2() {
   #   cfut_ (Cloudflare user tokens),
   #   Bearer <value>,
   #   <KEY_NAME>=<value> dans du code (pas dans .env ou .ps1).
-  local secret_re='sk-[A-Za-z0-9]{8,}|gsk_[A-Za-z0-9_-]{8,}|cfut_[A-Za-z0-9_-]{8,}|Bearer[[:space:]]+[A-Za-z0-9._-]{8,}|(^|[^A-Za-z0-9_])(API_KEY|SERVICE_ROLE_KEY|SUPABASE_DB_URL|POWERSYNC_SECRET|ONESIGNAL_REST_API_KEY|Sentry_DSN|SENTRY_DSN|POSTHOG_API_KEY)=.{8,}'
+  local secret_re='(^|[^A-Za-z0-9_])(sk-[A-Za-z0-9]{8,}|gsk_[A-Za-z0-9_-]{8,}|cfut_[A-Za-z0-9_-]{8,})|Bearer[[:space:]]+[A-Za-z0-9._-]{8,}|(^|[^A-Za-z0-9_])(API_KEY|SERVICE_ROLE_KEY|SUPABASE_DB_URL|POWERSYNC_SECRET|ONESIGNAL_REST_API_KEY|Sentry_DSN|SENTRY_DSN|POSTHOG_API_KEY)=.{8,}'
   local hits=""
   for f in $(code_files); do
     case "$f" in
