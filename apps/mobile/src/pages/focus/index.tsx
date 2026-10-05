@@ -163,25 +163,51 @@ export function FocusPage({ service, onSession }: FocusPageProps) {
                 <button
                   type="button"
                   role="tab"
+                  id="tab-pomodoro"
                   aria-selected={subMode === 'pomodoro'}
+                  aria-controls={subMode === 'pomodoro' ? 'panel-pomodoro' : undefined}
+                  tabIndex={subMode === 'pomodoro' ? 0 : -1}
                   className={`focus-submode-tab ${subMode === 'pomodoro' ? 'is-active' : ''}`}
                   onClick={() => setSubMode('pomodoro')}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'Home' || e.key === 'End') {
+                      e.preventDefault();
+                      setSubMode('chrono');
+                      document.getElementById('tab-chrono')?.focus();
+                    }
+                  }}
                 >
                   <Timer size={14} /> Pomodoro
                 </button>
                 <button
                   type="button"
                   role="tab"
+                  id="tab-chrono"
                   aria-selected={subMode === 'chrono'}
+                  aria-controls={subMode === 'chrono' ? 'panel-chrono' : undefined}
+                  tabIndex={subMode === 'chrono' ? 0 : -1}
                   className={`focus-submode-tab ${subMode === 'chrono' ? 'is-active' : ''}`}
                   onClick={() => setSubMode('chrono')}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'Home' || e.key === 'End') {
+                      e.preventDefault();
+                      setSubMode('pomodoro');
+                      document.getElementById('tab-pomodoro')?.focus();
+                    }
+                  }}
                 >
                   <AlarmClock size={14} /> Chrono
                 </button>
               </div>
 
               {subMode === 'pomodoro' && (
-                <div className="focus-pomodoro-config">
+                <div
+                  id="panel-pomodoro"
+                  role="tabpanel"
+                  aria-labelledby="tab-pomodoro"
+                  tabIndex={0}
+                  className="focus-pomodoro-config"
+                >
                   <div className="focus-config-row">
                     <label>
                       Travail (min)
@@ -214,7 +240,13 @@ export function FocusPage({ service, onSession }: FocusPageProps) {
               )}
 
               {subMode === 'chrono' && (
-                <div className="focus-chrono-config">
+                <div
+                  id="panel-chrono"
+                  role="tabpanel"
+                  aria-labelledby="tab-chrono"
+                  tabIndex={0}
+                  className="focus-chrono-config"
+                >
                   <label>
                     Sonner à (fin de session)
                     <input
@@ -227,12 +259,15 @@ export function FocusPage({ service, onSession }: FocusPageProps) {
                     <Music size={14} aria-hidden />
                     <span>Son de concentration</span>
                     <div className="focus-sound-themes" role="tablist" aria-label="Thème du son">
-                      {FOCUS_SOUND_THEMES.map((t) => (
+                      {FOCUS_SOUND_THEMES.map((t, i) => (
                         <button
                           key={t.id}
                           type="button"
                           role="tab"
+                          id={`tab-theme-${t.id}`}
                           aria-selected={activeTheme === t.id}
+                          aria-controls="panel-sound-themes"
+                          tabIndex={activeTheme === t.id ? 0 : -1}
                           className={`focus-sound-theme ${
                             activeTheme === t.id ? 'is-active' : ''
                           }`}
@@ -241,12 +276,32 @@ export function FocusPage({ service, onSession }: FocusPageProps) {
                             const first = FOCUS_SOUNDS.find((s) => s.theme === t.id);
                             if (first) setFocusSound(first.name);
                           }}
+                          onKeyDown={(e) => {
+                            const n = FOCUS_SOUND_THEMES.length;
+                            let next = -1;
+                            if (e.key === 'ArrowRight') next = (i + 1) % n;
+                            else if (e.key === 'ArrowLeft') next = (i - 1 + n) % n;
+                            else if (e.key === 'Home') next = 0;
+                            else if (e.key === 'End') next = n - 1;
+                            if (next >= 0) {
+                              e.preventDefault();
+                              const target = FOCUS_SOUND_THEMES[next]!;
+                              setActiveTheme(target.id);
+                              const first = FOCUS_SOUNDS.find((s) => s.theme === target.id);
+                              if (first) setFocusSound(first.name);
+                              document.getElementById(`tab-theme-${target.id}`)?.focus();
+                            }
+                          }}
                         >
                           {t.label}
                         </button>
                       ))}
                     </div>
                     <select
+                      id="panel-sound-themes"
+                      role="tabpanel"
+                      aria-labelledby={`tab-theme-${activeTheme}`}
+                      tabIndex={0}
                       value={focusSound}
                       onChange={(e) => selectThemeSound(e.target.value)}
                       aria-label="Choisir le son de concentration"

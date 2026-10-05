@@ -1,8 +1,11 @@
 /**
- * Measure the apps/mobile declaration emit for the 300 Ko JS-gz budget
- * (02 §9.1). A type-only tsc emit (tsconfig.build.json) is what CI can
- * deterministically produce without a bundler; the conservative
- * measurement is:
+ * Measure the apps/mobile web bundle for the 300 Ko JS-gz budget
+ * (02 §9.1). The declaration-emit pipeline (tsconfig.build.json) was
+ * removed on 2026-10-05 (Q6 2026-10-05, @aurora/mobile is an
+ * executable app, not a library, zero external consumers) — this
+ * module now measures the Vite web bundle (dist/assets/*.js) when
+ * present, and falls back to a conservative 0.35 raw-byte factor
+ * when it is not:
  *
  *   - raw:  total bytes of `dist` output
  *   - gz:   gzip of the collected text output (the emit's .d.ts is

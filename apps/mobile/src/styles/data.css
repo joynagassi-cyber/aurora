@@ -452,6 +452,25 @@
 [data-knowledge] {
   padding: 0 16px 16px;
 }
+/* Cross-page query intake (`/knowledge?q=…`, e.g. the agent « Open » action):
+ * a quiet banner above the tree. The semantic search mirror lands with the
+ * knowledge family (AD-7) — until then the banner holds the query visibly. */
+.knowledge-query-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--aurora-text-secondary);
+  background: var(--aurora-bg-subtle);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+}
+.knowledge-query-banner a {
+  flex: none;
+}
 /* AD-10: the SemanticTreeRenderer (React Flow) mounts here — a definite
  * height is required for the canvas to size (React Flow reads parent height). */
 .knowledge-tree {

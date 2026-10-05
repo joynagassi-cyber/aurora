@@ -5,7 +5,9 @@
  *   loading  -> Skeleton shimmer (shadcn Skeleton + Framer Motion GPU pulse)
  *   error    -> Alert destructive (red border + message + retry)
  *   empty    -> Card empty variant (icon + text + CTA "Demande à Aurora")
- *   success  -> Toast (auto-dismiss 3s) — surfaced via the toaster
+ *   success  -> Toast (auto-dismiss 3s) — wave-N (a toaster was planned and
+ *               later removed as dead code, Q4 2026-10-05); no consumer
+ *               currently surfaces a success toast.
  *   offline  -> Badge in the top bar + last-known data
  *   killed   -> Skeleton + auto-resync ("Reconnexion…" + shimmer, 04 S6.1:
  *                kill = taskbar swipe, no reliable signal; return-to-boot

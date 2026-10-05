@@ -13,7 +13,7 @@
  * import CTA; it lays out nodes the moment the mirror yields them.
  */
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { SemanticTreeRenderer } from '@aurora/ui';
 import type { RenderSemanticEdge, RenderSemanticNode } from '@aurora/ui';
 import { useUiStateStore } from '../../state/ui-state';
@@ -36,6 +36,15 @@ function knowledgeFlags(): {
 
 export function KnowledgePage() {
   const { knowledgeExpanded, online, killed, flags } = knowledgeFlags();
+  const [searchParams, setSearchParams] = useSearchParams();
+  /**
+   * Cross-page query intake (`?q=`, navigation-and-page-composition.md):
+   * e.g. the agent transcript's « Open » action drops a quoted snippet here
+   * (`/knowledge?q=…`). The semantic search mirror lands with the knowledge
+   * family (AD-7); until then the query is shown as an intake banner so the
+   * destination is not a dead end.
+   */
+  const query = searchParams.get('q');
 
   // AD-7: the knowledge mirror is not wired yet → the tree is empty. The
   // renderer is still MOUNTED (React Flow canvas + controls); it renders
@@ -50,6 +59,25 @@ export function KnowledgePage() {
       </IonHeader>
       <IonContent>
         <div data-knowledge>
+          {query && (
+            <div className="knowledge-query-banner" data-query={query}>
+              <span>Recherche : « {query} »</span>
+              <a
+                className="aurora-btn aurora-btn--ghost aurora-tap"
+                href="/learn"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setSearchParams((prev) => {
+                    const next = new URLSearchParams(prev);
+                    next.delete('q');
+                    return next;
+                  });
+                }}
+              >
+                Effacer
+              </a>
+            </div>
+          )}
           {/* G-M2: killed = re-hydrate from the local store (skeleton + resync). */}
           {killed ? (
             <UxStates

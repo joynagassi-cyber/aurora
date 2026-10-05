@@ -9,27 +9,56 @@
  * crosses the device (F-09/AD-3).
  *
  * The composer's `+` button opens a bottom sheet with:
- *  - Add files / Add connect (Composio: Google Workspace by default)
+ *  - Files (kernel not yet wired — the section ships in a later wave;
+ *    there is no fake file picker on the surface)
+ *  - Add connect (Composio: Google Workspace by default)
  *  - Skills marketplace (browse ClawHub / create personal skill)
  *  - Research mode (standard / deep)
  *  - Thinking level (low / medium / high / max)
  *
  * Agent modes: chat | agent (autonomous) | mirror (teach the AI).
+ *
+ * ————————————————————————————————————————————————————————————————
+ * Gestures (emotion-design §3, mobile UX pattern: « fluid, never blocking »)
+ *  - **Text selection → menu** : long-press / native selection inside the
+ *    transcript exposes a floating action bar (Copy / Send-to-chat /
+ *    Open page) — the bar appears on `selectionchange` when a selection
+ *    is inside the transcript container.
+ *  - **Horizontal drag (composer)** : the composer row is a swipe surface:
+ *    swipe LEFT → opens the `+` sheet (files/connectors/research/skills);
+ *    swipe RIGHT → cycles the agent mode tabs (chat → agent → mirror).
+ *    The gesture is damped (not instant) so it never fights the keyboard.
+ *  - **Vertical drag → modal (composer)** : swipe the composer row DOWN
+ *    (pull-to-open) → opens the model picker modal (the same sheet as the
+ *    `Cpu` trigger). Threshold 60 px; springs back below.
+ *  - **Drag-to-open page (transcript)** : agent entries that carry a
+ *    `route` payload (deep-link, 04 §3.2.5) are horizontally draggable:
+ *    drag the bubble LEFT → the page it targets slides in from the right
+ *    (navigate + push-state so the back button returns to the chat).
+ *    The bubble « peels » (transform follows the finger, clamped).
  */
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
 import {
   Bot,
   Brain,
   Cpu,
-  FilePlus,
   Link2,
   Plus,
   Search,
   Send,
   Sparkles,
   Zap,
+  Copy,
+  ArrowRight,
+  Quote,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMobileData } from '../../query/context';
 import { useAgentRun } from '../../query/agent-runs';
 import type { AgentRunRow } from '../../lib/agent-client';
@@ -78,6 +107,14 @@ interface Entry {
   body: string;
   /** run id for agent entries (the `agent_runs` row they belong to). */
   runId?: string;
+  /**
+   * Deep-link target (04 §3.2.5): when present, the bubble is
+   * drag-to-open — swipe LEFT peels the bubble and navigates to `route`
+   * with replace-state so back returns to the chat.
+   */
+  route?: string;
+  /** Optional short label shown on the peel affordance (chevron line). */
+  routeLabel?: string;
 }
 
 function statusLine(row: AgentRunRow | null): string {
@@ -96,7 +133,18 @@ function statusLine(row: AgentRunRow | null): string {
   }
 }
 
+/**
+ * Gesture constants (emotional design §3: « calm, never snappy »).
+ * Thresholds tuned so the gestures coexist with native text selection:
+ * a 10 px dead-zone prevents accidental triggers when tapping the composer.
+ */
+const GESTURE_DEAD_ZONE = 10; // px before a swipe is "real"
+const GESTURE_VELOCITY = 0.35; // px/ms — below = "slow, intentional"
+const PULL_OPEN_DISTANCE = 64; // px for composer pull-down → model modal
+const PULL_OPEN_EASE = 'cubic-bezier(0.22, 1, 0.36, 1)'; // ease-out « luxe »
+
 export function AgentPage() {
+  const navigate = useNavigate();
   const { agent } = useMobileData();
   const [draft, setDraft] = useState('');
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -108,9 +156,29 @@ export function AgentPage() {
   const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>('medium');
   const [researchMode, setResearchMode] = useState<ResearchMode>('off');
   const [connectors, setConnectors] = useState<string[]>(DEFAULT_CONNECTORS);
-  const [files, setFiles] = useState<string[]>([]);
+  // files: local surface state — kernel not yet wired (wave-N, see docs/kernel §files)
   const transcriptRef = useRef<HTMLDivElement>(null);
   const entrySeq = useRef(0);
+
+  // ——— Text-selection floating menu state ————————————————————————————
+  const [selection, setSelection] = useState<{
+    text: string;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  // ——— Composer pull-down (→ model modal) ——————————————————————————
+  const [pullOffset, setPullOffset] = useState(0);
+  const [pullActive, setPullActive] = useState(false);
+
+  // ——— Composer horizontal swipe (left → + sheet, right → cycle mode) —
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [swipeActive, setSwipeActive] = useState(false);
+  const swipeStart = useRef<{ x: number; y: number; t: number } | null>(null);
+
+  // ——— Transcript bubble peel (drag-to-open route) ———————————————————
+  const [peel, setPeel] = useState<{ entryId: string; dx: number } | null>(null);
+  const peelStart = useRef<{ x: number; entryId: string } | null>(null);
 
   const { data: runRow, isFetching } = useAgentRun(activeRun);
   const thinking = activeRun !== undefined && !runRow;
@@ -146,11 +214,24 @@ export function AgentPage() {
     }
   }, [runRow, activeRun]);
 
+  // ——— Overlay dismissal (Escape) for the model picker + the + sheet
+  // (pattern: src/ux/floating.tsx). ———
+  useEffect(() => {
+    if (!showPicker && !showPlusSheet) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setShowPicker(false);
+        setShowPlusSheet(false);
+      }
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [showPicker, showPlusSheet]);
+
   async function submit() {
     const intent = draft.trim();
     if (!intent || !agent || thinking) return;
     setDraft('');
-    setFiles([]);
     push({ role: 'user', body: intent });
     try {
       const handle = await agent.start({
@@ -172,6 +253,160 @@ export function AgentPage() {
     }
   }
 
+  /**
+   * Prepend the selected text into the composer draft (the « send-to-chat »
+   * action of the selection menu). The selection is cleared AFTER so the
+   * user can keep scrolling; focus returns to the composer.
+   */
+  function selectionToDraft() {
+    if (!selection) return;
+    const quoted = selection.text;
+    setDraft((prev) => (prev ? `${prev}\n${quoted}` : quoted));
+    setSelection(null);
+    window.getSelection()?.removeAllRanges();
+    document.getElementById('agent-composer-input')?.focus();
+  }
+
+  /** Native copy (clipboard) — the « copy » action of the selection menu. */
+  async function selectionCopy() {
+    if (!selection) return;
+    try {
+      await navigator.clipboard.writeText(selection.text);
+    } catch {
+      /* mobile Safari: clipboard API may be gated; the text is still
+         highlighted, the user can use the system share sheet. */
+    }
+    setSelection(null);
+    window.getSelection()?.removeAllRanges();
+  }
+
+  // ——— selectionchange watcher (only when a selection is INSIDE the
+  // transcript container — the floating menu must not track selections
+  // in the composer input, the model picker, or other pages). ———
+  useEffect(() => {
+    function onSelectionChange() {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
+        setSelection(null);
+        return;
+      }
+      const range = sel.getRangeAt(0);
+      if (!transcriptRef.current?.contains(range.startContainer)) {
+        setSelection(null);
+        return;
+      }
+      const rect = range.getBoundingClientRect();
+      setSelection({
+        text: sel.toString(),
+        x: Math.max(12, Math.min(window.innerWidth - 180, rect.left + rect.width / 2 - 90)),
+        y: Math.max(8, rect.top - 56),
+      });
+    }
+    document.addEventListener('selectionchange', onSelectionChange);
+    return () => document.removeEventListener('selectionchange', onSelectionChange);
+  }, []);
+
+  // ————————————————————————————————————————————————————————————————
+  // Composer gestures (horizontal swipe + vertical pull-down)
+  // Both live on the composer row. The handler distinguishes the two
+  // by the dominant axis at pointermove (first 15 px past the dead-zone).
+  // ————————————————————————————————————————————————————————————————
+
+  function onComposerPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
+    // Ignore if the user is interacting with a real control (buttons, input).
+    const target = e.target as HTMLElement;
+    if (target.closest('button, input, a')) return;
+    swipeStart.current = { x: e.clientX, y: e.clientY, t: performance.now() };
+    setSwipeActive(true);
+  }
+
+  function onComposerPointerMove(e: ReactPointerEvent<HTMLDivElement>) {
+    if (!swipeStart.current) return;
+    const dx = e.clientX - swipeStart.current.x;
+    const dy = e.clientY - swipeStart.current.y;
+
+    // Past the dead-zone: decide the axis (|dx| vs |dy| dominates).
+    if (!swipeActive) return;
+    if (Math.abs(dx) < GESTURE_DEAD_ZONE && Math.abs(dy) < GESTURE_DEAD_ZONE) return;
+
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      // Horizontal: LEFT swipe → open the + sheet (files / connectors /
+      // research — the sheet is the "right" surface, reaching left for it);
+      // RIGHT swipe → cycle the agent-mode tab (chat → agent → mirror).
+      const clamped = Math.max(-96, Math.min(96, dx));
+      setSwipeOffset(clamped);
+    } else if (dy > 0) {
+      // Vertical down-pull → model modal (pull-to-open, spring-back below
+      // the PULL_OPEN_DISTANCE threshold). 15 % damping keeps it calm.
+      setPullOffset(Math.min(120, dy * 0.85));
+      setPullActive(true);
+    }
+  }
+
+  function onComposerPointerUp(e: ReactPointerEvent<HTMLDivElement>) {
+    const start = swipeStart.current;
+
+    if (start) {
+      const totalDx = e.clientX - start.x;
+      const totalDy = e.clientY - start.y;
+      const dt = Math.max(1, performance.now() - start.t);
+      const velocity = Math.abs(totalDx) / dt;
+      if (totalDx < -GESTURE_DEAD_ZONE) {
+        // LEFT swipe → open the + sheet (connectors / skills / research).
+        if (Math.abs(totalDx) > 64 || velocity > GESTURE_VELOCITY) {
+          setShowPicker(false);
+          setShowPlusSheet(true);
+        }
+      } else if (totalDx > GESTURE_DEAD_ZONE) {
+        // RIGHT swipe → cycle the agent mode (chat → agent → mirror → chat).
+        if (Math.abs(totalDx) > 64 || velocity > GESTURE_VELOCITY) {
+          setAgentMode((prev) => {
+            const idx = Math.max(0, AGENT_MODES.findIndex((m) => m.id === prev));
+            return AGENT_MODES[(idx + 1) % AGENT_MODES.length]!.id;
+          });
+        }
+      } else if (totalDy > PULL_OPEN_DISTANCE) {
+        // Down-pull past the threshold → open the model picker modal.
+        setShowPlusSheet(false);
+        setShowPicker(true);
+      }
+    }
+
+    setSwipeActive(false);
+    setPullActive(false);
+    setSwipeOffset(0);
+    setPullOffset(0);
+    swipeStart.current = null;
+  }
+
+  // ————————————————————————————————————————————————————————————————
+  // Transcript bubble peel (drag-to-open a route entry, 04 §3.2.5)
+  // Only entries carrying a `route` are peelable; the chevron affordance
+  // is the only visual cue (a static `→` line, no shadow), so the surface
+  // stays calm by default.
+  // ————————————————————————————————————————————————————————————————
+
+  function onBubblePointerDown(e: ReactPointerEvent<HTMLDivElement>, entryId: string) {
+    peelStart.current = { x: e.clientX, entryId };
+  }
+  function onBubblePointerMove(e: ReactPointerEvent<HTMLDivElement>) {
+    if (!peelStart.current) return;
+    const dx = Math.min(0, e.clientX - peelStart.current.x); // left only
+    if (dx > -GESTURE_DEAD_ZONE) return;
+    setPeel({ entryId: peelStart.current.entryId, dx: Math.max(-160, dx * 0.7) });
+  }
+  function onBubblePointerUp(e: ReactPointerEvent<HTMLDivElement>) {
+    if (!peelStart.current) return;
+    const totalDx = e.clientX - peelStart.current.x;
+    const entry = entries.find((x) => x.id === peelStart.current?.entryId);
+    if (totalDx < -96 && entry?.route) {
+      // Confirmed peel: navigate to the target page; back returns here.
+      navigate(entry.route, { state: { from: '/agent' } });
+    }
+    setPeel(null);
+    peelStart.current = null;
+  }
+
   const inFlightRow = activeRun && runRow && runRow.id === activeRun ? runRow : null;
 
   return (
@@ -188,7 +423,25 @@ export function AgentPage() {
                 key={m.id}
                 type="button"
                 role="tab"
+                id={`tab-${m.id}`}
                 aria-selected={agentMode === m.id}
+                aria-controls="agent-transcript"
+                tabIndex={agentMode === m.id ? 0 : -1}
+                onKeyDown={(e) => {
+                  if (thinking) return;
+                  const idx = AGENT_MODES.findIndex((x) => x.id === m.id);
+                  let next = -1;
+                  if (e.key === 'ArrowRight') next = (idx + 1) % AGENT_MODES.length;
+                  else if (e.key === 'ArrowLeft') next = (idx - 1 + AGENT_MODES.length) % AGENT_MODES.length;
+                  else if (e.key === 'Home') next = 0;
+                  else if (e.key === 'End') next = AGENT_MODES.length - 1;
+                  if (next >= 0) {
+                    e.preventDefault();
+                    const target = AGENT_MODES[next]!;
+                    setAgentMode(target.id);
+                    document.getElementById(`tab-${target.id}`)?.focus();
+                  }
+                }}
                 className={`agent-mode-tab ${agentMode === m.id ? 'is-active' : ''}`}
                 onClick={() => setAgentMode(m.id)}
                 disabled={thinking}
@@ -201,7 +454,11 @@ export function AgentPage() {
 
           <div
             ref={transcriptRef}
+            id="agent-transcript"
             className="agent-transcript"
+            role="tabpanel"
+            aria-labelledby={`tab-${agentMode}`}
+            tabIndex={0}
             data-state={
               agent ? (entries.length || inFlightRow ? 'streaming' : thinking ? 'loading' : 'empty') : 'offline'
             }
@@ -224,11 +481,33 @@ export function AgentPage() {
               </div>
             )}
 
-            {entries.map((e) => (
-              <div key={e.id} className={`agent-entry agent-entry--${e.role}`}>
-                <div className="agent-entry-body">{e.body}</div>
-              </div>
-            ))}
+            {entries.map((e) => {
+              const isPeeling = peel?.entryId === e.id;
+              const peeling = isPeeling ? peel!.dx : 0;
+              return (
+                <div
+                  key={e.id}
+                  className={`agent-entry agent-entry--${e.role} ${e.route ? 'agent-entry--peelable' : ''}`}
+                  style={
+                    isPeeling
+                      ? { transform: `translateX(${peeling}px)`, transition: 'transform 220ms ' + PULL_OPEN_EASE }
+                      : undefined
+                  }
+                  onPointerDown={(ev) => e.route && onBubblePointerDown(ev, e.id)}
+                  onPointerMove={(ev) => e.route && onBubblePointerMove(ev)}
+                  onPointerUp={(ev) => e.route && onBubblePointerUp(ev)}
+                  onPointerCancel={() => setPeel(null)}
+                >
+                  <div className="agent-entry-body">{e.body}</div>
+                  {e.route && (
+                    <div className="agent-entry-route" aria-hidden>
+                      <ArrowRight size={12} />
+                      <span>{e.routeLabel ?? 'Ouvrir la page'}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
 
             {thinking && (
               <div className="agent-thinking">
@@ -246,7 +525,58 @@ export function AgentPage() {
             )}
           </div>
 
-          {/* Active chips: thinking level + research + files + connectors */}
+          {/* Floating text-selection action bar (Copy / Send-to-chat / Open
+              page) — appears when a selection is inside the transcript. */}
+          {selection && (
+            <div
+              className="agent-selection-menu"
+              role="menu"
+              aria-label="Actions sur la sélection"
+              style={{ left: selection.x, top: selection.y }}
+            >
+              <button
+                type="button"
+                onClick={selectionCopy}
+                aria-label="Copier la sélection"
+              >
+                <Copy size={14} />
+                <span>Copier</span>
+              </button>
+              <button
+                type="button"
+                onClick={selectionToDraft}
+                aria-label="Ajouter au chat"
+              >
+                <Send size={14} />
+                <span>Dans le chat</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  // « Open page » = treat the selection as a query and open
+                  // the knowledge search (the natural destination for a
+                  // quoted snippet). If the selection looks like a route
+                  // (a known in-app path), navigate there instead.
+                  const text = selection.text.trim();
+                  const looksLikeRoute =
+                    text.startsWith('/') && !text.includes(' ') && text.length < 64;
+                  setSelection(null);
+                  window.getSelection()?.removeAllRanges();
+                  if (looksLikeRoute) {
+                    navigate(text);
+                  } else {
+                    navigate(`/knowledge?q=${encodeURIComponent(text)}`);
+                  }
+                }}
+                aria-label="Ouvrir dans l'app"
+              >
+                <Quote size={14} />
+                <span>Ouvrir</span>
+              </button>
+            </div>
+          )}
+
+          {/* Active chips: research + connectors */}
           <div className="agent-active-chips">
             <button
               type="button"
@@ -261,18 +591,15 @@ export function AgentPage() {
             <button
               type="button"
               className="agent-chip"
-              onClick={() => setShowPlusSheet(true)}
+              onClick={() => {
+                setShowPicker(false);
+                setShowPlusSheet(true);
+              }}
               disabled={!agent || thinking}
               aria-label="Plus d'options"
             >
               <Plus size={14} />
             </button>
-            {files.length > 0 && (
-              <span className="agent-chip agent-chip--static">
-                <FilePlus size={12} />
-                {files.length} fichier{files.length > 1 ? 's' : ''}
-              </span>
-            )}
             {connectors.length > 0 && (
               <span className="agent-chip agent-chip--static">
                 <Link2 size={12} />
@@ -281,52 +608,92 @@ export function AgentPage() {
             )}
           </div>
 
-          <form
-            className="agent-composer"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void submit();
+          {/* Composer (pinned, swipe surface) */}
+          <div
+            className="agent-composer-gesture"
+            onPointerDown={onComposerPointerDown}
+            onPointerMove={onComposerPointerMove}
+            onPointerUp={onComposerPointerUp}
+            onPointerCancel={onComposerPointerUp}
+            style={{
+              transform: `translateX(${swipeOffset}px) translateY(${pullOffset}px)`,
+              transition:
+                swipeActive || pullActive ? 'none' : 'transform 260ms ' + PULL_OPEN_EASE,
+              touchAction: 'none',
             }}
           >
-            <button
-              type="button"
-              className="agent-model-picker-trigger"
-              onClick={() => setShowPicker(true)}
-              aria-label="Choisir le modèle et le niveau de réflexion"
-              disabled={!agent || thinking}
+            <form
+              className="agent-composer"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void submit();
+              }}
             >
-              {modelChoice ? (
-                <span className="agent-model-picker-label">
-                  <Cpu size={12} aria-hidden />
-                  {modelChoice.model}
-                </span>
-              ) : (
-                <span className="agent-model-picker-label">
-                  <Sparkles size={12} aria-hidden />
-                  Auto
-                </span>
-              )}
-            </button>
+              <button
+                type="button"
+                className="agent-model-picker-trigger"
+                onClick={() => {
+                  setShowPlusSheet(false);
+                  setShowPicker(true);
+                }}
+                aria-label="Choisir le modèle et le niveau de réflexion"
+                disabled={!agent || thinking}
+              >
+                {modelChoice ? (
+                  <span className="agent-model-picker-label">
+                    <Cpu size={12} aria-hidden />
+                    {modelChoice.model}
+                  </span>
+                ) : (
+                  <span className="agent-model-picker-label">
+                    <Sparkles size={12} aria-hidden />
+                    Auto
+                  </span>
+                )}
+              </button>
 
-            <input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder={agentMode === 'mirror' ? 'Explique ce que tu as appris…' : 'Écris ton intention…'}
-              aria-label="Écrire à l'agent"
-              disabled={!agent || isFetching}
-            />
-            <button
-              type="submit"
-              disabled={!agent || draft.trim().length === 0 || thinking}
-              aria-label="Envoyer"
-            >
-              <Send size={18} />
-            </button>
-          </form>
+              <input
+                id="agent-composer-input"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                placeholder={agentMode === 'mirror' ? 'Explique ce que tu as appris…' : 'Écris ton intention…'}
+                aria-label="Écrire à l'agent"
+                disabled={!agent || isFetching}
+              />
+              <button
+                type="submit"
+                disabled={!agent || draft.trim().length === 0 || thinking}
+                aria-label="Envoyer"
+              >
+                <Send size={18} />
+              </button>
+            </form>
+
+            {/* Hint line (only visible while swiping: « glisser → options ») */}
+            {(swipeActive || pullActive) && (
+              <div className="agent-composer-hint" aria-live="polite">
+                {swipeOffset < -16
+                  ? 'Relâche pour les options'
+                  : swipeOffset > 16
+                  ? 'Relâche pour changer de mode'
+                  : pullOffset > 16
+                  ? 'Relâche pour le choix du modèle'
+                  : 'Glisse'}
+              </div>
+            )}
+          </div>
 
           {/* Model + thinking level picker modal */}
           {showPicker && (
-            <div className="agent-model-picker-modal" role="dialog" aria-label="Choix du modèle">
+            <div
+              className="agent-model-picker-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Choix du modèle"
+              onMouseDown={(e) => {
+                if (e.target === e.currentTarget) setShowPicker(false);
+              }}
+            >
               <div className="agent-model-picker-header">
                 <Bot size={16} aria-hidden />
                 <h3>Modèle & réflexion</h3>
@@ -398,9 +765,17 @@ export function AgentPage() {
             </div>
           )}
 
-          {/* + sheet: files / connectors / skills / research */}
+          {/* + sheet: connectors / skills / research */}
           {showPlusSheet && (
-            <div className="agent-plus-sheet" role="dialog" aria-label="Options du chat">
+            <div
+              className="agent-plus-sheet"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Options du chat"
+              onMouseDown={(e) => {
+                if (e.target === e.currentTarget) setShowPlusSheet(false);
+              }}
+            >
               <div className="agent-plus-header">
                 <h3>Options</h3>
                 <button
@@ -448,26 +823,8 @@ export function AgentPage() {
               </div>
 
               <div className="agent-plus-section">
-                <div className="agent-plus-label">Fichiers</div>
-                <button
-                  type="button"
-                  className="agent-plus-option"
-                  onClick={() => {
-                    const next = `fichier-${files.length + 1}.pdf`;
-                    setFiles([...files, next]);
-                  }}
-                >
-                  <FilePlus size={14} aria-hidden />
-                  <span>Ajouter un fichier</span>
-                </button>
-                {files.length > 0 && (
-                  <div className="agent-plus-files">{files.map((f) => <span key={f} className="agent-plus-file">{f}</span>)}</div>
-                )}
-              </div>
-
-              <div className="agent-plus-section">
                 <div className="agent-plus-label">Skills</div>
-                <button type="button" className="agent-plus-option" onClick={() => { setShowPlusSheet(false); /* navigate to /skills */ }}>
+                <button type="button" className="agent-plus-option" onClick={() => { setShowPlusSheet(false); navigate('/skills'); }}>
                   <Sparkles size={14} aria-hidden />
                   <span>Gérer mes skills (marketplace + perso)</span>
                 </button>

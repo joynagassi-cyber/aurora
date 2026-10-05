@@ -21,9 +21,12 @@ import { useEffect, useState } from 'react';
 import { useMobileData } from '../../query/context';
 import type { IntegrationAccount } from '../../lib/integrations-client';
 
-// ——— Connector catalog (Composio toolkits; slugs are the v3.1
-// ———  `toolkit_slug` values; the UI NEVER invents a toolkit/tool slug —
-// ———  the skill §4 + the runtime catalog are the SSoT). ———
+// ——— Connector catalog (Composio v3.1 toolkits) ————————————————————————
+// The 9 CONNECTORS below are a static device-side subset of the v3.1 toolkit
+// catalog (composio-analysis.md §2). discoverTools() (lib/integrations-client.ts:47)
+// is the SSoT runtime seam — it is NOT wired yet (wave-N); the server EF
+// (fn-integrations) validates every toolSlug against the live session catalog
+// before execution, so a stale slug in this array cannot corrupt data.
 interface Connector {
   id: string; // toolkit_slug (v3.1)
   name: string;
@@ -62,6 +65,9 @@ export function IntegrationsPage() {
   const [accounts, setAccounts] = useState<IntegrationAccount[]>([]);
   const [loading, setLoading] = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
+  // In-flight guard: disables the toggles + preset while a connect call runs
+  // (5 parallel window.open would otherwise race the accounts refresh).
+  const [inFlight, setInFlight] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!integrations) return;
@@ -86,10 +92,18 @@ export function IntegrationsPage() {
   const isConnected = (id: string) =>
     accounts.some((a) => a.app.toUpperCase() === id && a.state === 'connected');
 
-  function toggle(id: string) {
-    if (!integrations) return;
+  /**
+   * Connect (or disconnect) one app. Returns a Promise so preset-level
+   * batching (Promise.allSettled) cannot lose individual rejections — a
+   * failed item surfaces a per-item `setConnectError`, not a silent drop.
+   */
+  function connectOne(id: string): Promise<void> {
+    if (!integrations) return Promise.resolve();
     setConnectError(null);
-    void integrations
+    setInFlight((prev) => new Set(prev).add(id));
+    const connector = CONNECTORS.find((c) => c.id === id);
+    const label = connector ? connector.name : id;
+    return integrations
       .connect(id)
       .then((res) => {
         if (res.connectLink) {
@@ -102,8 +116,22 @@ export function IntegrationsPage() {
       })
       .then((a) => setAccounts(a))
       .catch((e: unknown) => {
-        setConnectError(e instanceof Error ? e.message : 'Connexion indisponible');
+        setConnectError(
+          `${label} : ${e instanceof Error ? e.message : 'erreur de connexion'}`,
+        );
+      })
+      .finally(() => {
+        setInFlight((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
       });
+  }
+
+  /** Single-app toggle (card button). */
+  function toggle(id: string) {
+    void connectOne(id);
   }
 
   const google = CONNECTORS.filter((c) => c.vendor === 'Google Workspace');
@@ -144,6 +172,7 @@ export function IntegrationsPage() {
           type="button"
           className={`integration-toggle ${on ? 'is-on' : ''}`}
           onClick={() => toggle(c.id)}
+          disabled={inFlight.has(c.id)}
           aria-label={on ? `Déconnecter ${c.name}` : `Connecter ${c.name}`}
         >
           {on ? 'Déconnecter' : 'Connecter'}
@@ -185,9 +214,12 @@ export function IntegrationsPage() {
               <button
                 type="button"
                 className="integration-preset-btn"
+                disabled={inFlight.size > 0}
                 onClick={() => {
                   // Connect the full Google Workspace preset at once.
-                  google.forEach((g) => toggle(g.id));
+                  // allSettled: one item's rejection must not drop the
+                  // others — each failure lands in setConnectError per item.
+                  void Promise.allSettled(google.map((g) => connectOne(g.id)));
                 }}
               >
                 <Check size={14} />
@@ -230,6 +262,7 @@ export function IntegrationsPage() {
                   type="button"
                   className={`integration-toggle ${isConnected('SPOTIFY') ? 'is-on' : ''}`}
                   onClick={() => toggle('SPOTIFY')}
+                  disabled={inFlight.has('SPOTIFY')}
                   aria-label={isConnected('SPOTIFY') ? 'Déconnecter Spotify' : 'Connecter Spotify'}
                 >
                   {isConnected('SPOTIFY') ? 'Déconnecter' : 'Connecter'}

@@ -529,3 +529,106 @@
   background: var(--aurora-accent-primary);
   border-color: var(--aurora-accent-primary);
 }
+
+/* ————————————————————————————————————————————————————————————————
+ * Gestures (emotion-design §3: fluid, never blocking; §2: token-only)
+ *  1. Composer swipe surface — the row translates with the finger; a hint
+ *     line appears mid-gesture so the affordance is discoverable once.
+ *  2. Floating text-selection menu — anchored above the selection range.
+ *  3. Peelable transcript bubbles — entries with a deep-link `route`
+ *     (04 §3.2.5) carry a static chevron affordance; a left peel navigates.
+ * ————————————————————————————————————————————————————————————————
+
+.agent-composer-gesture {
+  position: relative;
+  will-change: transform;
+}
+
+/* The calm « glisse pour… » hint, only visible mid-gesture (200ms in). */
+.agent-composer-hint {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--aurora-accent-on-primary);
+  background: var(--aurora-accent-primary);
+  border-radius: 999px;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: agent-hint-in 0.18s ease-out;
+}
+@keyframes agent-hint-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Floating selection action bar — sits above the highlighted range, one
+   compact pill row. Calm: no shadow, 1px border, token colors only. */
+.agent-selection-menu {
+  position: fixed;
+  z-index: 1002;
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border-strong, var(--aurora-border));
+  border-radius: 999px;
+  box-shadow: var(--aurora-shadow-card);
+  animation: agent-hint-in 0.16s ease-out;
+}
+.agent-selection-menu button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--aurora-text-primary);
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.agent-selection-menu button:hover {
+  background: var(--aurora-bg-subtle);
+}
+.agent-selection-menu button:active {
+  background: var(--aurora-accent-surface);
+  color: var(--aurora-accent-on-primary);
+}
+
+/* Peelable transcript bubbles (deep-link entries, 04 §3.2.5). The affordance
+   is a quiet chevron line, bottom-left — it never pulses (A1 anti-pattern). */
+.agent-entry--peelable {
+  position: relative;
+  touch-action: pan-y; /* allow vertical scroll, capture horizontal peel */
+}
+.agent-entry-route {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--aurora-text-muted);
+  background: transparent;
+  border-radius: 999px;
+  opacity: 0.7;
+  align-self: flex-start;
+}
+.agent-entry--user .agent-entry-route {
+  align-self: flex-end;
+}
+.agent-entry-route:hover,
+.agent-entry-route:active {
+  opacity: 1;
+  color: var(--aurora-accent-primary);
+}
+.agent-entry--peelable:active .agent-entry-route {
+  opacity: 1;
+}
+

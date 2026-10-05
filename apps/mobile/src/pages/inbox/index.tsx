@@ -6,9 +6,14 @@
  *
  * Tiptap (the capture editor) mounts here once Tailwind is on mobile; this
  * turn ships a token-styled composer + an honest empty list.
+ *
+ * AD-7 honesty: the capture triage (draft → task/learn routing) is not
+ * wired yet. The composer is a re-readable draft — there is deliberately no
+ * capture CTA (a "Capturer" button would claim a triage that does not
+ * happen); the textarea stays editable so nothing typed is lost.
  */
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
-import { Plus, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useState } from 'react';
 
 export function InboxPage() {
@@ -24,7 +29,9 @@ export function InboxPage() {
       </IonHeader>
       <IonContent>
         <div data-inbox="true" className="inbox">
-          {/* Capture composer (quick capture, 02 §6.1). */}
+          {/* Capture composer (quick capture, 02 §6.1). The draft is
+              re-readable — the triage (routing to /tasks, /learn) is a
+              pending wave, so the CTA is an honest badge, not a button. */}
           <div className="inbox-composer">
             <textarea
               className="inbox-composer-input"
@@ -34,14 +41,7 @@ export function InboxPage() {
               aria-label="Capturer"
               rows={3}
             />
-            <button
-              className="aurora-btn aurora-btn--primary aurora-tap"
-              onClick={() => setDraft('')}
-              disabled={draft.trim().length === 0}
-            >
-              <Plus size={18} aria-hidden />
-              Capturer
-            </button>
+            <span className="aurora-badge">Capture en cours de wiring</span>
           </div>
 
           {/* Triage list (local draft; mirror not wired → honest empty). */}
