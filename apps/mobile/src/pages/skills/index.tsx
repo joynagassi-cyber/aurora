@@ -20,6 +20,7 @@ import { IonContent, IonHeader, IonTitle } from '@ionic/react';
 import {
   Brain,
   Check,
+  FileText,
   Loader2,
   Plus,
   Search,
@@ -28,17 +29,43 @@ import {
   X,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { SkillDocSheet } from '../../components/skills/SkillDocSheet';
 import { useMobileData } from '../../query/context';
 import type { SkillCatalogEntry, UserSkillRow } from '../../lib/skills-client';
 
-// ——— Domain labels (the 6 catalog domains, French) —————————————————————
+// ——— Domain labels (14 domaines, seed 0021 — scripts/skills-seed.ts DOMAIN_ORDER, ordre manuel) ———
+const DOMAIN_ORDER: string[] = [
+  'science',
+  'legal',
+  'finance',
+  'healthcare',
+  'students',
+  'productivity',
+  'business',
+  'marketing',
+  'documents',
+  'research',
+  'creative',
+  'design',
+  'social',
+  'coding',
+];
+
 const DOMAIN_LABELS: Record<string, string> = {
   science: 'Scientifique',
+  legal: 'Juridique',
+  finance: 'Finance',
+  healthcare: 'Santé',
+  students: 'Étudiants & Apprentissage',
+  productivity: 'Productivité',
+  business: 'Business & Ops',
   marketing: 'Marketing & Productivité',
-  social: 'Réseau & Social',
-  research: 'Recherche',
   documents: 'Documents & Présentations',
+  research: 'Recherche',
   creative: 'Création',
+  design: 'Design & UX',
+  social: 'Réseau & Social',
+  coding: 'Développement',
 };
 
 type Tab = 'catalog' | 'personal' | 'expert';
@@ -55,6 +82,9 @@ export function SkillsPage() {
   const [userSkills, setUserSkills] = useState<UserSkillRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Document sheet (0021 marketplace seed) : le skill du catalogue dont on
+  // affiche le corps markdown complet (SKILL.md tel quel).
+  const [docEntry, setDocEntry] = useState<SkillCatalogEntry | null>(null);
 
   // Create form (Mes skills tab).
   const [showCreate, setShowCreate] = useState(false);
@@ -93,7 +123,7 @@ export function SkillsPage() {
   const toggleCatalogSkill = useCallback(
     async (entry: SkillCatalogEntry) => {
       if (!skills) return;
-      const key = `builtin:${entry.skillKey}`;
+      const key = entry.source.startsWith('marketplace:') ? `marketplace:${entry.skillKey}` : entry.skillKey;
       const isActive = activeKeys.has(key);
       if (isActive) {
         await skills.deactivateSkill(key);
@@ -176,8 +206,12 @@ export function SkillsPage() {
   }
 
   const domains = useMemo(() => {
-    const set = new Set(catalog.map((c) => c.domain));
-    return Array.from(set);
+    const present = new Set(catalog.map((c) => c.domain));
+    // Ordre manuel (DOMAIN_ORDER, seed 0021) : les domaines présents d'abord
+    // dans cet ordre, puis les domaines inconnus (catégorie ad hoc du seed).
+    const known = DOMAIN_ORDER.filter((d) => present.has(d));
+    const unknown = Array.from(present).filter((d) => !DOMAIN_ORDER.includes(d)).sort();
+    return [...known, ...unknown];
   }, [catalog]);
 
   const visibleDomains = domainFilter === 'all' ? domains : domains.filter((d) => d === domainFilter);
@@ -309,7 +343,7 @@ export function SkillsPage() {
                     {filteredCatalog
                       .filter((c) => c.domain === d)
                       .map((entry) => {
-                        const key = `builtin:${entry.skillKey}`;
+                        const key = entry.source.startsWith('marketplace:') ? `marketplace:${entry.skillKey}` : entry.skillKey;
                         const isActive = activeKeys.has(key);
                         return (
                           <div
@@ -339,19 +373,31 @@ export function SkillsPage() {
                                 </span>
                               ))}
                             </div>
-                            <button
-                              type="button"
-                              className={`skill-activate-btn ${isActive ? 'is-on' : ''}`}
-                              onClick={() => void toggleCatalogSkill(entry)}
-                            >
-                              {isActive ? (
-                                <>
-                                  <Check size={12} aria-hidden /> Activé
-                                </>
-                              ) : (
-                                'Activer'
+                            <div className="skill-card-actions">
+                              {entry.body != null && entry.body !== '' && (
+                                <button
+                                  type="button"
+                                  className="skill-doc-btn"
+                                  onClick={() => setDocEntry(entry)}
+                                >
+                                  <FileText size={12} aria-hidden />
+                                  <span>Document</span>
+                                </button>
                               )}
-                            </button>
+                              <button
+                                type="button"
+                                className={`skill-activate-btn ${isActive ? 'is-on' : ''}`}
+                                onClick={() => void toggleCatalogSkill(entry)}
+                              >
+                                {isActive ? (
+                                  <>
+                                    <Check size={12} aria-hidden /> Activé
+                                  </>
+                                ) : (
+                                  'Activer'
+                                )}
+                              </button>
+                            </div>
                           </div>
                         );
                       })}
@@ -548,6 +594,10 @@ export function SkillsPage() {
               </div>
             </div>
           )}
+
+          {/* Document sheet (0021 marketplace seed) — le SKILL.md complet du
+              skill sélectionné, rendu en markdown. */}
+          {docEntry && <SkillDocSheet entry={docEntry} onClose={() => setDocEntry(null)} />}
         </div>
       </IonContent>
     </>

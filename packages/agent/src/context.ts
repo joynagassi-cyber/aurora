@@ -192,6 +192,9 @@ export async function buildAgentContext(
           procedure: Array.isArray(s.procedure) ? s.procedure : [],
           constraints: Array.isArray(s.constraints) ? s.constraints : [],
           tools: Array.isArray(s.tools) ? s.tools : [],
+          // 0021 marketplace seed: the full markdown SKILL.md body (null for
+          // builtin/user-created rows). Feeds prompt layer 1 inline.
+          body: typeof (s as { body?: unknown }).body === "string" ? (s as { body: string }).body : null,
         })),
     },
   };
