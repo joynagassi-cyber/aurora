@@ -169,29 +169,44 @@ async function main() {
   }
   console.log("\nNOTE: si l'EF fn-skills renvoie {degraded:true} / 503 'SUPABASE env not configured', le secret projet SUPABASE_SECRET_KEY n'est pas encore défini pour l'EF (Dashboard > Edge Functions > Secrets, ou `supabase secrets set SUPABASE_SECRET_KEY=...`). La suite bascule automatiquement en [5b] fallback service key pour attester la précision du flux de données dans l'intervalle.");
 
-  console.log("\n[1] skill_catalog — intégrité du seed (18 skills builtin, 6 domaines)");
+  console.log("\n[1] skill_catalog — intégrité du seed (18 builtin + 589 marketplace seed 0021, 14 domaines)");
   const catalog: any[] = await restGet("/skill_catalog", SECRET_KEY);
-  check("skill_catalog = 18 rows (service key)", Array.isArray(catalog) && catalog.length === 18, `got ${Array.isArray(catalog) ? catalog.length : JSON.stringify(catalog).slice(0, 120)}`);
-  const domains = new Set((catalog as any[]).map((c) => c.domain));
-  const expectedDomains = ["science", "marketing", "social", "research", "documents", "creative"];
+  const builtinRows = (catalog ?? []).filter((c) => !String(c.source).startsWith("marketplace:"));
+  const marketplaceRows = (catalog ?? []).filter((c) => String(c.source).startsWith("marketplace:"));
+  check("skill_catalog = 18 rows builtin (service key)", Array.isArray(catalog) && builtinRows.length === 18, `got ${builtinRows.length}`);
   check(
-    "6 domaines exacts (science/marketing/social/research/documents/creative)",
-    expectedDomains.every((d) => domains.has(d)) && domains.size === 6,
-    `got ${[...domains].join(",")}`,
+    "skill_catalog = 589 rows marketplace (seed 0021)",
+    marketplaceRows.length === 589,
+    `got ${marketplaceRows.length}`,
+  );
+  check(
+    "chaque ligne marketplace a un body non vide (seed 0021)",
+    marketplaceRows.every((c) => typeof c.body === "string" && c.body.trim() !== ""),
+    marketplaceRows.filter((c) => !(typeof c.body === "string" && c.body.trim() !== "")).length + " sans body",
+  );
+  const domains = new Set((catalog as any[]).map((c) => c.domain));
+  const expectedDomains = ["science", "legal", "finance", "healthcare", "students", "productivity", "business", "marketing", "documents", "research", "creative", "design", "social", "coding"];
+  check(
+    "14 domaines attendus (DOMAIN_ORDER seed 0021)",
+    expectedDomains.every((d) => domains.has(d)),
+    `manquants: ${expectedDomains.filter((d) => !domains.has(d)).join(",")}`,
   );
   const expectedKeys = AGENT_SKILL_TEMPLATES.map((t) => t.skillKey).sort();
-  const liveKeys = (catalog as any[]).map((c) => c.skill_key).sort();
+  const liveBuiltinKeys = builtinRows.map((c) => c.skill_key).sort();
   check(
-    "18 skill_keys live = 18 AGENT_SKILL_TEMPLATES (aucune divergence source/SSoT)",
-    JSON.stringify(expectedKeys) === JSON.stringify(liveKeys),
-    `live=${liveKeys.length} templates=${expectedKeys.length}`,
+    "18 skill_keys builtin live = 18 AGENT_SKILL_TEMPLATES (aucune divergence source/SSoT)",
+    JSON.stringify(expectedKeys) === JSON.stringify(liveBuiltinKeys),
+    `live=${liveBuiltinKeys.length} templates=${expectedKeys.length}`,
   );
-  const emptyProc = (catalog as any[]).filter((c) => !Array.isArray(c.procedure) || c.procedure.length === 0);
-  check("aucun skill_catalog row sans procedure (précision du seed)", emptyProc.length === 0, emptyProc.map((c) => c.skill_key).join(","));
+  const emptyProc = builtinRows.filter((c) => !Array.isArray(c.procedure) || c.procedure.length === 0);
+  check("aucun skill_catalog BUILTIN row sans procedure (précision du seed)", emptyProc.length === 0, emptyProc.map((c) => c.skill_key).join(","));
+  const mpDomainCounts: Record<string, number> = {};
+  for (const c of marketplaceRows) mpDomainCounts[c.domain] = (mpDomainCounts[c.domain] ?? 0) + 1;
+  console.log(`  (par domaine marketplace: ${Object.entries(mpDomainCounts).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}=${v}`).join(" ")})`);
 
   console.log("\n[2] Lecture publique (AD-3) — le mobile lit le catalogue SANS user JWT");
   const anonCatalog: any[] = await restGet("/skill_catalog", PUBLISH_KEY);
-  check("publishable key lit skill_catalog (18 rows)", Array.isArray(anonCatalog) && anonCatalog.length === 18, `got ${Array.isArray(anonCatalog) ? anonCatalog.length : "non-array"}`);
+  check("publishable key lit skill_catalog (18 builtin + 589 marketplace)", Array.isArray(anonCatalog) && anonCatalog.length === 607, `got ${Array.isArray(anonCatalog) ? anonCatalog.length : "non-array"}`);
 
   console.log("\n[3] RLS — user_skills est isolé par utilisateur");
   const anonUserSkills: any[] = await restGet("/user_skills", PUBLISH_KEY);
@@ -205,10 +220,10 @@ async function main() {
   const listCatalogViaEf = await ef("list_catalog", {});
   const degraded = listCatalogViaEf.json?.data?.degraded === true;
   check(
-    "EF list_catalog (public, pas de user JWT requis) = 18 rows, ou état dégradé honnête (secret EF pas encore en place)",
+    "EF list_catalog (public, pas de user JWT requis) = 607 rows (18 builtin + 589 marketplace), ou état dégradé honnête (secret EF pas encore en place)",
     listCatalogViaEf.status === 200 &&
       listCatalogViaEf.json?.ok === true &&
-      ((listCatalogViaEf.json?.data?.catalog?.length === 18) || degraded),
+      ((listCatalogViaEf.json?.data?.catalog?.length === 607) || degraded),
     `HTTP ${listCatalogViaEf.status} degraded=${degraded} ${JSON.stringify(listCatalogViaEf.json).slice(0, 120)}`,
   );
 
@@ -381,7 +396,16 @@ async function main() {
     }
   }
   check("chaque template: tools ⊂ KERNEL_TOOLS (46), procedure ≥ 3 étapes, constraints ≥ 1, trigger substantiel", templatesOk);
-  check("18 templates = le nombre exact de skill_catalog rows (aucun orphelin d'un côté ou l'autre)", AGENT_SKILL_TEMPLATES.length === 18 && catalog.length === 18);
+  check("18 templates = le nombre exact de skill_catalog rows BUILTIN (aucun orphelin d'un côté ou l'autre)", AGENT_SKILL_TEMPLATES.length === 18 && builtinRows.length === 18);
+
+  console.log("\n[7b] Seed marketplace 0021 — intégrité des 589 lignes (source/domain/body/key)");
+  const mpSourcePrefixOk = marketplaceRows.every((c) => String(c.source).startsWith("marketplace:"));
+  check("chaque ligne marketplace a source='marketplace:<repo>'", mpSourcePrefixOk);
+  check("chaque skill_key marketplace commence par 'marketplace:'", marketplaceRows.every((c) => String(c.skill_key).startsWith("marketplace:")));
+  const mpDomainValid = marketplaceRows.every((c) => expectedDomains.includes(c.domain));
+  check("chaque domaine marketplace est dans le closed-set de 14 (DOMAIN_ORDER)", mpDomainValid);
+  const mpDup = marketplaceRows.length - new Set(marketplaceRows.map((c) => c.skill_key)).size;
+  check("skill_key uniques (aucun doublon)", mpDup === 0, `${mpDup} doublons`);
 
   console.log("\n[8] Nettoyage");
   const keep = process.argv.includes("--keep");

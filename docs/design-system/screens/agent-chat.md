@@ -85,6 +85,43 @@ Composition **fixe** (05 §4.9.1 l. 2779-2804 + kernel §13) :
 
 **Règle bloquante** (ui-libraries S5 l. 169 + S3 l. 143 + 05 §2.6) : **jamais** de `layout` animations sur mobile ; **jamais** de bouncy animations (S3 l. 143 : Framer Motion smooth 150–250ms **uniquement** — le 4.2s/3.4s/2.6s du loader = **boucles GPU** autorisées, pas des transitions bouncy) ; `prefers-reduced-motion` = **static** (05 §2.6 l. 330-334 : tout passe en `instant`, 0ms) ; les données **scientifiques** ne s'animent **jamais** (05 §2.6 l. 323-330, règle 1) — le streaming de texte **n'est pas** une donnée scientifique (c'est du contenu, pas un résultat), donc **autorise** l'animation du flux (mais **pas** de bouncy, S3 l. 143).
 
+### 5.1 Gestes /agent (4 gestes, owner-ratified 2026-10-05)
+
+Les 4 gestes du chat `/agent` sont des affordances **secondaires** — jamais
+substitut d'un contrôle visible (règle a11y §11 : chaque geste a son
+équivalent clavier). Implémentation : `apps/mobile/src/pages/agent/index.tsx`
+(pointer events ; `touch-action: none` uniquement sur la surface du
+composer). Constantes (emotion-design §3 : « calm, never snappy ») : dead-zone
+10 px (ni le scroll, ni le tap, ne déclenchent un geste par erreur) ; seuil
+de confirmation 64 px **ou** vitesse > 0.35 px/ms (relâchement lent =
+annulation, relâchement vif = action).
+
+| # | Geste | Surface | Seuil / damping | Résultat | Équivalent accessible |
+|---|---|---|---|---|---|
+| G1 | Swipe **gauche** du composer | ligne du composer (hors boutons/input) | dx < −10 px actif ; confirmé dx < −64 px ou v > 0.35 px/ms | Ouvre le sheet `+` (connecteurs / recherche / skills) | Le bouton `+` (`.agent-chip`, toujours visible) |
+| G2 | Swipe **droite** du composer | idem | dx > +10 px actif ; confirmé dx > +64 px ou v > 0.35 px/ms | Cycle le mode agent : `chat → agent → mirror → chat` (le registre de voix bascule avec le mode, §5.1 voice-register) | Les tabs de mode (toujours visibles, clavier ←/→) |
+| G3 | Pull **bas** du composer | idem | dy > 0, damping 0.85 (transform suit le doigt, clamp 120 px) ; confirmé dy ≥ 64 px | Ouvre la modale de choix du modèle (la même que le trigger `Cpu`) | Le trigger modèle (`Cpu` / « Auto »), toujours visible |
+| G4 | Peel d'une bulle `route` (deep-link 04 §3.2.5) | bulle de transcript portant un `route` (payload `data.route` OneSignal) | dx < −10 px actif (gauche uniquement), damping 0.7 ; confirmé dx < −96 px | `navigate(route, { state: { from: '/agent' } })` — la page cible s'ouvre **au-dessus** du chat ; le back natif **retourne au chat** (contexte préservé, 02 §6.3) | Le chevron de la bulle (`→` + libellé, `.agent-entry-route`) — bouton focusable, pas seulement un geste |
+
+Règles bloquantes des 4 gestes :
+- Un hint textuel discret (« Relâche pour … ») n'apparaît **que** pendant le
+  geste (`.agent-composer-hint`, `aria-live="polite"`), jamais au repos —
+  l'app ne « vend » pas ses propres raccourcis (AD-14 : un seul CTA par écran).
+- G1/G2/G3 sont **mutuellement exclusifs** par axe dominant (le 1er move au-delà
+  de la dead-zone décide de l'axe) — jamais 2 gestes sur le même mouvement.
+- G4 existe **uniquement** sur les bulles qui portent un `route` ; une bulle
+  sans `route` n'est jamais draggable (pas de geste fantôme).
+- Pendant `thinking` (run en cours) : G1–G4 restent **actifs** (fermer/ouvrir
+  les surfaces n'interrompt pas le run — AD-7), mais les tabs de mode sont
+  désactivés (le mode ne bascule pas en plein run).
+
+**Voice-register (owner-ratifié 2026-10-05)** : le registre de voix suit le
+mode agent — `chat` / `agent` = vouvoiement (registre pro, emotion-design §5.1
+« jamais le tutoiame ») ; `mirror` = tutoiement (registre pédagogique, le mode
+miroir **enseigne** : « explique ce que tu as appris »). Le swipe G2 qui
+cycle le mode **bascule** le registre (code : `registerCopy(register, …)`
+dans agent/index.tsx). Les microcopy existants de l'écran suivent cette règle.
+
 ## 6. Modals / BottomSheets / Drawers
 
 | Surface | Déclencheur | Contenu | Focus-trap | Dismissal | Transition | SSoT |

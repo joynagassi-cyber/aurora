@@ -57,3 +57,5 @@ supabase/.temp/
 # est dans anthropic-skills/, qui EST tracké et ppushable)
 third-party/
 
+
+# WDS agent session state (machine-local, not project content)

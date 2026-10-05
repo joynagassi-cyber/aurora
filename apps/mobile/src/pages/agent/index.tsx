@@ -248,7 +248,7 @@ export function AgentPage() {
     } catch {
       push({
         role: 'agent',
-        body: 'Lancement du run impossible (agent indisponible côté serveur). Vérifie ta connexion et relance.',
+        body: `Lancement du run impossible (agent indisponible côté serveur). ${registerCopy(register, 'conn')}`,
       });
     }
   }
@@ -400,12 +400,39 @@ export function AgentPage() {
     const totalDx = e.clientX - peelStart.current.x;
     const entry = entries.find((x) => x.id === peelStart.current?.entryId);
     if (totalDx < -96 && entry?.route) {
-      // Confirmed peel: navigate to the target page; back returns here.
+      // Confirmed peel: navigate to the target page over the chat (agent-chat
+      // §5.1 G4). `state.from = '/agent'` preserves the return context — the
+      // native back returns to this conversation (02 §6.3, RET column).
       navigate(entry.route, { state: { from: '/agent' } });
     }
     setPeel(null);
     peelStart.current = null;
   }
+
+  // ——— Voice register (emotion-design §5.3): chat/agent = vouvoiement
+  // (professional register); mirror = tutoiement (pedagogical register).
+  // The right-swipe that cycles the mode therefore switches the register —
+  // copy in the transcript follows agentMode. ———
+  function registerCopy(
+    register: 'pro' | 'pedagogical',
+    keys: 'conn' | 'mirror' | 'write' | 'explain'
+  ): string {
+    const pro: Record<typeof keys, string> = {
+      conn: 'Vérifiez votre connexion et relancez.',
+      mirror: 'miroir — vous expliquez ce que vous avez appris',
+      write: 'Écrivez votre intention…',
+      explain: 'Expliquez ce que vous avez appris…',
+    };
+    const ped: Record<typeof keys, string> = {
+      conn: 'Vérifie ta connexion et relance.',
+      mirror: 'miroir — explique ce que tu as appris',
+      write: 'Écris ton intention…',
+      explain: 'Explique ce que tu as appris…',
+    };
+    return (register === 'pro' ? pro : ped)[keys];
+  }
+
+  const register: 'pro' | 'pedagogical' = agentMode === 'mirror' ? 'pedagogical' : 'pro';
 
   const inFlightRow = activeRun && runRow && runRow.id === activeRun ? runRow : null;
 
@@ -475,8 +502,8 @@ export function AgentPage() {
             {agent && entries.length === 0 && !thinking && !inFlightRow && (
               <div className="agent-empty">
                 <p>
-                  Mode {agentMode === 'agent' ? 'agent' : agentMode === 'mirror' ? 'miroir — explique ce que tu as appris' : 'chat'}.
-                  Commence par une intention.
+                  Mode {agentMode === 'agent' ? 'agent' : agentMode === 'mirror' ? registerCopy(register, 'mirror') : 'chat'}.
+                  {agentMode === 'mirror' ? 'Commence par un apprentissage.' : 'Commencez par une intention.'}
                 </p>
               </div>
             )}
@@ -500,17 +527,26 @@ export function AgentPage() {
                 >
                   <div className="agent-entry-body">{e.body}</div>
                   {e.route && (
-                    <div className="agent-entry-route" aria-hidden>
-                      <ArrowRight size={12} />
+                    /* Peel affordance (agent-chat §5.1 G4): a focusable button
+                       in addition to the drag gesture — the keyboard / SR
+                       equivalent of the swipe. The chevron is decorative;
+                       the button's aria-label carries the meaning. */
+                    <button
+                      type="button"
+                      className="agent-entry-route"
+                      onClick={() => navigate(e.route ?? '/', { state: { from: '/agent' } })}
+                      aria-label={`Ouvrir ${e.routeLabel ?? 'la page'}`}
+                    >
+                      <ArrowRight size={12} aria-hidden />
                       <span>{e.routeLabel ?? 'Ouvrir la page'}</span>
-                    </div>
+                    </button>
                   )}
                 </div>
               );
             })}
 
             {thinking && (
-              <div className="agent-thinking">
+              <div className="agent-thinking" role="status" aria-live="polite">
                 <div className="agent-thinking-blobs" aria-hidden />
                 <span className="agent-thinking-label">L'agent réfléchit ({thinkingLevel})…</span>
               </div>
@@ -518,7 +554,10 @@ export function AgentPage() {
 
             {inFlightRow && (
               <div className="agent-entry agent-entry--agent">
-                <div className={`agent-entry-status ${inFlightRow.confirmationMessage ? 'is-attention' : ''}`}>
+                <div
+                  className={`agent-entry-status ${inFlightRow.confirmationMessage ? 'is-attention' : ''}`}
+                  aria-live="polite"
+                >
                   {statusLine(inFlightRow)}
                 </div>
               </div>
@@ -656,7 +695,7 @@ export function AgentPage() {
                 id="agent-composer-input"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                placeholder={agentMode === 'mirror' ? 'Explique ce que tu as appris…' : 'Écris ton intention…'}
+                placeholder={agentMode === 'mirror' ? registerCopy(register, 'explain') : registerCopy(register, 'write')}
                 aria-label="Écrire à l'agent"
                 disabled={!agent || isFetching}
               />
@@ -709,13 +748,28 @@ export function AgentPage() {
               <div className="agent-model-picker-body">
                 <div className="agent-picker-section">
                   <div className="agent-picker-section-label">Niveau de réflexion</div>
-                  <div className="agent-thinking-levels">
-                    {THINKING_LEVELS.map((lvl) => (
+                  <div className="agent-thinking-levels" role="radiogroup" aria-label="Niveau de réflexion">
+                    {THINKING_LEVELS.map((lvl, i) => (
                       <button
                         key={lvl}
                         type="button"
+                        role="radio"
+                        aria-checked={thinkingLevel === lvl}
+                        tabIndex={thinkingLevel === lvl ? 0 : -1}
                         className={`agent-thinking-level ${thinkingLevel === lvl ? 'is-active' : ''}`}
                         onClick={() => setThinkingLevel(lvl)}
+                        onKeyDown={(e) => {
+                          // Roving radio pattern: arrows move focus + selection.
+                          if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            const next = THINKING_LEVELS[(i + 1) % THINKING_LEVELS.length]!;
+                            setThinkingLevel(next);
+                          } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            const prev = THINKING_LEVELS[(i + 3) % THINKING_LEVELS.length]!;
+                            setThinkingLevel(prev);
+                          }
+                        }}
                       >
                         {lvl}
                       </button>

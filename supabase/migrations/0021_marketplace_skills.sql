@@ -1,5 +1,5 @@
 -- 0021_marketplace_skills.sql
--- Généré par scripts/skills-seed.ts le 2026-10-04
+-- Généré par scripts/skills-seed.ts le 2026-10-05
 -- Source : anthropic-skills/ (curé de 589 SKILL.md de third-party/anthropic/*)
 -- Règle : le fichier de migration est le SSoT du schéma (règle supabase-mcp.md) ;
 -- le live doit rester aligné. Application via mcp__supabase-aurora__execute_sql,

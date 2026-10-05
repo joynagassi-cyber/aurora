@@ -101,6 +101,11 @@ g2() {
     case "$f" in
       *.env.local*|docs/*|prompts/*|set-secrets.ps1|.github/*)
         continue ;;
+      # Exception sanctionnee: le contenu de SKILL.md troisiemes parties (seed 0021,
+      # docs Anthropic avec exemples curl/Bearer ACCESS_TOKEN, Zoom SDK, etc.)
+      # n'est PAS du code Aurora, ne contient aucune valeur de secret reelle.
+      supabase/migrations/*)
+        continue ;;
       # Exception sanctionnee: appKey OneSignal dans capacitor.config.ts.
       */capacitor.config.ts)
         # Scanner le fichier mais ignorer les lignes "appKey" OneSignal.

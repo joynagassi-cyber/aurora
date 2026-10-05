@@ -134,8 +134,10 @@ async function handleActivate(
   if (!skillKey) {
     return err("skills/missing_skill_key", "skillKey is required", 400);
   }
-  // AD-7/AD-11: for a catalog key ('builtin:<key>') the payload comes
-  // from the CATALOG, not the request body.
+  // AD-7/AD-11: for a catalog key the payload comes from the CATALOG, not the
+  // request body. Legacy UI keys are 'builtin:<key>' (stripped here); the 0021
+  // marketplace seed keys ARE the catalog keys themselves ('marketplace:<key>')
+  // — no prefix stripping needed, they match 1:1.
   const stripped = skillKey.replace(/^builtin:/, "");
   const catQs = "?skill_key=eq." + encodeURIComponent(stripped);
   const catRes = await rest("GET", "/rest/v1/skill_catalog", catQs, undefined, supabaseUrl, serviceKey);

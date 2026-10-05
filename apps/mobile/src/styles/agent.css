@@ -123,7 +123,7 @@
   color: var(--aurora-text-muted);
 }
 .agent-entry-status.is-attention {
-  color: var(--aurora-accent-warning, #b45309);
+  color: var(--aurora-warning);
   font-weight: 500;
 }
 
@@ -135,7 +135,7 @@
   flex-direction: column;
   gap: 10px;
   padding: 12px 14px;
-  border: 1px solid var(--aurora-accent-warning, #b45309);
+  border: 1px solid var(--aurora-warning);
   border-radius: var(--aurora-radius, 0.5rem);
   background: var(--aurora-bg-subtle);
   max-width: 88%;
@@ -238,7 +238,7 @@
   z-index: 1000;
   display: flex;
   align-items: flex-end;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--aurora-scrim);
   animation: agent-picker-in 0.18s ease-out;
 }
 @keyframes agent-picker-in {
@@ -387,7 +387,7 @@
   z-index: 1001;
   display: flex;
   align-items: flex-end;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--aurora-scrim);
   animation: agent-picker-in 0.18s ease-out;
 }
 .agent-plus-sheet > div {
@@ -614,10 +614,12 @@
   margin-top: 4px;
   padding: 2px 8px;
   font-size: 11px;
-  color: var(--aurora-text-muted);
+  font-weight: 500;
+  color: var(--aurora-text-secondary);
   background: transparent;
+  border: none;
+  cursor: pointer;
   border-radius: 999px;
-  opacity: 0.7;
   align-self: flex-start;
 }
 .agent-entry--user .agent-entry-route {
@@ -625,10 +627,10 @@
 }
 .agent-entry-route:hover,
 .agent-entry-route:active {
-  opacity: 1;
-  color: var(--aurora-accent-primary);
+  color: var(--aurora-text-primary);
 }
-.agent-entry--peelable:active .agent-entry-route {
-  opacity: 1;
+.agent-entry-route:focus-visible {
+  outline: var(--aurora-focus-ring-width, 2px) solid var(--aurora-accent-focus-ring);
+  outline-offset: 2px;
 }
 

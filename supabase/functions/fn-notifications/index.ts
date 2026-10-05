@@ -5,8 +5,8 @@
 //   - The app holds ONLY the OneSignal *app* key (capacitor.config.ts — AD-3).
 //   - The REST API key is server-side (Supabase secret store, AD-3 — never
 //     shipped to the device, never committed, CI G2 grep).
-//   - OneSignal REST API v2 (onesignal.com/api/notifications) is the native
-//     path for a Deno edge function: direct HTTPS, no vendor SDK required.
+//   - OneSignal REST API v2 (spec: docs.onesignal.com — POST /api/v2/{app_id}/notifications)
+//     is the native path for a Deno edge function: direct HTTPS, no vendor SDK.
 //
 // The MCP OneSignal server is a developer tool (console/dashboard) — it is
 // OUT OF SCOPE for a Deno edge function; the REST v2 surface is the
@@ -20,7 +20,9 @@ import { ok, err } from "../_shared/envelope.ts";
 
 const ONESIGNAL_APP_ID = Deno.env.get("ONESIGNAL_APP_ID") ?? "";
 const ONESIGNAL_REST_API_KEY = Deno.env.get("ONESIGNAL_REST_API_KEY") ?? "";
-const ONESIGNAL_REST_ENDPOINT = "https://onesignal.com/api";
+// OneSignal REST v2 spec (docs.onesignal.com): POST /api/v2/{app_id}/notifications.
+// The app_id is part of the URL path, NOT a body field.
+const ONESIGNAL_REST_BASE = "https://onesignal.com/api/v2";
 
 Deno.serve(async (req) => {
   try {
@@ -30,7 +32,7 @@ Deno.serve(async (req) => {
       push?: OneSignalPushPayload;
     });
 
-    // Stub wave-0: log the trigger + note OneSignal availability.
+    // Log the trigger + note OneSignal availability.
     // Quiet-hours check (notification_preferences.quiet_hours) lands in wave 1.
     console.log(
       `[fn-notifications] event=${body.eventType ?? "n/a"} user=${body.userId ?? "n/a"} ` +
@@ -48,22 +50,32 @@ Deno.serve(async (req) => {
       return ok({ delivered: false, reason: "no_push_payload" });
     }
 
-    const res = await fetch(`${ONESIGNAL_REST_ENDPOINT}/notifications`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`,
+    // OneSignal REST v2 request body — spec: docs.onesignal.com
+    //   - `include_external_user_ids`: target users by their external_id
+    //     (the Supabase user id, created at onboarding 01 §5.1).
+    //   - `headings`: { en: string } — localized title.
+    //   - `content`:  { en: string } — localized body.
+    //   - `data`:     arbitrary map → lands in client `notification.data`
+    //     for deep-link routing (04 §3.2.5: `route`, `category`, …).
+    const notification: Record<string, unknown> = {};
+    if (body.push.includeExternalUserIds?.length) {
+      notification.include_external_user_ids = body.push.includeExternalUserIds;
+    }
+    if (body.push.headings) notification.headings = body.push.headings;
+    if (body.push.content) notification.content = body.push.content;
+    if (body.push.data) notification.data = body.push.data;
+
+    const res = await fetch(
+      `${ONESIGNAL_REST_BASE}/${ONESIGNAL_APP_ID}/notifications`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`,
+        },
+        body: JSON.stringify(notification),
       },
-      body: JSON.stringify({
-        app_id: ONESIGNAL_APP_ID,
-        ...(body.push.includeExternalUserIds?.length
-          ? { include_external_user_ids: body.push.includeExternalUserIds }
-          : {}),
-        ...(body.push.content ? { content: body.push.content } : {}),
-        ...(body.push.head ? { head: body.push.head } : {}),
-        ...(body.push.data ? { data: body.push.data } : {}),
-      }),
-    });
+    );
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
@@ -90,18 +102,18 @@ Deno.serve(async (req) => {
 // --- Types (01 §5.1) --------------------------------------------------------
 
 /**
- * OneSignal REST v2 — notification request subset. The native REST surface
- * (onesignal.com/api/notifications) accepts an arbitrary `data` map that
- * lands in the client's `notification.data`; the app's OneSignal plugin
- * reads it for deep-link routing (04 §3.2.5).
+ * OneSignal REST v2 — notification request subset.
+ * Spec: docs.onesignal.com/api/ — the `data` map lands in the client's
+ * `notification.data`; the app's OneSignal plugin reads it for deep-link
+ * routing (04 §3.2.5).
  */
 interface OneSignalPushPayload {
   /** Target users by Supabase external_id (alias created at onboarding, 01 §5.1). */
   includeExternalUserIds?: string[];
-  /** Localized title/body (push `head`). */
+  /** Localized push title — OneSignal REST v2 field: `headings` ({ en: "…" }). */
+  headings?: Record<string, string>;
+  /** Localized push body — OneSignal REST v2 field: `content` ({ en: "…" }). */
   content?: Record<string, string>;
-  /** Push head fields (title, icon, sound…). */
-  head?: Record<string, unknown>;
   /** Arbitrary payload — deep-link `route`, `category`, `deadlineAt` (04 §3.2.5). */
   data?: Record<string, unknown>;
 }

@@ -23,6 +23,8 @@
   --aurora-surface: #ffffff;
   --aurora-surface-alt: #f8fafc;
   --aurora-surface-overlay: rgba(255, 255, 255, 0.85);
+  /* Scrim (modal/sheet background dimming, light G-H2). Dark override below. */
+  --aurora-scrim: rgba(15, 23, 42, 0.4);
 
   /* Text */
   --aurora-text-primary: #0f172a;
@@ -168,6 +170,7 @@
   --aurora-node-mastered-h: 160 84% 53%;
   --aurora-node-fragile-h: 43 94% 61%;
   --aurora-node-forgotten-h: 0 84% 69%;
+  --aurora-scrim: rgba(0, 0, 0, 0.5);
 }
 
 /* ---- Base resets ------------------------------------------------------ */
