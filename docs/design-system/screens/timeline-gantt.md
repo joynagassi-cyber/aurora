@@ -72,9 +72,9 @@
 | **`GanttRow` (liste)** | Apparition (pas d'animation de trace qui se « dessine » — règle donnée scientifique §2.6 : la sparkline n'animé pas, le `GanttRow` non plus) ; au rechargement, la liste **apparaît** (pas de trace) | 150–250ms GPU only | Pas de layout animation mobile (§5 ui-libraries l.169) ; si reduced-motion = statique (pas d'animation, l'apparition est **instantanée**). |
 | **`GanttRow` (barre bloquée)** | Apparition (pas d'animation) ; l'icône `ic-task-blocked` reste fixe (pas de pulsation) | 150–250ms GPU only | Le blocage est **visible** (05 §3.6.4 l.941–945 : le blocage est **visible**, pas seulement dans le statut) — mais **statique** (pas d'animation de pulsation, §5 ui-libraries l.169). |
 | **Jalons non atteints (marqués en rouge)** | Apparition (pas d'animation) ; le fond `danger-surface` reste fixe (pas de pulsation) | 150–250ms GPU only | Le « nouveau » (sync) = indigo `primary`, **pas** rouge (05 §3.4 l.748–750 : le danger est réservé à l'échec) ; pas d'animation de highlight (§5 ui-libraries l.169). |
-| **CTA « Générer la fiche »** | Tap → `ProgressRing` 16 px **dans** le bouton (05 §3.1 l.387–392 : l'utilisateur sait où c'est, le reste de l'écran **reste** interactif AD-7) ; transition de sortie 150–250ms (si le CTA déclenche un redirect, la transition est `PAGE_TRANSITION` 200ms ease-out, polish.tsx) | 150–250ms GPU only | Pas de layout animation (§5 ui-libraries l.169) ; le `ProgressRing` est **dans** le bouton (pas de spinner externe, 05 §3.1 l.387–392). |
+| **CTA « Générer la fiche »** | Tap → `ProgressRing` 16 px **dans** le bouton (05 §3.1 l.387–392 : l'utilisateur sait où c'est, le reste de l'écran **reste** interactif AD-7) ; transition de sortie 150–250ms (si le CTA déclenche un redirect, la transition est `PAGE_TRANSITION` 200ms ease-out, motion.tsx @aurora/ui) | 150–250ms GPU only | Pas de layout animation (§5 ui-libraries l.169) ; le `ProgressRing` est **dans** le bouton (pas de spinner externe, 05 §3.1 l.387–392). |
 | **EmptyState « projet scindé → plan vide »** | Apparition (pas d'animation) ; le CTA du EmptyState reste fixe (pas de pulsation) | 150–250ms GPU only | Pas de layout animation (§5 ui-libraries l.169) ; l'état vide **positif** (05 §12 l.70–74 : pas d'état vide négatif) = pas d'animation de déception. |
-| **BottomNav (si présente, OQ-02 §14)** | Transition d'onglet `PAGE_TRANSITION` 200ms ease-out (polish.tsx) ; le tab actif reste fixe (pas de pulsation) | 150–250ms GPU only | Pas de layout animation (§5 ui-libraries l.169) ; le BottomNav est **stable** (pas de reflow au switch de tab, 05 §3.4 l.659–665). |
+| **BottomNav (si présente, OQ-02 §14)** | Transition d'onglet `PAGE_TRANSITION` 200ms ease-out (motion.tsx @aurora/ui) ; le tab actif reste fixe (pas de pulsation) | 150–250ms GPU only | Pas de layout animation (§5 ui-libraries l.169) ; le BottomNav est **stable** (pas de reflow au switch de tab, 05 §3.4 l.659–665). |
 
 ## §6 Modals / Sheets (surfaces flottantes ouvertes par cet écran)
 
@@ -95,13 +95,13 @@ N/A (pas de formulaire sur cet écran — la `GanttRow` est une liste de lecture
 - **Si > 100 lignes** : virtualisation (`react-virtuoso` 30 fps, ui-libraries §1 l.24–26 / pack 02 §9.3, cf. 05 §3.6.3 l.920–924) = OQ-07 §14 (seuil non tranché pour cet écran).
 - **Sinon** : N/A (pas de pagination si < 100 lignes, le `Pager` jour/semaine/mois suffit).
 
-## §9 Transitions (entrées/sorties de l'écran + liens vers polish.tsx)
+## §9 Transitions (entrées/sorties de l'écran + liens vers motion.tsx @aurora/ui)
 
-- **Entrée** : `PAGE_TRANSITION` 200ms ease-out (polish.tsx l.12 : le composant est monté dans le shell, la transition est `ease-out`).
+- **Entrée** : `PAGE_TRANSITION` 200ms ease-out (motion.tsx @aurora/ui l.12 : le composant est monté dans le shell, la transition est `ease-out`).
   - **Entrée primaire** : CTA « Visualiser sur timeline » de `projets-detail` (WDS 02.5 §2 : l'entrée primaire = CTA « Visualiser sur timeline » de `projets-detail`).
   - **Entrée secondaire** : retour par back Android ou par le bouton retour du `TopBar` (05 §3.4 l.659–665 : le retour = `chevrons-left` Lucide ; push route, 02 §6.1).
 - **Sortie** :
-  - **Sortie primaire** : CTA « Générer la fiche » → redirect vers `fiches-liste` (S-17, WDS 02.5 §6) ; transition de sortie `PAGE_TRANSITION` 200ms ease-out (polish.tsx l.12).
+  - **Sortie primaire** : CTA « Générer la fiche » → redirect vers `fiches-liste` (S-17, WDS 02.5 §6) ; transition de sortie `PAGE_TRANSITION` 200ms ease-out (motion.tsx @aurora/ui l.12).
   - **Sortie secondaire** : retour par back Android ou par le bouton retour du `TopBar` → `projets-detail` (WDS 02.5 §2 : l'écran parent = `projets-detail`).
   - **Sortie tercière** : si le CTA échoue (`error`), le CTA reste (pas de redirect, l'utilisateur reste dans l'écran, AD-7 : le reste de l'écran **reste** interactif).
 

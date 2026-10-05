@@ -1,4 +1,4 @@
-# Surfaces flottantes — doc transversal (05 §3.5 + ui-libraries S1/S9.3 + polish.tsx)
+# Surfaces flottantes — doc transversal (05 §3.5 + ui-libraries S1/S9.3 + motion.tsx @aurora/ui)
 
 Status: SPÉCIFIABLE (inventaire #54) · transversal — **pas un écran, pas une route**
 (`_inventory.md` §1 règle 3 : les surfaces flottantes NE SONT PAS des écrans).
@@ -7,7 +7,7 @@ SSoT principales : `05-design-system.md` §3.5 l. 752–864 (normes), §3.1 `FAB
 l. 400–411, §2.4 coins & élévations, §2.6 règles animation ;
 `docs/ui-libraries.md` S1 l. 13–29 (carte lib), S5 l. 162–172 (mobile + batterie),
 §9.3/§9.3.1 (AgentThinkingLoader, owner 2026-09-27/28) ;
-`apps/mobile/src/ux/polish.tsx` (primitives GPU du shell, Phase 3 S3).
+`apps/mobile/src/ux/motion.tsx @aurora/ui` (primitives GPU du shell, Phase 3 S3).
 
 ## 0. Règle de stacking (normative, 05 §3.5 l. 754–759)
 
@@ -48,7 +48,7 @@ Une surface qui « sort de son rang » = review blocking.
   (store UI, AD-7) — jamais de retour en haut surprise.
 - **Transition** : `aurora.anim.normal` = 250ms ease-out (05 §2.6) —
   dans la fenêtre 150–250ms GPU-only (transform + opacity, ui-libraries S5
-  l. 169 ; polish.tsx `PAGE_TRANSITION` = même courbe, 200ms).
+  l. 169 ; motion.tsx @aurora/ui `PAGE_TRANSITION` = même courbe, 200ms).
   `prefers-reduced-motion` ON = `aurora.anim.instant` (05 §2.6 règle 2) :
   appari **statique**, zéro animation.
 - **Lib S1 (l. 14)** : shadcn `drawer` (Vaul) `npx shadcn@latest add drawer`
@@ -86,7 +86,7 @@ Une surface qui « sort de son rang » = review blocking.
   suivent, ce sont 2 Modaux **séquentiels**, jamais 2 en même temps.
 - **Transition** : `aurora.anim.normal` = 250ms ease-out (05 §2.6 :
   « Ouverture de Modal ») — GPU-only (transform + opacity), reduced-motion
-  = statique (05 §2.6 règle 2, polish.tsx pattern).
+  = statique (05 §2.6 règle 2, motion.tsx @aurora/ui pattern).
 - **Lib S1 (l. 13)** : shadcn `dialog` (Radix, headless, skinnable par
   tokens), `npx shadcn@latest add dialog`.
 
@@ -300,7 +300,7 @@ Une surface qui « sort de son rang » = review blocking.
   fade 200ms ease-out** (ui-libraries §9.3 l. 455–456) quand le
   1ᵉʳ token du streaming **arrive** (le texte **commence** à
   streamer **pendant** le repli, pas après). La durée 200ms est
-  **dans** la fenêtre 150–250ms (S3 l. 143 : smooth, polish.tsx
+  **dans** la fenêtre 150–250ms (S3 l. 143 : smooth, motion.tsx @aurora/ui
   `PAGE_TRANSITION` = 200ms). GPU-only (transform scale 1→0.8 +
   opacity 1→0). **`prefers-reduced-motion` ON = le loader
   disparaît **instantanément** (pas de repli, pas de fade,
@@ -375,12 +375,12 @@ Une surface qui « sort de son rang » = review blocking.
   §9.3 = SSoT). Le code existe (test
   `packages/ui/test/agent-thinking-loader.test.tsx`).
 
-## 8. Transitions — fenêtre normative (05 §2.6 + polish.tsx +
+## 8. Transitions — fenêtre normative (05 §2.6 + motion.tsx @aurora/ui +
 ui-libraries S3 l. 143 + S5 l. 169)
 
-| Surface | Token 05 §2.6 | Durée | Courbe | GPU (ui-libraries S5) | reduced-motion (05 §2.6 règle 2, polish.tsx) |
+| Surface | Token 05 §2.6 | Durée | Courbe | GPU (ui-libraries S5) | reduced-motion (05 §2.6 règle 2, motion.tsx @aurora/ui) |
 |---|---|---|---|---|---|
-| `Modal` (ouverture) | `anim.normal` | **250ms** | `ease-out` | transform (translateY 8→0) + opacity (0→1) | statique (appari instantané, polish.tsx `PageTransition` pattern) |
+| `Modal` (ouverture) | `anim.normal` | **250ms** | `ease-out` | transform (translateY 8→0) + opacity (0→1) | statique (appari instantané, motion.tsx @aurora/ui `PageTransition` pattern) |
 | `BottomSheet` (slide-in) | `anim.normal` | **250ms** | `ease-out` | transform (translateY 100%→0) + opacity (backdrop 0→1) | statique |
 | `Drawer` (slide-in latéral) | `anim.normal` | **250ms** | `ease-out` | transform (translateX ±80%→0) + opacity | statique |
 | `Command palette` (apparition) | `anim.normal` | **250ms** | `ease-out` | transform (scale 0.96→1) + opacity | statique |
@@ -390,7 +390,7 @@ ui-libraries S3 l. 143 + S5 l. 169)
 | `AgentThinkingLoader` (exiting) | — (ui-libraries §9.3 l. 455) | **200ms** | `ease-out` | transform (scale 1→0.8) + opacity (1→0) | **instantané** (05 §2.6 l. 330–334) |
 | `AgentThinkingLoader` (inhale, §9.3.1) | — | **250ms** | `ease-in-out` | transform (scale 1→1.04→1) | **pas de pulsation** |
 | `AgentThinkingLoader` (float mot, §9.3.1) | — | **200ms** | `ease-in-out` (GPU) | transform (translateY ±4px) + opacity (crossfade) | **swap sans animation** |
-| Page transition (polish.tsx) | — | **200ms** | `ease-out` | transform (translateY 8→0) + opacity | statique |
+| Page transition (motion.tsx @aurora/ui) | — | **200ms** | `ease-out` | transform (translateY 8→0) + opacity | statique |
 
 **Règle 05 §2.6 (l. 322–334)** : `aurora.anim.fast` = 150ms
 (micro-interactions, toggle, chip, hover) ; `aurora.anim.normal`
@@ -400,7 +400,7 @@ ui-libraries S3 l. 143 + S5 l. 169)
 toutes `fast` ou `normal`). `prefers-reduced-motion` ON =
 **tout passe à `instant`** (05 §2.6 règle 2 : « toute
 animation `slow`/`normal` → `instant` si `prefers-reduced-motion:
-reduce` ») — polish.tsx `useReducedMotion()` (motion v13) :
+reduce` ») — motion.tsx @aurora/ui `useReducedMotion()` (motion v13) :
 `if (reduced) return <div data-ux="…-static">{children}</div>`
 (pas de `motion.div`, zéro keyframe).
 
@@ -412,7 +412,7 @@ Les surfaces flottantes utilisent **uniquement** `transform`
 **jamais** de `filter` (blur, shadow animé = CPU, S5 l. 169),
 **jamais** de `width`/`height` animé (reflow).
 
-## 9. Focus-trap & dismissal — matrice (05 §3.5 + polish.tsx)
+## 9. Focus-trap & dismissal — matrice (05 §3.5 + motion.tsx @aurora/ui)
 
 | Surface | Focus-trap (05 §3.5 + Radix) | Dismissal | reduced-motion (05 §2.6 règle 2) |
 |---|---|---|---|

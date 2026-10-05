@@ -42,7 +42,7 @@
 
 ### (a) 6 états S6 par élément async (ui-libraries §6 l.174–187)
 
-- **loading** (flux lecture local + flux QCM serveur) : Skeleton liste chapitres + ProgressRing (§3, loading row) ; tokens = --aurora-skeleton ; texte exact = « Chargement du cours… » (court, car local AD-7) ; CTA = aucun (pas d'actions avant données) ; **entrée** = fade 200ms easeOut (PAGE_TRANSITION, ssootCode motionRefs polish.tsx) ; **sortie** = skeleton → contenu partiel crossfade 200ms (pack 02 §7 : si > 300ms le contenu apparaît partiellement en dessous du Skeleton).
+- **loading** (flux lecture local + flux QCM serveur) : Skeleton liste chapitres + ProgressRing (§3, loading row) ; tokens = --aurora-skeleton ; texte exact = « Chargement du cours… » (court, car local AD-7) ; CTA = aucun (pas d'actions avant données) ; **entrée** = fade 200ms easeOut (PAGE_TRANSITION, ssootCode motionRefs motion.tsx @aurora/ui) ; **sortie** = skeleton → contenu partiel crossfade 200ms (pack 02 §7 : si > 300ms le contenu apparaît partiellement en dessous du Skeleton).
 - **empty** (cours sans chapitre importé) : zone contenu vide + CTA primaire « Importer un cours » (capture documentaire, 05 §4.6.2 empty) ; tokens = --aurora-bg-subtle + --aurora-text-secondary ; **entrée** = fade 200ms ; **sortie** = import lancé → CTA disparaît, liste apparaît (transfert au flux loading).
 - **error** (chapitre corrompu ; le cours reste ouvert) : Callout danger (§3, Callout row) signalant le `SemanticNode` corrompu ; les autres chapitres restent accessibles (§4.6.2 error) ; tokens = --aurora-danger / --aurora-danger-surface ; CTA = « Réessayer » (re-load local) ; **entrée** = fade 200ms ; **sortie** = retry OK → chapitre rechargé, Callout disparaît.
 - **success** (génération QCM OK, retour sur l'écran) : Toast success (§3, QCM/fiches row) ; tokens = --aurora-success ; texte = « QCM généré — prête à commencer » ; CTA = le CTA principal « Commencer l'étude » redevient actif ; **entrée** = toast slide up 200ms (translateY, pas de layout, S5 l.169) ; **sortie** = auto-dismiss 3s (§3.5 l.823 pattern).
@@ -69,7 +69,7 @@
 
 | Élément | Action → feedback | Durée | GPU only (transform/opacity) | Smooth | reduced-motion = statique | Source SSoT |
 |---|---|---|---|---|---|---|
-| Header (ouverture overlay) | tap depuis biblio/home → open | 200ms easeOut (PAGE_TRANSITION opacity 0→1, y 8→0, exit y -4) | opacity + translateY, **pas** de layout | easeOut (pas de spring/bouncy, S3 l.143) | statique (div fixe, ssootCode motionRefs) | ssootCode motionRefs polish.tsx + ui-libraries S5 l.169 |
+| Header (ouverture overlay) | tap depuis biblio/home → open | 200ms easeOut (PAGE_TRANSITION opacity 0→1, y 8→0, exit y -4) | opacity + translateY, **pas** de layout | easeOut (pas de spring/bouncy, S3 l.143) | statique (div fixe, ssootCode motionRefs) | ssootCode motionRefs motion.tsx @aurora/ui + ui-libraries S5 l.169 |
 | Liste chapitres (chargé) | skeleton → contenu | crossfade 200ms easeOut | opacity (pas de scale, pas de reflow) | easeOut | statique | ssootCode motionRefs + 05 §2.6 |
 | Accordion chapitre (dépliable) | tap chap → open/close | 200ms easeOut | **height via transform** (pas de layout, S5 l.169 mobile) ; pas de bouncy | easeOut | statique (chapitre affiché/ masqué sans anim) | ui-libraries S5 l.169 + 05 §2.6 règle 2 |
 | `SemanticTreeNode` compact (reveal) | tap → fiche ouverte | 150ms easeOut (reveal REVEAL_TRANSITION 250ms cap, ssootCode motionRefs) | opacity + translateY | easeOut | statique | ssootCode motionRefs + 05 §2.6 |

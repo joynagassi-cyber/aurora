@@ -100,7 +100,7 @@ La matrice = **lecture locale 100 %** (AD-7) : au kill système, le relaunch **p
 
 | Élément | Action → Feedback | Durée | GPU-only (transform+opacity) | smooth | reduced-motion=statique | SSoT |
 |---|---|---|---|---|---|---|
-| Grille de quadrants | Apparition (fade + translateY 8→0) | 200 ms `anim.normal` | `transform: translateY`, `opacity` (ui-libraries S5 l. 169) | ease-out | statique (pas d'anim, S5) | polish.tsx l. 40-50 `PAGE_TRANSITION` ; 05 §2.6 l. 310 |
+| Grille de quadrants | Apparition (fade + translateY 8→0) | 200 ms `anim.normal` | `transform: translateY`, `opacity` (ui-libraries S5 l. 169) | ease-out | statique (pas d'anim, S5) | motion.tsx PAGE_TRANSITION @aurora/ui `PAGE_TRANSITION` ; 05 §2.6 l. 310 |
 | Ligne tâche (tap) | Press feedback (scale 0.98, 150 ms) | 150 ms `anim.fast` | `transform: scale` | linear | statique | 05 §2.6 l. 314 ; S5 l. 169 |
 | Zone Q1 (highlight au survol — desktop) | Pas de layout animation (mobile interdit S5 l. 169) ; uniquement `opacity` (le `hover` n'est pas un état mobile) | n/a (desktop) | `opacity` | ease-out | statique | S5 l. 169 ; 05 §2.6 l. 314 |
 | BottomSheet de suggestion (CTA « Réviser ») | Slide-up (translateY 100 %→0, 250 ms) | 250 ms `anim.normal` | `transform: translateY` | ease-out, **pas bouncy** (S3 l. 143) | statique (S5) | 05 §2.6 ; WDS 05.3 §Interactions |
@@ -150,9 +150,9 @@ La matrice = **lecture locale 100 %** (AD-7) : au kill système, le relaunch **p
 
 | Transition | Direction | Durée / curve | GPU-only | SSoT |
 |---|---|---|---|---|
-| Home → Matrice (« Priorité principale » Q1) | `/home` → `/tasks?view=matrix` (OQ-2) | 200 ms fade + y (PAGE_TRANSITION, polish.tsx l. 40-50) | transform+opacity | polish.tsx ; 05 §2.6 l. 310 |
+| Home → Matrice (« Priorité principale » Q1) | `/home` → `/tasks?view=matrix` (OQ-2) | 200 ms fade + y (PAGE_TRANSITION, motion.tsx PAGE_TRANSITION @aurora/ui) | transform+opacity | motion.tsx @aurora/ui ; 05 §2.6 l. 310 |
 | Projet (Matrix tab) → Matrice | `/projects/:id` → matrice (OQ-2) | 200 ms fade + y | transform+opacity | eisenhower.md §4 l. 55-56 (G-DOC-05) |
-| Matrice → Détail tâche (BottomSheet) | overlay sur le tab courant | 250 ms slide-up (S5 l. 169) | transform | 05 §3.5 l. 787-808 ; polish.tsx REVEAL_TRANSITION l. 31 |
+| Matrice → Détail tâche (BottomSheet) | overlay sur le tab courant | 250 ms slide-up (S5 l. 169) | transform | 05 §3.5 l. 787-808 ; motion.tsx @aurora/ui REVEAL_TRANSITION l. 31 |
 | Matrice → BottomSheet de suggestion | overlay sur le tab courant | 250 ms slide-up | transform | 05 §3.5 l. 787-808 |
 | Retour Détail/Suggestion → Matrice | close BottomSheet | 200 ms fade | transform | idem |
 

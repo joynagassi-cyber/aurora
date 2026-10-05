@@ -128,7 +128,7 @@ Classe offline = feature du `master-feature-catalog.md` (col. Chain) :
 | 51 | calendrier (enveloppe, Pager + time-block editor + event detail) | Productivité | `/calendar` | 05 §4.4.1 l. 1896-2043 (Pager = 1 composant, 3 pagers = #20-22) | offline-capable | SPÉCIFIABLE |
 | 52 | revues (enveloppe, P3 = 3 pagers) | Productivité | (reviews) | 05 §4.5.1 l. 2229-2409 (P3 = 3 pagers = #24-26) | offline-capable | SPÉCIFIABLE |
 | 53 | objectives (enveloppe liste+détail, AD-15 type partagé) | Productivité | `/goals` (+`/goals/:id`) | 05 §4.3.4 l. 1635-1697 (paire liste+détail = 2 écrans #11-12) | offline-capable | SPÉCIFIABLE |
-| 54 | surfaces flottantes (transversal) | Toutes | (surfaces §3.5, pas une route) | 05 §3.5 l. 752-864 + ui-libraries §9.3 (AgentThinkingLoader) + polish.tsx | n/a (transversal, référencé par écran, PAS un écran) | SPÉCIFIABLE (doc dédié, 0 écran) |
+| 54 | surfaces flottantes (transversal) | Toutes | (surfaces §3.5, pas une route) | 05 §3.5 l. 752-864 + ui-libraries §9.3 (AgentThinkingLoader) + motion.tsx @aurora/ui | n/a (transversal, référencé par écran, PAS un écran) | SPÉCIFIABLE (doc dédié, 0 écran) |
 
 **Note de réconciliation** : les #49-54 = les **enveloppes** (listes/détails qui
 contenent des vues-variantes) ; la table compte chaque **vue de variante distincte**

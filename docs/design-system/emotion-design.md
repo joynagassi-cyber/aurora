@@ -3,7 +3,7 @@
 **Statut** : proposition normative (au-dessus de `DESIGNED_NOT_IMPLEMENTED`).
 **Autorité** : direction « Technical Calm » (05 §1), tokens AD-17 (05 §2.1, G-H2 re-2026-10),
 focus-mode spec (S4/S8, DPC v1.8), catalog des sons `apps/mobile/src/lib/focus-sounds.ts`,
-polish layer `apps/mobile/src/ux/polish.tsx`.
+polish layer `apps/mobile/src/ux/motion.tsx @aurora/ui`.
 **Règle bloquante reprise** : un thème expressif ne redéfinit **jamais**
 `success`/`warning`/`danger`/`info` (05 §5.1) — les états sémantiques sont gelés
 dans `packages/ui/src/themes/neutral.ts`. Ce document assigne des **états émotionnels**
@@ -44,7 +44,7 @@ de 25 minutes est terminée. 0 interruption. » Jamais d'exclamation, jamais d'e
 | **Hors ligne** | Neutralité (« rien ne change ») | Apaisant | Badge `warning` (S6 : « Offline ») ; le Focus reste parfaitement fonctionnel ; jamais de « PANIQUE, PAS DE RÉSEAU ». |
 | **Reconnexion** | Soulagement discret | Factuel | Toast 3s (`success` si resync OK) ; aucun son si on est en Focus actif. |
 | **Check-in coach (agent)** | Intéraction humaine déléguée, « quelqu'un me suit » | Chaleur mesurée, jamais de surjouer | Carte agent (`agent.css`), loader organique 3-blobs (ui-libraries §9.3, **pas** three-dot) ; ton de la voix : §5.3. |
-| **App au repos / ambiant (Home)** | Clairté tranquille (« que compte-t-il maintenant ? ») | Neutre, rassurant | Home = réponse à *« What matters now? »* (AD-14) ; `NodePulse` **désactivé** (les nœuds secondaires restent statiques, polish.tsx) ; animation ambiante : **aucune** par défaut (§3.4). |
+| **App au repos / ambiant (Home)** | Clairté tranquille (« que compte-t-il maintenant ? ») | Neutre, rassurant | Home = réponse à *« What matters now? »* (AD-14) ; `NodePulse` **désactivé** (les nœuds secondaires restent statiques, motion.tsx @aurora/ui) ; animation ambiante : **aucune** par défaut (§3.4). |
 
 ### 1.3 Règle de hiérarchie émotionnelle
 
@@ -121,7 +121,7 @@ renforcé ; le ring **ne** s'atténue jamais (il est le sujet).
 
 ## 3. Motion & timing
 
-Référentiels existants (polish.tsx, DS 05 §2.6) : `PAGE_TRANSITION` 200ms easeOut
+Référentiels existants (motion.tsx @aurora/ui, DS 05 §2.6) : `PAGE_TRANSITION` 200ms easeOut
 (`y: 8 → 0`), `REVEAL` 250ms, `NodePulse` breath 1.5s easeInOut (scale 1 → 1.04 → 1,
 le **seul** emphease animé du Focus), Skeleton pulse opacity 0.6 → 1 / 1.2s.
 Règle 2 **obligatoire** : `prefers-reduced-motion` → tout passe à l'instantané (0ms).
@@ -137,7 +137,7 @@ Règle 2 **obligatoire** : `prefers-reduced-motion` → tout passe à l'instanta
 | **Transition entre écrans** | 200ms | `easeOut` | `PAGE_TRANSITION` exact ; en Focus actif → **instantané** (règle 3, 05 §2.6 l.323-324 : fast → 0ms). | On ne quitte pas une immersion avec un glide. |
 | **Ouverture BottomSheet bilan** | 250ms | `easeOut` | Slide-up `y: 100 % → 0`, shadow.4, focus-trap ; reduced-motion = affichage sans animation. | Le bilan **précède** le retour au Home ; l'ouverture doit être posée, pas bondissante. |
 | **NodePulse (nœud actif)** | 1.5s × 2 cycles | `easeInOut` | scale 1 → 1.04 → 1 (4 % max) ; **seul** emphease animé autorisé. | Le pulse = « ce nœud vit » ; 4 % = à peine visible, intentionnel (calme). |
-| **Animation d'ambiance (fond)** | 1.5s « breath » | `easeInOut` | **Uniquement** sur le Focus (`NodePulse`) ; sur Home : **aucune animation de fond par défaut** (les nœuds secondaires restent statiques, polish.tsx). L'animation ambiante optionnelle (thème Cosmos : particules douces 300ms spring) est **opt-in** dans les settings. | « Un écran qui respire concentre » — mais un fond qui bouge tout le temps = agitation. |
+| **Animation d'ambiance (fond)** | 1.5s « breath » | `easeInOut` | **Uniquement** sur le Focus (`NodePulse`) ; sur Home : **aucune animation de fond par défaut** (les nœuds secondaires restent statiques, motion.tsx @aurora/ui). L'animation ambiante optionnelle (thème Cosmos : particules douces 300ms spring) est **opt-in** dans les settings. | « Un écran qui respire concentre » — mais un fond qui bouge tout le temps = agitation. |
 
 ### 3.2 Hiérarchie temporelle (à retenir)
 
@@ -288,7 +288,7 @@ Règle : le coach **n'exprime jamais de sentiment à la place de l'utilisateur**
 | Phase | Durée | Ce que l'utilisateur **ressent** | Ce que le design **crée** |
 |---|---|---|---|
 | **A. Pré-focus (wind-down, ~30 s)** | 0 → start | Le monde se met en pause ; le téléphone devient « un lieu ». | `/focus` sans TopBar ni BottomNav (chrome retiré, 05 §4.4.2) ; `NodePulse` 1.5s breath sur le ring **avant** le démarrage (le nœud « respire » = le lieu est vivant mais calme) ; Callout info « Les notifications sont réduites pour cette session » ; son optionnel en fondu (2 s d'attaque pour éviter le coup de tonnerre) ; transition de page entrante 200ms easeOut, puis **plus** de transition (le Focus ne fait plus glisser les écrans). |
-| **B. Focus actif (5–90 min)** | start → end | Immersion, stabilité, « le temps se voit mais ne se sent pas ». | Ring 160px préeminent, temps restant 3xl JetBrains Mono **stable** (pas de NumberTick — 05 §2.6 règle 1 : les données ne s'animent jamais) ; animations atténuées (règle 3 : `slow` off, toasts différés, transitions instantanées) ; nœuds secondaires à 40 % (local adaptation, polish.tsx) ; le son de fond (si choisi) **continue** sans interruption (loop, nature/bruit-blanc) ; aucune notification ne sonne (§4.3) ; le badge « En cours » (accent) au-dessus du timer est le **seul** signal d'état. |
+| **B. Focus actif (5–90 min)** | start → end | Immersion, stabilité, « le temps se voit mais ne se sent pas ». | Ring 160px préeminent, temps restant 3xl JetBrains Mono **stable** (pas de NumberTick — 05 §2.6 règle 1 : les données ne s'animent jamais) ; animations atténuées (règle 3 : `slow` off, toasts différés, transitions instantanées) ; nœuds secondaires à 40 % (local adaptation, motion.tsx @aurora/ui) ; le son de fond (si choisi) **continue** sans interruption (loop, nature/bruit-blanc) ; aucune notification ne sonne (§4.3) ; le badge « En cours » (accent) au-dessus du timer est le **seul** signal d'état. |
 | **C. Pause intermédiaire (Pomodoro break, 5 min)** | entre cycles | « C'est le repos, pas la fin. » | Le ring passe en **`success` vert** (05 §3.6.9 : « le break, le repos, est vert — le rouge est réservé au danger ») ; le label passe de « Temps restant » à « Pause » ; le son reste en continu (pas de coupure) ; le CTA redevient « Reprendre » (pas « Démarrer »). |
 | **D. Post-focus (bilan, 15–30 s)** | fin → Home | Soulagement + fierté **discrète** ; le temps est rendu. | Le ring se fige ; BottomSheet `FocusSessionBilan` s'ouvre (250ms easeOut, shadow.4) **avant** le retour au Home (05 §4.4.2 : « le bilan précède le retour ») ; `ChartSpec focusBilan` : barre horizontale `planned vs actual` (`accent-primary` = actual, `surface-alt` = planned) + 2 `StatTile` (score, interruptions) en G2 via `DataVisualizationRenderer` — **pas de valeurs animées** ; si interruption 0 : le score est affiché tel quel, pas de commentaire de « perfection » (le chiffre parle) ; CTA « Revenir au Home » (primary, seul CTA du sheet) ; son `focus-end` (si setting ON) **après** l'ouverture du sheet ; les toasts différés de la session (réductions d'apps, sync) s'affichent **maintenant** (règle 3 : jamais pendant le pomodoro). |
 | **E. Retour au monde normal** | après Home | La navigation revient doucement ; tout est à sa place. | Transition de page Home 200ms ; le `NodePulse` du Focus s'arrête (n'importe quel nœud secondaire redevient statique) ; le son de fond s'arrête en fondu (2 s) ; le canvas reste `#FFFFFF` (le fond n'a jamais changé, §2.3) — le monde n'a pas « bougé ». |
@@ -314,7 +314,7 @@ Invariants de l'arc (à ne jamais briser) :
 | **A3** | Notifications multiples sur le même objet (deadline locale + OneSignal pour la même tâche) | L'utilisateur reçoit le même « rappel » deux fois (une fois locale, une fois serveur) = « l'app ne sait pas ce qu'elle fait ». (04 §3.4 : anti-double-push, test 04 §7.) | Règle bloquante pack 04 §3.4 : **un seul émetteur par objet** (deadline = local, événement serveur = OneSignal) ; le test de CI le vérifie. |
 | **A4** | Son d'erreur alarmant (bip aigus, « error » vocal) | Un son de drame sur une erreur transitoire (réseau) = punition + fausse urgence ; en réunion c'est humiliant. | §4.4 : **silence** sur tous les états `danger` ; le Callout (rouge `#EF4444`) + CTA « Réessayer » portent l'information. |
 | **A5** | « Vous avez raté X jours de {habitude} » | La re-proche décompose la série ; le rouge « broken streak » pousse l'abandon (effort perçu > récompision). | « La série est à {n}. Reprendre aujourd'hui la relance à {n+1}. » (5.5) ; `habit-weak` gris, **pas** `danger`. |
-| **A6** | Un fond qui bouge en permanence (particules, wave, « live ») | « Un écran qui respire concentre » (05 §1) — un fond qui bouge **en permanence** est le contraire. Le Cosmos (particules douces) est opt-in, jamais par défaut. | Animation ambiante = **NodePulse uniquement** (Focus) ; le default de Home = aucun fond animé (les nœuds secondaires sont statiques, polish.tsx). |
+| **A6** | Un fond qui bouge en permanence (particules, wave, « live ») | « Un écran qui respire concentre » (05 §1) — un fond qui bouge **en permanence** est le contraire. Le Cosmos (particules douces) est opt-in, jamais par défaut. | Animation ambiante = **NodePulse uniquement** (Focus) ; le default de Home = aucun fond animé (les nœuds secondaires sont statiques, motion.tsx @aurora/ui). |
 | **A7** | Le Focus qui **bloque** les apps sur un device consumer (promesse v1.8 sur un device non-DPC) | La UI ne doit jamais montrer un CTA « bloquer » quand `isBlockingAvailable() = false` (04 §4.2) ; la capacité réelle = `reduceForFocus` (réduction, pas blocage). | Callout « capacité réelle » : « Les notifications d'Aurora sont réduites. Les autres applications ne sont pas affectées. » — le fallback consumer est documenté, **jamais simulé**. |
 | **A8** | Changer le thème en revenant au premier plan | Un changement silencieux de thème au retour foreground = l'app « se transforme » derrière l'utilisateur (05 §2.1 : « jamais de changement de thème silencieux »). | Le choix de thème est persistant (UI store, `persist`); l'auto-bascule (système/heure) est **explicite** dans /settings avec aperçu. |
 | **A9** | « Reconnexion réussie ! 🎉 » | Le soulagement de resync n'est pas un événement digne d'une fanfare ; ça dilue l'attention. | Toast 3s `success` « Synchronisation terminée. » — factuel. |

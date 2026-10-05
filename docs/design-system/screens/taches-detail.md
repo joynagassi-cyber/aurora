@@ -106,15 +106,15 @@ Module : Productivité · Route : `/tasks/:id` (S-24) · Statut : **additif** ·
 
 | Élément | Action → Feedback | Durée | GPU-only (transform+opacity) | smooth | reduced-motion=statique | SSoT |
 |---|---|---|---|---|---|---|
-| Sheet (ouverture) | Slide-up (translateY 100 %→0, 250 ms) | 250 ms `anim.normal` | `transform: translateY` | ease-out (pas bouncy, S3 l.143) | statique (S5 ; §2.6 r.2) | 05 §2.6 ; polish.tsx REVEAL_TRANSITION ; WDS 05.5 §Interactions |
+| Sheet (ouverture) | Slide-up (translateY 100 %→0, 250 ms) | 250 ms `anim.normal` | `transform: translateY` | ease-out (pas bouncy, S3 l.143) | statique (S5 ; §2.6 r.2) | 05 §2.6 ; motion.tsx @aurora/ui REVEAL_TRANSITION ; WDS 05.5 §Interactions |
 | Ligne sous-tâche (tap) | Press feedback (scale 0.98, 150 ms) + toggle Checkbox (success, 150 ms) | 150 ms `anim.fast` | `transform: scale` | linear | statique | 05 §2.6 l.314 ; S5 ; 05 §3.2 l.457 (pressed = verrouillé + success) |
-| CTA focus | Press feedback (scale 0.98, 150 ms) + transition page (200 ms) | 150+200 ms | `transform: scale` + fade | ease-out | statique | polish.tsx PAGE_TRANSITION ; 05 §2.6 |
+| CTA focus | Press feedback (scale 0.98, 150 ms) + transition page (200 ms) | 150+200 ms | `transform: scale` + fade | ease-out | statique | motion.tsx @aurora/ui PAGE_TRANSITION ; 05 §2.6 |
 | Toast | Slide-in bas (translateY + opacity, 250 ms) | 250 ms | `transform: translateY`, `opacity` | ease-out | statique | S6 l.183 ; 05 §2.6 |
 | Skeleton (loading) | Pulse (opacity 0.6→1, 1.2 s loop) | 1200 ms loop | `opacity` | ease-in-out | **pas de pulse, statique** (§2.6 r.2 ; S5) | 05 §2.6 l.343 ; S5 |
-| Sheet (fermeture swipe-down) | Slide-down (translateY 0→100 %, 200 ms) + fade | 200 ms `anim.normal` | `transform: translateY`, `opacity` | ease-out, pas bouncy (S3 l.143) | statique | WDS 05.5 §Interactions ; polish.tsx |
+| Sheet (fermeture swipe-down) | Slide-down (translateY 0→100 %, 200 ms) + fade | 200 ms `anim.normal` | `transform: translateY`, `opacity` | ease-out, pas bouncy (S3 l.143) | statique | WDS 05.5 §Interactions ; motion.tsx @aurora/ui |
 | Mini-matrice (surlignage) | **Aucune animation** — la donnée n'est jamais animée (§2.6 règle 1 : « les données ne s'animent jamais ») | — | — | — | statique | 05 §2.6 l.310 (règle 1) ; WDS 05.5 §6 (quadrantOf = pure, pas de serveur) |
 
-> **Règle 1 (§2.6)** : les données (sous-tâches, % complétées, position Q) **ne s'animent jamais** (pas de réordonnancement, pas de trace qui se dessine). **Règle 4** : aucune animation ne bloque l'input. **Mobile** : pas de layout animation (S5 l.169 ; polish.tsx spring-free 200 ms ease-out). **Reduced-motion** : toutes animations → statiques ; skeleton = pas de pulse (§2.6 r.2 ; aurora.css media query durations → 0.01 ms).
+> **Règle 1 (§2.6)** : les données (sous-tâches, % complétées, position Q) **ne s'animent jamais** (pas de réordonnancement, pas de trace qui se dessine). **Règle 4** : aucune animation ne bloque l'input. **Mobile** : pas de layout animation (S5 l.169 ; motion.tsx @aurora/ui spring-free 200 ms ease-out). **Reduced-motion** : toutes animations → statiques ; skeleton = pas de pulse (§2.6 r.2 ; aurora.css media query durations → 0.01 ms).
 
 ---
 
@@ -157,9 +157,9 @@ Module : Productivité · Route : `/tasks/:id` (S-24) · Statut : **additif** ·
 
 | Transition | Direction | Durée / curve | GPU-only | SSoT |
 |---|---|---|---|---|
-| Ouverture (Kanban → overlay) | `kanban` (S-05) → `BottomSheet full` `/tasks/:id` (par-dessus, le board **reste** visible) | 250 ms slide-up (REVEAL_TRANSITION) | `transform: translateY` + `opacity` | WDS 05.5 §2 (entrée primaire) ; 05 §4.3.3 l.1614–1618 ; polish.tsx REVEAL_TRANSITION |
+| Ouverture (Kanban → overlay) | `kanban` (S-05) → `BottomSheet full` `/tasks/:id` (par-dessus, le board **reste** visible) | 250 ms slide-up (REVEAL_TRANSITION) | `transform: translateY` + `opacity` | WDS 05.5 §2 (entrée primaire) ; 05 §4.3.3 l.1614–1618 ; motion.tsx @aurora/ui REVEAL_TRANSITION |
 | Ouverture (liste → overlay) | `taches-liste` (S-32) → overlay `/tasks/:id` | 250 ms slide-up | idem | WDS 05.5 §2 ; 05 §4.3.1 l.1417 |
-| CTA focus → matrice (S-39) | `/tasks/:id` → `/tasks` (taskView→eisenhower, S-39, 05.6) | 200 ms fade + y (PAGE_TRANSITION) ; le sheet **se ferme** d'abord (200 ms slide-down) puis le push | `transform` + `opacity` | WDS 05.5 §4 (CTA focus enclenche la session) ; eisenhower.md §4 ; polish.tsx PAGE_TRANSITION |
+| CTA focus → matrice (S-39) | `/tasks/:id` → `/tasks` (taskView→eisenhower, S-39, 05.6) | 200 ms fade + y (PAGE_TRANSITION) ; le sheet **se ferme** d'abord (200 ms slide-down) puis le push | `transform` + `opacity` | WDS 05.5 §4 (CTA focus enclenche la session) ; eisenhower.md §4 ; motion.tsx @aurora/ui PAGE_TRANSITION |
 | Retour (swipe-down) | overlay → board Kanban (invariant S6.2 : **retour au contexte**, pas à une liste) | 200 ms slide-down + fade | `transform` + `opacity` | WDS 05.5 §6 (swipe-down = close) ; invariant S6.2 ; 05 §4.3.3 l.1616–1618 |
 | Retour natif (Back Android) | descend le sheet (ferme à `peek` puis entièrement, pas de saut direct, 05 §3.5 l.801–802) | 200 ms | idem | 05 §3.5 l.801–802 |
 

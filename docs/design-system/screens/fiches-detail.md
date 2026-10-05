@@ -64,7 +64,7 @@
 
 | Éléments | Action → feedback | Durée | GPU only | Smooth | reduced-motion=static | Source SSoT |
 |---|---|---|---|---|---|---|
-| Header (ouverture) | tap → open overlay | 200ms easeOut (PAGE_TRANSITION) | opacity+translateY (pas de layout) | easeOut (pas de spring/bouncy) | static (pas d'animation) | ssootCode motionRefs (polish.tsx) ; ui-libraries S5 l.169 |
+| Header (ouverture) | tap → open overlay | 200ms easeOut (PAGE_TRANSITION) | opacity+translateY (pas de layout) | easeOut (pas de spring/bouncy) | static (pas d'animation) | ssootCode motionRefs (motion.tsx @aurora/ui) ; ui-libraries S5 l.169 |
 | Contenu (chargé) | skeleton → contenu | crossfade 200ms easeOut | opacity (pas de scale) | easeOut | static | ssootCode motionRefs ; ui-libraries S3 l.143 |
 | Badge mastery (changement) | state change → badge update | 200ms easeOut | opacity+translateY (pas de scale) | easeOut | static | ssootCode motionRefs ; 05 §2.6 |
 | Toast feedback (QCM) | réponse → toast | slide up 200ms easeOut | translateY (pas de layout) | easeOut | static (pas de toast animé) | ssootCode motionRefs ; ui-libraries §3.5 |

@@ -24,7 +24,7 @@
 
 | Contrainte | SSoT | Détail |
 |---|---|---|
-| **Durée + courbe** : 200ms, `ease-out`, GPU-only (transform/opacity) | `apps/mobile/src/ux/polish.tsx` `PAGE_TRANSITION` | Toutes les entrées/sorties de page (push, overlay, tab-switch) ; `prefers-reduced-motion` = statique (in)stantané. |
+| **Durée + courbe** : 200ms, `ease-out`, GPU-only (transform/opacity) | `apps/mobile/src/ux/motion.tsx @aurora/ui` `PAGE_TRANSITION` | Toutes les entrées/sorties de page (push, overlay, tab-switch) ; `prefers-reduced-motion` = statique (in)stantané. |
 | **Stacking z-index des surfaces flottantes** | 05 §3.5 l.754-759 | contenu 0 < TopBar/BottomNav 10 < sheet/menu/drawer 30 < Modal 40 < Toast 50 < Splash 60 — un écran ne définit jamais son propre z-index ; il consomme ces valeurs. |
 | **Details open OVER the current tab** (jamais de switch de tab pour ouvrir un détail) | `navigation-and-page-composition.md` §1 l.10-15 · `router.tsx` l.65-71 | Les overlays (`/tasks/:id`, `/learn/:id`, `/progress/:id`, `/knowledge`, `/knowledge/:nodeId`, `/artifacts/:id`) s'ouvrent **par-dessus** le tab actif ; le retour ferme l'overlay et **révèle le tab en dessous** (ion-back ou native back, 02 §6.3). |
 | **Back** : le retour natif (geste Android) fonctionne sur **chaque** route ; une route qui bloque le back **sauve d'abord** | 02 §6.3 · `navigation-and-page-composition.md` §1 l.13-15 | Le local-first (AD-7) rend le form state auto-persisté ; le back n'a jamais de modale « perdues modifications ? » — l'état est déjà persisté. |

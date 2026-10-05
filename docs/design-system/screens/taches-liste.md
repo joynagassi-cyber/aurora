@@ -110,11 +110,11 @@ Module : Productivité · Route : `/tasks` · Statut : **additif** · SSoT écra
 
 | Élément | Action → Feedback | Durée | GPU-only (transform+opacity) | smooth | reduced-motion=statique | SSoT |
 |---|---|---|---|---|---|---|
-| Liste plate | Apparition (fade + translateY 8→0) | 200 ms `anim.normal` | `transform: translateY`, `opacity` (S5 l.169) | ease-out | statique (pas d'anim, S5) | polish.tsx `PAGE_TRANSITION` ; 05 §2.6 l.310 |
+| Liste plate | Apparition (fade + translateY 8→0) | 200 ms `anim.normal` | `transform: translateY`, `opacity` (S5 l.169) | ease-out | statique (pas d'anim, S5) | motion.tsx @aurora/ui `PAGE_TRANSITION` ; 05 §2.6 l.310 |
 | Ligne tâche (tap) | Press feedback (scale 0.98, 150 ms) | 150 ms `anim.fast` | `transform: scale` | linear | statique | 05 §2.6 l.314 ; S5 |
 | BottomSheet détail | Slide-up (translateY 100 %→0, 250 ms) | 250 ms `anim.normal` | `transform: translateY` | ease-out, pas bouncy (S3 l.143) | statique (S5) | 05 §2.6 ; WDS 05.3 §Interactions |
 | Toast | Slide-in bas (translateY + opacity, 250 ms) | 250 ms | `transform: translateY`, `opacity` | ease-out | statique | S6 l.183 ; 05 §2.6 |
-| CTA Kanban | Press feedback (scale 0.98, 150 ms) + transition page 200 ms | 150+200 ms | `transform: scale` + fade | ease-out | statique | polish.tsx ; 05 §2.6 |
+| CTA Kanban | Press feedback (scale 0.98, 150 ms) + transition page 200 ms | 150+200 ms | `transform: scale` + fade | ease-out | statique | motion.tsx @aurora/ui ; 05 §2.6 |
 | Skeleton | Pulse (opacity 0.6→1, 1.2 s) | 1200 ms loop | `opacity` | ease-in-out | **pas de pulse, statique** (S5 ; 05 §2.6 r.2) | 05 §2.6 l.343 ; S5 |
 
 > **Règle 1 (05 §2.6)** : les données ne s'animent jamais (pas de réordonnancement animé de la liste au tri). **Règle 4** : aucune animation ne bloque l'input. **Mobile** : pas de layout animation (S5 l.169).
@@ -161,10 +161,10 @@ Module : Productivité · Route : `/tasks` · Statut : **additif** · SSoT écra
 
 | Transition | Direction | Durée / curve | GPU-only | SSoT |
 |---|---|---|---|---|
-| Liste → Kanban global (CTA) | `/tasks` → `/tasks` (tab Kanban, S-05) | 200 ms fade + y (PAGE_TRANSITION) | transform+opacity | polish.tsx ; WDS 05.3 OQ-2 ; 05 §2.6 |
-| Liste → Détail (BottomSheet) | overlay sur tab courant | 250 ms slide-up | transform | WDS 05.3 ; polish.tsx REVEAL_TRANSITION |
+| Liste → Kanban global (CTA) | `/tasks` → `/tasks` (tab Kanban, S-05) | 200 ms fade + y (PAGE_TRANSITION) | transform+opacity | motion.tsx @aurora/ui ; WDS 05.3 OQ-2 ; 05 §2.6 |
+| Liste → Détail (BottomSheet) | overlay sur tab courant | 250 ms slide-up | transform | WDS 05.3 ; motion.tsx @aurora/ui REVEAL_TRANSITION |
 | Retour Détail → Liste | close BottomSheet | 200 ms fade | transform | idem |
-| Home → Tâches (tab 2 BottomNav) | `/` → `/tasks` | 200 ms fade | transform | 02 §6.1 ; polish.tsx |
+| Home → Tâches (tab 2 BottomNav) | `/` → `/tasks` | 200 ms fade | transform | 02 §6.1 ; motion.tsx @aurora/ui |
 
 > Transitions = données jamais animées (règle 1, 05 §2.6) ; reduced-motion = statique (règle 2). Pas de transition bouncy (S3 l.143). La transition liste↔Kanban conserve le même tab (taskView change, pas de push route, 02 §3.3).
 

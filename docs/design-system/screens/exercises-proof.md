@@ -41,7 +41,7 @@
 
 ### (a) 6 états S6 par élément async (ui-libraries §6 l.174–187)
 
-- **loading** (validation Scientific Engine en cours, AD-12, module serveur-only, ~2-5 s par sous-étape) : Zone 2 = skeleton de l'exercice courant + CTA indisponible (pas d'actions avant données) ; tokens = --aurora-skeleton ; texte exact = « Validation en cours… » (court, car serveur AD-12) ; CTA = aucun (pas de retry pendant le loading) ; **entrée** = fade 200ms easeOut (PAGE_TRANSITION, ssootCode motionRefs polish.tsx) ; **sortie** = skeleton → contenu partiel crossfade 200ms (pack 02 §7 : si > 300ms le contenu apparaît partiellement en dessous du Skeleton) ; **pas** de layout animation (S5 l.169).
+- **loading** (validation Scientific Engine en cours, AD-12, module serveur-only, ~2-5 s par sous-étape) : Zone 2 = skeleton de l'exercice courant + CTA indisponible (pas d'actions avant données) ; tokens = --aurora-skeleton ; texte exact = « Validation en cours… » (court, car serveur AD-12) ; CTA = aucun (pas de retry pendant le loading) ; **entrée** = fade 200ms easeOut (PAGE_TRANSITION, ssootCode motionRefs motion.tsx @aurora/ui) ; **sortie** = skeleton → contenu partiel crossfade 200ms (pack 02 §7 : si > 300ms le contenu apparaît partiellement en dessous du Skeleton) ; **pas** de layout animation (S5 l.169).
 - **empty** (pas d'exercice actif : aucun domaine RDM sélectionné) : zone contenu vide + CTA primaire « Revenir à /progress » (retour natif, invariant S6.2) ; tokens = --aurora-bg-subtle + --aurora-text-secondary ; **entrée** = fade 200ms ; **sortie** = tap CTA → navigation vers `/progress` (01.2).
 - **error** (échec validation Scientific Engine : unités/dimensions non conformes) : Callout danger (« Validation non conforme : unités erronées ») + CTA ghost « Réessayer » (re-saisie, AD-13 A4) ; tokens = --aurora-danger / --aurora-danger-surface ; **entrée** = fade 200ms ; **sortie** = retry OK → Zone 2 rechargée, Callout disparaît ; si fail → retry encore (pas de crash).
 - **success** (validation OK, fin de session) : Zone 3 = Callout success (« Scientific Engine : VALIDÉ ✓ (unités/dimensions conformes, scientific.evaluate/verify) ») + auto-redirect événementiel vers `/progress` (pas un CTA manuel, invariant AD-14) ; tokens = --aurora-success / --aurora-success-surface ; **entrée** = fade 200ms ; **sortie** = auto-redirect OK → navigation vers `/progress` (01.7), overlay fermé.
@@ -68,12 +68,12 @@
 
 | Élément | Action → feedback | Durée | GPU only (transform/opacity) | Smooth | reduced-motion = statique | Source SSoT |
 |---|---|---|---|---|---|---|
-| Header (ouverture overlay) | tap depuis mirror-cognitive → open | 200ms easeOut (PAGE_TRANSITION opacity 0→1, y 8→0, exit y -4) | opacity + translateY, **pas** de layout | easeOut (pas de spring/bouncy, S3 l.143) | statique (div fixe, ssootCode motionRefs) | ssootCode motionRefs polish.tsx + ui-libraries S5 l.169 |
+| Header (ouverture overlay) | tap depuis mirror-cognitive → open | 200ms easeOut (PAGE_TRANSITION opacity 0→1, y 8→0, exit y -4) | opacity + translateY, **pas** de layout | easeOut (pas de spring/bouncy, S3 l.143) | statique (div fixe, ssootCode motionRefs) | ssootCode motionRefs motion.tsx @aurora/ui + ui-libraries S5 l.169 |
 | Zone 2 (chargé) | skeleton → contenu | crossfade 200ms easeOut | opacity (pas de scale, pas de reflow) | easeOut | statique | ssootCode motionRefs + 05 §2.6 |
 | CTA « Valider l'étape » (tap) | tap → pressed | 150ms easeOut (anim.fast, 05 §2.6) | scale 0.95 (pas de layout, S5 l.169) ; pas de bouncy | easeOut | statique (pas d'anim) | ssootCode motionRefs + 05 §2.6 |
 | Callout danger (échec) | validation fail → Callout appear | fade 200ms easeOut | opacity (pas de scale) | easeOut | statique | ssootCode motionRefs + 05 §2.6 |
 | Callout success (validation OK) | validation OK → Zone 3 appear | fade 200ms easeOut | opacity (pas de scale) | easeOut | statique | ssootCode motionRefs + 05 §2.6 |
-| Auto-redirect (fin) | validation OK → navigate `/progress` | fade 200ms easeOut (close overlay) | opacity + translateY (exit y -4) | easeOut | statique | ssootCode motionRefs polish.tsx + ui-libraries S5 l.169 |
+| Auto-redirect (fin) | validation OK → navigate `/progress` | fade 200ms easeOut (close overlay) | opacity + translateY (exit y -4) | easeOut | statique | ssootCode motionRefs motion.tsx @aurora/ui + ui-libraries S5 l.169 |
 | Focus Mode (data-focus-mode=true) | attenuated animations + deferred toasts (ssootCode forbidden : `[data-focus-mode=true] .animate-pulse-skeleton = animation:none`) | N/A (règle globale) | N/A | N/A | statique | ssootCode forbidden (Focus Mode rule 3, 05 §2.6) |
 
 ## §6 Tokens (discipline AD-17, 05 §2 l.93–346 + ui-libraries S4 l.145–160)

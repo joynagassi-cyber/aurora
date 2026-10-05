@@ -119,7 +119,7 @@ Le board = **lecture locale 100 %** (AD-7, PowerSync mirror, pack 03 §4.1) — 
 
 | Transition | Spec | SSoT |
 |---|---|---|
-| **Entrée** du board (push depuis `taches-liste` S-32, ou tab 2 BottomNav) | `PAGE_TRANSITION` : `opacity 0→1`, `translateY(8px→0)`, 200ms `ease-out` (polish.tsx l. 23-28) ; `exit` = `opacity 1→0`, `translateY(0→-4px)` | polish.tsx l. 23-28 ; 05 §2.6 l. 310-320 |
+| **Entrée** du board (push depuis `taches-liste` S-32, ou tab 2 BottomNav) | `PAGE_TRANSITION` : `opacity 0→1`, `translateY(8px→0)`, 200ms `ease-out` (motion.tsx PAGE_TRANSITION @aurora/ui) ; `exit` = `opacity 1→0`, `translateY(0→-4px)` | motion.tsx PAGE_TRANSITION @aurora/ui ; 05 §2.6 l. 310-320 |
 | **Sortie** vers `taches-detail` (S-24, 05.5) | La `KanbanCard` → **`BottomSheet full` par-dessus** le board (05 §4.3.3 l. 1613-1620 : le Kanban **reste** visible en arrière-plan, retour = au board, **pas** à une liste — règle de non-surprise) | 05 §4.3.3 l. 1613-1620 |
 | **Retour** depuis `taches-detail` → board | Le `contexte` est **préservé** : le scroll de la colonne + le filtre (02 §6.3 : le retour retrouve l'état d'avant) ; le `ui-state` (filtre, scroll position) est **persisté** (store UI, AD-7) | 02 §6.3 ; 05 §4.3.3 l. 1613-1620 |
 | **`BottomSheet full`** → `taches-detail` (route push si le détail est **lourd**) | Le `BottomSheet` = le détail **léger** (05 §3.5 l. 787-808) ; un écran qui a sa propre `TopBar` + routing = une **route** (pack 02 §6.1) — `taches-detail` = une route `/tasks/:id` (WDS 05.5) | 05 §3.5 l. 787-808 ; 02 §6.1 |

@@ -43,7 +43,7 @@
 
 ### (a) 6 états S6 par élément async (ui-libraries §6 l.174–187)
 
-- **loading** (flux presign → fetch → rendu) : Skeleton aperçu + KeyValueList (§3, loading row) ; tokens = --aurora-skeleton ; texte exact = « Chargement de l'aperçu… » (court, cache local = rapide si présent) ; CTA = **aucun** (pas d'actions avant données) ; **entrée** = fade 200ms easeOut (PAGE_TRANSITION, ssootCode motionRefs polish.tsx) ; **sortie** = skeleton → contenu crossfade 200ms.
+- **loading** (flux presign → fetch → rendu) : Skeleton aperçu + KeyValueList (§3, loading row) ; tokens = --aurora-skeleton ; texte exact = « Chargement de l'aperçu… » (court, cache local = rapide si présent) ; CTA = **aucun** (pas d'actions avant données) ; **entrée** = fade 200ms easeOut (PAGE_TRANSITION, ssootCode motionRefs motion.tsx @aurora/ui) ; **sortie** = skeleton → contenu crossfade 200ms.
 - **empty** (artefact inconnu / supprimé / non synchronisé) : Card empty (S8) + CTA « Revenir à la bibliothèque » (navigate back, 02 §6.1 S3) ; tokens = --aurora-bg-subtle + --aurora-text-secondary ; **entrée** = fade 200ms ; **sortie** = retour (close overlay, bibliothèque S14 préservée S6.2).
 - **error** (rendu échoué — format pris en charge mais moteur a échoué) : Alert destructive + message court + CTA « Réessayer » (§3, error row) ; tokens = --aurora-danger / --aurora-danger-surface ; **entrée** = fade 200ms ; **sortie** = retry OK → rendu ; fail → raw-file fallback (§4 non-prises-en-charge).
 - **success** (export terminé, retour sur l'écran) : Toast success (§3, export row) ; tokens = --aurora-success ; texte = « Export terminé — [format] » ; CTA = le CTA « Télécharger » redevient actif (fichier exporté disponible) ; **entrée** = toast slide up 200ms (translateY, pas de layout, S5 l.169) ; **sortie** = auto-dismiss 3s (§3.5 l.823 pattern).
@@ -70,7 +70,7 @@
 
 | Élément | Action → feedback | Durée | GPU only (transform/opacity) | Smooth | reduced-motion = statique | Source SSoT |
 |---|---|---|---|---|---|---|
-| Header (ouverture overlay) | tap depuis biblio/deep-link → open | 200ms easeOut (PAGE_TRANSITION opacity 0→1, y 8→0, exit y -4, ssootCode motionRefs polish.tsx) | opacity + translateY, **pas** de layout (S5 l.169) | easeOut (pas de spring/bouncy, S3 l.143) | statique (div fixe, ssootCode forbidden) | ssootCode motionRefs + ui-libraries S5 l.169 |
+| Header (ouverture overlay) | tap depuis biblio/deep-link → open | 200ms easeOut (PAGE_TRANSITION opacity 0→1, y 8→0, exit y -4, ssootCode motionRefs motion.tsx @aurora/ui) | opacity + translateY, **pas** de layout (S5 l.169) | easeOut (pas de spring/bouncy, S3 l.143) | statique (div fixe, ssootCode forbidden) | ssootCode motionRefs + ui-libraries S5 l.169 |
 | Zone aperçu (chargé) | skeleton → contenu | crossfade 200ms easeOut | opacity (pas de scale, pas de reflow) | easeOut | statique | ssootCode motionRefs + 05 §2.6 |
 | `MathBlock` (LaTeX, KaTeX) | **aucune animation** — donnée scientifique = **jamais** animée (05 §2.6 règle 1, AnimationController header ssootCode motionRefs) | N/A | N/A | N/A | statique (pas de trace) | 05 §2.6 règle 1 + ssootCode forbidden |
 | `InfographicSlot` (AntV) / `DataTable` (G2) | **aucune animation** — données visuelles = jamais animées (règle 1) ; seul le reveal de la zone (crossfade) s'anime | 200ms (reveal) / N/A (data) | opacity (reveal) | easeOut | statique | 05 §2.6 + ssootCode forbidden (scientific data NEVER animates) |

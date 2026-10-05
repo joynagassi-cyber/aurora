@@ -105,7 +105,7 @@ Module : Productivité · Route : `/habits` · Statut : **détaillé** · SSoT �
 
 | Élément | Action → Feedback | Durée | GPU-only (transform+opacity) | smooth | reduced-motion = statique | SSoT |
 |---|---|---|---|---|---|---|
-| Page (entrée) | Fade + translateY 8→0 | 200 ms `anim.normal` | `transform: translateY`, `opacity` (S5 l.169) | ease-out | statique (S5 ; 05 §2.6 r.2) | polish.tsx `PAGE_TRANSITION` ; 05 §2.6 l.310 |
+| Page (entrée) | Fade + translateY 8→0 | 200 ms `anim.normal` | `transform: translateY`, `opacity` (S5 l.169) | ease-out | statique (S5 ; 05 §2.6 r.2) | motion.tsx @aurora/ui `PAGE_TRANSITION` ; 05 §2.6 l.310 |
 | Card habitude (apparition) | Fade + translateY 8→0 (le **conteneur** s'anime, **jamais** la donnée de la heatmap — règle 1 §2.6 l.323–329) | 250 ms `anim.normal` | `transform`, `opacity` | ease-out, pas bouncy (S3 l.143) | statique | 05 §2.6 l.323–329 |
 | Heatmap `HabitStreak` | **AUCUNE animation de remplissage** (05 §3.6.12 l.1224–1226 : « les cellules *sont*, elles ne se « peignent pas » » ; la case se **remplit immédiatement**, pas de trace) | 0 ms | n/a (statique par design) | n/a | statique (idem, règle 1) | 05 §3.6.12 l.1224–1226 ; 05 §2.6 l.323 |
 | CTA « Marquer aujourd'hui » (tap) | Press feedback scale 0.98 → la case du jour apparaît **immédiatement** (écriture locale, AD-7) + Toast succès (si non-bouclé) | 150 ms press ; Toast 250 ms | `transform: scale` | ease-out | statique (le case apparaît sans anim) | 05 §3.6.12 l.1229–1231 ; S5 ; 05 §2.6 l.314 |
@@ -157,7 +157,7 @@ Module : Productivité · Route : `/habits` · Statut : **détaillé** · SSoT �
 
 | Transition | Direction | Durée / curve | GPU-only | SSoT |
 |---|---|---|---|---|
-| Home → Habitudes | `/` → `/habits` (bloc « Habitudes/Routines » AD-14) | 200 ms fade + y (`PAGE_TRANSITION`) | `transform` + `opacity` | 05 §2.6 ; polish.tsx ; WDS 05.1 §2 |
+| Home → Habitudes | `/` → `/habits` (bloc « Habitudes/Routines » AD-14) | 200 ms fade + y (`PAGE_TRANSITION`) | `transform` + `opacity` | 05 §2.6 ; motion.tsx @aurora/ui ; WDS 05.1 §2 |
 | Habitudes → Routines | Menu TopBar → écran S-09 (`/routines`) | 200 ms fade | `transform` | 05 §4.3.5 l.1711 ; 05 §4.3.6 |
 | Habitudes → Adhérence | Menu TopBar → l'analyse (la vue d'adhérence) | 200 ms fade | `transform` | 05 §4.3.5 l.1711 |
 | Card → BottomSheet détail | overlay **par-dessus** le tab courant (règle detail-over-tab, 02 §6.1) | 250 ms slide-up | `transform` | 05 §4.3.5 l.1752 ; 05 §3.4 l.1326–1328 |

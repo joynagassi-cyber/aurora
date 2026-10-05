@@ -124,7 +124,7 @@
 | **§15 CTA success** | Tap CTA → `Toast` « ✓ » apparaît (fade-in 200 ms) puis disparaît (fade-out 200 ms) | 200 ms × 2 | `opacity` (GPU) | smooth | `Toast` apparaît/disparaît instantanément (pas de fade) | ui-libraries S6 l.183 ; S5 l.169 |
 | **§16 Bandeau offline** | Offline détecté → bandeau `Badge` warning apparaît (fade-in 200 ms) | 200 ms | `opacity` (GPU) | smooth | statique (bandeau apparaît instantanément) | WDS 04.5 §7 ; S5 l.169 |
 | **§4(c) 404 page** | Deep link inconnu → page 404 (fade-in 200 ms) | 200 ms | `opacity` (GPU) | smooth | statique | ui-libraries §6.1 l.202 |
-| **Page transition (entrée `/settings`)** | Navigation vers `/settings` → `PAGE_TRANSITION` opacity 0→1 + y 8→0 | 200 ms easeOut | `transform: translateY` + `opacity` (GPU) | smooth | statique (pas de transition) | code `polish.tsx` ; S5 l.169 |
+| **Page transition (entrée `/settings`)** | Navigation vers `/settings` → `PAGE_TRANSITION` opacity 0→1 + y 8→0 | 200 ms easeOut | `transform: translateY` + `opacity` (GPU) | smooth | statique (pas de transition) | code `motion.tsx @aurora/ui` ; S5 l.169 |
 
 > **Interdits** : layout animations sur mobile (ui-libraries S5 l.169) ; bouncy (S3 l.143) ; `prefers-reduced-motion` = statique (05 §2.6 règle 2 ; `aurora.css` media query clamps all durations to 0.01 ms).
 

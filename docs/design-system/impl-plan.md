@@ -191,7 +191,7 @@ surfaces flottantes ouvertes (`_flows §2`) — transverses, non par-lot :**
 | T6 redirect/fallback | deep link feature masquée → `NotFoundPage` | `router.tsx l.100-102` |
 
 **Contraintes globales (2, `_flows §1`)** : PAGE_TRANSITION = 200 ms
-`ease-out` GPU-only (transform+opacity, `ux/polish.tsx` `PAGE_TRANSITION`),
+`ease-out` GPU-only (transform+opacity, `ux/motion.tsx @aurora/ui` `PAGE_TRANSITION`),
 reduced-motion = statique ; z-index par le stacking figé (§0).
 
 **Dérives non-bloquantes déclarées (R3, `_flows §8`)** : `/progress` partagé
@@ -269,7 +269,7 @@ CHAQUE aperçu avant ratification :**
 - **`aria-label`** sur les icon buttons ; loader `role="status"` +
   `aria-live="polite"` + mots `aria-hidden` (§9.3 l.457-462).
 - **`prefers-reduced-motion` respecté** (tout → `instant` 0 ms, `05 §2.6
-  règle 2`, `polish.tsx` `useReducedMotion`).
+  règle 2`, `motion.tsx @aurora/ui` `useReducedMotion`).
 
 ---
 
@@ -280,7 +280,7 @@ CHAQUE aperçu avant ratification :**
 | JS | **≤ 300 Ko gz** | `AI_RULES §Testing` + `apps/mobile/src/perf/budgets.ts` (`PERF_BUDGETS.jsGzBytes`) | `perf/measure.ts` → **`viteBundleGzBytes()`** (A5 : `dist/assets/*.js` gz réel), repli proxy `.d.ts` |
 | TTI | **≤ 1.5 s** (Pixel 4a) | `02 §9.1` + Sentry SLO | `perf/budgets.ts` `checkTti` + capture device owner (OQ-08) |
 | tree | **30 fps** (1000 nœuds) | `02 §9.1` + `packages/ui/scripts/semantic-tree-30fps.mts` | device (harnais `SemanticTreeRenderer`, AD-10 lazy + incremental Dagre) |
-| animations | **GPU 150-250 ms + reduced-motion** | `ui-libraries S5 l.169` + `05 §2.6` (fast 150 / normal 250 / slow 400) | `prefers-reduced-motion` = `instant` (`polish.tsx`) |
+| animations | **GPU 150-250 ms + reduced-motion** | `ui-libraries S5 l.169` + `05 §2.6` (fast 150 / normal 250 / slow 400) | `prefers-reduced-motion` = `instant` (`motion.tsx @aurora/ui`) |
 
 Lazy engines AD-10 (`ui-libraries` + `05 §3.6`) : les 5 engines se chargent
 **seulement** quand leur écran s'ouvre (`React.lazy`), Home les exclut ;
