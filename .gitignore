@@ -53,3 +53,7 @@ apps/mobile/.build/
 # Supabase CLI link cache (created by `supabase link`, not tracked)
 supabase/.temp/
 
+# Bruts des dépôts Anthropic (référence de curation, non trackés — le curé
+# est dans anthropic-skills/, qui EST tracké et ppushable)
+third-party/
+
