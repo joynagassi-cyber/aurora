@@ -149,6 +149,11 @@ export interface AgentContext {
    *  Feeds prompt layer 1. Degrades to {} when the assembler lacks the
    *  loadUserSkills seam (AD-1: the loop continues without skills). */
   skills: Record<string, unknown>;
+  /** form 11 — Global skill_catalog index (0021 marketplace).
+   *  Compact index: key/name/domain/trigger only, no body. Feeds prompt
+   *  layer 2.5 so the model knows which skills exist; the agent calls
+   *  skill_search + skill_get to load details. Degrades to {}. */
+  catalog: Record<string, unknown>;
 }
 
 /**

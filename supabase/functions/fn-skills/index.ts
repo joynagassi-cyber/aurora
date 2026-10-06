@@ -15,6 +15,10 @@
 //
 // Endpoints (POST, { verb, ... } — same shape as fn-integrations):
 //   { verb: 'list_catalog', domain? }   — public (no user JWT needed, AD-3)
+//   { verb: 'search_catalog', query?, domain? } — public (AD-3); ilike over
+//         name/trigger_/objective + optional domain eq; returns ≤10 compact rows
+//   { verb: 'get_skill', skillKey }     — public (AD-3); point lookup of one
+//         skill_catalog row (full body included)
 //   { verb: 'list_user_skills' }        — user JWT required
 //   { verb: 'activate_skill', skillKey }
 //   { verb: 'deactivate_skill', skillKey }
@@ -272,6 +276,65 @@ async function listCatalog(serviceKey: string, supabaseUrl: string, domainFilter
   return ok({ catalog: r.json as unknown as CatalogRow[] });
 }
 
+/**
+ * search_catalog (public, AD-3) — ilike search over name / trigger_ /
+ * objective + optional domain eq filter, ≤10 compact rows (no body —
+ * token economy; the agent calls get_skill for the full SKILL.md).
+ */
+async function searchCatalog(
+  serviceKey: string,
+  supabaseUrl: string,
+  query: string,
+  domain: string | null,
+  limit: number,
+): Promise<Response> {
+  const parts: string[] = [];
+  if (domain) {
+    parts.push("domain=eq." + encodeURIComponent(domain));
+  }
+  const q = query.trim().replace(/,/g, " ");
+  if (q) {
+    // PostgREST: OR of case-insensitive ilike on the three text fields
+    // (name / trigger_ / objective), AND-ed with the domain eq. The 3-field
+    // OR covers every angle the agent might phrase a query.
+    parts.push(
+      "or=(name.ilike.*" + encodeURIComponent(q) + "*,trigger_.ilike.*" +
+      encodeURIComponent(q) + "*,objective.ilike.*" + encodeURIComponent(q) + "*)",
+    );
+  }
+  parts.push("limit=" + Math.min(Math.max(1, limit || 10), 10));
+  parts.push("select=skill_key,domain,name,trigger_,objective,source");
+  const qs = parts.length ? "?" + parts.join("&") : "";
+  const r = await rest("GET", "/rest/v1/skill_catalog", qs, undefined, supabaseUrl, serviceKey);
+  if (!r.ok) {
+    return err("skills/search_failed", "skill_catalog search failed: " + (r.error ?? String(r.status)), 502);
+  }
+  return ok({ results: (r.json as unknown) as CatalogRow[] });
+}
+
+/**
+ * get_skill (public, AD-3) — point lookup of one skill_catalog row by
+ * skill_key, full payload including the markdown body. The agent calls
+ * this AFTER search_catalog has identified the right key; the body is
+ * the authoritative SKILL.md procedure.
+ */
+async function getSkill(
+  serviceKey: string,
+  supabaseUrl: string,
+  skillKey: string,
+): Promise<Response> {
+  const qs = "?skill_key=eq." + encodeURIComponent(skillKey) + "&select=*";
+  const r = await rest("GET", "/rest/v1/skill_catalog", qs, undefined, supabaseUrl, serviceKey);
+  if (!r.ok) {
+    return err("skills/get_failed", "skill_catalog read failed: " + (r.error ?? String(r.status)), 502);
+  }
+  const rows = (r.json as unknown) as CatalogRow[];
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return err("skills/not_found", "skill_key not found: " + skillKey, 404);
+  }
+  return ok({ skill: rows[0] });
+}
+
 async function listUserSkills(userId: string, serviceKey: string, supabaseUrl: string): Promise<Response> {
   const qs = "?user_id=eq." + encodeURIComponent(userId) + "&order=created_at.desc";
   const r = await rest("GET", "/rest/v1/user_skills", qs, undefined, supabaseUrl, serviceKey);
@@ -313,6 +376,31 @@ Deno.serve(async (req: Request) => {
       }
       const domainFilter = body.domain != null ? String(body.domain) : null;
       return listCatalog(SUPABASE_SERVICE_KEY, SUPABASE_URL, domainFilter);
+    }
+
+    // — Public search_catalog / get_skill (AD-3, 0021 marketplace): the agent
+    //    (server-side fn-agent-run) and the mobile app both browse the global
+    //    catalog without a user JWT; the EF reads it with the service key.
+    if (verb === "search_catalog" || verb === "get_skill") {
+      if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+        return ok({
+          results: [],
+          degraded: true,
+          note: "SUPABASE env not configured on the EF — set SUPABASE_SECRET_KEY.",
+        });
+      }
+      if (verb === "search_catalog") {
+        const query = String(body.query ?? "");
+        const domain = body.domain != null ? String(body.domain) : null;
+        const limit = typeof body.limit === "number" ? body.limit : 10;
+        return searchCatalog(SUPABASE_SERVICE_KEY, SUPABASE_URL, query, domain, limit);
+      }
+      // get_skill
+      const skillKey = String(body.skillKey ?? "");
+      if (!skillKey) {
+        return err("skills/missing_skill_key", "skillKey is required", 400);
+      }
+      return getSkill(SUPABASE_SERVICE_KEY, SUPABASE_URL, skillKey);
     }
 
     // — Authed verbs (AD-7: identity from the Bearer user JWT) —

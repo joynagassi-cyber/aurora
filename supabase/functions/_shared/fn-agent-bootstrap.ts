@@ -285,6 +285,22 @@ export function buildContextAssembler(): ContextAssembler {
       if (!rows) return [];
       return byUser(rows, userId).filter((r) => r.active === true);
     },
+    // 0021 marketplace: the GLOBAL skill_catalog index (compact — key + name
+    // + domain + trigger only, never the markdown body). Feeds prompt
+    // layer 2.5 so the model knows WHICH skills exist without polluting the
+    // context with 600 bodies; the agent picks one via skill_search, then
+    // loads the full SKILL.md via skill_get (the server-side fn-skills EF).
+    // Public table (AD-3 read-open), no user filter needed.
+    async loadSkillCatalogIndex() {
+      const rows = await rest<
+        Array<{ skill_key: string; name: string; domain: string; trigger_: string | null }>
+      >(
+        "GET",
+        "skill_catalog?select=skill_key,name,domain,trigger_&limit=600",
+      );
+      if (!rows) return [];
+      return rows;
+    },
     async loadToolContext(userId) {
       void userId;
       const chain = providerChain();
@@ -473,6 +489,13 @@ export function buildAgentKernel(): AgentKernel | null {
         ? (skillsForm.active as ModelCall["activeSkills"])
         : undefined;
       const expertSkillIds = Array.isArray(expertForm.active) ? (expertForm.active as string[]) : [];
+      // 0021 marketplace — catalog index (form 11): compact, no body. The
+      // context form carries the index; invokeModelReal inlines it as
+      // layer 2.5 so the model knows which skills exist before picking one.
+      const catalogForm = (ctx?.catalog ?? {}) as Record<string, unknown>;
+      const catalogIndex = Array.isArray(catalogForm.index)
+        ? (catalogForm.index as ModelCall["catalogIndex"])
+        : undefined;
       return invokeModelReal({
         registry,
         health: chain.health,
@@ -490,6 +513,8 @@ export function buildAgentKernel(): AgentKernel | null {
         // procedure is NOT inlined — the Planner + Tool Registry already
         // carry the capability details, matching today's ID-level form 7).
         expertSkills: expertSkillIds.map((id) => ({ id })),
+        // Layer 2.5 — 0021 marketplace catalog index (compact, no body).
+        catalogIndex,
       });
     },
     invokeTool: async (tool, input) => {
@@ -604,10 +629,28 @@ async function invokeModelReal(
         .join('\n')
     : '';
 
+  // — 0021 marketplace: prompt layer 2.5 — the global skill_catalog index
+  //    (compact: key + name + domain + trigger, no body). The model sees
+  //    WHICH skills exist and can call skill_search to narrow the set, then
+  //    skill_get to load the full SKILL.md procedure for the chosen one.
+  //    Grouped by domain so the list is scannable; the body is NEVER inlined.
+  const catalogLayer = call.catalogIndex?.length
+    ? '\n\n[CATALOGUE DE SKILLS (index compact — utiliser skill_search puis skill_get)]\n' +
+      call.catalogIndex
+        .slice(0, 200) // cap the index: 200 rows ≈ 40KB, token budget friendly
+        .map(
+          (s) =>
+            `- ${s.key} [${s.domain}] ${s.name}${s.trigger ? ` — ${s.trigger}` : ''}`,
+        )
+        .join('\n') +
+      '\n→ Pour chaque cas, appelle `skill_search` (query + domaine) pour trouver le skill adapté, puis `skill_get` (skillKey) pour charger sa procédure complète avant d\'agir.'
+    : '';
+
   const systemPrompt =
     `${AGENT_SYSTEM_PROMPT}` +
     skillsLayer +
     expertLayer +
+    catalogLayer +
     researchContext +
     mirrorPrelude +
     ascentPrelude;
@@ -708,5 +751,17 @@ export interface ModelCall {
     trigger?: string;
     objective?: string;
     confidence?: number;
+  }>;
+  /**
+   * 0021 marketplace — prompt layer 2.5: the global skill_catalog index
+   * (compact: skill_key + name + domain + trigger only, NO body). Let the
+   * model know which skills exist so it can call skill_search / skill_get
+   * to load details; the bodies are fetched on demand, not inlined here.
+   */
+  catalogIndex?: Array<{
+    key: string;
+    name: string;
+    domain: string;
+    trigger: string;
   }>;
 }

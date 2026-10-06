@@ -841,6 +841,55 @@ export const skillCreate: KernelTool = tool({
 });
 
 /**
+ * skill_search — search the global skill_catalog by query text and/or domain.
+ * The server-side EF (fn-skills `search_catalog` verb) runs the PostgREST
+ * `ilike` filter over `skill_catalog.name/trigger_/objective` and returns
+ * up to 10 compact rows (key, name, domain, trigger_, objective, source)
+ * without the markdown body (token economy — the agent picks one, then
+ * calls skill_get for the full SKILL.md). READ-ONLY, no write, no job.
+ */
+export const skillSearch: KernelTool = tool({
+  description:
+    'Search the global skills catalog (skill_catalog, 600+ rows, 0021 marketplace + 18 builtin) by free-text query and/or domain. Returns up to 10 compact matches (key, name, domain, trigger, objective, source) — NOT the full body. Use it to discover which skill fits the current case, then call skill_get with the chosen key to load its full procedure before acting. READ-ONLY.',
+  inputSchema: z.object({
+    /** free-text to match against name / trigger_ / objective (ilike, case-insensitive) */
+    query: z.string().default(''),
+    /** optional domain filter (e.g. 'documents', 'code', 'design', 'learning') */
+    domain: z.string().optional(),
+  }),
+  execute: async (input) => ({
+    ok: true,
+    command: 'skills.search_catalog',
+    payload: {
+      query: input.query,
+      domain: input.domain,
+      limit: 10,
+    },
+  }),
+});
+
+/**
+ * skill_get — retrieve the full SKILL.md body of a single catalog entry
+ * by its `skill_key`. The server-side EF (fn-skills `get_skill` verb)
+ * does one PostgREST point lookup. Use after skill_search has identified
+ * the right key; the body is inlined into the working context so the
+ * agent can follow the procedure step by step. READ-ONLY.
+ */
+export const skillGet: KernelTool = tool({
+  description:
+    'Retrieve the full SKILL.md body + procedure + constraints for a single skill_catalog entry by its skill_key. Call after skill_search has identified the right key — the body is the authoritative procedure; follow it step by step. READ-ONLY, no write.',
+  inputSchema: z.object({
+    /** the skill_key from a skill_search result */
+    skillKey: z.string(),
+  }),
+  execute: async (input) => ({
+    ok: true,
+    command: 'skills.get',
+    payload: { skillKey: input.skillKey },
+  }),
+});
+
+/**
  * The full kernel tool set, keyed by the canonical tool ids the Planner's
  * `resolveTool` + `ExecutionEngine.invoke` address them by
  * (capability.tool === these keys).
@@ -896,6 +945,11 @@ export const KERNEL_TOOLS = {
   // Skills (ADR S14 user skills, separate from expert skills)
   skill_activate: skillActivate,
   skill_create: skillCreate,
+  // Skill catalog search (0021 marketplace): the agent searches the global
+  // skill_catalog per case — skill_search returns compact matches,
+  // skill_get retrieves the full SKILL.md body of the chosen skill.
+  skill_search: skillSearch,
+  skill_get: skillGet,
 };
 
 export type KernelToolId = keyof typeof KERNEL_TOOLS;

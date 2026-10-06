@@ -83,6 +83,16 @@ export interface ContextAssembler {
    * absent (AD-1: the loop continues without skills).
    */
   loadUserSkills?(userId: string): Promise<Array<Record<string, unknown>>>;
+  /**
+   * 0021 marketplace — the GLOBAL skill_catalog index (compact: skill_key +
+   * name + domain + trigger_ only, never the markdown body). Feeds prompt
+   * layer 2.5 so the model knows WHICH skills exist without 600 bodies in
+   * context; the agent picks one via skill_search, then loads the full
+   * SKILL.md via skill_get. Degrades to [] when the table is absent.
+   */
+  loadSkillCatalogIndex?(): Promise<
+    Array<{ skill_key: string; name: string; domain: string; trigger_: string | null }>
+  >;
 }
 
 /**
@@ -101,7 +111,7 @@ export async function buildAgentContext(
     evidences?: ProgressEvidence[];
   },
 ): Promise<AgentContext> {
-  const [personal, productivity, learning, discovery, semantic, expertSkills, tool, permission, userSkills] =
+  const [personal, productivity, learning, discovery, semantic, expertSkills, tool, permission, userSkills, catalogIndex] =
     await Promise.all([
       safe(a.loadPersonal(userId)),
       safe(a.loadProductivity(userId)),
@@ -113,6 +123,8 @@ export async function buildAgentContext(
       safe(a.loadPermission(userId)),
       // form 10 — Task 1/2: active user skills (optional seam, degrades to []).
       safe(a.loadUserSkills ? a.loadUserSkills(userId) : Promise.resolve([])),
+      // form 11 — 0021: global skill_catalog index (optional, degrades to []).
+      safe(a.loadSkillCatalogIndex ? a.loadSkillCatalogIndex() : Promise.resolve([])),
     ]);
 
   const expertSkillRows = expertSkills ?? [];
@@ -196,6 +208,17 @@ export async function buildAgentContext(
           // builtin/user-created rows). Feeds prompt layer 1 inline.
           body: typeof (s as { body?: unknown }).body === "string" ? (s as { body: string }).body : null,
         })),
+    },
+    // form 11 — 0021 marketplace: the global skill_catalog index (compact,
+    // no body). The agent uses this to know WHICH skills exist, then
+    // calls skill_search / skill_get for details. Feeds prompt layer 2.5.
+    catalog: {
+      index: (catalogIndex ?? []).map((s) => ({
+        key: s.skill_key,
+        name: s.name,
+        domain: s.domain,
+        trigger: s.trigger_ ?? "",
+      })),
     },
   };
 }
