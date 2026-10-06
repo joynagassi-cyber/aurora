@@ -13,8 +13,6 @@
  */
 import { marked, Renderer, type Tokens } from "marked";
 
-const BLOCK_LIST_RE = /^\s*<(?:ul|ol|li|table|tbody|tr)\b/i;
-
 /**
  * Renderer sécurisé : le HTML brut du markdown est neutralisé —
  * scripts/balises interactives retirés, le reste échappé (afin que le
@@ -35,9 +33,12 @@ function createSafeRenderer(): InstanceType<typeof Renderer> {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
-    // Les listes/table brutes rendent le document illisible une fois
-    // échappé : on renvoie le texte brut (contenu lisible, aucune marque).
-    return BLOCK_LIST_RE.test(raw) ? raw : escaped;
+    // Le HTML brut du markdown canvas n'est JAMAIS restitué littéral :
+    // il est HTML-échappé (donc non exécutable) et rendu comme texte.
+    // Rendre les listes/table brutes non-échappées (l'ancienne règle
+    // BLOCK_LIST_RE) ré-injectait des balises dangereuses (ex.
+    // `<ul onclick=…>` ou `<table><script>…`) dans le rendu lecture.
+    return escaped;
   };
   return renderer;
 }

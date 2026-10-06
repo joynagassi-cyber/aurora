@@ -35,6 +35,19 @@ describe("markdownToHtml", () => {
     expect(markdownToHtml("<iframe src=x></iframe>")).not.toContain("<iframe");
   });
 
+  it("échappe le HTML brut de listes/tables (pas de balise littérale dans le rendu)", () => {
+    // Regression : le vieux `BLOCK_LIST_RE` rendait `<ul ...>` littéral
+    // (non-échappé), ce qui ré-injectait des balises dangereuses dans
+    // dangerouslySetInnerHTML. Maintenant le HTML brut = texte échappé.
+    const html = markdownToHtml("<ul onclick=alert(1)><li>x</li></ul>");
+    expect(html).not.toContain("<ul");
+    expect(html).not.toContain("onclick");
+    // Toute balise HTML littérale doit avoir disparu du rendu — le payload
+    // ne survit que sous forme échappée (le bloc complet étant dropé, le
+    // résultat peut légitimement être vide).
+    expect(html).not.toMatch(/<\s*(ul|ol|li|table|script)\b/i);
+  });
+
   it("laisse passer le markdown propre (rendu correct, aucune altération)", () => {
     expect(markdownToHtml("Salut le **monde**")).toBe("<p>Salut le <strong>monde</strong></p>");
   });
