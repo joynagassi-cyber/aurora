@@ -173,6 +173,15 @@ export {
   // = programmer) — thin emitters AD-7
   habitCreate,
   routineCreate,
+  // G10 (feature agentique 2026-10-06) : création + verrouillage de
+  // session canvas (le 0022, verrou réversible)
+  canvasCreate,
+  canvasLock,
+  // G11 (feature agentique 2026-10-06) : inbox capture / triage
+  // (AD-7 Productivity) + ascent read-only
+  inboxCapture,
+  inboxTriage,
+  ascentRead,
   isJobKind,
 } from './tools.ts';
 

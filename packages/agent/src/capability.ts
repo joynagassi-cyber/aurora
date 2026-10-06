@@ -733,6 +733,68 @@ export class DefaultCapabilityRegistry {
         destructive: false,
         requiresConfirmation: false,
       },
+      // ------------------------------------------------------------------
+      // G10 (feature agentique 2026-10-06) — canvas_create + canvas_lock
+      // (le 0022, verrou réversible). AD-7 : le module Canvas applique
+      // la mutation (canvas_sessions : colonne `locked` si elle existe,
+      // sinon via `blocks jsonb` ou une migration additive — le choix
+      // est module-side, le kernel n'y touche pas).
+      // ------------------------------------------------------------------
+      {
+        id: 'canvas.create',
+        tool: 'canvas_create',
+        description:
+          "Créer une nouvelle session canvas (le titre porte la session ; blocks / artifactId optionnels). Thin command → canvas.create (AD-7 : le module Canvas applique la write `canvas_sessions`). Light op, non-destructive, sans confirmation.",
+        writeScopes: ['canvas:write'],
+        readScopes: ['canvas:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      {
+        id: 'canvas.lock',
+        tool: 'canvas_lock',
+        description:
+          "(Dé)verrouiller une session canvas (verrou de co-édition réversible). Thin command → canvas.lock (AD-7 : le module Canvas applique la mutation sur `canvas_sessions`, via la colonne `locked` si elle existe, sinon via `blocks jsonb` ou une migration additive). Non-destructive, sans confirmation (le verrou est réversible).",
+        writeScopes: ['canvas:write'],
+        readScopes: ['canvas:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      // ------------------------------------------------------------------
+      // G11 (feature agentique 2026-10-06) — inbox capture / triage
+      // (AD-7 Productivity, inbox.ts captureTask / triageTask) +
+      // ascent read-only (pas de write scope, ADR §5 : READ-ONLY).
+      // ------------------------------------------------------------------
+      {
+        id: 'inbox.capture',
+        tool: 'inbox_capture',
+        description:
+          "Capture rapide d'une idée / tâche en l'air (« se souvenir de X ») — crée une inbox task nue (status todo, sans projet, due_at null). Thin command → productivity.inbox_capture (AD-7 : le module Productivity applique via `captureTask`, inbox.ts L29). Light op, non-destructive, sans confirmation.",
+        writeScopes: ['productivity:write'],
+        readScopes: ['productivity:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      {
+        id: 'inbox.triage',
+        tool: 'inbox_triage',
+        description:
+          "Trier une tâche de l'inbox : vers un projet (kind='project'), une échéance demain (kind='tomorrow'), ou la jeter (kind='discard'). Thin command → productivity.inbox_triage (AD-7 : le module Productivity applique via `triageTask`, inbox.ts L42 — 1 commande partielle par mutation). Non-destructive, sans confirmation.",
+        writeScopes: ['productivity:write'],
+        readScopes: ['productivity:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      {
+        id: 'ascent.read',
+        tool: 'ascent_read',
+        description:
+          "Lire un artefact ou une session d'ascent (mode /ascent, read-do-prove). READ-ONLY : pas de write scope, pas de job, sans confirmation. Le module Ascent (kernel-integration.ts) lit sa propre table — le kernel ne fait que porter la commande typed.",
+        writeScopes: [],
+        readScopes: ['ascent:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
     ];
     for (const b of base) {
       this.register({

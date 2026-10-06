@@ -15,3 +15,4 @@ export * from './discovery.ts';
 export * from './gaps.ts';
 export * from './events.ts';
 export * from './jobs.ts';
+export * from './veille-pipeline.ts';

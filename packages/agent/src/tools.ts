@@ -472,6 +472,117 @@ export const canvasComment: KernelTool = tool({
   execute: async (input) => ({ ok: true, command: 'canvas.comment', payload: input }),
 });
 
+/**
+ * G10 — canvas.create : crée une nouvelle session canvas (complète
+ * canvas_read / canvas_write / canvas_comment, 0022 + plan 2026-10-06).
+ * AD-7 thin : le module Canvas (endpoint fn-canvas, ou le client device
+ * canvas-client.ts qui a déjà un `create`) applique la mutation sur
+ * `canvas_sessions`. Le kernel n'y touche jamais directement.
+ */
+export const canvasCreate: KernelTool = tool({
+  description:
+    "Créer une nouvelle session canvas (le titre porte la session ; blocks / artifactId optionnels pour pré-remplir). Thin command → canvas.create (AD-7 : le module Canvas applique la write `canvas_sessions`). Light op (pas de job), non-destructive, sans confirmation.",
+  inputSchema: z.object({
+    /** le titre de la nouvelle session */
+    title: z.string(),
+    /** blocs markdown pré-remplis (optionnel) */
+    blocks: z.array(z.record(z.unknown())).optional(),
+    /** lier la session à un artefact existant (optionnel) */
+    artifactId: z.string().optional(),
+    /** l'identité du user courant (portée par le kernel, AD-7 : l'EF ne fait jamais confiance au body). */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'canvas.create', payload: input }),
+});
+
+/**
+ * G10 — canvas.lock : (dé)verrouiller une session canvas (verrou de
+ * co-édition agent/humain ; réversible → non-destructif, sans
+ * confirmation). Le module Canvas applique la mutation sur
+ * `canvas_sessions` : si la table n'a pas de colonne `locked`, le
+ * module l'applique via `blocks jsonb` ou une migration additive —
+ * c'est le module qui décide, l'outil kernel n'y touche pas (AD-7).
+ */
+export const canvasLock: KernelTool = tool({
+  description:
+    "(Dé)verrouiller une session canvas (verrou de co-édition réversible — locked=true pendant qu'une partie édite, locked=false pour libérer). Thin command → canvas.lock (AD-7 : le module Canvas applique la mutation sur `canvas_sessions`, via la colonne `locked` si elle existe, sinon via `blocks jsonb` ou une migration additive — le choix est module-side). Non-destructif, sans confirmation (le verrou est réversible).",
+  inputSchema: z.object({
+    canvasId: z.string(),
+    /** true = verrouiller, false = déverrouiller */
+    locked: z.boolean(),
+    /** l'identité du user courant (portée par le kernel, AD-7). */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'canvas.lock', payload: input }),
+});
+
+// ---------------------------------------------------------------------------
+// G11 (feature agentique 2026-10-06) — inbox capture / triage + ascent
+// read-only (surfaces manquantes, plan §G11).
+//
+// AD-7 single-writer : le kernel émet les commandes typed ; le module
+// Productivity (packages/productivity/src/inbox.ts : captureTask L29 /
+// triageTask L42) applique les mutations `tasks`. Pas de job (ops
+// light, AD-1) ; triage = 3 kinds discriminés (project / tomorrow /
+// discard — la forme exacte du test file inbox.ts).
+//
+// ascent_read est READ-ONLY (pas de write scope) : le module Ascent
+// (mode /ascent, read-do-prove) expose la lecture ; le kernel ne fait
+// que porter la commande typed.
+// ---------------------------------------------------------------------------
+
+/** G11 — inbox.capture : capture rapide ("se souvenir de X") → inbox task nue (AD-7 Productivity). */
+export const inboxCapture: KernelTool = tool({
+  description:
+    "Capture rapide d'une idée / tâche en l'air (« se souvenir de X ») — crée une inbox task nue (status todo, sans projet, due_at null). Thin command → productivity.inbox_capture (AD-7 : le module Productivity applique la write via `captureTask`, inbox.ts L29). Light op (pas de job), non-destructive, sans confirmation.",
+  inputSchema: z.object({
+    /** le texte capturé, verbatim */
+    text: z.string(),
+    /** l'identité du user courant (portée par le kernel, AD-7). */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'productivity.inbox_capture', payload: input }),
+});
+
+/** G11 — inbox.triage : structure une inbox task (project / tomorrow / discard, AD-7 Productivity). */
+export const inboxTriage: KernelTool = tool({
+  description:
+    "Trier une tâche de l'inbox : la structurer vers un projet (kind='project', projectId + dueAt optionnel), une échéance demain (kind='tomorrow', dueAt ISO), ou la jeter (kind='discard'). Thin command → productivity.inbox_triage (AD-7 : le module Productivity applique via `triageTask`, inbox.ts L42 — 1 commande partielle par mutation, AD-7/F-03). Non-destructive, sans confirmation (le discard est réversible via le journal / AD-15 additif côté module si besoin).",
+  inputSchema: z.object({
+    taskId: z.string(),
+    /** les 3 kinds de triage (module inbox.ts) : project / tomorrow / discard */
+    resolution: z.discriminatedUnion('kind', [
+      z.object({
+        kind: z.literal('project'),
+        projectId: z.string(),
+        dueAt: z.string().optional(),
+      }),
+      z.object({
+        kind: z.literal('tomorrow'),
+        dueAt: z.string(),
+      }),
+      z.object({
+        kind: z.literal('discard'),
+      }),
+    ]),
+    /** l'identité du user courant (portée par le kernel, AD-7). */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'productivity.inbox_triage', payload: input }),
+});
+
+/** G11 — ascent.read : lire un artefact / session d'ascent (READ-ONLY, pas de write scope). */
+export const ascentRead: KernelTool = tool({
+  description:
+    "Lire un artefact ou une session d'ascent (mode /ascent, read-do-prove). READ-ONLY : le kernel émet la commande typed ; le module Ascent (kernel-integration.ts) lit sa propre table — pas de write scope, pas de job, sans confirmation. Le payload porte userId (injecté par le kernel, AD-7 : l'EF ne fait jamais confiance au body).",
+  inputSchema: z.object({
+    ascentId: z.string(),
+    /** l'identité du user courant (portée par le kernel, AD-7). */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'ascent.read', payload: input }),
+});
+
 // ---------------------------------------------------------------------------
 // Feature-agentability-matrix.md — the remaining agentable families.
 //
@@ -1396,6 +1507,16 @@ export const KERNEL_TOOLS = {
   canvas_read: canvasRead,
   canvas_write: canvasWrite,
   canvas_comment: canvasComment,
+  // G10 (feature agentique 2026-10-06) : création + verrouillage de
+  // session canvas (le 0022, verrou réversible — non-destructif).
+  canvas_create: canvasCreate,
+  canvas_lock: canvasLock,
+  // G11 (feature agentique 2026-10-06) : inbox capture / triage
+  // (AD-7 Productivity, inbox.ts captureTask / triageTask) + ascent
+  // read-only (pas de write scope).
+  inbox_capture: inboxCapture,
+  inbox_triage: inboxTriage,
+  ascent_read: ascentRead,
 };
 
 export type KernelToolId = keyof typeof KERNEL_TOOLS;

@@ -29,6 +29,14 @@ import {
   crossCheck,
 } from './research-provider.ts';
 
+// G9 (feature agentique 2026-10-06) : le `hit` porté par le qualify de
+// `runVeillePipeline` (veille-pipeline.ts) est un `ResearchResult` +
+// les champs filtrables optionnels (`FilterableItem`). Les 2 types
+// restent séparés (AD-15 SSoT, le domain type n'est pas modifié ici) —
+// le cast au call-site (`as unknown as ResearchResult & FilterableItem`)
+// est l'unique point de chevauchement, le `DiscoveryService.qualify`
+// ci-dessous reste le seul consommateur du `&`.
+
 /** The typed separation (ADR S13.7): every sheet classifies its content. */
 export type DiscoveryItemKind =
   | 'FACT'
