@@ -119,9 +119,13 @@ export function createAuroraDataProvider(env: AuroraDataEnv): AuroraDataProvider
     async connect(): Promise<void> {
       await engine.init();
       // `auto_subscribe` streams (sync-config.yaml) — no manual
-      // `addScope` at the relay; `addScope` triggers `connect` +
-      // `waitForFirstSync` (the app boot gate, 03 S8.1: identity first
-      // paint = priority 1, OQ-11/AD-14).
+      // `addScope` at the relay; `addScope` triggers `connect`
+      // (`db.connect`, fire-and-forget) + `waitForFirstSync` as the
+      // readiness gate (03 S8.1: identity first paint = priority 1,
+      // OQ-11/AD-14). The gate fails cleanly when the device is not
+      // signed in yet (no Supabase session for `fetchCredentials`) —
+      // `boot-data.ts#connect()` catches that and degrades to the
+      // local-mirror shell (AD-7), so the shell always paints.
       await engine.addScope('identity');
       await engine.addScope('productivity');
       // A2: the ascent local-mirror stream (ascent_paths, read-only AD-7).

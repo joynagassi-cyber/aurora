@@ -72,7 +72,13 @@ export class PowerSyncClientEngine {
       schema: AuroraPowerSyncSchema,
       database: { dbFilename: this.opts.dbFilename ?? 'aurora.db' },
     });
-    this.connector = this.buildConnector();
+    // The connector is built LAZILY (see `addScope`), not here:
+    // `buildConnector()` calls the Supabase client factory, which throws
+    // when no publishable-key env value is present (AD-3 / OQ-03 — the
+    // publishable-scope shell must still boot without a live Supabase
+    // session, AD-7 local-first). `addScope()` builds it on first sync
+    // attempt and degrades cleanly (local mirror only) when it cannot.
+    this.connector = null;
   }
 
   /**
@@ -84,9 +90,22 @@ export class PowerSyncClientEngine {
    */
   async addScope(_scope: string): Promise<void> {
     if (!this.db) throw new Error('engine not initialized');
-    // Sync Streams (edition 3) are auto-subscribed per user — nothing to do.
-    void this.db.connect(this.connector!);
-    await this.db.waitForFirstSync();
+    // Sync Streams (edition 3) are auto-subscribed per user — nothing to
+    // do at the relay. Build the connector here (first real sync attempt,
+    // NOT at `init()`, so an unauthenticated shell still boots — AD-7):
+    // if it throws (no Supabase session yet), catch and fall through to a
+    // local-only mirror, never blocking the app shell paint.
+    if (!this.connector) {
+      try {
+        this.connector = this.buildConnector();
+      } catch {
+        this.connector = null;
+      }
+    }
+    if (this.connector) {
+      void this.db.connect(this.connector);
+      await this.db.waitForFirstSync();
+    }
   }
 
   /**
@@ -178,9 +197,14 @@ export class PowerSyncClientEngine {
 
   // ------------------------------------------------------------------------
 
-  /** Wait for the first full sync (03 S8.1 app boot — gate rendering). */
+  /** Wait for the first full sync (03 S8.1 app boot — gate rendering).
+   *  Resolves IMMEDIATELY when no connector is attached yet (the device
+   *  has not signed in / built a relay connector): the local-mirror shell
+   *  (AD-7) must paint without a successful first sync; a real session
+   *  still gates on the sync as before. */
   waitForFirstSync(): Promise<void> {
     if (!this.db) throw new Error('engine not initialized');
+    if (!this.connector) return Promise.resolve();
     return this.db.waitForFirstSync();
   }
 
