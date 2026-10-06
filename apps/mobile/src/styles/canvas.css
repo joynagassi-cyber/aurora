@@ -1,0 +1,345 @@
+/*
+ * Aurora — Canvas page (0022, docs/plans/2026-10-06-canvas-tiptap Task 6).
+ *
+ * Blocs TipTap éditables + commentaires + bascule md ⇄ HTML. Le contenu
+ * est un SSoT markdown (plan Task 4 `markdownToHtml` + Task 6 note
+ * `stripTipTapJson`) — la bascule de vue est une vue, pas un 2e bloc.
+ *
+ * Styles cohérents avec `agent.css` : mêmes tokens `--aurora-*` (zéro
+ * valeur brute, AD-17 / 05 §2), tap targets 44px floor (05 §6.3).
+ */
+
+.canvas-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0 0 calc(env(safe-area-inset-bottom));
+  gap: 0;
+}
+
+/* ——— Toolbar (3 vues : Éditer / Markdown / HTML) ———
+   Segmented control (pattern `.agent-mode-tab`, cf. agent.css). Le
+   `role="toolbar"` est porté par le parent DOM ; chaque bouton est
+   une vue exclusive (aria-label porteur du sens, cf. plan §a11y). */
+.canvas-toolbar {
+  display: flex;
+  gap: 6px;
+  padding: 10px 12px 0;
+}
+.canvas-toolbar button {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--aurora-text-muted);
+  background: transparent;
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  cursor: pointer;
+}
+.canvas-toolbar button.is-active {
+  color: var(--aurora-accent-on-primary);
+  background: var(--aurora-accent-primary);
+  border-color: var(--aurora-accent-primary);
+}
+.canvas-toolbar button:focus-visible {
+  outline: var(--aurora-focus-ring-width, 2px) solid var(--aurora-accent-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ——— Éditeur (container des blocs TipTap) ——— */
+.canvas-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+/* Un bloc TipTap (`.tiptap` + `.canvas-block`). Le min-height 320px est
+   le plan Task 6 step 3 — le bloc reste un plan de frappe calme, le
+   focus ring passe par le global :focus-visible de tokens.css. */
+.canvas-block {
+  min-height: 320px;
+  padding: 12px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  color: var(--aurora-text-primary);
+  font-size: 15px;
+  line-height: 1.45;
+}
+.canvas-block:focus,
+.canvas-block:focus-visible {
+  outline: var(--aurora-focus-ring-width, 2px) solid var(--aurora-accent-focus-ring);
+  outline-offset: 2px;
+  border-color: var(--aurora-accent-focus-ring);
+}
+.canvas-block.is-empty {
+  /* Le contenu TipTap vide porte `is-empty` sur la ProseMirror div —
+     le placeholder est affiché via CSS (pas de contenu factice, AD-7). */
+  position: relative;
+}
+.canvas-block.is-empty::before {
+  content: "Écrire ici…";
+  position: absolute;
+  color: var(--aurora-text-muted);
+  pointer-events: none;
+}
+
+/* CTA « Enregistrer » (création, id === 'new'). */
+.canvas-create-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  border: 1px dashed var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+}
+.canvas-create-cta p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--aurora-text-secondary);
+  text-align: center;
+  max-width: 40ch;
+}
+
+/* ——— Vue Markdown (texte plat, `pre`) ——— */
+.canvas-source {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  margin: 0;
+  background: var(--aurora-bg-subtle);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--aurora-text-primary);
+  white-space: pre-wrap;
+}
+
+/* ——— Vue HTML (rendu lecture, 02 S6 : 16px/1.6) ——— */
+.canvas-html {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--aurora-text-primary);
+}
+.canvas-html-empty {
+  color: var(--aurora-text-muted);
+  font-style: italic;
+}
+/* Typo du rendu markdown (marked → gfm : les listes/portraits de code
+   restent dans le vocabulaire de la DS). */
+.canvas-html h1,
+.canvas-html h2,
+.canvas-html h3 {
+  color: var(--aurora-text-primary);
+  font-weight: 600;
+  margin: 0.6em 0 0.3em;
+}
+.canvas-html p {
+  margin: 0 0 0.8em;
+}
+.canvas-html ul,
+.canvas-html ol {
+  margin: 0 0 0.8em;
+  padding-left: 1.2em;
+}
+.canvas-html code,
+.canvas-html pre {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+  background: var(--aurora-bg-subtle);
+  border: 1px solid var(--aurora-border);
+  border-radius: 4px;
+}
+.canvas-html pre {
+  padding: 10px;
+  overflow-x: auto;
+}
+.canvas-html table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+.canvas-html th,
+.canvas-html td {
+  border: 1px solid var(--aurora-border);
+  padding: 6px 8px;
+  text-align: left;
+}
+.canvas-html th {
+  background: var(--aurora-bg-subtle);
+  font-weight: 600;
+}
+.canvas-html blockquote {
+  margin: 0 0 0.8em;
+  padding: 4px 12px;
+  border-left: 3px solid var(--aurora-accent-primary);
+  color: var(--aurora-text-secondary);
+  font-style: italic;
+}
+
+/* ——— Menu flottant (pattern agent : position fixed, z-index par-dessus
+   les gestes ; borné au container via `selectionchange` + `.contains`). — */
+.canvas-selection-menu {
+  position: fixed;
+  z-index: 1002;
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border-strong, var(--aurora-border));
+  border-radius: 999px;
+  box-shadow: var(--aurora-shadow-card);
+  animation: canvas-hint-in 0.16s ease-out;
+}
+.canvas-selection-menu button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--aurora-text-primary);
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.canvas-selection-menu button:hover {
+  background: var(--aurora-bg-subtle);
+}
+.canvas-selection-menu button:active {
+  background: var(--aurora-accent-surface);
+  color: var(--aurora-accent-on-primary);
+}
+@keyframes canvas-hint-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ——— Composer de commentaire (action 2 du menu) ——— */
+.canvas-comment-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 16px 12px;
+  padding: 12px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+}
+.canvas-comment-composer textarea {
+  min-height: 72px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--aurora-text-primary);
+  background: var(--aurora-bg-subtle);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  resize: vertical;
+}
+.canvas-comment-error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--aurora-danger);
+  background: var(--aurora-danger-surface);
+  padding: 8px 10px;
+  border-radius: var(--aurora-radius, 0.5rem);
+}
+.canvas-comment-composer-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ——— Liste des commentaires existants (0022) ——— */
+.canvas-comments {
+  padding: 0 16px calc(16px + env(safe-area-inset-bottom));
+}
+.canvas-comments h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+  margin: 0 0 8px;
+}
+.canvas-comments ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.canvas-comment-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--aurora-bg-subtle);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  font-size: 14px;
+}
+.canvas-comment-anchor {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: var(--aurora-text-muted);
+}
+.canvas-comment-body {
+  flex: 1;
+  color: var(--aurora-text-primary);
+  min-width: 12ch;
+}
+.canvas-comment-delete {
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--aurora-danger);
+  background: transparent;
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  cursor: pointer;
+}
+.canvas-comment-delete:hover {
+  background: var(--aurora-danger-surface);
+}
+
+/* ——— État vide (session absente, RLS user / introuvable, AD-7) ——— */
+.canvas-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 40vh;
+  padding: 24px;
+  text-align: center;
+}
+.canvas-empty p {
+  margin: 0;
+  font-size: 15px;
+  color: var(--aurora-text-secondary);
+  max-width: 40ch;
+}

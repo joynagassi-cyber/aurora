@@ -34,6 +34,7 @@ import './styles/home.css';
 import './styles/goals.css';
 import './styles/focus.css';
 import './styles/agent.css';
+import './styles/canvas.css';
 import './styles/ascent.css';
 import './styles/data.css';
 import './styles/floating.css';

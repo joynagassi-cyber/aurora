@@ -41,6 +41,7 @@ import { ProgressPage, ProgressDetailPage } from './pages/progress';
 import { FocusPage } from './pages/focus';
 import { ArtifactPage } from './pages/artifacts';
 import { AgentPage } from './pages/agent';
+import { CanvasPage } from './pages/canvas';
 import { SlideAscentPage } from './pages/ascent';
 import { SettingsPage } from './pages/settings';
 import { NotFoundPage } from './pages/not-found';
@@ -63,6 +64,9 @@ export const appRouter: AppRouter = createBrowserRouter([
       { path: '/learn', element: <LearnPage /> },
       { path: '/progress', element: <ProgressPage /> },
       { path: '/agent', element: <AgentPage /> },
+      // Canvas (0022): dedicated session-editing surface — blocs TipTap,
+      // commentaires, bascule md ⇄ HTML. 'new' = creation mode (Task 6).
+      { path: '/canvas/:id', element: <CanvasPage /> },
 
       // --- Details over the current tab (IonModal/IonSlides, 02 §6.1) ---
       { path: '/tasks/:id', element: <TaskDetailPage /> },
@@ -116,4 +120,5 @@ export type AppRoute = '/home' | '/tasks' | '/learn' | '/progress' | '/agent'
   | '/tasks/:id' | '/learn/:id' | '/progress/:id' | '/knowledge' | '/knowledge/:nodeId'
   | '/artifacts/:id' | '/inbox' | '/settings' | '/goals' | '/goals/:id'
   | '/goals/:id/features/:fid' | '/goals/:id/ascent' | '/focus' | '/calendar' | '/projects' | '/discovery'
-  | '/skills' | '/integrations';
+  | '/skills' | '/integrations'
+  | '/canvas/:id';
