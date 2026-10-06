@@ -168,27 +168,25 @@ export function modelPicker(): Array<{ id: string; label: string; provider: stri
 }
 
 // ——— Supabase REST (service_role — env-only, AD-3) ———
-// SUPABASE_SECRET_KEY accepts either the legacy service_role JWT
-// ("eyJhbGciOiJIUzI1NiIs...", works on both apikey + Authorization headers)
-// or the new "sb_secret_..." key (apikey header only — Supabase rejects it
-// on Authorization with "Invalid JWT"). The resolver below picks the
-// correct header set; the EF's Deno.env config supplies the value.
+// Le secret service_role est stocké sous SERVICE_ROLE_KEY (Supabase refuse
+// tout nom commençant par SUPABASE_). La valeur peut être une clé legacy
+// JWT ("eyJ...") ou moderne ("sb_secret_...") : pour la moderne, ne
+// l'envoyer QUE sur le header apikey (pas Authorization).
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_SECRET_KEY = Deno.env.get("SUPABASE_SECRET_KEY") ?? "";
+const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 function restHeaders(): Record<string, string> {
-  const isLegacyJwt = SUPABASE_SECRET_KEY.startsWith("eyJ");
+  const isLegacyJwt = SERVICE_ROLE_KEY.startsWith("eyJ");
   const h: Record<string, string> = { "Content-Type": "application/json" };
+  if (!SERVICE_ROLE_KEY) return h;
+  h.apikey = SERVICE_ROLE_KEY;
   if (isLegacyJwt) {
-    h.apikey = SUPABASE_SECRET_KEY;
-    h.Authorization = `Bearer ${SUPABASE_SECRET_KEY}`;
-  } else {
-    h.apikey = SUPABASE_SECRET_KEY; // sb_secret_ key: apikey only
+    h.Authorization = `Bearer ${SERVICE_ROLE_KEY}`;
   }
   return h;
 }
 
 async function rest<T>(method: string, path: string, body?: unknown): Promise<T | null> {
-  if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) return null;
+  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) return null;
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     method,
     headers: restHeaders(),
@@ -538,7 +536,7 @@ export function buildAgentKernel(): AgentKernel | null {
           const { userId: _omit, command: _omitCmd, ...canvasBody } = payload;
           const res = await fetch(SUPABASE_URL + '/functions/v1/fn-canvas', {
             method: 'POST',
-            headers: { ...restHeaders(), Authorization: `Bearer ${userId}`, apikey: SUPABASE_SECRET_KEY },
+            headers: { ...restHeaders(), Authorization: `Bearer ${userId}`, apikey: SERVICE_ROLE_KEY },
             body: JSON.stringify({ verb, ...canvasBody }),
           });
           if (res.ok) {

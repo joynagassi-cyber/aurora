@@ -30,7 +30,16 @@
        `canvas.write` / `canvas.comment` (scopes `canvas:read` / `canvas:write`). L'humain
        conserve l'édition StarterKit dans /canvas ; l'agent écrit par le kernel, l'humain par
        le client device — même table (AD-7 single-writer, mutation appliquée par le module) —
-       commit `2d842fa`. Seam serveur `invokeTool` restant no-op OQ-03 (command routing futur).
+       commit `2d842fa`.
+       **Routage serveur canvas.*** (OQ-03) : endpoint `fn-canvas` (module Canvas =
+       single-writer AD-7 des tables canvas_* côté serveur, pattern rest + service key de
+       fn-skills, identité par JWT jamais par le body) : `read` / `write` (patch blocs
+       jsonb, blockId présent = remplacement, absent = ajout) / `comment` (réponse hérite
+       l'ancage du parent). `invokeTool` dans `fn-agent-bootstrap.ts` remplacé par un
+       routeur détectant les commandes `canvas.*` → `fn-canvas` ; `tools.ts` : `userId?`
+       optionnel sur les 3 outils (AD-7 : le kernel injecte l'identité, l'EF ne la lit
+       jamais du body) ; `planner.ts` : stepTemplates pour `canvas_read`/`canvas_write`/
+       `canvas_comment` — commit `d89c3fe`.
   5. **Fixs collatéraux (typecheck 0 erreur)** : destructuring `[searchParams]` manquante dans
      `agent/index.tsx` (WIP pré-existant) + `data` du success state dans `knowledge/index.tsx`
      (commit `6e8e8cc`).
@@ -76,7 +85,16 @@
        `canvas.write` / `canvas.comment` (scopes `canvas:read` / `canvas:write`). L'humain
        conserve l'édition StarterKit dans /canvas ; l'agent écrit par le kernel, l'humain par
        le client device — même table (AD-7 single-writer, mutation appliquée par le module) —
-       commit `2d842fa`. Seam serveur `invokeTool` restant no-op OQ-03 (command routing futur).
+       commit `2d842fa`.
+       **Routage serveur canvas.*** (OQ-03) : endpoint `fn-canvas` (module Canvas =
+       single-writer AD-7 des tables canvas_* côté serveur, pattern rest + service key de
+       fn-skills, identité par JWT jamais par le body) : `read` / `write` (patch blocs
+       jsonb, blockId présent = remplacement, absent = ajout) / `comment` (réponse hérite
+       l'ancage du parent). `invokeTool` dans `fn-agent-bootstrap.ts` remplacé par un
+       routeur détectant les commandes `canvas.*` → `fn-canvas` ; `tools.ts` : `userId?`
+       optionnel sur les 3 outils (AD-7 : le kernel injecte l'identité, l'EF ne la lit
+       jamais du body) ; `planner.ts` : stepTemplates pour `canvas_read`/`canvas_write`/
+       `canvas_comment` — commit `d89c3fe`.
   5. **Fixs collatéraux (typecheck 0 erreur)** : destructuring `[searchParams]` manquante dans
      `agent/index.tsx` (WIP pré-existant) + `data` du success state dans `knowledge/index.tsx`
      (commit `6e8e8cc`).
