@@ -157,6 +157,18 @@ export {
   createAutomation,
   updateAutomation,
   deleteAutomation,
+  // G4 (feature agentique 2026-10-06) : verbes renommer (AD-7 thin, non-destructifs)
+  goalRename,
+  taskRename,
+  eventRename,
+  habitRename,
+  canvasRename,
+  skillRename,
+  // G5/G12 (feature agentique 2026-10-06) : verbes supprimer DESTRUCTIFS
+  // (ADR §5 : confirmation obligatoire)
+  taskDelete,
+  canvasDelete,
+  skillDelete,
   isJobKind,
 } from './tools.ts';
 

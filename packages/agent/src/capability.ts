@@ -507,6 +507,110 @@ export class DefaultCapabilityRegistry {
         destructive: true,
         requiresConfirmation: true,
       },
+      // ----------------------------------------------------------------
+      // G4 (feature agentique 2026-10-06) — verbes renommer : thin
+      // emitters AD-7 (le module du domaine applique le patch du titre) ;
+      // non-destructifs, sans confirmation. INVARIANT AD-15 : il n'y a
+      // JAMAIS de goal.delete ici — les goals sont additifs, on guide
+      // vers goal_abandon (gel, données préservées).
+      // ----------------------------------------------------------------
+      {
+        id: 'goal.rename',
+        tool: 'goal_rename',
+        description:
+          "Rename a GoalProject (patch du titre). Thin command → progress.goal_rename (AD-7 : le module Progress patche `title`). Non-destructif. Pas de goal.delete (AD-15 additif → goal_abandon).",
+        writeScopes: ['progress:write'],
+        readScopes: ['progress:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      {
+        id: 'task.rename',
+        tool: 'task_rename',
+        description:
+          "Rename a task (patch du sujet). Thin command → productivity.task_update { taskIds:[id], action:'update', patch:{ subject } } (AD-7 : le module Productivity applique). Non-destructif.",
+        writeScopes: ['productivity:write'],
+        readScopes: ['productivity:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      {
+        id: 'event.rename',
+        tool: 'event_rename',
+        description:
+          "Rename a calendar event (patch du titre). Thin command → productivity.event_update { eventIds:[id], patch:{ title } } (AD-7 : le module Productivity applique). Non-destructif.",
+        writeScopes: ['productivity:write'],
+        readScopes: ['productivity:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      {
+        id: 'habit.rename',
+        tool: 'habit_rename',
+        description:
+          "Rename a habit / routine (patch du nom). Thin command → productivity.habit_update { habitId, patch:{ name } } (AD-7 : le module Productivity applique). Non-destructif.",
+        writeScopes: ['productivity:write'],
+        readScopes: ['productivity:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      {
+        id: 'canvas.rename',
+        tool: 'canvas_rename',
+        description:
+          "Rename a canvas session (patch du titre). Thin command → canvas.rename (AD-7 : le module Canvas applique). Non-destructif.",
+        writeScopes: ['canvas:write'],
+        readScopes: ['canvas:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      {
+        id: 'skill.rename',
+        tool: 'skill_rename',
+        description:
+          "Rename a personal skill (complète la famille skills ADR S14). Thin command → agent.skill_rename (AD-7 : le module Agent patche le nom). Non-destructif.",
+        writeScopes: ['agent:write'],
+        readScopes: ['agent:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      // ----------------------------------------------------------------
+      // G5 (feature agentique 2026-10-06) — verbes supprimer
+      // DESTRUCTIFS (ADR §5 : confirmation obligatoire).
+      // Invariant AD-15 : PAS de goal.delete (additif, goal_abandon) ;
+      // pas de event.delete / habit.delete dans ce batch (les use-cases
+      // module ne supportent pas le vrai delete de ces familles).
+      // ----------------------------------------------------------------
+      {
+        id: 'task.delete',
+        tool: 'task_delete',
+        description:
+          "Delete a task (DESTRUCTIVE, ADR §5 : irréversible — supprime la row tasks + cascades, confirmation obligatoire). Thin command → productivity.task_delete (AD-7 : le module Productivity supprime la row). NB : pour un GOAL, ne JAMAIS supprimer — goal_abandon (AD-15 additif).",
+        writeScopes: ['productivity:write'],
+        readScopes: ['productivity:read'],
+        destructive: true,
+        requiresConfirmation: true,
+      },
+      {
+        id: 'canvas.delete',
+        tool: 'canvas_delete',
+        description:
+          "Delete a canvas session (DESTRUCTIVE, ADR §5 : irréversible — confirmation obligatoire). Thin command → canvas.delete (AD-7 : le module Canvas supprime la session).",
+        writeScopes: ['canvas:write'],
+        readScopes: ['canvas:read'],
+        destructive: true,
+        requiresConfirmation: true,
+      },
+      {
+        id: 'skill.delete',
+        tool: 'skill_delete',
+        description:
+          "Delete a personal skill (DESTRUCTIVE, ADR §5 : irréversible — confirmation obligatoire ; complète la famille skills ADR S14). Thin command → agent.skill_delete (AD-7 : le module Agent supprime la row).",
+        writeScopes: ['agent:write'],
+        readScopes: ['agent:read'],
+        destructive: true,
+        requiresConfirmation: true,
+      },
       {
         id: 'notification.prefs',
         tool: 'notification_pref',

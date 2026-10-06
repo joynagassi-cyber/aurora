@@ -819,6 +819,188 @@ export const deleteAutomation: KernelTool = tool({
   execute: async (input) => ({ ok: true, command: 'integrations.automation_delete', payload: input }),
 });
 
+/**
+ * G4 — progress.goal_rename : renommer un GoalProject (AD-7 thin : le
+ * module Progress patche le titre, use-case updateGoal existe — AD-9
+ * event fields:['title']). Non-destructif. Pas de goal_delete
+ * (AD-15 : les goals sont additifs, on guide vers goal_abandon).
+ */
+export const goalRename: KernelTool = tool({
+  description:
+    "Renommer un GoalProject (le titre / l'objectif). Thin command → progress.goal_rename (AD-7 : le module Progress patche `title`). Non-destructif.",
+  inputSchema: z.object({
+    goalId: z.string(),
+    title: z.string(),
+    /** l'identité du user (portée par le kernel, AD-7) */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'progress.goal_rename', payload: input }),
+});
+
+/**
+ * G4 — productivity.task_update (patch subject) : renommer une tâche.
+ * AD-7 thin : le module Productivity applique le patch `{ subject }`
+ * sur les taskIds. Non-destructif.
+ */
+export const taskRename: KernelTool = tool({
+  description:
+    "Renommer une tâche (patch du sujet). Thin command → productivity.task_update avec action:'update' + patch:{ subject } (AD-7 : le module Productivity applique). Non-destructif.",
+  inputSchema: z.object({
+    taskId: z.string(),
+    title: z.string(),
+    /** l'identité du user (portée par le kernel, AD-7) */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => ({
+    ok: true,
+    command: 'productivity.task_update',
+    payload: {
+      taskIds: [input.taskId],
+      action: 'update',
+      patch: { subject: input.title },
+      userId: input.userId,
+    },
+  }),
+});
+
+/**
+ * G4 — productivity.event_update (patch title) : renommer un événement
+ * calendrier. AD-7 thin : le module Productivity applique le patch
+ * `{ title }` sur les eventIds. Non-destructif (pas de event_delete
+ * dans ce batch — le use-case n'existe pas côté module).
+ */
+export const eventRename: KernelTool = tool({
+  description:
+    "Renommer un événement du calendrier (patch du titre). Thin command → productivity.event_update avec patch:{ title } (AD-7 : le module Productivity applique). Non-destructif.",
+  inputSchema: z.object({
+    eventId: z.string(),
+    title: z.string(),
+    /** l'identité du user (portée par le kernel, AD-7) */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => ({
+    ok: true,
+    command: 'productivity.event_update',
+    payload: {
+      eventIds: [input.eventId],
+      patch: { title: input.title },
+      userId: input.userId,
+    },
+  }),
+});
+
+/**
+ * G4 — productivity.habit_update (patch name) : renommer une habitude.
+ * AD-7 thin : le module Productivity applique le patch `{ name }`.
+ * Non-destructif (pas de habit_delete dans ce batch).
+ */
+export const habitRename: KernelTool = tool({
+  description:
+    "Renommer une habitude / routine (patch du nom). Thin command → productivity.habit_update avec patch:{ name } (AD-7 : le module Productivity applique). Non-destructif.",
+  inputSchema: z.object({
+    habitId: z.string(),
+    name: z.string(),
+    /** l'identité du user (portée par le kernel, AD-7) */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => ({
+    ok: true,
+    command: 'productivity.habit_update',
+    payload: {
+      habitId: input.habitId,
+      patch: { name: input.name },
+      userId: input.userId,
+    },
+  }),
+});
+
+/**
+ * G4 — canvas.rename : renommer une session canvas. AD-7 thin : le
+ * module Canvas (client device ou endpoint serveur) patche le titre.
+ * Non-destructif.
+ */
+export const canvasRename: KernelTool = tool({
+  description:
+    "Renommer une session canvas (le titre). Thin command → canvas.rename (AD-7 : le module Canvas applique le patch du titre). Non-destructif.",
+  inputSchema: z.object({
+    canvasId: z.string(),
+    title: z.string(),
+    /** l'identité du user (portée par le kernel, AD-7) */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'canvas.rename', payload: input }),
+});
+
+/**
+ * G12 — agent.skill_rename : renommer une skill personnelle (complète
+ * la famille skills ADR S14). AD-7 thin : le module Agent patche le
+ * nom. Non-destructif.
+ */
+export const skillRename: KernelTool = tool({
+  description:
+    "Renommer une skill personnelle (complète skill_create / skill_activate, ADR S14). Thin command → agent.skill_rename (AD-7 : le module Agent patche le nom). Non-destructif.",
+  inputSchema: z.object({
+    skillId: z.string(),
+    name: z.string(),
+    /** l'identité du user (portée par le kernel, AD-7) */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'agent.skill_rename', payload: input }),
+});
+
+/**
+ * G5 — productivity.task_delete : suppression DESTRUCTIVE d'une tâche
+ * (supprime la row tasks + cascades). ADR §5 : confirmation
+ * obligatoire — irréversible. AD-7 thin : le module Productivity
+ * supprime la row.
+ *
+ * AD-15 : contrairement aux goals (additifs, gel via goal_abandon),
+ * une tâche EST supprimable — c'est un vrai delete.
+ */
+export const taskDelete: KernelTool = tool({
+  description:
+    "Supprimer une tâche (DESTRUCTIVE, ADR §5 : confirmation obligatoire — irréversible, supprime la row tasks + cascades). Thin command → productivity.task_delete (AD-7 : le module Productivity supprime la row). NB: pour un GOAL, ne jamais supprimer — utiliser goal_abandon (AD-15 additif, gel avec données préservées).",
+  inputSchema: z.object({
+    taskId: z.string(),
+    /** l'identité du user (portée par le kernel, AD-7) */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'productivity.task_delete', payload: input }),
+});
+
+/**
+ * G5 — canvas.delete : suppression DESTRUCTIVE d'une session canvas.
+ * ADR §5 : confirmation obligatoire. AD-7 thin : le module Canvas
+ * supprime la session.
+ */
+export const canvasDelete: KernelTool = tool({
+  description:
+    "Supprimer une session canvas (DESTRUCTIVE, ADR §5 : confirmation obligatoire — irréversible). Thin command → canvas.delete (AD-7 : le module Canvas supprime la session).",
+  inputSchema: z.object({
+    canvasId: z.string(),
+    /** l'identité du user (portée par le kernel, AD-7) */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'canvas.delete', payload: input }),
+});
+
+/**
+ * G12 — agent.skill_delete : suppression DESTRUCTIVE d'une skill
+ * personnelle (complète la famille skills ADR S14). ADR §5 :
+ * confirmation obligatoire. AD-7 thin : le module Agent supprime la
+ * row.
+ */
+export const skillDelete: KernelTool = tool({
+  description:
+    "Supprimer une skill personnelle (DESTRUCTIVE, ADR §5 : confirmation obligatoire — irréversible). Thin command → agent.skill_delete (AD-7 : le module Agent supprime la row).",
+  inputSchema: z.object({
+    skillId: z.string(),
+    /** l'identité du user (portée par le kernel, AD-7) */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'agent.skill_delete', payload: input }),
+});
+
 /** notification.subscribe / silence — user prefs (matrix row notification.subscribe / silence, PARTIAL). */
 export const notificationPref: KernelTool = tool({
   description:
@@ -1129,6 +1311,23 @@ export const KERNEL_TOOLS = {
   create_automation: createAutomation,
   update_automation: updateAutomation,
   delete_automation: deleteAutomation,
+  // G4 (feature agentique 2026-10-06) : verbes renommer — thin emitters
+  // AD-7 (le module du domaine applique le patch du titre) ;
+  // non-destructifs. goal_rename (pas de goal_delete : AD-15 additif).
+  goal_rename: goalRename,
+  task_rename: taskRename,
+  event_rename: eventRename,
+  habit_rename: habitRename,
+  canvas_rename: canvasRename,
+  skill_rename: skillRename,
+  // G5 (feature agentique 2026-10-06) : verbes supprimer DESTRUCTIFS
+  // (ADR §5 : confirmation obligatoire). Pas de goal_delete /
+  // event_delete / habit_delete dans ce batch.
+  task_delete: taskDelete,
+  canvas_delete: canvasDelete,
+  // G12 (feature agentique 2026-10-06) : mutation skills — skill_delete
+  // (DESTRUCTIVE, ADR §5) ; skill_rename est G4 ci-dessus.
+  skill_delete: skillDelete,
   notification_pref: notificationPref,
   eisenhower_prioritize: eisenhowerPrioritize,
   // Focus planning (focus-mode spec + planning-execution)
