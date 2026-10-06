@@ -208,6 +208,17 @@
   color: var(--aurora-text-primary);
   box-shadow: var(--aurora-shadow-card);
 }
+/* Compact variant (calendar's in-strip task-mode switch, 05 §3.4): same
+   pill pattern, smaller footprint, no default 16px horizontal margin. */
+.segmented--compact {
+  margin: 0 0 8px;
+  padding: 2px;
+}
+.segmented--compact .segmented-item {
+  min-height: 30px;
+  font-size: 12px;
+  padding: 0 10px;
+}
 
 /* The in-app logo (S9: no-background variant, centered on the 404 + empty
  * states). When the real asset is pinned via `data-asset` it renders as an

@@ -398,6 +398,14 @@
   justify-content: space-between;
   gap: 8px;
 }
+/* The 2 composer CTAs (Ajouter primary / Classer ghost-inert) sit side
+   by side — a flex group so the "Sauvegardé localement" badge stays on
+   the left and the buttons on the right, matching .inbox-composer-footer. */
+.inbox-composer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .inbox-empty {
   display: flex;
   flex-direction: column;
@@ -546,12 +554,21 @@
 }
 .discovery-item--running svg {
   color: var(--aurora-accent-primary);
-  animation: discovery-pulse 1.4s ease-in-out infinite;
+  /* SSoT motion (motion.tsx SKELETON_PULSE): opacity-only pulse, NOT the
+     ad-hoc 1.4s pre-refactor variant — and MUST respect prefers-reduced-motion
+     (emotion-design §3 / 05 §2.6 rule 2: everything static when ON). */
+  animation: discovery-pulse 1.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .discovery-item--running svg {
+    animation: none;
+    opacity: 1;
+  }
 }
 @keyframes discovery-pulse {
   0%,
   100% {
-    opacity: 0.4;
+    opacity: 0.6;
   }
   50% {
     opacity: 1;
@@ -559,7 +576,9 @@
 }
 /* Ascent entry (docs/ascent S12): the veille surfaces concepts; "Étudier via
  * Ascent" routes to the agent (ascent mode) or, when a path exists, to
- * /ascent (read the mounted training). One tap. */
+ * /ascent (read the mounted training). One tap. `#ascent-cta` is the
+ * in-page anchor target of UxStates' `emptyCtaHref` (discovery/index.tsx) —
+ * the CTA links to a real on-page element, never a dead affordance. */
 .discovery-ascent-cta {
   display: flex;
   align-items: center;

@@ -84,11 +84,15 @@ export function CalendarPage() {
         <div data-calendar="true" className="cal-page space-y-2">
           {/* T4 in-page SegmentedControl (05 §3.4 — sous-option, non-push,
               z-chrome=10 per floating.css). The page owns the 6-view strip;
-              `CalendarView` below receives whichever view is active. */}
+              `CalendarView` below receives whichever view is active.
+              Reuses the shared `.segmented`/`.segmented-item` CSS pattern
+              (atoms.css, 05 §3.4 Pager) — the pre-fix version re-implemented
+              it inline in Tailwind (a duplicate, visually inconsistent with
+              /learn /progress /projects /tasks which all use this pattern). */}
           <div
             role="tablist"
             aria-label="Vue calendrier"
-            className="relative z-[10] flex gap-1 overflow-x-auto rounded-md border border-border bg-card p-1"
+            className="segmented"
           >
             {CALENDAR_VIEWS.map(([name, label]) => (
               <button
@@ -96,12 +100,8 @@ export function CalendarPage() {
                 type="button"
                 role="tab"
                 aria-selected={view === name}
+                className={view === name ? "segmented-item active" : "segmented-item"}
                 onClick={() => setView(name)}
-                className={`shrink-0 rounded px-3 py-1.5 text-xs font-medium transition-colors ${
-                  view === name
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
               >
                 {label}
               </button>
@@ -137,18 +137,14 @@ export function CalendarPage() {
             <div
               role="tablist"
               aria-label="Mode liste de tâches"
-              className="mb-2 flex gap-1"
+              className="segmented segmented--compact"
             >
               <button
                 type="button"
                 role="tab"
                 aria-selected={taskMode === "liste"}
+                className={taskMode === "liste" ? "segmented-item active" : "segmented-item"}
                 onClick={() => setTaskMode("liste")}
-                className={`rounded px-2 py-1 text-xs font-medium ${
-                  taskMode === "liste"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted"
-                }`}
               >
                 Liste
               </button>
@@ -156,18 +152,14 @@ export function CalendarPage() {
                 type="button"
                 role="tab"
                 aria-selected={taskMode === "chronologie"}
+                className={taskMode === "chronologie" ? "segmented-item active" : "segmented-item"}
                 onClick={() => setTaskMode("chronologie")}
-                className={`rounded px-2 py-1 text-xs font-medium ${
-                  taskMode === "chronologie"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted"
-                }`}
               >
                 Chronologie
               </button>
             </div>
             {taskMode === "liste" ? (
-              <Timeline events={taskEvents} emptyMessage="Aucune tâche pour cette période." />
+              <Timeline taskList events={taskEvents} emptyMessage="Aucune tâche pour cette période." />
             ) : (
               <Timeline events={taskEvents} emptyMessage="Aucune tâche pour cette période." />
             )}

@@ -33,9 +33,15 @@ export function DiscoveryPage() {
       <IonContent>
         <div data-discovery>
           {/* The feed: agent-curated DiscoveryItems (gap-triggered).
-              No discovery mirror yet → the "recherche en cours" state
-              (job state, 01 §6) + a research CTA. */}
-          <UxStates state={{ status: 'empty' }} flags={flags} label="Découverte">
+              No discovery mirror yet → the honest "recherche en cours"
+              state (job state, 01 §6). `emptyCtaHref` points the UxStates
+              CTA at the ascent CTA below (a real, in-page action) rather
+              than a dead CTA — the button renders a link, not inert text. */}
+          <UxStates
+            state={{ status: 'empty' }}
+            flags={{ ...flags, emptyCtaHref: '#ascent-cta' }}
+            label="Découverte"
+          >
             <div className="discovery-feed" data-research="running">
               <div className="discovery-item discovery-item--running">
                 <Search size={20} aria-hidden />
@@ -47,7 +53,7 @@ export function DiscoveryPage() {
           {/* Ascent entry (docs/ascent S12): the veille surfaces concepts;
               the "Ascent" CTA = conduct the climb (agent ascent mode) or,
               when a path exists, READ it on /ascent. One tap. */}
-          <div className="discovery-ascent-cta" data-ascent-entry="true">
+          <div id="ascent-cta" className="discovery-ascent-cta" data-ascent-entry="true">
             <Compass size={16} aria-hidden />
             <span>Étudier via Ascent</span>
             <a
