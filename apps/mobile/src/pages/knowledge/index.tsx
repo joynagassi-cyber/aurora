@@ -203,7 +203,7 @@ export function KnowledgeNodePage() {
           <UxStates
             state={
               mirror.data && mirror.data.nodes.length > 0
-                ? { status: 'success', data: undefined }
+                ? { status: 'success', data: mirror.data }
                 : { status: 'empty' }
             }
             flags={{ ...flags, emptyCta: 'Étudier ce concept' }}
