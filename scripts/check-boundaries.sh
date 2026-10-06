@@ -104,7 +104,9 @@ g2() {
       # Exception sanctionnee: le contenu de SKILL.md troisiemes parties (seed 0021,
       # docs Anthropic avec exemples curl/Bearer ACCESS_TOKEN, Zoom SDK, etc.)
       # n'est PAS du code Aurora, ne contient aucune valeur de secret reelle.
-      supabase/migrations/*)
+      # Restrict: le lot 0021 uniquement (les autres migrations SQL restent
+      # scannees normalement — une valeur de secret s'y reintroduit = FAIL).
+      supabase/migrations/0021_lots/*|supabase/migrations/0021_*)
         continue ;;
       # Exception sanctionnee: appKey OneSignal dans capacitor.config.ts.
       */capacitor.config.ts)

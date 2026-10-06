@@ -7,18 +7,30 @@
  * (NodeState, AD-6). Bridges hidden by default. /knowledge/:nodeId —
  * node detail (lazy deeper branches) with provenance drill-down (AD-11).
  *
+ * AD-7 local-first (03 S3.1): the tree reads the LOCAL PowerSync mirror
+ * of `semantic_nodes` / `semantic_edges` / `node_state` (0004 columns,
+ * snake_case in `packages/data/powersync-schema.ts` L187–236). The
+ * `embedding` column is NOT mirrored (0004 §4.2 rule, AD-12/F-09) —
+ * full semantic retrieval stays server-side and requires connectivity
+ * (`docs/knowledge/overview.md` §16). `?q=` therefore does a LOCAL
+ * substring scan over `title` / `content` of mirrored nodes; it is
+ * never FTS or vector on the device.
+ *
  * AD-10: the tree is the REAL `SemanticTreeRenderer` (React Flow engine,
- * engine CSS + `-h` tokens provided by packages/ui). The knowledge mirror
- * is not wired yet (AD-7) → the engine renders its empty canvas + the
- * import CTA; it lays out nodes the moment the mirror yields them.
+ * engine CSS + `-h` tokens provided by packages/ui). Offline / no
+ * Supabase env → the mirror is empty (or stale = frozen tree) and the
+ * import CTA stays, never an error (AD-7: no blank, no fake data).
  */
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
+import { useQuery } from '@tanstack/react-query';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { SemanticTreeRenderer } from '@aurora/ui';
 import type { RenderSemanticEdge, RenderSemanticNode } from '@aurora/ui';
 import { useUiStateStore } from '../../state/ui-state';
 import { UxStates, type UxStateFlags } from '../../ux-states';
 import { useOnlineStatus } from '../../hooks/use-online';
+import { useMobileData } from '../../query/context';
+import { readKnowledgeMirror, searchKnowledgeMirror } from '../../lib/knowledge-repo';
 
 /** Shared 6-state flags for the knowledge family. */
 function knowledgeFlags(): {
@@ -39,18 +51,53 @@ export function KnowledgePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   /**
    * Cross-page query intake (`?q=`, navigation-and-page-composition.md):
-   * e.g. the agent transcript's « Open » action drops a quoted snippet here
-   * (`/knowledge?q=…`). The semantic search mirror lands with the knowledge
-   * family (AD-7); until then the query is shown as an intake banner so the
-   * destination is not a dead end.
+   * e.g. the agent transcript's « Open » action drops a quoted snippet
+   * here (`/knowledge?q=…`). AD-7/AD-12: the search is a LOCAL substring
+   * scan over mirrored `title` / `content` (knowledge-repo.ts) — full
+   * semantic retrieval (FTS / pgvector, 0004) is server-only and needs
+   * connectivity (`docs/knowledge/overview.md` §16), so when the query
+   * matches nothing locally we say so honestly, we never fake a result.
    */
   const query = searchParams.get('q');
 
-  // AD-7: the knowledge mirror is not wired yet → the tree is empty. The
-  // renderer is still MOUNTED (React Flow canvas + controls); it renders
-  // its empty state + the import CTA, and lays out real nodes on demand.
-  const nodes: RenderSemanticNode[] = [];
-  const edges: RenderSemanticEdge[] = [];
+  // AD-7 local-first: read the mirror (never the network). One pass per
+  // mount / 60s staleTime — the repo re-reads on `watch`-driven
+  // invalidation of the shared local store (same channel as ascent).
+  const mirrorProvider = useMobileData();
+  const store = mirrorProvider.store;
+  // AD-7 / 03 S8.1: when the provider was built without a local engine
+  // (tests, or a degenerate boot), the mirror is empty — the import CTA
+  // stays, never an error. `enabled` guards the `store!` non-null.
+  const mirror = useQuery({
+    queryKey: ['knowledge', 'mirror'],
+    queryFn: () => (store ? readKnowledgeMirror(store) : { nodes: [], edges: [] }),
+    staleTime: 60_000,
+    retry: 1,
+    enabled: store !== undefined,
+  });
+
+  const allNodes: RenderSemanticNode[] = mirror.data?.nodes ?? [];
+  const allEdges: RenderSemanticEdge[] = mirror.data?.edges ?? [];
+
+  // `?q=` narrows the tree to the matching nodes (+ their edges) — not a
+  // separate result list. The full tree stays available below when the
+  // banner is dismissed.
+  let nodes: RenderSemanticNode[] = allNodes;
+  let edges: RenderSemanticEdge[] = allEdges;
+  let matchCount = 0;
+  if (query && allNodes.length > 0 && store) {
+    const matches = searchKnowledgeMirror(store, query);
+    matchCount = matches.length;
+    const matchedIds = new Set(matches.map((m) => m.id));
+    nodes = matches;
+    // keep edges whose BOTH endpoints are in the matched set (an edge to a
+    // filtered-out node would reference a missing node in the layout).
+    edges = allEdges.filter(
+      (e) => matchedIds.has(e.source) && matchedIds.has(e.target),
+    );
+  }
+
+  const hasMirrorData = allNodes.length > 0;
 
   return (
     <>
@@ -61,13 +108,19 @@ export function KnowledgePage() {
         <div data-knowledge>
           {query && (
             <div className="knowledge-query-banner" data-query={query}>
-              <span>Recherche : « {query} »</span>
+              <span>
+                {hasMirrorData
+                  ? matchCount > 0
+                    ? `Recherche locale : « ${query} » — ${matchCount} nœud(s) trouvé(s) sur le miroir.`
+                    : `Recherche locale : « ${query} » — aucun résultat sur le miroir (recherche sémantique complète = en ligne, 01 §4.3).`
+                  : `Recherche locale : « ${query} » — miroir vide, importez d'abord un cours ou une fiche.`}
+              </span>
               <a
                 className="aurora-btn aurora-btn--ghost aurora-tap"
                 href="/learn"
                 onClick={(e) => {
                   e.preventDefault();
-                  setSearchParams((prev) => {
+                  setSearchParams((prev: URLSearchParams) => {
                     const next = new URLSearchParams(prev);
                     next.delete('q');
                     return next;
@@ -92,11 +145,13 @@ export function KnowledgePage() {
               data-expanded={knowledgeExpanded}
               data-online={online ? 'true' : 'false'}
             >
-              {/* AD-10: React Flow + Dagre mounted via the @aurora/ui contract. */}
+              {/* AD-10: React Flow + Dagre mounted via the @aurora/ui contract,
+                  fed by the LOCAL mirror (AD-7). Empty / stale mirror = the
+                  canvas stays, never a crash (05 §3.6 / AD-8). */}
               <SemanticTreeRenderer nodes={nodes} edges={edges} fitView />
-              {nodes.length === 0 && (
+              {!hasMirrorData && (
                 <div className="knowledge-tree-cta">
-                  <p>Aucun concept — importez un cours ou une fiche.</p>
+                  <p>Aucun concept sur le miroir local — importez un cours ou une fiche.</p>
                   <a
                     className="aurora-btn aurora-btn--primary aurora-tap"
                     href="/learn"
@@ -105,9 +160,9 @@ export function KnowledgePage() {
                   </a>
                 </div>
               )}
-              {!online && (
+              {!online && hasMirrorData && (
                 <span className="aurora-badge" data-badge="offline">
-                  Offline
+                  Hors ligne — arbre figé sur le dernier miroir connu (AD-7)
                 </span>
               )}
             </div>

@@ -120,7 +120,7 @@
 - **Sortie de session** : tap « Terminer la session » → Toast success (slide up 200ms, S6 l.183, auto-dismiss 3s) → Zone 3 apparaît (CTA fixe « QCM du domaine », fade 200ms) si fin de file (12/12, WDS 01.3) ; pas de CTA manuel de sortie (invariant AD-14 : le CTA répond à « qu'est-ce qui compte maintenant ? »).
 - **Sortie vers QCM** : tap « QCM du domaine » → transition vers `qcm` (§4.8.2, overlay `IonModal` `qcm` sous le même `/learn/:id`, router.tsx l.97) ; **pas** de spec de transition overlay → overlay (OQ-07 §14).
 - **Sortie 404** : fade 200ms → navigate back (close overlay, retour au tab courant, §4c).
-- Lien vers les primitives de motion : `motion.tsx @aurora/ui` (PAGE_TRANSITION, REVEAL_TRANSITION, crossfade, ssootCode motionRefs) ; Framer Motion GPU only, `prefers-reduced-motion` = statique (05 §2.6 + ui-libraries S5 l.169).
+- Lien vers les primitives de motion : `motion.tsx @aurora/ui` (PAGE_TRANSITION, REVEAL_TRANSITION, NODE_PULSE, SKELETON_PULSE) ; Framer Motion GPU only, `prefers-reduced-motion` = statique (05 §2.6 + ui-libraries S5 l.169).
 
 ## §10 Thèmes (comportement par couche 05 §5.2 ; 10 thèmes + 3 presets ; règle bloquante 05 §5.1)
 

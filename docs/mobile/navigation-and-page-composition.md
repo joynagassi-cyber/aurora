@@ -14,6 +14,15 @@ switch, 02 §6.1): `/tasks/:id`, `/learn/:id`, `/progress/:id`, `/knowledge` +
 gesture) works on every route; a route that blocks back **saves first** (02 §6.3 —
 local-first makes form state auto-persisted).
 
+Feature detail routes (19 pages total, matrix §2): `/calendar`, `/projects`,
+`/goals`, `/discovery`, `/focus` (session screen), `/tasks/:id`, `/learn/:id`,
+`/knowledge/:nodeId`, `/artifacts/:id`, `/skills` (ADR S14, fn-skills, OQ-03),
+`/integrations` (Composio, fn-integrations, OQ-33-35), `/ascent` (module Ascent),
+`/progress/:id`, `/goals/:id`, `/calendar/:date`, `/tasks?view=matrix` (Eisenhower).
+The `/skills` and `/integrations` routes are server-backed (fn-skills /
+fn-integrations) and degrade to honest empty states when no Supabase env
+(AD-7, OQ-03 / OQ-33-35) — they are NOT in the frozen 17-page core.
+
 ## 2. Page matrix (required fields per page)
 
 Legend: EP = entry points; OUT = outgoing routes; IN = incoming; CTX = context passed;
@@ -36,6 +45,8 @@ persistent state; EMPTY = empty state; PERM = permission state.
 | **Focus** (05 §4.4.2) | Home slot 6 (AD-14 immediate Focus), /tasks/:id CTA, Agent | session screen (timer ring) → bilan sheet (`focusBilan` ChartSpec, 05 §3.6.9) | Home, tasks, /agent | task link + blocklist (v1.8 DPC) | AGT: "start focus, block X+Y" (v1.8 candidate — OQ-17) | back to origin task | session row (focus_sessions) | session not started state | `POST_NOTIFICATIONS`; DPC = OQ-17 |
 | **Artifacts** `/artifacts/:id` | search/results, course (exports), /agent | preview (per format, ADR §16) → source/download/share | /learn, /agent, discovery | artifact id + kind | AGT: "show me the generated X" | back to origin list | cached previews (04 §3.2.2) | "loading preview / unsupported" (no fake preview, ADR §16) | none (presigned) |
 | **Agent** `/agent` | tab; any screen assistant CTA; Home coach slot | conversation → actions confirmation → target screens (/tasks, /learn, /focus…); **peelable deep-link bubbles** (`route` payload, 04 §3.2.5) open the target page over the chat (agent-chat.md §5.1 G4) | Home, all features (assistant CTA), deep links | AgentRunState (F-09, 02 §4) + run history | deep: push "coach check-in" → /agent | back returns to the chat (`{ state: { from: '/agent' } }` — the transcript is kept, 02 §6.3); conversation history local | conversation + confirmations pending | "start with an intent" | destructive ops = confirmation (AD-12) |
+| **Skills** `/skills` | Home, /agent (+ sheet), Settings | 3 tabs: catalogue / mes skills / expert (ADR S14) | Home, /agent, /settings | skill domain grouping | — | back to origin | activated skills (user_skills, RLS) | honest empty state when no Supabase env (AD-7 / OQ-03) | none |
+| **Integrations** `/integrations` | Home, /agent (+ sheet) | connect external accounts (Composio) | Home, /agent | connected-account state | — | back to origin | integrations_state (RLS user-isolated) | "intégrations indisponibles" when no Supabase env (AD-3/AD-7) | OAuth via WebView / deep link (tokens stay server-side, AD-3) |
 | **Settings** `/settings` | Home, any top bar | theme selector + preview (05 §2.1: auto-switch deferred to /settings mount, never boot), silence windows (coaching cadence, ADR §13), notification prefs, account | all | none | — | back to origin | theme = persisted (store persist middleware) | n/a | OneSignal appKey only in `capacitor.config.ts` (04 §3.2.5) |
 
 ## 3. Context-preserving navigation (details)

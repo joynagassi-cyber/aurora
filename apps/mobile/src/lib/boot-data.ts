@@ -126,12 +126,21 @@ export function createAuroraDataProvider(env: AuroraDataEnv): AuroraDataProvider
       await engine.addScope('productivity');
       // A2: the ascent local-mirror stream (ascent_paths, read-only AD-7).
       await engine.addScope('ascent');
+      // Knowledge local-mirror stream (semantic_nodes / semantic_edges /
+      // node_state / semantic_bridges / source_refs, read-only AD-7 —
+      // the `embedding` column is NOT mirrored, 0004 §4.2 / AD-12).
+      await engine.addScope('knowledge');
       // Bind the engine's reactive row stream into the bridge cache (03
       // S5.2.2) so repository reads stay live without a poll; the UI's
       // QueryClient invalidation rides on this channel (03 S5.8).
       void bridge.bindEngineWatch('goals');
       void bridge.bindEngineWatch('tasks');
       void bridge.bindEngineWatch('ascent_paths');
+      // Knowledge mirror (AD-7): the tree reads semantic_nodes/edges +
+      // node_state through the same reactive channel (03 S5.8).
+      void bridge.bindEngineWatch('semantic_nodes');
+      void bridge.bindEngineWatch('semantic_edges');
+      void bridge.bindEngineWatch('node_state');
     },
 
     async dispose(clear = false): Promise<void> {

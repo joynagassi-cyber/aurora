@@ -3,10 +3,9 @@
  * AgentRunState).
  *
  * The chat is a calm two-pane surface: a scrolling transcript + a pinned
- * composer. The "thinking" state is the organic organism (ui-libraries
- * §9.3, AgentThinkingLoader @aurora/ui); while no real run streams yet,
- * this file styles the token-native `.agent-thinking` fallback so the
- * surface reads premium even in the empty/thinking state.
+ * composer. The "thinking" state = AgentThinkingLoader (@aurora/ui,
+ * ui-libraries §9.3: 3 morphing blobs + rotating thinking-verbs, the
+ * a11y + reduced-motion guards are built in).
  */
 
 .agent-chat {
@@ -42,50 +41,12 @@
   max-width: 28ch;
 }
 
-/* The thinking organism (organic, NOT a three-dot spinner — §9.3). */
+/* The thinking state = AgentThinkingLoader (@aurora/ui, ui-libraries §9.3:
+   3 morphing blobs + rotating thinking-words, S9-compliant). The class below
+   only positions it inside the transcript column. */
 .agent-thinking {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 24px;
-}
-.agent-thinking-blobs {
-  position: relative;
-  width: 48px;
-  height: 48px;
-  overflow: hidden;
-}
-.agent-thinking-blobs::before,
-.agent-thinking-blobs::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: var(--aurora-accent-primary);
-  opacity: 0.35;
-  animation: agent-blob 3.4s ease-in-out infinite;
-}
-.agent-thinking-blobs::after {
-  background: var(--aurora-accent-secondary);
-  animation-delay: 1.1s;
-  animation-duration: 2.6s;
-}
-@keyframes agent-blob {
-  0%,
-  100% {
-    transform: scale(0.7);
-    opacity: 0.3;
-  }
-  50% {
-    transform: scale(1);
-    opacity: 0.55;
-  }
-}
-.agent-thinking-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--aurora-text-muted);
+  align-self: center;
+  margin: 8px 0;
 }
 
 /* Transcript entries (real runs, F-09: the device sees run rows only). */

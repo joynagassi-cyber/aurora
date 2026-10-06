@@ -3,7 +3,7 @@
 **Statut** : proposition normative (au-dessus de `DESIGNED_NOT_IMPLEMENTED`).
 **Autorité** : direction « Technical Calm » (05 §1), tokens AD-17 (05 §2.1, G-H2 re-2026-10),
 focus-mode spec (S4/S8, DPC v1.8), catalog des sons `apps/mobile/src/lib/focus-sounds.ts`,
-polish layer `apps/mobile/src/ux/motion.tsx @aurora/ui`.
+motion SSoT `packages/ui/src/motion.tsx` (@aurora/ui : PAGE_TRANSITION, REVEAL_TRANSITION, NODE_PULSE, SKELETON_PULSE).
 **Règle bloquante reprise** : un thème expressif ne redéfinit **jamais**
 `success`/`warning`/`danger`/`info` (05 §5.1) — les états sémantiques sont gelés
 dans `packages/ui/src/themes/neutral.ts`. Ce document assigne des **états émotionnels**
@@ -92,6 +92,9 @@ retouche `success` dans un thème JSON est rejeté.
 
 Un état « oublié » n'est **jamais** affiché en `danger` : c'est `habit-weak`
 (repartir est facile), pas `#EF4444` (qui impliquerait que l'utilisateur a échoué).
+Les valeurs ci-dessus sont **gelées** (05 §2.1.2, G-H2 re-2026-10) — un thème
+expressif ne les redéfinit jamais (règle 05 §5.1) ; un PR qui retouche un
+token `habit-*` dans un thème JSON est rejeté.
 
 ### 2.3 Bascule fond : normal ↔ focus mode
 
@@ -171,7 +174,7 @@ Catalogue `focus-sounds.ts` (AD-15, ids stables = clé du tool kernel `focus.sou
 | **Bruit blanc** (`bruit-blanc`) | `white-noise` · `cabin-brown-noise` · `rain-steady` · `fireflies` · `wind-light` | **Focus long (≥ 45 min)** — le bruit brun (`cabin-brown-noise`) = le plus « couvrant », idéal pour couper les bruits ambiants (bureaux ouverts, logement bruyant) ; `rain-steady` en boucle = le fond par défaut si l'utilisateur ne choisit rien d'autre. |
 | **Ambiance** (`ambiance`) | `cafe-bossa` · `cafe-rain-window` · `lofi-dreamscape` · `lofi-chill` · `chill-relax` | **Travail créatif / étude légère** — « le café sous la pluie » = le son d'« on est dehors du monde mais pas seul ». `chill-relax` pour la fin de journée. |
 | **Lointain** (`lointain`) | `space-drone` · `ambient-classics` · `midnight-radio` · `calm-radio` · `zen-radio` | **Revue / contemplation (Vesper)** — les drones pour le journal des décisions, `zen-radio` pour la méditation de fin de session. |
-| **Musique** (`musique`) | `lofi-mellow` · `lofi-sunbeam` · `lofi-soochrys` + « Lundi doux » ×2 | **Sessions rythmées (Citrus)** — le seul thème avec du tempo ; réservé aux objectifs « vifs » (revisions, sprints courts). Ne jamais proposer par défaut sur une session de contemplation. |
+| **Musique** (`musique`) | `lofi-mellow` · `lofi-sunbeam` · `lofi-soochrys` + `sundown-loop` · `sundown-loop-2` | **Sessions rythmées (Citrus)** — le seul thème avec du tempo ; réservé aux objectifs « vifs » (revisions, sprints courts). Ne jamais proposer par défaut sur une session de contemplation. |
 
 Règle d'or : **le son de fond est toujours un choix utilisateur, jamais un
 défaut imposé** ; le défaut silencieux est légitime (05 §4.4.2 : le Focus est un
@@ -192,6 +195,17 @@ réducteur de distracteur, pas un nouvel audio).
 Livrables sonores à produire (outils `focus.sound` kernel, ids stables AD-15) :
 `chime-local`, `chime-remote`, `focus-end`, `goal-hit` (4 fichiers 44.1 kHz, ≤ 2s,
 licences CC/domaine public comme le reste du catalogue).
+
+**Statut V1 (décision owner, 2026-10-05)** : les 4 chimes sont
+**DESIGNED_NOT_IMPLEMENTED** — le cahier des charges ci-dessus est la SSoT, mais
+les fichiers WAV (production + licences) arrivent dans une vague ultérieure.
+La surface du catalogue est déjà prête : `kind?: 'event'` dans
+`apps/mobile/src/lib/focus-sounds.ts` (`FocusSound`) distingue les chimes
+d'événement des 25 fonds ambiants (`kind` absent = `'background'`).
+Jusqu'à la production des assets, le son de fin de focus et le chime de
+deadline restent **silencieux** (cohérent avec §4.4 : le silence n'est
+jamais une erreur) — le comportement visuel (notification, BottomSheet)
+est inchangé.
 
 ### 4.3 Réduction sonore pendant le Focus (S8, `reduceForFocus`)
 

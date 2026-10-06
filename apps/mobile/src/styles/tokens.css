@@ -26,10 +26,10 @@
   /* Scrim (modal/sheet background dimming, light G-H2). Dark override below. */
   --aurora-scrim: rgba(15, 23, 42, 0.4);
 
-  /* Text */
+  /* Text (light: WCAG AA ≥4.5:1 on #FFFFFF — muted = #64748B, review 2026-10-05) */
   --aurora-text-primary: #0f172a;
   --aurora-text-secondary: #334155;
-  --aurora-text-muted: #94a3b8;
+  --aurora-text-muted: #64748B;
   --aurora-text-disabled: #cbd5e1;
 
   /* Borders */

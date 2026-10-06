@@ -79,13 +79,19 @@ export function createLocalNotificationAdapter(): LocalNotificationAdapter {
       // still records the flag (focus spec §8) so the state is coherent.
       if (!native || focusReduced) return;
       const schema = toSchema(n);
+      // DESIGNED_NOT_IMPLEMENTED (owner, 2026-10-05; docs/mobile/overview.md §6):
       // v7 typed surface has no public scheduleLocal queue; the native
-      // Android deadline queue is a native-bridge hook. The seam keeps
-      // the app shell decoupled and the split-rule test enforceable.
+      // Android deadline queue (AlarmManager/WorkManager) is a native-bridge
+      // hook landing in wave 1. The seam keeps the app shell decoupled and
+      // the split-rule test enforceable. The 04 §7 anti-double-push test
+      // is intentionally NOT written yet — it would be a skip, and the
+      // owner decided to declare the GAP here instead of shipping a dead
+      // test.
       void schema;
     },
     async cancelLocal(n) {
       if (!native) return;
+      // DESIGNED_NOT_IMPLEMENTED (owner, 2026-10-05; docs/mobile/overview.md §6):
       // State is preserved for re-enable (feature-registry S6). The
       // native cancel is a no-op in the typed seam until the Android
       // bridge exposes a matching queue API.

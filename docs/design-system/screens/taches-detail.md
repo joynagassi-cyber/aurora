@@ -153,7 +153,7 @@ Module : Productivité · Route : `/tasks/:id` (S-24) · Statut : **additif** ·
 
 ---
 
-## §9 Transitions entre écrans (GPU-only, §2.6 ; polished.tsx)
+## §9 Transitions entre écrans (GPU-only, §2.6 ; motion.tsx @aurora/ui)
 
 | Transition | Direction | Durée / curve | GPU-only | SSoT |
 |---|---|---|---|---|

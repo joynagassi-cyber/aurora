@@ -96,7 +96,7 @@ export function UxStates({
     case 'offline':
       return (
         <div data-ux="offline" data-badged="true">
-          <span className="aurora-badge">Offline</span>
+          <span className="aurora-badge">Hors ligne</span>
           <div data-last-known="true">{children}</div>
         </div>
       );

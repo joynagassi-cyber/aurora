@@ -108,7 +108,7 @@ export function HomePage() {
         <IonTitle>Aurora</IonTitle>
         {!online && (
           <span data-badge="offline" className="aurora-badge">
-            Offline
+            Hors ligne
           </span>
         )}
       </IonHeader>

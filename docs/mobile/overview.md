@@ -55,6 +55,15 @@ driven = Capacitor local (`scheduleLocal`); **never both for the same object**
 (anti-double-push, test 04 §7). Focus suppression = `reduceForFocus` (see
 [focus-mode/spec.md](../focus-mode/spec.md)).
 
+**DESIGNED_NOT_IMPLEMENTED — local deadline queue (owner, 2026-10-05)** :
+`scheduleLocal`/`cancelLocal` (`packages/platform/src/local-notification.ts`)
+are typed seams only: the Capacitor 7 typed surface has no native queue API,
+and the Android bridge (AlarmManager/WorkManager) lands in **wave 1**. Until
+then the app-shell seam no-ops, and the 04 §7 anti-double-push test is
+intentionally not written (it would be a dead test) — the GAP is declared
+here and in the adapter's inline comments, and the split-rule guarantee stays
+documented (04 §3.4) so no consumer of the seam assumes a live local channel.
+
 ## 7. Focus Controller platform validation (04 §4.1)
 
 The Android validation of ADR §2.8's express rule: timer + notification reduction

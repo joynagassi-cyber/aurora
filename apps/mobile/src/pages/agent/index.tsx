@@ -38,6 +38,7 @@
  *    The bubble « peels » (transform follows the finger, clamped).
  */
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
+import { AgentThinkingLoader } from '@aurora/ui';
 import {
   Bot,
   Brain,
@@ -59,6 +60,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useReducedMotion } from 'motion/react';
 import { useMobileData } from '../../query/context';
 import { useAgentRun } from '../../query/agent-runs';
 import type { AgentRunRow } from '../../lib/agent-client';
@@ -183,12 +185,19 @@ export function AgentPage() {
   const { data: runRow, isFetching } = useAgentRun(activeRun);
   const thinking = activeRun !== undefined && !runRow;
 
+  // Reduced-motion guard (emotion-design §3, 05 §2.6 règle 2): smooth scroll
+  // → instant scroll when the OS preference is ON.
+  const reducedMotion = useReducedMotion();
+
   function push(e: Omit<Entry, 'id'>) {
     entrySeq.current += 1;
     const id = `e${entrySeq.current}`;
     setEntries((prev) => [...prev, { ...e, id }]);
     requestAnimationFrame(() => {
-      transcriptRef.current?.scrollTo({ top: transcriptRef.current.scrollHeight, behavior: 'smooth' });
+      transcriptRef.current?.scrollTo({
+        top: transcriptRef.current.scrollHeight,
+        behavior: reducedMotion ? 'auto' : 'smooth',
+      });
     });
   }
 
@@ -209,10 +218,13 @@ export function AgentPage() {
   useEffect(() => {
     if (runRow && activeRun && runRow.id === activeRun) {
       requestAnimationFrame(() => {
-        transcriptRef.current?.scrollTo({ top: transcriptRef.current.scrollHeight });
+        transcriptRef.current?.scrollTo({
+          top: transcriptRef.current.scrollHeight,
+          behavior: reducedMotion ? 'auto' : 'smooth',
+        });
       });
     }
-  }, [runRow, activeRun]);
+  }, [runRow, activeRun, reducedMotion]);
 
   // ——— Overlay dismissal (Escape) for the model picker + the + sheet
   // (pattern: src/ux/floating.tsx). ———
@@ -546,10 +558,11 @@ export function AgentPage() {
             })}
 
             {thinking && (
-              <div className="agent-thinking" role="status" aria-live="polite">
-                <div className="agent-thinking-blobs" aria-hidden />
-                <span className="agent-thinking-label">L'agent réfléchit ({thinkingLevel})…</span>
-              </div>
+              <AgentThinkingLoader
+                state="thinking"
+                label={`L'agent réfléchit (${thinkingLevel})…`}
+                className="agent-thinking"
+              />
             )}
 
             {inFlightRow && (

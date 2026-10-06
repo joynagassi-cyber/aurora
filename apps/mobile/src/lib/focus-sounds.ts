@@ -16,6 +16,14 @@
  *  - `id` stable = clé du kernel tool `focus.sound` (AD-15).
  */
 
+/**
+ * Kind of sound (emotion-design §4.2):
+ * - 'background' = a focus-mode ambience track (the 25 catalog entries)
+ * - 'event'      = a short event chime (§4.2: chime-local, chime-remote,
+ *                  focus-end, goal-hit) — DESIGNED_NOT_IMPLEMENTED in V1:
+ *                  the 44.1 kHz WAV assets are produced in a later wave;
+ *                  the kernel tool surface (type, ids) is ready for them.
+ */
 export interface FocusSound {
   /** Stable id — the value carried by the kernel tool `focus.sound`. */
   id: string;
@@ -35,6 +43,8 @@ export interface FocusSound {
   source: string;
   /** Optional loop flag (nature & ambiances : loop ; musique : one-shot ok). */
   loop: boolean;
+  /** 'background' (default, implicit) or 'event' (§4.2 chimes). */
+  kind?: 'background' | 'event';
 }
 
 export const FOCUS_SOUNDS: FocusSound[] = [

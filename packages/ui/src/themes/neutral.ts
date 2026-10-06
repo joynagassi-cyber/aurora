@@ -28,7 +28,7 @@ export const NEUTRAL_STYLES: NeutralStyleCatalog = {
     "surface-overlay": "rgba(255,255,255,0.85)",
     "text-primary": "#0F172A",
     "text-secondary": "#334155",
-    "text-muted": "#94A3B8",
+    "text-muted": "#64748B",
     "text-disabled": "#CBD5E1",
     "border": "#E2E8F0",
     "border-strong": "#94A3B8",

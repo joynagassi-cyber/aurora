@@ -41,6 +41,15 @@ export interface MobileDataProvider {
    * through it (`fn-skills`, Task 1: multi-source skill marketplace).
    */
   skills?: SkillClient;
+  /**
+   * The local `LocalStore` (PowerSync/SQLite, 03 S8.1) — read side of the
+   * families that don't have their own `LocalQueryRepository` yet (AD-7 /
+   * 03 S3.1): today `semantic_nodes` / `semantic_edges` / `node_state`
+   * (knowledge, `knowledge-repo.ts`). NO network on this path; the store is
+   * a local snapshot. Absent when the provider has no local engine (e.g.
+   * tests injecting fake repos without the boot provider).
+   */
+  store?: import('@aurora/data').LocalStore;
   /** optional: reactive channel that invalidates the QueryClient on upsync. */
   onLocalChange?: (invalidate: () => void) => void;
 }
@@ -129,11 +138,20 @@ export function mobileDataProviderFrom(
     // AD-3: the publishable-scope skills client (multi-source marketplace
     // via `fn-skills`; catalog read + user skill activation, Task 1).
     skills,
+    // AD-7 / 03 S3.1: expose the local store read side so the knowledge
+    // family (semantic_nodes / semantic_edges / node_state) can read its
+    // mirror without a dedicated repository (knowledge-repo.ts).
+    store: provider.store(),
     onLocalChange: (invalidate) => {
       // The bridge watches the mirror tables; invalidate on downstream
       // batches (03 S5.8). goals + the ascent_paths read-only mirror (A2).
       provider.store().watch({ entity: 'goals' }, () => invalidate());
       provider.store().watch({ entity: 'ascent_paths' }, () => invalidate());
+      // Knowledge mirror (AD-7): semantic_nodes / semantic_edges /
+      // node_state downstream batches invalidate the knowledge query key.
+      provider.store().watch({ entity: 'semantic_nodes' }, () => invalidate());
+      provider.store().watch({ entity: 'semantic_edges' }, () => invalidate());
+      provider.store().watch({ entity: 'node_state' }, () => invalidate());
     },
   };
 }

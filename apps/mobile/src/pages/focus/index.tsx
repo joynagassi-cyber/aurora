@@ -77,6 +77,10 @@ export function FocusPage({ service, onSession }: FocusPageProps) {
       setBlocking(false);
       return;
     }
+    // S2/S10 detection (AD-7): the DPC check is a LOCAL read of the device
+    // owner state — it never touches the network. Offline = no blocking
+    // available (consumer fallback = restriction mode, controller.ts L6);
+    // the check is safe to run and its promise still settles.
     void service.isBlockingAvailable().then((b: boolean) => {
       if (live) setBlocking(b);
     });

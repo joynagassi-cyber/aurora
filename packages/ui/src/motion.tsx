@@ -20,9 +20,32 @@
  * mirror the same numbers.
  */
 
-import { motion, useReducedMotion, useInView } from 'motion/react';
-import { useRef } from 'react';
-import type { ReactNode } from 'react';
+import { motion, useInView } from "motion/react";
+import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
+
+/**
+ * Reduced-motion hook (05 §2.6 rule 2): prefers-reduced-motion: reduce →
+ * everything static. Local duplicate of the theme provider's hook —
+ * importing it from "./theme/provider" would create a module cycle through
+ * index.ts (index → motion → theme/provider → index), which breaks the
+ * barrel export.
+ */
+function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState<boolean>(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onChange = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return reduced;
+}
 
 /** Page-transition spec (smooth, 200ms ease-out — emotion-design §3). */
 export const PAGE_TRANSITION = {
