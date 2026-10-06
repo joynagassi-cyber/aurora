@@ -31,6 +31,7 @@ export * from './entities-discovery';
 export * from './entities-artifact';
 export * from './entities-agent';
 export * from './entities-goal';
+export * from './entities-canvas';
 export * from './entities-integrations';
 export * from './entities-identity';
 export * from './entities-engineering';
