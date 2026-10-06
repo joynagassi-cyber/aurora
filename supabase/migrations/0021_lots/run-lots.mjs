@@ -60,6 +60,10 @@ function extractSegments(sql) {
 }
 
 // — Parse les 10 champs textuels/jsonb d'un tuple SQL (approche char-by-char) —
+// Le lot SQL est géré par patch-marketplace-meta.mjs : ici, les 3 jsonb
+// (procedure/constraints/tools) sont '[]'::jsonb — on les parse comme "[]" (array vide).
+// Les doubles quotes SQL ('') dans les champs textuels sont un-escaped.
+// source/description sont ici '' (le patch les remplit depuis le frontmatter SKILL.md).
 function parseFields(fieldsPart) {
   const vals = [];
   let i = 0;
@@ -107,26 +111,18 @@ function parseFields(fieldsPart) {
 // Les 3 jsonb sont littéralement '[]'::jsonb — on les parse comme "[]" (array vide).
 // Les doubles quotes SQL ('') dans les champs textuels sont un-escaped.
 function parseSegment(segment) {
-  // Isoler le body (dernier champ, dollar-quoted)
-  const bodyStartMarker = segment.lastIndexOf("$body$");
-  const bodyStart = bodyStartMarker + 6; // après "$body$"
-  // Le body se termine au $body$ qui précède la parenthèse fermante
-  const bodyEndMarker = segment.lastIndexOf("$body$");
-  // Le dernier $body$ = la clôture (même index si le body ne contient pas de $body$)
-  // En fait : le premier $body$ = ouverture, le dernier $body$ = fermeture
-  // bodyStartMarker = lastIndexOf = la fermeture ; on veut l'ouverture = indexOf
-  const bodyOpen = segment.indexOf("$body$");
-  const bodyContent = segment.slice(bodyOpen + 6, bodyEndMarker);
+  // Le corps est $body$...$body$ : l'OUVERTURE = le premier $body$ absolu
+  // (il ne se trouve jamais dans le corps lui-même), la CLÔTURE = le dernier.
+  // Les 10 champs SQL (key..desc) sont entre "(" et l'ouverture.
+  const openBody = segment.indexOf("$body$");
+  const closeBody = segment.lastIndexOf("$body$");
+  const fieldsPart = segment.slice(0, openBody).replace(/^\(/, "").replace(/,\s*$/, "");
 
-  // Tout ce qui précède le body : les 10 premiers champs
-  const before = segment.slice(0, bodyOpen);
-  // Retirer le préfixe "(" et le séparateur de fin ", " avant $body$
-  const fieldsPart = before.replace(/^\(/, "").replace(/,\s*$/, "");
-  // Pattern : champs textuels ('...' avec '' escaped) + champs jsonb ('[]'::jsonb)
-  // Le jsonb littéral "[]" est le seul contenu possible dans ce seed — on l'encode
-  // comme un regex simple (pas de caractère spécial dans la classe de caractères).
   const vals = parseFields(fieldsPart);
-  const row = {
+  // parseFields un-escape les '' SQL : les 3 jsonb (5,6,7) sont '[]'::jsonb →
+  // parseés comme "[]" (array vide). source/description ici '' — le patch
+  // patch-marketplace-meta.mjs les remplit depuis le frontmatter SKILL.md.
+  return {
     skill_key: vals[0] ?? "",
     domain: vals[1] ?? "",
     name: vals[2] ?? "",
@@ -137,9 +133,8 @@ function parseSegment(segment) {
     tools: JSON.parse(vals[7] ?? "[]"),
     source: vals[8] ?? "",
     description: vals[9] ?? "",
-    body: bodyContent,
+    body: segment.slice(openBody + 6, closeBody),
   };
-  return row;
 }
 
 // — Filtre optionnel : node run-lots.mjs [debut] [fin] —
