@@ -113,6 +113,12 @@ export default defineConfig({
     // self-contained ES module at `dist/worker-<hash>.js`, referenced via
     // the rewritten `new URL('./worker-<hash>.js', import.meta.url)` —
     // resolvable at runtime on the static CDN (Render / Capacitor).
+    //
+    // NOTE (Render build): the V8 heap default (~2GB) OOM-crashes
+    // `rendering chunks` on a large Rollup bundle on Render's starter-tier
+    // build box. Set `NODE_OPTIONS=--max-old-space-size=4096` in the Render
+    // build command — this is a process-level env var, not a Vite config
+    // option, so it can't be set from here.
   },
   worker: {
     format: 'es',
