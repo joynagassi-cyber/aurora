@@ -104,7 +104,12 @@ export class PowerSyncClientEngine {
     }
     if (this.connector) {
       void this.db.connect(this.connector);
-      await this.db.waitForFirstSync();
+      // Gate: the first downsync must complete before the shell paints a
+      // real (non-empty-mirror) state. When the connector exists but no
+      // session is available yet, `waitForFirstSync` still resolves as
+      // soon as the local mirror is ready — it does not throw for a
+      // missing session (AD-7: the shell never blocks on auth).
+      await this.waitForFirstSync();
     }
   }
 
