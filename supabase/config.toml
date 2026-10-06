@@ -39,3 +39,6 @@ progress-evidences-recompute = "0 4 * * *"
 # events trigger -> OneSignal (Phase 1), quiet-hours aware
 [functions.fn_agent_run]
 # {intent, contextRefs[], taskProfile} -> 202 {ok, data:{jobId}}
+[functions.fn_canvas]
+# le module Canvas (single-writer AD-7) applique les commandes canvas.read /
+# canvas.write / canvas.comment émises par le kernel (OQ-03). Authed (JWT user).

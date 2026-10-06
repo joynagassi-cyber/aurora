@@ -32,25 +32,28 @@ test('KERNEL_TOOLS contient les 3 outils canvas (0022)', () => {
   }
 });
 
-test('canvas_read: inputSchema = { canvasId, includeComments } (read-only, pas de job)', () => {
+test('canvas_read: inputSchema = { canvasId, includeComments, userId? } (read-only, pas de job)', () => {
   assert.deepEqual(inputFields(KERNEL_TOOLS.canvas_read).sort(), [
     'canvasId',
     'includeComments',
+    'userId',
   ]);
 });
 
-test('canvas_write: inputSchema = { canvasId, blockId?, markdown } (AD-7, overwrite = risk du planStep)', () => {
+test('canvas_write: inputSchema = { canvasId, blockId?, markdown, userId? } (AD-7, overwrite = risk du planStep)', () => {
   assert.deepEqual(inputFields(KERNEL_TOOLS.canvas_write).sort(), [
     'blockId',
     'canvasId',
     'markdown',
+    'userId',
   ]);
 });
 
-test('canvas_comment: inputSchema = { canvasId, replyToCommentId?, body } (0022 anchors)', () => {
+test('canvas_comment: inputSchema = { canvasId, replyToCommentId?, body, userId? } (0022 anchors)', () => {
   assert.deepEqual(inputFields(KERNEL_TOOLS.canvas_comment).sort(), [
     'body',
     'canvasId',
     'replyToCommentId',
+    'userId',
   ]);
 });

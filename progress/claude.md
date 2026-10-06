@@ -22,6 +22,15 @@
        commit `b028e5d`.
      - SSoT contenu = markdown par bloc ; la bascule md/HTML est une vue sur le même SSoT
        (le JSON TipTap est un intermédiaire éphémère, fallback documenté dans la page).
+     - **Réorientation 2026-10-06 (demande : « le canvas n'est PAS simplement utilisé par
+       l'humain, c'est l'agent qui utilise le canvas »)** : 3 outils kernel AD-7 (thin command,
+       le module Canvas applique — pas de write direct, pas de job) : `canvas_read` (lecture
+       blocs + commentaires), `canvas_write` (écrit un bloc md, confirmation via planStep.risk),
+       `canvas_comment` (crée/répond à un commentaire ancré). Capabilities `canvas.read` /
+       `canvas.write` / `canvas.comment` (scopes `canvas:read` / `canvas:write`). L'humain
+       conserve l'édition StarterKit dans /canvas ; l'agent écrit par le kernel, l'humain par
+       le client device — même table (AD-7 single-writer, mutation appliquée par le module) —
+       commit `2d842fa`. Seam serveur `invokeTool` restant no-op OQ-03 (command routing futur).
   5. **Fixs collatéraux (typecheck 0 erreur)** : destructuring `[searchParams]` manquante dans
      `agent/index.tsx` (WIP pré-existant) + `data` du success state dans `knowledge/index.tsx`
      (commit `6e8e8cc`).
@@ -59,6 +68,15 @@
        commit `b028e5d`.
      - SSoT contenu = markdown par bloc ; la bascule md/HTML est une vue sur le même SSoT
        (le JSON TipTap est un intermédiaire éphémère, fallback documenté dans la page).
+     - **Réorientation 2026-10-06 (demande : « le canvas n'est PAS simplement utilisé par
+       l'humain, c'est l'agent qui utilise le canvas »)** : 3 outils kernel AD-7 (thin command,
+       le module Canvas applique — pas de write direct, pas de job) : `canvas_read` (lecture
+       blocs + commentaires), `canvas_write` (écrit un bloc md, confirmation via planStep.risk),
+       `canvas_comment` (crée/répond à un commentaire ancré). Capabilities `canvas.read` /
+       `canvas.write` / `canvas.comment` (scopes `canvas:read` / `canvas:write`). L'humain
+       conserve l'édition StarterKit dans /canvas ; l'agent écrit par le kernel, l'humain par
+       le client device — même table (AD-7 single-writer, mutation appliquée par le module) —
+       commit `2d842fa`. Seam serveur `invokeTool` restant no-op OQ-03 (command routing futur).
   5. **Fixs collatéraux (typecheck 0 erreur)** : destructuring `[searchParams]` manquante dans
      `agent/index.tsx` (WIP pré-existant) + `data` du success state dans `knowledge/index.tsx`
      (commit `6e8e8cc`).

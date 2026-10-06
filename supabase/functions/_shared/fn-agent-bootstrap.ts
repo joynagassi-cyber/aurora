@@ -518,8 +518,36 @@ export function buildAgentKernel(): AgentKernel | null {
       });
     },
     invokeTool: async (tool, input) => {
-      void tool; void input;
-      return { note: "tool seam pending — OQ-03 bootstrap", executed: false };
+      // OQ-03 seam — route les commandes canvas.* vers fn-canvas (le module
+      // Canvas = single-writer AD-7 qui applique la mutation sur canvas_*) ;
+      // les autres commandes restent le no-op documenté (AD-8 : pas de
+      // perte, le module concerné n'existe pas encore côté serveur).
+      //
+      // L'identité (userId) est portée par le PAYLOAD de l'outil canvas
+      // (AD-7 : le kernel l'injecte depuis le contexte courant ; l'EF fn-canvas
+      // ne fait JAMAIS confiance au body pour l'identité — ici le payload est
+      // le contexte kernel, pas le body HTTP).
+      const payload = (input?.payload ?? input) as Record<string, unknown>;
+      const cmd = (payload?.command ?? tool) as string;
+      const userId = (payload?.userId as string | undefined) ?? '';
+      if (typeof cmd === 'string' && cmd.startsWith('canvas.')) {
+        const verb = cmd === 'canvas.read' ? 'read' : cmd === 'canvas.write' ? 'write' : cmd === 'canvas.comment' ? 'comment' : null;
+        if (verb && userId) {
+          // Le body fn-canvas = verb + champs outils, SANS userId (l'identité
+          // vient du Bearer user JWT — AD-7 : jamais du body).
+          const { userId: _omit, command: _omitCmd, ...canvasBody } = payload;
+          const res = await fetch(SUPABASE_URL + '/functions/v1/fn-canvas', {
+            method: 'POST',
+            headers: { ...restHeaders(), Authorization: `Bearer ${userId}`, apikey: SUPABASE_SECRET_KEY },
+            body: JSON.stringify({ verb, ...canvasBody }),
+          });
+          if (res.ok) {
+            return { ...(await res.json()), executed: true };
+          }
+          return { ok: false, executed: false, error: `fn-canvas ${res.status}` };
+        }
+      }
+      return { note: `tool seam pending — OQ-03 bootstrap (cmd: ${cmd ?? 'unknown'})`, executed: false };
     },
     jobs,
     memory,

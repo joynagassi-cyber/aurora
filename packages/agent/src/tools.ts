@@ -391,10 +391,12 @@ export const docsParse: KernelTool = tool({
 /** canvas_read — lit la session canvas courante (bloc + commentaires) pour l'agent. */
 export const canvasRead: KernelTool = tool({
   description:
-    "Read the current canvas session (blocks + comments) for the agent to 'visualiser' une session d'artefact (spec originale, partie 4). The canvas is the SSoT (markdown par bloc, 0022). READ-ONLY, thin command (AD-7 : le module Canvas lit sa propre table) ; pas de job.",
+    "Read the current canvas session (blocks + comments) for the agent to 'visualiser' une session d'artefact (spec originale, partie 4). The canvas is the SSoT (markdown par bloc, 0022). READ-ONLY, thin command (AD-7 : le module Canvas lit sa propre table) ; pas de job. Le payload porte userId (injecté par le kernel, AD-7 identity from context, jamais du body).",
   inputSchema: z.object({
     canvasId: z.string(),
     includeComments: z.boolean().default(true),
+    /** l'identité du user courant (portée par le kernel, AD-7 : l'EF ne fait jamais confiance au body). */
+    userId: z.string().optional(),
   }),
   execute: async (input) => ({ ok: true, command: 'canvas.read', payload: input }),
 });
@@ -411,11 +413,13 @@ export const canvasRead: KernelTool = tool({
  */
 export const canvasWrite: KernelTool = tool({
   description:
-    "Écrit / remplace un bloc markdown dans une session canvas (l'agent propose, modifie ou crée le contenu d'un bloc). canvas = SSoT (markdown par bloc, 0022). AD-7 : le kernel émet la commande ; le module Canvas (client device) applique la mutation. Overwrite = confirmation via le risk du planStep (pas de flag dédié ici).",
+    "Écrit / remplace un bloc markdown dans une session canvas (l'agent propose, modifie ou crée le contenu d'un bloc). canvas = SSoT (markdown par bloc, 0022). AD-7 : le kernel émet la commande ; le module Canvas (endpoint fn-canvas) applique la mutation. Overwrite = confirmation via le risk du planStep (pas de flag dédié ici). Le payload porte userId (injecté par le kernel, AD-7 : l'EF ne fait jamais confiance au body).",
   inputSchema: z.object({
     canvasId: z.string(),
     blockId: z.string().optional(),
     markdown: z.string(),
+    /** l'identité du user courant (portée par le kernel, AD-7 : l'EF ne fait jamais confiance au body). */
+    userId: z.string().optional(),
   }),
   execute: async (input) => ({ ok: true, command: 'canvas.write', payload: input }),
 });
@@ -428,11 +432,13 @@ export const canvasWrite: KernelTool = tool({
  */
 export const canvasComment: KernelTool = tool({
   description:
-    "Crée ou répond à un commentaire ancré sur une sélection du canvas (canvas_comments : anchor_start / anchor_end dans le texte plat de la session, 0022). replyToCommentId présent = réponse ; absent = nouveau commentaire. AD-7 : le module Canvas applique (pas de job, op light, non-destructive).",
+    "Crée ou répond à un commentaire ancré sur une sélection du canvas (canvas_comments : anchor_start / anchor_end dans le texte plat de la session, 0022). replyToCommentId présent = réponse ; absent = nouveau commentaire. AD-7 : le module Canvas (endpoint fn-canvas) applique (pas de job, op light, non-destructive). Le payload porte userId (injecté par le kernel, AD-7 : l'EF ne fait jamais confiance au body).",
   inputSchema: z.object({
     canvasId: z.string(),
     replyToCommentId: z.string().optional(),
     body: z.string(),
+    /** l'identité du user courant (portée par le kernel, AD-7 : l'EF ne fait jamais confiance au body). */
+    userId: z.string().optional(),
   }),
   execute: async (input) => ({ ok: true, command: 'canvas.comment', payload: input }),
 });

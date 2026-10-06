@@ -34,6 +34,10 @@ export interface PlannerDeps {
 function stepTemplatesFor(intent: string, ctx: AgentContext): Array<{ tool: string; input: Record<string, unknown>; jobKind?: string }> {
   const refs = ctx.intent.parts ?? [intent];
   const out: Array<{ tool: string; input: Record<string, unknown>; jobKind?: string }> = [];
+  // Le userId courant (le context form 1 porte l'identité du user — AD-7 :
+  // les outils canvas le portent dans leur payload pour l'EF fn-canvas,
+  // qui ne fait jamais confiance au body HTTP pour l'identité).
+  const userId = String((ctx.intent as unknown as { userId?: string }).userId ?? '');
   for (const part of refs) {
     switch (part) {
       case 'plan_day':
@@ -62,6 +66,36 @@ function stepTemplatesFor(intent: string, ctx: AgentContext): Array<{ tool: stri
         break;
       case 'scientific_verify':
         out.push({ tool: 'scientific_verify', input: { context: ctx.learning }, jobKind: 'scientific' });
+        break;
+      case 'canvas_read':
+        // Canvas lecture (0022, AD-7) : le payload porte userId pour fn-canvas
+        // (l'EF ne fait jamais confiance au body pour l'identité).
+        out.push({
+          tool: 'canvas_read',
+          input: { canvasId: String((ctx.intent as unknown as { canvasId?: string }).canvasId ?? ''), includeComments: true, userId },
+        });
+        break;
+      case 'canvas_write':
+        out.push({
+          tool: 'canvas_write',
+          input: {
+            canvasId: String((ctx.intent as unknown as { canvasId?: string }).canvasId ?? ''),
+            blockId: (ctx.intent as unknown as { blockId?: string }).blockId,
+            markdown: String((ctx.intent as unknown as { markdown?: string }).markdown ?? ''),
+            userId,
+          },
+        });
+        break;
+      case 'canvas_comment':
+        out.push({
+          tool: 'canvas_comment',
+          input: {
+            canvasId: String((ctx.intent as unknown as { canvasId?: string }).canvasId ?? ''),
+            replyToCommentId: (ctx.intent as unknown as { replyToCommentId?: string }).replyToCommentId,
+            body: String((ctx.intent as unknown as { commentBody?: string }).commentBody ?? ''),
+            userId,
+          },
+        });
         break;
       default:
         break;
