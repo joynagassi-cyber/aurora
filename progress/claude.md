@@ -3,6 +3,35 @@
 ## Context
 - Projet : Aurora (monorepo pnpm, Capacitor/Ionic React mobile app, Supabase + PowerSync)
 - Travail de session :
+  6. **Feature agentique — gaps G1–G12 (agentique-first, 2026-10-06/07)** : cartographie
+     complète des features × 6 verbes (nommer/renommer/créer/supprimer/verrouiller/
+     programmer) dans `docs/agent/feature-mapping-agent-gaps.md` ; plan d'implémentation
+     `docs/plans/2026-10-06-feature-agentique-g1-g12.md`. Exécution Subagent-Driven,
+     4 batches commités (chaque = thin emitters AD-7 + capabilities registry + tests TDD) :
+     - `ebe1463` — G1–G3 scheduling de veille : `create_automation` (trigger
+       schedule/event/condition, jobKind fermé AD-15, inconnu → notification),
+       `update_automation` (renommer/reprogrammer/verrouiller), `delete_automation`
+       (DESTRUCTIVE, ADR §5). Veille = `Automation` (table `automations`, 0008) ;
+       scheduling per-user via le dispatcher (pas de nouvelles `cron.job`).
+     - `e014113` — G4/G5/G12 verbes génériques : 6 rename (`goal_rename` →
+       progress.goal_rename, `task_rename` → productivity.task_update patch subject,
+       `event_rename`, `habit_rename`, `canvas_rename`, `skill_rename`) + 2 delete
+       destructive (`task_delete`/`canvas_delete`, ADR §5) + `skill_delete`.
+       Invariant pin par test : **pas de `goal.delete`** (AD-15 additif →
+       `goal_abandon` uniquement).
+     - `6722e37` — G6/G7 : `habit_create` (cadence daily/weekly/custom) +
+       `routine_create` (anchors + steps) ; `recurring`/`recurrenceRule` ajoutés aux
+       schémas `task_update`/`schedule` (materialized rows, 01 S4.1). G8 = doc NL
+       (focus/bilan récurrents via `create_automation` trigger schedule, pas d'outil).
+     - `2d413c1` — G9/G10/G11 : pipeline veille `runVeillePipeline` (packages/discovery,
+       research → DiscoveryItem + notification job, **flag `uncertain` AD-16b jamais
+       supprimé**, vendor OneSignal resté dans l'adapter AD-1) + `canvas_create`/
+       `canvas_lock` + `inbox_capture`/`inbox_triage` + `ascent_read` (read-only).
+       Tests agent 102→112, discovery 8→13, tous verts.
+     Open items wave 3 : wiring du handler `research` du dispatcher → `runVeillePipeline`
+     (TODO commenté dans `veille-pipeline.ts`) ; colonnes module-side pour `canvas.lock`
+     (décision : `locked boolean` vs `blocks jsonb`) ; `goal_rename` côté module
+     (`renameGoal` à ajouter si absent, pattern `updateGoal` patch title).
   4. **Feature canvas (0022)** : page `/canvas/:id` + mode canvas depuis `/agent` — blocs TipTap
      éditables, commentaires sur sélection, indexation verbatim dans le chat, bascule md ⇄ HTML.
      - Migration `supabase/migrations/0022_canvas.sql` (`canvas_sessions` + `canvas_comments`, RLS user)
