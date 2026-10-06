@@ -3,6 +3,28 @@
 ## Context
 - Projet : Aurora (monorepo pnpm, Capacitor/Ionic React mobile app, Supabase + PowerSync)
 - Travail de session :
+  4. **Feature canvas (0022)** : page `/canvas/:id` + mode canvas depuis `/agent` — blocs TipTap
+     éditables, commentaires sur sélection, indexation verbatim dans le chat, bascule md ⇄ HTML.
+     - Migration `supabase/migrations/0022_canvas.sql` (`canvas_sessions` + `canvas_comments`, RLS user)
+       appliquée au live Supabase (policies=2, triggers=1 par table) — commit `6b1af35`.
+     - Types `@aurora/domain` (`entities-canvas.ts`) + client device-side `canvas-client.ts` (AD-3,
+       pattern agent-client) + test contractuel node:test — commit `86a18d1`.
+     - Utils `@aurora/ui` : `markdownToHtml` (marked safe-renderer : `<script>`/`<iframe>`/handlers
+       inline neutralisés, HTML brut des listes/tables échappé) + `commentAnchors` (offsets [start,end)
+       sur le texte plat de la session) — vitest 9/9 — commits `41c5f0c` + fix sécurité `57363b5`.
+     - Hook `useCanvasSession` / `useCanvasSave` (save debouncé 1 s + invalidation) + wiring boot
+       `main.tsx` + `qk.canvas` — commit `b88e1d0`.
+     - Page `apps/mobile/src/pages/canvas/index.tsx` (blocs TipTap StarterKit, menu sélection
+       flottant « Indexer dans le chat » → `/agent?intent=` + « Commenter », CTA création
+       `/canvas/new`, liste commentaires + suppression, UxStates 6 états) + `styles/canvas.css` —
+       commit `04172c2` + fix CTA/save `269aec6`.
+     - Chip « Canvas » dans `/agent` (`PenLine` → `/canvas/new`, `state.from` pour le retour) —
+       commit `b028e5d`.
+     - SSoT contenu = markdown par bloc ; la bascule md/HTML est une vue sur le même SSoT
+       (le JSON TipTap est un intermédiaire éphémère, fallback documenté dans la page).
+  5. **Fixs collatéraux (typecheck 0 erreur)** : destructuring `[searchParams]` manquante dans
+     `agent/index.tsx` (WIP pré-existant) + `data` du success state dans `knowledge/index.tsx`
+     (commit `6e8e8cc`).
   1. **OneSignal** : config propre vérifiée via MCP (app « Aurora App » ID 6b3c35c5-e970-4e1a-a853-e616c92894a8) ;
      `fn-notifications` (Edge Function) remplacé du stub wave-0 par un vrai appel REST OneSignal v2
      (`POST /api/notifications`, `include_external_user_ids` = alias Supabase) ; `.env.example` mobile créé ;
@@ -18,8 +40,35 @@
      - pull-down du composer → modale modèle (seuil 64 px, easing luxe)
      - bulles `route` peelables (deep-link 04 §3.2.5, glisser à gauche → navigate)
      - CSS dans `styles/agent.css` ; `/knowledge` accepte `?q=` (banner d'intake dans `data.css`)
+  4. **Feature canvas (0022)** : page `/canvas/:id` + mode canvas depuis `/agent` — blocs TipTap
+     éditables, commentaires sur sélection, indexation verbatim dans le chat, bascule md ⇄ HTML.
+     - Migration `supabase/migrations/0022_canvas.sql` (`canvas_sessions` + `canvas_comments`, RLS user)
+       appliquée au live Supabase (policies=2, triggers=1 par table) — commit `6b1af35`.
+     - Types `@aurora/domain` (`entities-canvas.ts`) + client device-side `canvas-client.ts` (AD-3,
+       pattern agent-client) + test contractuel node:test — commit `86a18d1`.
+     - Utils `@aurora/ui` : `markdownToHtml` (marked safe-renderer : `<script>`/`<iframe>`/handlers
+       inline neutralisés, HTML brut des listes/tables échappé) + `commentAnchors` (offsets [start,end)
+       sur le texte plat de la session) — vitest 9/9 — commits `41c5f0c` + fix sécurité `57363b5`.
+     - Hook `useCanvasSession` / `useCanvasSave` (save debouncé 1 s + invalidation) + wiring boot
+       `main.tsx` + `qk.canvas` — commit `b88e1d0`.
+     - Page `apps/mobile/src/pages/canvas/index.tsx` (blocs TipTap StarterKit, menu sélection
+       flottant « Indexer dans le chat » → `/agent?intent=` + « Commenter », CTA création
+       `/canvas/new`, liste commentaires + suppression, UxStates 6 états) + `styles/canvas.css` —
+       commit `04172c2` + fix CTA/save `269aec6`.
+     - Chip « Canvas » dans `/agent` (`PenLine` → `/canvas/new`, `state.from` pour le retour) —
+       commit `b028e5d`.
+     - SSoT contenu = markdown par bloc ; la bascule md/HTML est une vue sur le même SSoT
+       (le JSON TipTap est un intermédiaire éphémère, fallback documenté dans la page).
+  5. **Fixs collatéraux (typecheck 0 erreur)** : destructuring `[searchParams]` manquante dans
+     `agent/index.tsx` (WIP pré-existant) + `data` du success state dans `knowledge/index.tsx`
+     (commit `6e8e8cc`).
 
 ## Plan / Next
+- [ ] **Canvas wave 2** : extension `@tiptap/markdown` pour une vraie ré-sérialisation
+     JSON→markdown idempotente (le fallback actuel garde le dernier markdown connu) ; e2e
+     Cypress sur l'app live pour valider le flow canvas → indexation → agent.
+- [ ] RLS live positif (user A lit ses propres lignes `canvas_sessions`/`canvas_comments`)
+     — en attente de users dans l'instance de dev ; le test négatif (aucun leak) est passé.
 - [x] **Review multi-agent du design** (workflow 17 agents, 2026-10-05) → disposition **REVISE**
 - [x] Corriger le payload OneSignal REST v2 dans fn-notifications (endpoint /api/v2/{app_id}/notifications, headings, include_external_user_ids)
 - [x] Corriger les 2 tokens orphelins agent.css (--aurora-accent-warning → --aurora-warning ; rgba(0,0,0,0.4) → --aurora-scrim, token ajouté + dark override)
@@ -41,6 +90,7 @@
 - [x] Miroir connaissance (AD-7) pour que /knowledge?q= fasse une vraie recherche — `apps/mobile/src/lib/knowledge-repo.ts` (lecture locale `semantic_nodes`/`semantic_edges`/`node_state` via `LocalStore` + recherche substring locale `title`/`content`, PAS FTS/vector — AD-12/F-09) ; `knowledge/index.tsx` branché dessus (arbre réel via `SemanticTreeRenderer`, banner `?q=` = résultat filtré, jamais un écran vide factice) ; `boot-data.ts` + `query-client.ts` : scope `knowledge` + `store` exposé sur le provider
 - [x] Gates : check-rls.sh, check-boundaries.sh — **Tous verts** : G1 (aucun vendor hors des 5 adapters), G2 (aucun secret en clair), G3 (aucun user hardcode), G4 (pas de DOM access dans packages/agent) ; check-rls (a) RLS ENABLE sur chaque table OK, (b) aucune policy permissive injustifiée OK, (c) FORCE ROW LEVEL SECURITY présente OK — 22 migrations scannées
 - [x] Vérifier le diff G2 d'exclusion de `scripts/check-boundaries.sh` (restreint à `supabase/migrations/0021_lots/*`) — confirmé : le scan G2 passe (aucun secret en clair) en excluant uniquement le lot 0021 ; les 16 fichiers 0021 qui contiennent des patterns de type `Bearer`/`sk-` (exemples de docs Anthropic/Zoom dans le seed de skills) sont tous dans `0021_lots/*` ou `0021_marketplace_skills.sql`, tous exclus de manière ciblée ; aucun autre fichier SQL ni TS/TSX/JS ne contient de valeur de secret → le verrou reste opérationnel
+- [x] **Déployer Aurora sur Render (static site) pour e2e Cypress** — service `aurora` (id `srv-db2fkfflot8c73f18ug0`, slug `aurora-n9qd`), URL **https://aurora-n9qd.onrender.com**, workspace `tea-dau0b4vlot8c7396jnr0`. Build command : `corepack enable; corepack prepare pnpm@10.28.0 --activate; pnpm install --frozen-lockfile --config.minimum-release-age=0; pnpm --filter @aurora/mobile build:web`, publishPath `apps/mobile/dist`, autoDeploy on (branch `main`). 2 fixes sur le repo pour que le build passe : `worker.format='es'` dans `apps/mobile/vite.config.ts` (erreur Rollup IIFE sur le worker PowerSync, commit `80ee3b2`) + `NODE_OPTIONS=--max-old-space-size=4096` comme variable d'env du service (OOM sur `rendering chunks`, commit docs `9755979` + ajout via `update_environment_variables`, non dans la commande de build mais fonctionnel car Render exporte l'env du service sur le process de build). Build #4 (`dep-db2fup2jnfac73cnmm4g`) = **live**, HTTP 200, HTML Aurora correct (`/assets/index-*.js`). Pour Cypress : viser cette URL ; l'app reste utilisable sans `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY`/`VITE_POWERSYNC_URL` (fallback AD-7 : miroir local vide, pas d'erreur) — pour un build « réel » il faudra ajouter ces 3 vars via `update_environment_variables` + re-trigger deploy, les valeurs viennent de `.env.local` (AD-3 : ne jamais les committer).
 
 ## Corrections apportées au design (review multi-agent, disposition REVISE)
 - **fn-notifications** : le payload OneSignal était non conforme au REST v2 réel — première notification cassée silencieusement. Corrigé (endpoint + champs).
