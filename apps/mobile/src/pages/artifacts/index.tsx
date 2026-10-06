@@ -33,10 +33,15 @@ export function ArtifactPage() {
         <div data-artifact-id={id}>
           <span className="breadcrumb">Artefact &rsaquo; {id}</span>
 
-          {/* Preview state: a real preview streams in from the R2 presigned
-              URL post-`ArtifactGenerated` (F-06). Until then = the honest
-              loading / unsupported states (ADR §16, never a fake preview). */}
-          <UxStates state={{ status: 'loading' }} flags={flags} label="Aperçu">
+          {/* The preview mirror is not wired yet (F-06): this is the
+              "preview not available for this format" state. An empty, not a
+              perpetual loading — a `loading` skeleton would pulse forever.
+              The "Télécharger" button is the CTA that routes somewhere. */}
+          <UxStates
+            state={{ status: 'empty' }}
+            flags={{ ...flags, emptyCta: 'Télécharger' }}
+            label="Aperçu"
+          >
             <div className="artifact-preview" data-preview="unsupported">
               <FileQuestion size={40} aria-hidden />
               <p>Aperçu indisponible pour ce format</p>

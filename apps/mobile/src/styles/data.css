@@ -391,6 +391,13 @@
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
 }
+/* Composer footer: the "saved locally" cue + the (inert) "Classer" CTA. */
+.inbox-composer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
 .inbox-empty {
   display: flex;
   flex-direction: column;

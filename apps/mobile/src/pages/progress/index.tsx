@@ -89,16 +89,44 @@ export function ProgressPage() {
 
 export function ProgressDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const killed = useUiStateStore((s) => s.killed);
+  const online = useOnlineStatus();
+  const flags: UxStateFlags = {
+    offline: !online,
+    killed,
+    emptyCta: 'Étudier ce concept',
+  };
   return (
-    <IonContent>
+    <>
       <IonHeader>
         <IonTitle>Progrès</IonTitle>
       </IonHeader>
-      <div data-progress-detail data-detail-id={id} data-state="loading">
-        <span className="breadcrumb">Progrès &rsaquo; {id}</span>
-        {/* Trajectory (ADR §18.6): the skill trajectory for one concept.
-            G2 `line`/`area` ChartSpec mounts here when the mirror is wired. */}
-      </div>
-    </IonContent>
+      <IonContent>
+        <div data-progress-detail data-detail-id={id}>
+          <span className="breadcrumb">Progrès &rsaquo; {id}</span>
+          {/* Trajectory (ADR §18.6): the skill trajectory for one concept.
+              G2 `line`/`area` ChartSpec mounts here when the mirror is wired.
+              Not wired yet → the honest EMPTY state (AD-7, 05 §4), never a
+              perpetual loading. The CTA routes to /learn (study the concept). */}
+          <UxStates
+            state={{ status: 'empty' }}
+            flags={flags}
+            label={`Trajectoire ${id}`}
+          >
+            <div data-progress-empty>
+              <p className="stat-label">
+                Pas encore de trajectoire pour ce concept
+              </p>
+              <a
+                className="aurora-btn aurora-btn--ghost aurora-tap"
+                href="/learn"
+              >
+                Étudier ce concept
+              </a>
+            </div>
+          </UxStates>
+        </div>
+      </IonContent>
+    </>
   );
 }

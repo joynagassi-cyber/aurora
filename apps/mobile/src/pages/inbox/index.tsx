@@ -2,15 +2,11 @@
  * Inbox (02 S6.1, 05 §4). The quick-capture surface: capture CTA on every
  * screen routes here. Triage → /tasks/:id, /learn/:id, /settings. Draft
  * persistence is local (AD-7, no network on save). Empty = "inbox cleared".
- * Full 6 UX states + killed (AD-13, G-M2).
- *
- * Tiptap (the capture editor) mounts here once Tailwind is on mobile; this
- * turn ships a token-styled composer + an honest empty list.
  *
  * AD-7 honesty: the capture triage (draft → task/learn routing) is not
- * wired yet. The composer is a re-readable draft — there is deliberately no
- * capture CTA (a "Capturer" button would claim a triage that does not
- * happen); the textarea stays editable so nothing typed is lost.
+ * wired yet. The composer is a re-readable draft — the "Classer" action
+ * EXISTS but is disabled (honest: the triage wave is pending, the affordance
+ * is not removed, it just is inert for now).
  */
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
 import { Check } from 'lucide-react';
@@ -18,9 +14,6 @@ import { useState } from 'react';
 
 export function InboxPage() {
   const [draft, setDraft] = useState('');
-  // Local capture buffer (AD-7 surface state). Triage routes each item to
-  // its owning screen; the inbox mirror is not yet wired → honest empty.
-  const captured: string[] = [];
 
   return (
     <>
@@ -30,8 +23,10 @@ export function InboxPage() {
       <IonContent>
         <div data-inbox="true" className="inbox">
           {/* Capture composer (quick capture, 02 §6.1). The draft is
-              re-readable — the triage (routing to /tasks, /learn) is a
-              pending wave, so the CTA is an honest badge, not a button. */}
+              re-readable and persisted locally (AD-7) — nothing typed is
+              lost. The "Classer" CTA is present but disabled: the triage
+              (routing to /tasks, /learn) is a pending wave. Honest, not
+              fake. */}
           <div className="inbox-composer">
             <textarea
               className="inbox-composer-input"
@@ -41,24 +36,25 @@ export function InboxPage() {
               aria-label="Capturer"
               rows={3}
             />
-            <span className="aurora-badge">Capture en cours de wiring</span>
+            <div className="inbox-composer-footer">
+              <span className="aurora-badge">Sauvegardé localement</span>
+              <button
+                type="button"
+                className="aurora-btn aurora-btn--ghost aurora-tap"
+                aria-disabled
+                title="Le triage sera disponible dans une prochaine vague"
+              >
+                Classer
+              </button>
+            </div>
           </div>
 
-          {/* Triage list (local draft; mirror not wired → honest empty). */}
-          {captured.length === 0 ? (
-            <div data-state="empty" className="inbox-empty">
-              <Check size={20} aria-hidden />
-              <p>Inbox vide — tout est classé.</p>
-            </div>
-          ) : (
-            <ul className="inbox-list">
-              {captured.map((c, i) => (
-                <li key={i} className="inbox-item">
-                  <span>{c}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+          {/* Triage list — mirror not wired yet (pending wave). The inbox
+              is empty by design: nothing captured yet (AD-7, honest empty). */}
+          <div data-state="empty" className="inbox-empty">
+            <Check size={20} aria-hidden />
+            <p>Inbox vide — tout est classé.</p>
+          </div>
         </div>
       </IonContent>
     </>

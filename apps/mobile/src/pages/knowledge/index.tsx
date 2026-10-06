@@ -176,26 +176,39 @@ export function KnowledgePage() {
 export function KnowledgeNodePage() {
   const { nodeId } = useParams<{ nodeId: string }>();
   const { flags } = knowledgeFlags();
+  const mirrorProvider = useMobileData();
+  const store = mirrorProvider.store;
+
+  // Resolve the node's READABLE name from the local mirror (AD-7). The
+  // `concept` field already carries title → content-prefix → id (knowledge-repo.ts).
+  const mirror = useQuery({
+    queryKey: ['knowledge', 'mirror', nodeId],
+    queryFn: () => (store ? readKnowledgeMirror(store) : { nodes: [], edges: [] }),
+    staleTime: 60_000,
+    enabled: store !== undefined,
+  });
+
+  // The node title: `concept` (readable) from the mirror, fallback `nodeId`.
+  const nodeTitle =
+    mirror.data?.nodes.find((n) => n.id === nodeId)?.concept ?? nodeId;
+
   return (
     <>
       <IonHeader>
-        <IonTitle>{nodeId}</IonTitle>
+        <IonTitle>{mirror.data ? nodeTitle : 'Nœud'}</IonTitle>
       </IonHeader>
       <IonContent>
-        <div data-node-id={nodeId}>
-          <span className="breadcrumb">Connaissance &rsaquo; {nodeId}</span>
+        <div data-node-id={nodeId} data-node-title={nodeTitle}>
+          <span className="breadcrumb">Connaissance &rsaquo; {nodeTitle}</span>
           <UxStates
-            state={{ status: 'loading' }}
-            flags={flags}
-            label={`Nœud ${nodeId}`}
+            state={mirror.data && mirror.data.nodes.length > 0 ? { status: 'success' } : { status: 'empty' }}
+            flags={{ ...flags, emptyCta: 'Étudier ce concept' }}
+            label={`Nœud ${nodeTitle}`}
           >
             {/* Provenance drill-down (AD-11) + lazy deeper branches mount here. */}
-            <div className="knowledge-node" data-state="loading">
-              <p>Nœud « {nodeId} » — lecture locale + provenance.</p>
-              <a
-                className="aurora-btn aurora-btn--ghost aurora-tap"
-                href="/learn"
-              >
+            <div className="knowledge-node">
+              <p>Nœud « {nodeTitle} » — lecture locale + provenance.</p>
+              <a className="aurora-btn aurora-btn--ghost aurora-tap" href="/learn">
                 Étudier ce concept
               </a>
             </div>

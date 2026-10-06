@@ -20,10 +20,12 @@
  */
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
 import { useQuery } from '@tanstack/react-query';
-import type { AscentLearningIR } from '@aurora/domain';
+import type { AscentLearningIR, AppError, AsyncState } from '@aurora/domain';
 import type { MobileDataProvider } from '../../query/query-client';
 import { useMobileData } from '../../query/context';
 import { qk } from '../../query/query-client';
+import { UxStates, type UxStateFlags } from '../../ux-states';
+import { useKilledDetection } from '../../hooks/use-killed';
 import { useOnlineStatus } from '../../hooks/use-online';
 import {
   ActiveReadingAction,
@@ -149,67 +151,73 @@ export function SlideAscentPage({
 
   const availability = activeReading(learningEnabled, visualizeAvailable);
 
-  // ---- 3 async states (ui-libraries.md Partie 3) + offline badge ----
-  if (status === 'pending') {
-    return (
-      <IonContent>
-        <div data-ascent-state="loading" data-online={online ? 'true' : 'false'}>
-          <div data-state="loading">Chargement du chemin (miroir local) …</div>
-        </div>
-      </IonContent>
-    );
-  }
-  if (status === 'error') {
-    return (
-      <IonContent>
-        <div data-ascent-state="error" data-online={online ? 'true' : 'false'}>
-          <div data-state="error">
-            {String((error as Error | undefined)?.message ?? 'Erreur')}
-          </div>
-          <button onClick={() => void refetch()}>Réessayer</button>
-        </div>
-      </IonContent>
-    );
-  }
-  if (data === undefined || data.steps.length === 0) {
-    return (
-      <IonContent>
-        <div data-ascent-state="empty" data-online={online ? 'true' : 'false'}>
-          <div data-state="empty">Aucun chemin actif</div>
-        </div>
-      </IonContent>
-    );
-  }
+  // — 6 UX states (AD-13, G-M2) via `UxStates` (02 S6.1, ui-libraries.md) —
+  const killed = useKilledDetection(() => refetch());
+  const flags: UxStateFlags = {
+    offline: !online,
+    killed,
+    onRetry: () => refetch(),
+    emptyCta: "Créer un chemin",
+  };
 
-  // ---- Level 1: current + next only (S11, never the full path) ----
-  const l1: Level1View = level1(data);
-  const slides = currentSlides(data, l1);
+  // Map the `useQuery` result to the canonical `AsyncState` shape that
+  // `UxStates` consumes. A mirror read is never "empty" server-side — an
+  // empty mirror = no active path, which IS the honest empty state (AD-7).
+  const ux: AsyncState<AscentLearningIR | undefined> =
+    status === 'error'
+      ? {
+          status: 'error',
+          error: {
+            code: 'ascent/load_failed',
+            message: String((error as Error | undefined)?.message ?? 'Erreur'),
+          } satisfies AppError,
+        }
+      : status === 'pending'
+        ? { status: 'loading' }
+        : data === undefined || data.steps.length === 0
+          ? { status: 'empty' }
+          : { status: 'success', data };
+
+  // The header is ALWAYS rendered (IonHeader before IonContent — every other
+  // page does this). Loading/error/empty states render INSIDE the content.
+  const isReady = ux.status === 'success';
+  const l1: Level1View | undefined = isReady ? level1(ux.data!) : undefined;
 
   return (
     <>
       <IonHeader>
         <IonTitle>Ascent</IonTitle>
+        {!online && (
+          <span data-badge="offline" className="aurora-badge">
+            Hors ligne
+          </span>
+        )}
       </IonHeader>
       <IonContent>
-        <div data-ascent-state="ready" data-online={online ? 'true' : 'false'}>
-          <header data-ascent-level={1} data-state="success">
-            <div data-ascent-goal>{data.goal}</div>
-            {l1.current && <div data-ascent-current>{l1.current.label}</div>}
-            {l1.next && <div data-ascent-next>Suivant — {l1.next.label}</div>}
-          </header>
-          <section data-ascent-slides>
-            {slides.map((s) => (
-              <SlideCard key={s.id} slide={s} availability={availability} />
-            ))}
-          </section>
-          <section data-ascent-disclosure>
-            {(Object.keys(DISCLOSURE_LEVELS) as Array<string>).map((k) => (
-              <div key={k} data-disclosure-level={Number(k) as DisclosureLevel}>
-                {DISCLOSURE_LEVELS[Number(k) as DisclosureLevel]}
-              </div>
-            ))}
-          </section>
-        </div>
+        <UxStates state={ux} flags={flags} label="Chemin d'ascension">
+          {isReady && l1 && (
+            <>
+              {/* Level 1: current + next only (S11, never the full path) */}
+              <header data-ascent-level={1}>
+                <div data-ascent-goal>{ux.data!.goal}</div>
+                {l1.current && <div data-ascent-current>{l1.current.label}</div>}
+                {l1.next && <div data-ascent-next>Suivant — {l1.next.label}</div>}
+              </header>
+              <section data-ascent-slides>
+                {currentSlides(ux.data!, l1).map((s) => (
+                  <SlideCard key={s.id} slide={s} availability={availability} />
+                ))}
+              </section>
+              <section data-ascent-disclosure>
+                {(Object.keys(DISCLOSURE_LEVELS) as Array<string>).map((k) => (
+                  <div key={k} data-disclosure-level={Number(k) as DisclosureLevel}>
+                    {DISCLOSURE_LEVELS[Number(k) as DisclosureLevel]}
+                  </div>
+                ))}
+              </section>
+            </>
+          )}
+        </UxStates>
       </IonContent>
     </>
   );
