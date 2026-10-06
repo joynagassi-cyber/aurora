@@ -23,6 +23,7 @@
  * WITHOUT background (`assets/aurora_icon_a_integre_dans_l'applciation.png`),
  * never the full app icon, never a re-invented logo.
  */
+import { Compass } from 'lucide-react';
 import * as React from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { cn } from '../../lib/utils';
@@ -51,9 +52,14 @@ const IN_APP_LOGO =
 export function GoalHeader({
   layout,
   goal,
+  /** When set, the header carries a "read the Ascent path" affordance —
+   *  the /ascent route for this goal (Slide-Ascent, docs/ascent S11–S14).
+   *  One tap = read the full training the agent has mounted. */
+  ascentHref,
 }: {
   layout: GoalDashboardLayout;
   goal: GoalProject;
+  ascentHref?: string;
 }) {
   return (
     <header className="goal-dashboard-header" data-goal-shape={layout.shape}>
@@ -74,6 +80,18 @@ export function GoalHeader({
           {layout.header.targetDate ? ` — ${layout.header.targetDate}` : ''}
         </p>
       </div>
+      {/* One tap → read the Ascent path for this goal (the agent CONDUCTS the
+       *  climb, the /ascent page READS the mounted result — docs/ascent S12). */}
+      {ascentHref && (
+        <a
+          className="goal-dashboard-ascent-link aurora-tap"
+          href={ascentHref}
+          data-ascent-entry="true"
+        >
+          <Compass size={14} aria-hidden />
+          <span>Lire le chemin</span>
+        </a>
+      )}
       {/* Progress bar — `info` token (AD-17: theme = skin, semantic = state).
        * The goal card's "[18] / [43]" counters stay on the Home card, not
        * here (header band shows the overall %). */}
@@ -313,12 +331,15 @@ export function GoalDashboard({
   attenuated = false,
   onNodeTap,
   onSuggestionTap,
+  /** /ascent entry for this goal (read the mounted training). */
+  ascentHref,
 }: {
   goal: GoalProject;
   shapeOverride?: ReturnType<typeof layoutTagFor>;
   attenuated?: boolean;
   onNodeTap?: (featureId: string) => void;
   onSuggestionTap?: () => void;
+  ascentHref?: string;
 }) {
   const shape = shapeOverride ?? layoutTagFor(goal);
   const layout = React.useMemo(
@@ -331,7 +352,7 @@ export function GoalDashboard({
   };
   return (
     <div className="goal-dashboard" data-goal-shape={shape}>
-      <GoalHeader layout={layout} goal={goal} />
+      <GoalHeader layout={layout} goal={goal} ascentHref={ascentHref} />
       <FeatureWorkflow
         layout={layout}
         attenuated={attenuated}

@@ -118,6 +118,7 @@ export function GoalDashboardPage() {
                 navigate(`/goals/${goal.id}/features/${fid}?goalId=${goal.id}`)
               }
               onSuggestionTap={() => navigate(`/agent?goalId=${goal.id}`)}
+              ascentHref={`/goals/${goal.id}/ascent`}
             />
           )}
         </UxStates>

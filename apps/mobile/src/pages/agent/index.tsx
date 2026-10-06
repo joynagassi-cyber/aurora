@@ -42,6 +42,7 @@ import { AgentThinkingLoader } from '@aurora/ui';
 import {
   Bot,
   Brain,
+  Compass,
   Cpu,
   Link2,
   Plus,
@@ -74,11 +75,15 @@ const MODEL_CATALOG: Array<{ provider: string; name: string; models: string[] }>
 ];
 
 // ——— Agent modes (kernel §4) ———
-type AgentMode = 'chat' | 'agent' | 'mirror';
+// 'ascent' = Slide-Ascent pedagogical mode (docs/ascent/overview S12):
+// the agent CONDUCTS the climb (explains / exercises / diagnoses), the
+// /ascent page only READS the resulting AscentLearningIR.
+type AgentMode = 'chat' | 'agent' | 'mirror' | 'ascent';
 const AGENT_MODES: Array<{ id: AgentMode; label: string; icon: React.ReactNode }> = [
   { id: 'chat', label: 'Chat', icon: <Bot size={12} /> },
   { id: 'agent', label: 'Agent', icon: <Zap size={12} /> },
   { id: 'mirror', label: 'Miroir', icon: <Brain size={12} /> },
+  { id: 'ascent', label: 'Ascent', icon: <Compass size={12} /> },
 ];
 
 // ——— Thinking levels ———

@@ -525,6 +525,7 @@ const THINKING_EFFORT: Record<TaskProfile['thinkingLevel'], string> = {
  *
  * `agentMode`:
  *   - 'mirror' → the expert-skill learning loop (ADR S14) wraps the call;
+ *   - 'ascent' → the Slide-Ascent pedagogy prelude (docs/ascent/overview S12);
  *   - 'chat'   → single-round, no agentic tool loop;
  *   - 'agent'  → the full agentic loop (maxSteps cap applies).
  *
@@ -557,6 +558,11 @@ async function invokeModelReal(
   // — Mirror-mode prelude (ADR S14: user-teaches-AI, before the model call) —
   const mirrorPrelude =
     mode === 'mirror' ? '\n\n(Le mode miroir est actif : l\'utilisateur t\'enseigne ce qu\'il a appris. Structure ce qu\'il dit en expert-skill : déclencheur, objectif, procédure, contrainte. N\'invente rien : reformule uniquement.)' : '';
+
+  // — Ascent-mode prelude (docs/ascent/overview S12: the agent CONDUCTS the
+  //    Slide-Ascent climb; the /ascent page only READS the resulting path) —
+  const ascentPrelude =
+    mode === 'ascent' ? '\n\n(Le mode Ascent est actif : tu conduis la montée pédagogique. Explique le concept en cours avec des analogies (toujours labellisées), propose l\'activité à faire, diagnostique si l\'utilisateur bloque (style Miroir), et structure le résultat comme un chemin d\'ascension que la page /ascent affichera. N\'improvise pas le corpus : reformule ce que l\'utilisateur maîtrise déjà.)' : '';
 
   // — Task 1/2 (2026-10-04): prompt layering —
   // Layer 0 = AGENT_SYSTEM_PROMPT (identity, fixed).
@@ -603,7 +609,8 @@ async function invokeModelReal(
     skillsLayer +
     expertLayer +
     researchContext +
-    mirrorPrelude;
+    mirrorPrelude +
+    ascentPrelude;
 
   const res = await invokeModelFn(
     {

@@ -44,7 +44,7 @@ export interface AgentRunRequest {
     preferredModel?: string;
     thinkingLevel?: 'low' | 'medium' | 'high' | 'max';
     researchMode?: 'off' | 'standard' | 'deep';
-    agentMode?: 'chat' | 'agent' | 'mirror';
+    agentMode?: 'chat' | 'agent' | 'mirror' | 'ascent';
   };
 }
 

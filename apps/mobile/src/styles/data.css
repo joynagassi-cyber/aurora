@@ -557,6 +557,28 @@
     opacity: 1;
   }
 }
+/* Ascent entry (docs/ascent S12): the veille surfaces concepts; "Étudier via
+ * Ascent" routes to the agent (ascent mode) or, when a path exists, to
+ * /ascent (read the mounted training). One tap. */
+.discovery-ascent-cta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+  color: var(--aurora-text-secondary);
+  font-size: 14px;
+}
+.discovery-ascent-cta svg {
+  color: var(--aurora-accent-primary);
+}
+.discovery-ascent-cta span {
+  flex: 1;
+}
 
 /* ---- Learning (05 §4.6–4.9) ---------------------------------------- */
 [data-learn-home] {

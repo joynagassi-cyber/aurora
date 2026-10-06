@@ -165,6 +165,33 @@
   color: var(--aurora-text-secondary);
 }
 
+/* Ascent entry — one tap reads the mounted training path (docs/ascent S12).
+ * Quiet pill, upper-right of the header band. 44px tap floor (aurora-tap). */
+.goal-dashboard-ascent-link {
+  position: absolute;
+  top: 16px;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  min-height: var(--aurora-tap-target, 44px);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--aurora-accent-primary);
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+  transition: border-color 0.18s ease;
+}
+.goal-dashboard-ascent-link:hover {
+  border-color: var(--aurora-accent-primary);
+}
+.goal-dashboard-ascent-link svg {
+  color: var(--aurora-accent-primary);
+}
+
 /* ---- Feature workflow (S2 Middle, S3) -------------------------------
  * Grid metrics MUST match dashboard.tsx constants: NODE_W=96, GAP_X=8,
  * GAP_Y=16, NODE_H=56 — the SVG overlay (.goal-feature-lines) computes its

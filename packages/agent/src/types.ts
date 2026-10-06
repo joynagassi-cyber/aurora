@@ -67,8 +67,11 @@ export interface TaskProfile {
    *   agent   = autonomous: plan → tools → verify → act (full kernel)
    *   mirror  = teach-the-AI mode: user explains what they learned,
    *             the agent stores it as an expert skill (ADR S14)
+   *   ascent  = Slide-Ascent pedagogical mode (docs/ascent/overview S12):
+   *             the agent conducts the climb and mounts the resulting
+   *             AscentLearningIR; the /ascent page only reads it
    */
-  agentMode?: 'chat' | 'agent' | 'mirror';
+  agentMode?: 'chat' | 'agent' | 'mirror' | 'ascent';
 }
 
 /** The routing level a TaskProfile resolves to (ADR v1.7 S7 levels). */
