@@ -373,6 +373,71 @@ export const docsParse: KernelTool = tool({
 });
 
 // ---------------------------------------------------------------------------
+// Canvas tools (0022) — "le canvas est utilisé par l'agent, pas par
+// l'humain" : l'humain reste éditeur de /canvas (StarterKit), l'agent
+// POUVOIR lire / écrire / commenter la session canvas via le kernel.
+//
+// AD-7 single-writer : le kernel NE MODIFIE JAMAIS directement une table
+// module. Chaque outil EMIT une commande typée `canvas.*` ; le module
+// Canvas (le device-side client canvas-client.ts, ou un futur endpoint
+// serveur si on en a besoin) applique la mutation. L'humain et l'agent
+// écrivent la même table — l'agent passe par le kernel, l'humain par le
+// client device. Pas de job (ops light, AD-1 "light ops local") ;
+// canvas_write reste une op de modification de contenu → confirmation
+// portée par le risk du planStep (pattern planner), pas un flag dédié
+// dans l'outil.
+// ---------------------------------------------------------------------------
+
+/** canvas_read — lit la session canvas courante (bloc + commentaires) pour l'agent. */
+export const canvasRead: KernelTool = tool({
+  description:
+    "Read the current canvas session (blocks + comments) for the agent to 'visualiser' une session d'artefact (spec originale, partie 4). The canvas is the SSoT (markdown par bloc, 0022). READ-ONLY, thin command (AD-7 : le module Canvas lit sa propre table) ; pas de job.",
+  inputSchema: z.object({
+    canvasId: z.string(),
+    includeComments: z.boolean().default(true),
+  }),
+  execute: async (input) => ({ ok: true, command: 'canvas.read', payload: input }),
+});
+
+/**
+ * canvas_write — écrit un bloc markdown dans une session canvas (l'agent
+ * propose / modifie le contenu). AD-7 : le module Canvas applique la
+ * mutation. Overwrite = confirmation via le risk du planStep (le
+ * planner, pas l'outil). Le canvas reste la SSoT (markdown par bloc,
+ * 0022) ; l'agent écrit via cette commande, le module applique la
+ * mutation (AD-7). L'humain garde l'accès d'édition dans /canvas
+ * (StarterKit) — les deux écrivent la même table, l'agent passe par
+ * le kernel, l'humain par le client device.
+ */
+export const canvasWrite: KernelTool = tool({
+  description:
+    "Écrit / remplace un bloc markdown dans une session canvas (l'agent propose, modifie ou crée le contenu d'un bloc). canvas = SSoT (markdown par bloc, 0022). AD-7 : le kernel émet la commande ; le module Canvas (client device) applique la mutation. Overwrite = confirmation via le risk du planStep (pas de flag dédié ici).",
+  inputSchema: z.object({
+    canvasId: z.string(),
+    blockId: z.string().optional(),
+    markdown: z.string(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'canvas.write', payload: input }),
+});
+
+/**
+ * canvas_comment — crée / répond à un commentaire ancré sur une
+ * sélection du canvas (canvas_comments, anchor_start / anchor_end,
+ * 0022). replyToCommentId présent = réponse à un commentaire
+ * existant ; absent = nouveau commentaire. AD-7, light (pas de job).
+ */
+export const canvasComment: KernelTool = tool({
+  description:
+    "Crée ou répond à un commentaire ancré sur une sélection du canvas (canvas_comments : anchor_start / anchor_end dans le texte plat de la session, 0022). replyToCommentId présent = réponse ; absent = nouveau commentaire. AD-7 : le module Canvas applique (pas de job, op light, non-destructive).",
+  inputSchema: z.object({
+    canvasId: z.string(),
+    replyToCommentId: z.string().optional(),
+    body: z.string(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'canvas.comment', payload: input }),
+});
+
+// ---------------------------------------------------------------------------
 // Feature-agentability-matrix.md — the remaining agentable families.
 //
 // Each tool is a THIN AD-7 command / AD-8 job emitter: the kernel NEVER
@@ -950,6 +1015,13 @@ export const KERNEL_TOOLS = {
   // skill_get retrieves the full SKILL.md body of the chosen skill.
   skill_search: skillSearch,
   skill_get: skillGet,
+  // Canvas tools (0022) : l'agent POUVOIR lire / écrire / commenter la
+  // session canvas. L'humain reste éditeur de /canvas (StarterKit) —
+  // les deux écrivent la même table, l'agent passe par le kernel
+  // (commandes canvas.*), l'humain par le client device (AD-7).
+  canvas_read: canvasRead,
+  canvas_write: canvasWrite,
+  canvas_comment: canvasComment,
 };
 
 export type KernelToolId = keyof typeof KERNEL_TOOLS;

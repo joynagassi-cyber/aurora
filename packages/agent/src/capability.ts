@@ -535,6 +535,47 @@ export class DefaultCapabilityRegistry {
         destructive: false,
         requiresConfirmation: false,
       },
+      // ------------------------------------------------------------------
+      // Canvas tools (0022) — "le canvas est utilisé par l'agent, pas
+      // par l'humain" : l'humain reste éditeur de /canvas (StarterKit),
+      // l'agent POUVOIR lire / écrire / commenter la session canvas via
+      // le kernel. AD-7 single-writer : le kernel EMIT les commandes
+      // canvas.* ; le module Canvas (client device canvas-client.ts,
+      // ou un futur endpoint serveur) applique la mutation. Scopes :
+      // canvas:read / canvas:write. Confirmation : read = none,
+      // write = oui (modification de contenu, via le risk du planStep),
+      // comment = none (non-destructive).
+      // ------------------------------------------------------------------
+      {
+        id: 'canvas.read',
+        tool: 'canvas_read',
+        description:
+          "Read the current canvas session (blocks + comments) so the agent can 'visualiser' une session d'artefact (spec originale, partie 4). READ-ONLY — pas de job, pas de confirmation.",
+        writeScopes: [],
+        readScopes: ['canvas:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      {
+        id: 'canvas.write',
+        tool: 'canvas_write',
+        description:
+          "Écrit / remplace un bloc markdown dans une session canvas (l'agent propose ou modifie le contenu). canvas = SSoT (markdown par bloc, 0022) ; AD-7 : le module Canvas applique la mutation. Confirmation : modification de contenu (via le risk du planStep).",
+        writeScopes: ['canvas:write'],
+        readScopes: ['canvas:read'],
+        destructive: false,
+        requiresConfirmation: true, // overwrite d'un bloc existant = modification de contenu
+      },
+      {
+        id: 'canvas.comment',
+        tool: 'canvas_comment',
+        description:
+          "Crée ou répond à un commentaire ancré sur une sélection du canvas (canvas_comments, anchor_start / anchor_end, 0022). Non-destructive — pas de confirmation. AD-7 : le module Canvas applique.",
+        writeScopes: ['canvas:write'],
+        readScopes: ['canvas:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
     ];
     for (const b of base) {
       this.register({
