@@ -21,6 +21,31 @@
  */
 import { tool, type Tool } from 'ai';
 import { z } from 'zod';
+import type { JobKind } from '@aurora/domain';
+
+/**
+ * The closed 11-kind set (AD-15 SSoT, duplicated from
+ * packages/domain/jobs.ts — the `@aurora/domain` `JobKind` union;
+ * `packages/agent` has no boundary import from `@aurora/integrations`,
+ * so the set is kept locally to enforce the closed vocabulary).
+ */
+const JOB_KINDS: ReadonlySet<string> = new Set([
+  'ocr',
+  'transcription',
+  'artifact_gen',
+  'fsrs-tick',
+  'skill_recompute',
+  'research',
+  'agent_run',
+  'verify',
+  'scientific',
+  'course_import',
+  'notification',
+]);
+/** AD-15: only the 11 closed kinds pass; anything else degrades. */
+export function isJobKind(k: string): k is JobKind {
+  return JOB_KINDS.has(k);
+}
 
 /**
  * The SDK's `Tool` union (FunctionTool | DynamicTool | …) is not
@@ -702,6 +727,98 @@ export const automationToggle: KernelTool = tool({
   execute: async (input) => ({ ok: true, command: 'integrations.automation_update', payload: input }),
 });
 
+/**
+ * G1 — integrations.automation.create : crée une Automation (veille) avec
+ * trigger schedule (cron) / event (AD-9) / condition. Thin command
+ * (AD-7 : le kernel émet, Integrations applique la write `automations`).
+ * jobKind restreint au vocabulaire fermé AD-15 (isJobKind) ; kind
+ * inconnu → dégrade à 'notification' (AD-1 optional capability). Le
+ * payload ne porte QUE les champs cohérents avec le trigger choisi
+ * (schedule ↔ trigger='schedule', triggerEvent ↔ trigger='event',
+ * condition ↔ trigger='condition').
+ */
+export const createAutomation: KernelTool = tool({
+  description:
+    "Créer une automation / une veille (ADR S2, 01 §5.2). trigger: 'schedule' (cron, ex. chaque jeudi) / 'event' (réactive sur un événement AD-9) / 'condition' (seuil observé). jobKind = le job enfilé au dispatcher (vocabulaire fermé AD-15 ; inconnu → notification). Thin command → integrations.automation_create (AD-7 : le module Integrations écrit `automations`, 0008). G8 : trigger:'schedule' + action:'focus.start' / 'review.run' = focus / bilan récurrent.",
+  inputSchema: z.object({
+    name: z.string(),
+    trigger: z.enum(['schedule', 'event', 'condition']),
+    /** expression cron (schedule) */
+    schedule: z.string().optional(),
+    /** nom d'événement AD-9 (event) */
+    triggerEvent: z.string().optional(),
+    /** clé / expression de condition (condition) */
+    condition: z.string().optional(),
+    /** JobKind fermé (AD-15) ; défaut 'research' pour la veille */
+    jobKind: z.string().default('research'),
+    /** le payload / topic de l'action (ex. le sujet de la veille) */
+    action: z.string().optional(),
+    /** l'identité du user (portée par le kernel, AD-7) */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => {
+    // AD-15: inconnu → dégrade à 'notification' (AD-1 optional capability).
+    const kind = isJobKind(input.jobKind) ? input.jobKind : 'notification';
+    return {
+      ok: true,
+      command: 'integrations.automation_create',
+      payload: {
+        name: input.name,
+        trigger: input.trigger,
+        // Only the field matching the chosen trigger discriminator passes.
+        schedule: input.trigger === 'schedule' ? input.schedule : undefined,
+        triggerEvent: input.trigger === 'event' ? input.triggerEvent : undefined,
+        condition: input.trigger === 'condition' ? input.condition : undefined,
+        jobKind: kind,
+        action: input.action,
+        userId: input.userId,
+      },
+    };
+  },
+});
+
+/**
+ * G2 — integrations.automation.update : renommer / reprogrammer /
+ * verrouiller une Automation (complète automation_toggle ON/OFF).
+ * Verrouiller = patch.enabled:false (gel, réversible → non-destructif).
+ * Thin command (AD-7 : le module Integrations applique le patch).
+ */
+export const updateAutomation: KernelTool = tool({
+  description:
+    "Renommer / reprogrammer / (dé)verrouiller une automation (complète automation_toggle ON/OFF). patch: name (renommer), schedule (cron), triggerEvent, condition, action, enabled (verrouiller = false). Thin command → integrations.automation_update (AD-7 : le module Integrations applique le patch sur `automations`, 0008).",
+  inputSchema: z.object({
+    automationId: z.string(),
+    patch: z.object({
+      name: z.string().optional(),
+      schedule: z.string().optional(),
+      triggerEvent: z.string().optional(),
+      condition: z.string().optional(),
+      action: z.string().optional(),
+      enabled: z.boolean().optional(),
+    }),
+    /** l'identité du user (portée par le kernel, AD-7) */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'integrations.automation_update', payload: input }),
+});
+
+/**
+ * G3 — integrations.automation.delete : suppression DESTRUCTIVE
+ * (ADR §5 : confirmation obligatoire — la table `automations` n'est
+ * pas AD-15-additive comme les goals ; ici c'est un vrai delete).
+ * Thin command (AD-7 : le module Integrations supprime la row).
+ */
+export const deleteAutomation: KernelTool = tool({
+  description:
+    "Supprimer une automation / veille (DESTRUCTIVE, ADR §5 : confirmation obligatoire — irréversible). Thin command → integrations.automation_delete (AD-7 : le module Integrations supprime la row `automations`, 0008).",
+  inputSchema: z.object({
+    automationId: z.string(),
+    /** l'identité du user (portée par le kernel, AD-7) */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'integrations.automation_delete', payload: input }),
+});
+
 /** notification.subscribe / silence — user prefs (matrix row notification.subscribe / silence, PARTIAL). */
 export const notificationPref: KernelTool = tool({
   description:
@@ -1006,6 +1123,12 @@ export const KERNEL_TOOLS = {
   settings_theme: settingsTheme,
   review_run: reviewRun,
   automation_toggle: automationToggle,
+  // G1–G3 (feature agentique 2026-10-06) : veilles / automations — le
+  // kernel émet des commandes integrations.automation_* (AD-7) ; le
+  // module Integrations applique (table `automations`, 0008).
+  create_automation: createAutomation,
+  update_automation: updateAutomation,
+  delete_automation: deleteAutomation,
   notification_pref: notificationPref,
   eisenhower_prioritize: eisenhowerPrioritize,
   // Focus planning (focus-mode spec + planning-execution)

@@ -472,6 +472,41 @@ export class DefaultCapabilityRegistry {
         requiresConfirmation: true,
         dependencies: ['composio'],
       },
+      // ----------------------------------------------------------------
+      // G1–G3 (feature agentique 2026-10-06) — veilles / automations :
+      // le kernel émet les commandes integrations.automation_* (AD-7) ;
+      // le module Integrations applique (table `automations`, 0008).
+      // ----------------------------------------------------------------
+      {
+        id: 'integrations.automation.create',
+        tool: 'create_automation',
+        description:
+          "Create an automation / veille (ADR S2, 01 §5.2). trigger 'schedule' (cron) / 'event' (AD-9) / 'condition' (seuil observé) ; jobKind from the AD-15 closed set (unknown degrades to notification, AD-1). Thin command → integrations.automation_create (AD-7)",
+        writeScopes: ['integrations:write'],
+        readScopes: ['integrations:read', 'discovery:read'],
+        destructive: false,
+        requiresConfirmation: false, // créer n'est pas destructif ; c'est la suite (delete) qui l'est
+      },
+      {
+        id: 'integrations.automation.update',
+        tool: 'update_automation',
+        description:
+          "Rename / reprogram / lock an automation (patch name / schedule / triggerEvent / condition / action / enabled ; verrouiller = enabled:false, gel réversible). Thin command → integrations.automation_update (AD-7)",
+        writeScopes: ['integrations:write'],
+        readScopes: ['integrations:read'],
+        destructive: false,
+        requiresConfirmation: false, // le verrouillage est réversible
+      },
+      {
+        id: 'integrations.automation.delete',
+        tool: 'delete_automation',
+        description:
+          "Delete an automation / veille (DESTRUCTIVE, ADR §5 : irreversible — confirmation obligatoire). Thin command → integrations.automation_delete (AD-7)",
+        writeScopes: ['integrations:write'],
+        readScopes: ['integrations:read'],
+        destructive: true,
+        requiresConfirmation: true,
+      },
       {
         id: 'notification.prefs',
         tool: 'notification_pref',

@@ -153,6 +153,11 @@ export {
   qcmGenerate,
   mirrorAnalyze,
   scientificVerify,
+  // G1–G3 (feature agentique 2026-10-06) : veilles / automations (AD-7 thin emitters)
+  createAutomation,
+  updateAutomation,
+  deleteAutomation,
+  isJobKind,
 } from './tools.ts';
 
 // Builtin skill templates (Task 2, 2026-10-04) — the 15 seeded catalog
