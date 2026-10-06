@@ -101,5 +101,20 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
     target: 'es2020',
+    // PowerSync ships a Web Worker (`@powersync/web/lib/worker/client.js`
+    // calls `new Worker(new URL('./worker.js', import.meta.url))`). Vite's
+    // dep optimizer inlines the worker file in DEV (the `optimizeDeps.exclude`
+    // above handles that). In PROD, Vite's `workerFileToUrl` hook rewrites
+    // the URL to a bundled IIFE chunk — which Rollup rejects when the app
+    // code-splits (React.lazy) with:
+    //   "Invalid value 'iife' for option 'output.format' — UMD and IIFE
+    //    output formats are not supported for code-splitting builds."
+    // Forcing `worker.format = 'es'` makes Vite emit the worker as a
+    // self-contained ES module at `dist/worker-<hash>.js`, referenced via
+    // the rewritten `new URL('./worker-<hash>.js', import.meta.url)` —
+    // resolvable at runtime on the static CDN (Render / Capacitor).
+  },
+  worker: {
+    format: 'es',
   },
 });
