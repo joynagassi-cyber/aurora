@@ -14,7 +14,9 @@
 # OPTION B — CLI (si le compte a le scope)
 #   1. supabase secrets list                       # doit renvoyer 200
 #   2. supabase secrets set \
-#        SUPABASE_SECRET_KEY="<le secret>"
+#        SERVICE_ROLE_KEY="<le secret>"
+#  (le nom du secret projet est SERVICE_ROLE_KEY — voir section ci-dessous ;
+#   jamais SUPABASE_SECRET_KEY, le prefix SUPABASE_ est refusé par Supabase)
 #
 # Ce que ce script contient :
 #   - La LISTE des keys à set dans les project secrets de l'instance
