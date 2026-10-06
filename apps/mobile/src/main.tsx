@@ -46,6 +46,7 @@ import { MobileDataCtx } from './query/context';
 import { mobileDataProviderFrom } from './query/query-client';
 import { createAuroraDataProvider, type AuroraDataEnv } from './lib/boot-data';
 import { createAgentClient } from './lib/agent-client';
+import { createCanvasClient } from './lib/canvas-client';
 import { createIntegrationClient } from './lib/integrations-client';
 import { createSkillClient } from './lib/skills-client';
 import { useUiStateStore } from './state/ui-state';
@@ -108,7 +109,22 @@ const skills =
         }),
       )
     : undefined;
-const dataProvider = mobileDataProviderFrom(provider, agent, integrations, skills);
+// AD-3: the canvas client runs on the SAME publishable-scope client —
+// the /canvas page reads/writes canvas sessions + comments (0022, RLS user).
+// Absent env values leave `canvas` undefined → honest "indisponible" state.
+const canvas =
+  env.supabaseUrl && env.supabasePublishableKey
+    ? createCanvasClient(
+        createAuroraSupabaseClient({
+          env: {
+            supabaseUrl: env.supabaseUrl,
+            supabasePublishableKey: env.supabasePublishableKey,
+          },
+        }),
+        env.supabasePublishableKey,
+      )
+    : undefined;
+const dataProvider = mobileDataProviderFrom(provider, agent, integrations, skills, canvas);
 
 function Root() {
   const focusActive = useUiStateStore((s) => s.focusActive);

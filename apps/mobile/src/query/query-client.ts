@@ -14,6 +14,7 @@ import { QueryClient } from '@tanstack/react-query';
 import type { LocalQueryRepository, LocalFilter } from '@aurora/data';
 import type { AscentLearningIR, GoalProject, Task } from '@aurora/domain';
 import type { AgentClient } from '../lib/agent-client';
+import type { CanvasClient } from '../lib/canvas-client';
 import type { IntegrationClient } from '../lib/integrations-client';
 import type { SkillClient } from '../lib/skills-client';
 
@@ -41,6 +42,12 @@ export interface MobileDataProvider {
    * through it (`fn-skills`, Task 1: multi-source skill marketplace).
    */
   skills?: SkillClient;
+  /**
+   * The device-side canvas client (AD-3: publishable scope only, 0022).
+   * The /canvas page reads/writes canvas sessions + comments through it
+   * (Supabase PostgREST, per-user RLS).
+   */
+  canvas?: CanvasClient;
   /**
    * The local `LocalStore` (PowerSync/SQLite, 03 S8.1) — read side of the
    * families that don't have their own `LocalQueryRepository` yet (AD-7 /
@@ -81,6 +88,12 @@ export const qk = {
   agent: {
     all: () => ['agent'] as const,
     run: (runId: string) => [...qk.agent.all(), 'run', runId] as const,
+  },
+  // Canvas (0022): per-session queries (load + save + comments).
+  canvas: {
+    all: () => ['canvas'] as const,
+    session: (sessionId: string) =>
+      [...qk.canvas.all(), 'session', sessionId] as const,
   },
 };
 
@@ -124,6 +137,7 @@ export function mobileDataProviderFrom(
   agent?: AgentClient,
   integrations?: IntegrationClient,
   skills?: SkillClient,
+  canvas?: CanvasClient,
 ): MobileDataProvider {
   return {
     goals: provider.goals,
@@ -138,6 +152,9 @@ export function mobileDataProviderFrom(
     // AD-3: the publishable-scope skills client (multi-source marketplace
     // via `fn-skills`; catalog read + user skill activation, Task 1).
     skills,
+    // AD-3: the publishable-scope canvas client (0022: canvas sessions +
+    // comments via PostgREST, per-user RLS).
+    canvas,
     // AD-7 / 03 S3.1: expose the local store read side so the knowledge
     // family (semantic_nodes / semantic_edges / node_state) can read its
     // mirror without a dedicated repository (knowledge-repo.ts).

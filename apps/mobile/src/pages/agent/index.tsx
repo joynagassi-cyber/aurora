@@ -59,7 +59,7 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useReducedMotion } from 'motion/react';
 import { useMobileData } from '../../query/context';
 import { useAgentRun } from '../../query/agent-runs';
@@ -148,7 +148,15 @@ const PULL_OPEN_EASE = 'cubic-bezier(0.22, 1, 0.36, 1)'; // ease-out « luxe »
 export function AgentPage() {
   const navigate = useNavigate();
   const { agent } = useMobileData();
-  const [draft, setDraft] = useState('');
+  // Cross-page intent prefill (?intent=): the Slide-Ascent active-reading
+  // actions (Expliquer / Note / Flashcard / Visualiser / Je bloque) and the
+  // UxStates « Demande à Aurora » CTA route here with a PRE-BOUND intent —
+  // the composer opens already typed, the user just sends (same intake
+  // pattern as /knowledge?q=).
+  const [searchParams] = useSearchParams();
+  const [draft, setDraft] = useState(
+    () => searchParams.get('intent') ?? '',
+  );
   const [entries, setEntries] = useState<Entry[]>([]);
   const [activeRun, setActiveRun] = useState<string | undefined>(undefined);
   const [modelChoice, setModelChoice] = useState<{ provider: string; model: string } | null>(null);
@@ -273,7 +281,7 @@ export function AgentPage() {
   function selectionToDraft() {
     if (!selection) return;
     const quoted = selection.text;
-    setDraft((prev) => (prev ? `${prev}\n${quoted}` : quoted));
+    setDraft((prev: string) => (prev ? `${prev}\n${quoted}` : quoted));
     setSelection(null);
     window.getSelection()?.removeAllRanges();
     document.getElementById('agent-composer-input')?.focus();
