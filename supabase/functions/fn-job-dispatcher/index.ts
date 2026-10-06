@@ -35,7 +35,18 @@ import {
 } from "../_shared/fn-agent-bootstrap.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_SECRET_KEY = Deno.env.get("SUPABASE_SECRET_KEY") ?? "";
+// Le secret service_role est stocké sous SERVICE_ROLE_KEY (Supabase refuse
+// tout nom commençant par SUPABASE_). La valeur peut être une clé legacy
+// JWT ("eyJ...") ou moderne ("sb_secret_...") : pour la moderne, ne
+// l'envoyer QUE sur le header apikey.
+const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+function restHeaders(): Record<string, string> {
+  const h: Record<string, string> = { "Content-Type": "application/json" };
+  if (!SERVICE_ROLE_KEY) return h;
+  h.apikey = SERVICE_ROLE_KEY;
+  if (SERVICE_ROLE_KEY.startsWith("eyJ")) h.Authorization = `Bearer ${SERVICE_ROLE_KEY}`;
+  return h;
+}
 
 // ——— Job handler registry (AD-8: one contract, module-provided handlers) ———
 // The dispatcher routes by (jobKind, payload.module) so the shared
@@ -186,16 +197,12 @@ function buildAgentRunDispatchers() {
     persistRun: async (userId, state) => {
       // Terminal AgentRunState → agent_runs (F-09 SSoT). Absent env or
       // a non-terminal state = no-op (the dispatcher reports via result).
-      if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) return;
+      if (!SUPABASE_URL || !SERVICE_ROLE_KEY) return;
       const res = await fetch(
         `${SUPABASE_URL}/rest/v1/agent_runs?user_id=eq.${userId}&id=eq.${state.agentRunId}`,
         {
           method: "PATCH",
-          headers: {
-            apikey: SUPABASE_SECRET_KEY,
-            Authorization: `Bearer ${SUPABASE_SECRET_KEY}`,
-            "Content-Type": "application/json",
-          },
+          headers: restHeaders(),
           body: JSON.stringify({
             status:
               state.status === "succeeded"
@@ -233,18 +240,14 @@ function buildAgentRunDispatchers() {
         // A missing agentRunsId (legacy payload) is a no-op.
         const agentRunsId =
           typeof payload.agentRunsId === "string" ? payload.agentRunsId : null;
-        if (agentRunsId && SUPABASE_URL && SUPABASE_SECRET_KEY && res.ok) {
+        if (agentRunsId && SUPABASE_URL && SERVICE_ROLE_KEY && res.ok) {
           const s = (res.result ?? {}) as { status?: string; stage?: string };
           const terminal = s.status === "succeeded" || s.status === "failed";
           await fetch(
             `${SUPABASE_URL}/rest/v1/agent_runs?id=eq.${agentRunsId}&user_id=eq.${userId}`,
             {
               method: "PATCH",
-              headers: {
-                apikey: SUPABASE_SECRET_KEY,
-                Authorization: `Bearer ${SUPABASE_SECRET_KEY}`,
-                "Content-Type": "application/json",
-              },
+              headers: restHeaders(),
               body: JSON.stringify({
                 status:
                   s.status === "succeeded"
@@ -291,14 +294,11 @@ async function fetchDue(
   now: string,
   limit: number,
 ): Promise<DueJob[]> {
-  if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) return [];
+  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) return [];
   const res = await fetch(
     `${SUPABASE_URL}/rest/v1/job_queue?status=eq.pending&due_at=lte.${now}&limit=${limit}&order=due_at.asc`,
     {
-      headers: {
-        apikey: SUPABASE_SECRET_KEY,
-        Authorization: `Bearer ${SUPABASE_SECRET_KEY}`,
-      },
+      headers: restHeaders(),
     },
   );
   if (!res.ok) return [];
@@ -307,14 +307,10 @@ async function fetchDue(
 
 /** Claim a due job (AD-8: status pending→running, attempts++). */
 async function claim(jobId: string, userId: string): Promise<void> {
-  if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) return;
+  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) return;
   await fetch(`${SUPABASE_URL}/rest/v1/job_queue?id=eq.${jobId}`, {
     method: "PATCH",
-    headers: {
-      apikey: SUPABASE_SECRET_KEY,
-      Authorization: `Bearer ${SUPABASE_SECRET_KEY}`,
-      "Content-Type": "application/json",
-    },
+    headers: restHeaders(),
     body: JSON.stringify({
       status: "running",
       user_id: userId,
@@ -328,14 +324,10 @@ async function report(
   userId: string,
   result: { status: "done" | "failed"; result?: unknown },
 ): Promise<void> {
-  if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) return;
+  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) return;
   await fetch(`${SUPABASE_URL}/rest/v1/job_queue?id=eq.${jobId}`, {
     method: "PATCH",
-    headers: {
-      apikey: SUPABASE_SECRET_KEY,
-      Authorization: `Bearer ${SUPABASE_SECRET_KEY}`,
-      "Content-Type": "application/json",
-    },
+    headers: restHeaders(),
     body: JSON.stringify({
       status: result.status,
       result: result.result ?? null,

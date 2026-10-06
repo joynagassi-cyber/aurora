@@ -262,7 +262,7 @@ Deno.serve(async (req: Request) => {
     if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
       return err(
         "canvas/env",
-        "SUPABASE env not configured — set the project's SUPABASE_SECRET_KEY secret",
+        "SUPABASE env not configured — set the project's SERVICE_ROLE_KEY secret",
         503,
       );
     }

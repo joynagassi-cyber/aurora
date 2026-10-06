@@ -33,8 +33,9 @@
  *   node --experimental-strip-types scripts/skills-qa.ts --keep     # garde le test user
  *
  * Env requis (AD-3, jamais en clair dans ce fichier) :
- *   SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SUPABASE_SECRET_KEY
- * (chargés depuis .env.local)
+ *   SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SERVICE_ROLE_KEY
+ * (chargés depuis .env.local — SERVICE_ROLE_KEY est l'alias Supabase du
+ *  service_role secret, cf. scripts/skills-seed.ts et les EF fn-*)
  */
 
 import { AGENT_SKILL_TEMPLATES } from "../packages/agent/src/skill-templates.ts";
@@ -42,7 +43,7 @@ import { KERNEL_TOOLS } from "../packages/agent/src/tools.ts";
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
 const PUBLISH_KEY = process.env.SUPABASE_PUBLISHABLE_KEY ?? "";
-const SECRET_KEY = process.env.SUPABASE_SECRET_KEY ?? "";
+const SECRET_KEY = process.env.SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY ?? "";
 
 const TEST_EMAIL = "skills-qa@aurora.test";
 const TEST_PASSWORD = "Aurora-Qa-Skills-2026-10-04!";

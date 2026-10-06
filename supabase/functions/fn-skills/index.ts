@@ -348,11 +348,10 @@ Deno.serve(async (req: Request) => {
   try {
     const rawAuth = req.headers.get("Authorization") ?? "";
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-    // fn-agent-bootstrap reads SUPABASE_SECRET_KEY; this EF reads
-    // SUPABASE_SERVICE_KEY. Fall back to SUPABASE_SECRET_KEY so a single
-    // env var suffices in most setups.
+    // Le secret service_role est stocké sous SERVICE_ROLE_KEY (Supabase refuse
+    // tout nom commençant par SUPABASE_). Les EF lisent SERVICE_ROLE_KEY.
     const SUPABASE_SERVICE_KEY =
-      Deno.env.get("SUPABASE_SERVICE_KEY") ?? Deno.env.get("SUPABASE_SECRET_KEY") ?? "";
+      Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 
     const body = await readBody(req);
     const verb = String(body.verb ?? "");
@@ -369,9 +368,9 @@ Deno.serve(async (req: Request) => {
           catalog: [],
           degraded: true,
           note:
-            "SUPABASE env not configured on the EF — set the project's SUPABASE_SECRET_KEY " +
-            "secret (Dashboard > Edge Functions > Secrets, or `supabase secrets set " +
-            "SUPABASE_SECRET_KEY=...`); no redeploy needed, it takes effect immediately.",
+            "SUPABASE env not configured on the EF — set the project's SERVICE_ROLE_KEY " +
+            "secret (Dashboard > Edge Functions > Secrets, or `supabase secrets set` " +
+            "with that key name); no redeploy needed, it takes effect immediately.",
         });
       }
       const domainFilter = body.domain != null ? String(body.domain) : null;
@@ -386,7 +385,7 @@ Deno.serve(async (req: Request) => {
         return ok({
           results: [],
           degraded: true,
-          note: "SUPABASE env not configured on the EF — set SUPABASE_SECRET_KEY.",
+          note: "SUPABASE env not configured on the EF — set SERVICE_ROLE_KEY.",
         });
       }
       if (verb === "search_catalog") {
@@ -411,7 +410,7 @@ Deno.serve(async (req: Request) => {
     if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
       return err(
         "skills/env",
-        "SUPABASE env not configured — set the project's SUPABASE_SECRET_KEY secret (Dashboard > Edge Functions > Secrets)",
+        "SUPABASE env not configured — set the project's SERVICE_ROLE_KEY secret (Dashboard > Edge Functions > Secrets)",
         503,
       );
     }

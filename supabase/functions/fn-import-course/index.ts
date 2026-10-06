@@ -6,7 +6,9 @@
 import { ok, err, ulid } from "../_shared/envelope.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_SECRET_KEY = Deno.env.get("SUPABASE_SECRET_KEY") ?? "";
+// Le secret service_role est stocké sous SERVICE_ROLE_KEY (Supabase refuse
+// tout nom commençant par SUPABASE_). Les EF lisent SERVICE_ROLE_KEY.
+const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 
 Deno.serve(async (req) => {
   try {
@@ -15,9 +17,9 @@ Deno.serve(async (req) => {
     const fileRefs = body.fileRefs ?? [];
 
     if (!courseId) return err("course/import_missing_id", "courseId is required", 400);
-    if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
+    if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
       // Secrets are read from env only (never inlined). Wave-0 stub state.
-      console.warn("[fn-import-course] SUPABASE secrets not configured — cannot enqueue job");
+      console.warn("[fn-import-course] SERVICE_ROLE_KEY not configured — cannot enqueue job");
       return err("course/secrets_missing", "Server env not configured", 503);
     }
 

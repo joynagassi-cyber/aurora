@@ -30,9 +30,12 @@ function envGet(key) {
   return line ? line.slice(key.length + 1).trim() : "";
 }
 const SUPABASE_URL = envGet("SUPABASE_URL").replace(/\/+$/, "");
-const SUPABASE_SECRET_KEY = envGet("SUPABASE_SECRET_KEY");
+// SERVICE_ROLE_KEY = l'alias local du secret service_role (mêmes valeur que
+// SUPABASE_SECRET_KEY côté Supabase/CI ; Supabase refuse un secret projet
+// nommé SUPABASE_*, d'où le renommage côté EF, 2026-10-06).
+const SUPABASE_SECRET_KEY = envGet("SERVICE_ROLE_KEY") || envGet("SUPABASE_SECRET_KEY");
 if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
-  console.error("ABORT: SUPABASE_URL / SUPABASE_SECRET_KEY absents dans .env.local");
+  console.error("ABORT: SUPABASE_URL / SERVICE_ROLE_KEY absents dans .env.local");
   process.exit(1);
 }
 

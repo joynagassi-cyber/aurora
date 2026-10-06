@@ -9,7 +9,7 @@
 //    the job dispatcher's agent handler (a shared file, remaining gap).
 //  - AD-8: the heavy agent step persists as a job_queue row
 //    (kind = 'agent_run', idempotency key = agent:<runId>).
-//  - AD-3: zero provider keys on the device — SUPABASE_SECRET_KEY
+//  - AD-3: zero provider keys on the device — SERVICE_ROLE_KEY
 //    stays in the server env (Deno.env), and payload carries NO
 //    provider / router / key material.
 //  - F-09 SSoT: the `agent_runs` mirror row is created HERE at enqueue
@@ -30,7 +30,19 @@
 import { ok, err, ulid } from "../_shared/envelope.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_SECRET_KEY = Deno.env.get("SUPABASE_SECRET_KEY") ?? "";
+// Le secret service_role est stocké sous SERVICE_ROLE_KEY (Supabase refuse
+// tout nom commençant par SUPABASE_). Les EF lisent SERVICE_ROLE_KEY.
+// La valeur peut être une clé legacy JWT ("eyJ...") ou moderne ("sb_secret_...") :
+// pour la moderne, ne l'envoyer QUE sur le header apikey (pas Authorization).
+const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+function restHeaders(): Record<string, string> {
+  const h: Record<string, string> = { "Content-Type": "application/json" };
+  if (!SERVICE_ROLE_KEY) return h;
+  const isLegacyJwt = SERVICE_ROLE_KEY.startsWith("eyJ");
+  h.apikey = SERVICE_ROLE_KEY;
+  if (isLegacyJwt) h.Authorization = `Bearer ${SERVICE_ROLE_KEY}`;
+  return h;
+}
 
 interface AgentRunRequest {
   intent?: string;
@@ -56,7 +68,7 @@ async function enqueueAgentRun(req: {
   userId: string;
   body: AgentRunRequest;
 }): Promise<{ jobId: string; agentRunsId: string; alreadyQueued: boolean } | null> {
-  if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) return null;
+  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) return null;
   const payload = {
     kind: "agent_run",
     module: "agent",
@@ -75,12 +87,7 @@ async function enqueueAgentRun(req: {
     `${SUPABASE_URL}/rest/v1/agent_runs?select=id&trace_id=eq.${req.agentRunId}&limit=1`,
     {
       method: "POST",
-      headers: {
-        apikey: SUPABASE_SECRET_KEY,
-        Authorization: `Bearer ${SUPABASE_SECRET_KEY}`,
-        "Content-Type": "application/json",
-        Prefer: "return=representation",
-      },
+      headers: restHeaders(),
       body: JSON.stringify({
         user_id: req.userId,
         intent: req.body.intent,
@@ -101,14 +108,11 @@ async function enqueueAgentRun(req: {
 
   // 2. Enqueue the agent_run job (idempotency = agent:<agentRunId>).
   payload.agentRunsId = agentRunsId;
+  const enqueueHeaders = restHeaders();
+  enqueueHeaders["Prefer"] = "resolution=merge-duplicates, return=representation";
   const res = await fetch(`${SUPABASE_URL}/rest/v1/job_queue`, {
     method: "POST",
-    headers: {
-      apikey: SUPABASE_SECRET_KEY,
-      Authorization: `Bearer ${SUPABASE_SECRET_KEY}`,
-      "Content-Type": "application/json",
-      Prefer: "resolution=merge-duplicates, return=representation",
-    },
+    headers: enqueueHeaders,
     body: JSON.stringify({
       id: req.agentRunId,
       user_id: req.userId,
@@ -136,8 +140,8 @@ Deno.serve(async (req) => {
     const body = (await req.json().catch(() => ({}))) as AgentRunRequest;
 
     if (!body.intent) return err("agent/missing_intent", "intent is required", 400);
-    if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
-      console.warn("[fn-agent-run] SUPABASE secrets not configured — cannot enqueue agent job");
+    if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+      console.warn("[fn-agent-run] SERVICE_ROLE_KEY not configured — cannot enqueue agent job");
       return err("agent/secrets_missing", "Server env not configured", 503);
     }
 
@@ -148,7 +152,10 @@ Deno.serve(async (req) => {
       return err("agent/unauthorized", "Bearer token required", 401);
     }
     const userIdRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: { apikey: SUPABASE_SECRET_KEY, Authorization: `Bearer ${match[1]}` },
+      headers: {
+        apikey: SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${match[1]}`,
+      },
     });
     if (!userIdRes.ok) {
       return err("agent/unauthorized", "invalid or expired user token", 401);

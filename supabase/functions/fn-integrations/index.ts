@@ -46,12 +46,14 @@ Deno.serve(async (req: Request) => {
     const match = /Bearer\s+(.+)/.exec(authHeader);
     if (!match?.[1]) return err("integrations/unauthorized", "Bearer token required", 401);
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-    const SUPABASE_SECRET_KEY = Deno.env.get("SUPABASE_SECRET_KEY") ?? "";
-    if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
+    // Le secret service_role est stocké sous SERVICE_ROLE_KEY (Supabase refuse
+    // tout nom commençant par SUPABASE_). Les EF lisent SERVICE_ROLE_KEY.
+    const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+    if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
       return err("integrations/env", "SUPABASE env not configured", 503);
     }
     const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: { apikey: SUPABASE_SECRET_KEY, Authorization: `Bearer ${match[1]}` },
+      headers: { apikey: SERVICE_ROLE_KEY, Authorization: `Bearer ${match[1]}` },
     });
     if (!userRes.ok) return err("integrations/unauthorized", "invalid user token", 401);
     const user = (await userRes.json()) as { id?: string };
@@ -65,7 +67,7 @@ Deno.serve(async (req: Request) => {
       return err(
         "integrations/not_configured",
         "COMPOSIO_API_KEY is not set on this deployment. " +
-          "Run `supabase secrets set COMPOSIO_API_KEY=…` to enable.",
+          "Run `supabase secrets set` with that key name to enable.",
         503,
       );
     }
