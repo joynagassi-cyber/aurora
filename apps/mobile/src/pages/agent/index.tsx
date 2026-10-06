@@ -45,6 +45,7 @@ import {
   Compass,
   Cpu,
   Link2,
+  PenLine,
   Plus,
   Search,
   Send,
@@ -664,6 +665,15 @@ export function AgentPage() {
               aria-label="Plus d'options"
             >
               <Plus size={14} />
+            </button>
+            <button
+              type="button"
+              className="agent-chip"
+              onClick={() => navigate('/canvas/new', { state: { from: '/agent' } })}
+              aria-label="Ouvrir un canvas (édition de contenu)"
+            >
+              <PenLine size={14} />
+              <span>Canvas</span>
             </button>
             {connectors.length > 0 && (
               <span className="agent-chip agent-chip--static">
