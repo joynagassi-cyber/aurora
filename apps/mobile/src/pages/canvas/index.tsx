@@ -204,10 +204,15 @@ export function CanvasPage() {
                         key={b.id}
                         block={b}
                         onChange={(md) => {
-                          setBlocks((prev) =>
-                            prev.map((x) => (x.id === b.id ? { ...x, content: md } : x)),
-                          );
-                          if (sessionId) save(sessionId, blocks);
+                          setBlocks((prev) => {
+                            const next = prev.map((x) => (x.id === b.id ? { ...x, content: md } : x));
+                            // Save le contenu ACTUEL (prev) — le `blocks` capturé
+                            // dans le closure est stale d'une édition (YAGNI :
+                            // le save debouncé porte la charge réseau, il doit
+                            // porter la vérité, pas un état retardé).
+                            if (sessionId) save(sessionId, next);
+                            return next;
+                          });
                         }}
                       />
                     ))}
@@ -226,8 +231,7 @@ export function CanvasPage() {
                           {creating ? 'Enregistrement…' : 'Enregistrer'}
                         </button>
                       </div>
-                    )}
-                  </div>
+                    )}                  </div>
                 )}
 
                 {view === 'markdown' && (
@@ -355,8 +359,7 @@ export function CanvasPage() {
                   </button>
                 )}
               </div>
-            )}
-          </UxStates>
+            )}          </UxStates>
         </div>
       </IonContent>
     </>
