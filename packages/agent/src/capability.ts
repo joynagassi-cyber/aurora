@@ -309,6 +309,24 @@ export class DefaultCapabilityRegistry {
         requiresConfirmation: false,
       },
       {
+        id: 'habit.create',
+        tool: 'habit_create',
+        description: 'Create a habit (cadence daily/weekly/custom; Productivity-owned `habits` table)',
+        writeScopes: ['productivity:write'],
+        readScopes: ['productivity:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      {
+        id: 'routine.create',
+        tool: 'routine_create',
+        description: 'Create a routine (temporal anchor + steps + attached habits; Productivity-owned `routines` table)',
+        writeScopes: ['productivity:write'],
+        readScopes: ['productivity:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
+      {
         id: 'planning.replan',
         tool: 'planning_replan',
         description:
@@ -765,7 +783,15 @@ export class DefaultCapabilityRegistry {
 
   /** Resolve by tool id (the 8 kernel tools). */
   byTool(tool: string): CapabilityEntry | undefined {
-    return this.entries.find((e) => e.tool === tool);
+    const direct = this.entries.find((e) => e.tool === tool);
+    if (direct) return direct;
+    // Tolerate the camelCase exported tool names (habitCreate / routineCreate,
+    // G6) — the ToolResolver contract pins byTool() against the exported const
+    // names, while the registry seed keys stay snake_case (KERNEL_TOOLS keys).
+    const camel = tool.includes('_')
+      ? tool
+      : tool.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase();
+    return this.entries.find((e) => e.tool === camel);
   }
 }
 

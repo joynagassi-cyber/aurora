@@ -93,6 +93,10 @@ export const schedule: KernelTool = tool({
     startAt: z.string(),
     /** duration in minutes */
     durationMin: z.number().int().positive(),
+    /** G7 (feature agentique 2026-10-06) — recurring flag (materialized rows, 01 S4.1) */
+    recurring: z.boolean().optional(),
+    /** G7 — RFC5545 rule (FREQ=DAILY|WEEKLY|MONTHLY[;INTERVAL=n]) */
+    recurrenceRule: z.string().optional(),
   }),
   execute: async (input) => ({ ok: true, command: 'productivity.event_update', payload: input }),
 });
@@ -506,6 +510,10 @@ export const taskUpdate: KernelTool = tool({
     title: z.string().optional(),
     /** fields to patch */
     patch: z.record(z.unknown()).optional(),
+    /** G7 (feature agentique 2026-10-06) — recurring flag (materialized rows, 01 S4.1), action:'create' only */
+    recurring: z.boolean().optional(),
+    /** G7 — RFC5545 rule (FREQ=DAILY|WEEKLY|MONTHLY[;INTERVAL=n]) */
+    recurrenceRule: z.string().optional(),
   }),
   execute: async (input) => ({ ok: true, command: 'productivity.task_update', payload: input }),
 });
@@ -520,6 +528,39 @@ export const habitCheckin: KernelTool = tool({
     note: z.string().optional(),
   }),
   execute: async (input) => ({ ok: true, command: 'productivity.habit_checkin', payload: input }),
+});
+
+/** G6 — habit.create : crée un habit / routine (Productivity, cadence = programmer).
+ *  Thin command AD-7 : le module Productivity applique la write `habits` / `routines`. */
+export const habitCreate: KernelTool = tool({
+  description:
+    "Créer un habit (matrix row habit.create, cadence = programmer daily/weekly/custom). Thin command → productivity.habit_create (AD-7 : le module Productivity écrit `habits`).",
+  inputSchema: z.object({
+    title: z.string(),
+    cadence: z.enum(['daily', 'weekly', 'custom']),
+    /** 1..7 (Mon=1…Sun=7) — pour weekly */
+    weekdays: z.array(z.number().int().min(1).max(7)).optional(),
+    /** RFC5545-ish rule (P1D, FREQ=WEEKLY…) — pour custom */
+    recurrenceRule: z.string().optional(),
+    /** l'identité du user (portée par le kernel, AD-7) */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'productivity.habit_create', payload: input }),
+});
+
+/** G6 — routine.create : crée une routine (ancres temporelles + steps + habits attachés). */
+export const routineCreate: KernelTool = tool({
+  description:
+    "Créer une routine (morning/evening/study/custom, steps + habitIds attachés) — matrix row routine.create. Thin command → productivity.routine_create (AD-7 : le module Productivity écrit `routines`).",
+  inputSchema: z.object({
+    title: z.string(),
+    kind: z.enum(['morning', 'evening', 'study', 'custom']),
+    steps: z.array(z.string()),
+    habitIds: z.array(z.string()).optional(),
+    /** l'identité du user (portée par le kernel, AD-7) */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'productivity.routine_create', payload: input }),
 });
 
 /** planning.replan — "recalcul du planning restant" (ADR S13, Productivity). */
@@ -1328,6 +1369,11 @@ export const KERNEL_TOOLS = {
   // G12 (feature agentique 2026-10-06) : mutation skills — skill_delete
   // (DESTRUCTIVE, ADR §5) ; skill_rename est G4 ci-dessus.
   skill_delete: skillDelete,
+  // G6 (feature agentique 2026-10-06) : création habit / routine (cadence
+  // = programmer) — thin commands AD-7 (le module Productivity écrit
+  // `habits` / `routines`).
+  habit_create: habitCreate,
+  routine_create: routineCreate,
   notification_pref: notificationPref,
   eisenhower_prioritize: eisenhowerPrioritize,
   // Focus planning (focus-mode spec + planning-execution)

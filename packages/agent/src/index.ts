@@ -169,6 +169,10 @@ export {
   taskDelete,
   canvasDelete,
   skillDelete,
+  // G6 (feature agentique 2026-10-06) : création habit / routine (cadence
+  // = programmer) — thin emitters AD-7
+  habitCreate,
+  routineCreate,
   isJobKind,
 } from './tools.ts';
 
