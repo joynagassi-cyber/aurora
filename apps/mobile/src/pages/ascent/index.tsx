@@ -20,6 +20,7 @@
  */
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import type { AscentLearningIR, AppError, AsyncState } from '@aurora/domain';
 import type { MobileDataProvider } from '../../query/query-client';
 import { useMobileData } from '../../query/context';
@@ -158,6 +159,11 @@ export function SlideAscentPage({
     killed,
     onRetry: () => refetch(),
     emptyCta: "Créer un chemin",
+    // "Créer un chemin" = enqueue an agent intent — the kernel builds the
+    // AscentLearningIR (single writer, AD-7); the page only reads the mirror.
+    emptyCtaHref: `/agent?intent=${encodeURIComponent(
+      "Conçois mon chemin d'ascension vers mon objectif (objectif, étapes, profondeur par étape, prérequis).",
+    )}`,
   };
 
   // Map the `useQuery` result to the canonical `AsyncState` shape that
@@ -241,6 +247,29 @@ function currentSlides(path: AscentLearningIR, l1: Level1View): Slide[] {
 }
 
 /**
+ * Pre-bound agent intents for the 5 Active-Reading actions (S14). Each maps
+ * to the kernel `agent.start({ intent })` surface (agent-client.ts, AD-12):
+ * the agent explains, notes, creates flashcards, visualizes, or diagnoses
+ * (Mirror-style). The device only ENQUEUES — the kernel executes
+ * server-side; the /agent page shows the run. The intent is pre-filled in
+ * the /agent composer via `?intent=`, so the user just sends.
+ */
+function activeReadingIntent(action: ActiveReadingAction, step: AscentLearningIR['steps'][number]): string {
+  switch (action) {
+    case 'explain':
+      return `Explique simplement le concept « ${step.label} » de mon chemin d'ascension (analogies OK, toujours labellisées) — niveau ${step.depth ?? 'standard'}.`;
+    case 'note':
+      return `Crée une note personnelle sur « ${step.label} » pour ma fiche de révision.`;
+    case 'flashcard':
+      return `Génère une flashcard (Q/R) sur « ${step.label} » pour ma révision FSRS.`;
+    case 'visualize':
+      return `Génère une visualisation (schéma / formule) du concept « ${step.label} ».`;
+    case 'stuck':
+      return `Je bloque sur « ${step.label} » — diagnostique (style Miroir : ce que je comprends mal, l'angle d'attaque) et propose un plan de remédiation court.`;
+  }
+}
+
+/**
  * One rendered slide. An Analogy slide ALWAYS carries its
  * "analogy, not fact" label (S12 rule, AD-11).
  */
@@ -252,6 +281,7 @@ export function SlideCard({
   availability: ActiveReadingAvailability;
 }) {
   const isAnalogy = slide.type === 'analogy';
+  const navigate = useNavigate();
   return (
     <article
       data-slide-type={slide.type}
@@ -268,7 +298,13 @@ export function SlideCard({
         {(Object.keys(ACTION_LABELS) as ActiveReadingAction[])
           .filter((a) => availability[a])
           .map((a) => (
-            <button key={a} data-action={a}>
+            <button
+              key={a}
+              type="button"
+              onClick={() =>
+                navigate(`/agent?intent=${encodeURIComponent(activeReadingIntent(a, slide.step))}`)
+              }
+            >
               {ACTION_LABELS[a]}
             </button>
           ))}

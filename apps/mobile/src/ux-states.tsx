@@ -36,6 +36,13 @@ export interface UxStateFlags {
   onRetry?: () => void;
   /** CTA for the `empty` state — defaults to "Demande à Aurora" (agent). */
   emptyCta?: string;
+  /**
+   * Where the empty-state CTA routes (e.g. "/agent?intent=…"). Rendered as
+   * an `<a>`; when absent the CTA is a plain button (no navigation).
+   */
+  emptyCtaHref?: string;
+  /** Where the error-state "Réessayer" / "Voir le rapport" affordances route. */
+  errorHref?: string;
 }
 
 /** Pick the single state to render from an AsyncState + flags. */
@@ -104,7 +111,24 @@ export function UxStates({
       return (
         <div data-ux="empty">
           <p>Aucune donnée</p>
-          <button type="button" data-cta="agent">{flags.emptyCta ?? 'Demande à Aurora'}</button>
+          {flags.emptyCtaHref ? (
+            <a
+              type="button"
+              data-cta="agent"
+              href={flags.emptyCtaHref}
+              className="aurora-btn aurora-btn--primary aurora-tap"
+            >
+              {flags.emptyCta ?? 'Demande à Aurora'}
+            </a>
+          ) : (
+            <button
+              type="button"
+              data-cta="agent"
+              className="aurora-btn aurora-btn--primary aurora-tap"
+            >
+              {flags.emptyCta ?? 'Demande à Aurora'}
+            </button>
+          )}
         </div>
       );
     case 'error': {
@@ -112,7 +136,23 @@ export function UxStates({
       return (
         <div data-ux="error" role="alert">
           <p>{err?.message ?? 'Erreur'}</p>
-          {flags.onRetry && <button type="button" onClick={flags.onRetry}>Réessayer</button>}
+          {flags.onRetry && (
+            <button
+              type="button"
+              onClick={flags.onRetry}
+              className="aurora-btn aurora-btn--ghost aurora-tap"
+            >
+              Réessayer
+            </button>
+          )}
+          {flags.errorHref && (
+            <a
+              href={flags.errorHref}
+              className="aurora-btn aurora-btn--ghost aurora-tap"
+            >
+              Voir le rapport
+            </a>
+          )}
         </div>
       );
     }

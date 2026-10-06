@@ -7,13 +7,6 @@
  * All the screen's structure is marked with `data-*` — we style here.
  */
 
-[data-ascent-state="ready"] {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 /* Level-1 disclosure header (S11: current + next ONLY, never the path). */
 [data-ascent-level="1"] {
   display: flex;

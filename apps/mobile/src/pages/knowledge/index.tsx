@@ -201,7 +201,11 @@ export function KnowledgeNodePage() {
         <div data-node-id={nodeId} data-node-title={nodeTitle}>
           <span className="breadcrumb">Connaissance &rsaquo; {nodeTitle}</span>
           <UxStates
-            state={mirror.data && mirror.data.nodes.length > 0 ? { status: 'success' } : { status: 'empty' }}
+            state={
+              mirror.data && mirror.data.nodes.length > 0
+                ? { status: 'success', data: undefined }
+                : { status: 'empty' }
+            }
             flags={{ ...flags, emptyCta: 'Étudier ce concept' }}
             label={`Nœud ${nodeTitle}`}
           >

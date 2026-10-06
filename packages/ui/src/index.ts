@@ -136,6 +136,7 @@ export { AgGridTable } from "./components/ui/AgGridTable";
 
 // --- Utils & hooks ----------------------------------------------------------
 export { cn } from "./lib/utils";
+export { markdownToHtml, commentAnchors } from "./lib/canvas-utils";
 export { useToast } from "./hooks/use-toast";
 export { useIsMobile } from "./hooks/use-mobile";
 
