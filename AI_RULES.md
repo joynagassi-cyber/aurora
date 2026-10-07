@@ -15,7 +15,7 @@ The live source of shipped state is, in order:
 2. **`git log`** — commit-level truth (each wave is tagged `wave{N}/{agent}: …`; last recorded full gate: **236 unit tests pass / 0 fail**, all boundary + RLS + view-join greps green).
 3. **`_bmad-output/project-context.md`** + **`project-context-changelog.md`** — the engineering context log.
 
-So: **`apps/` + `packages/` contain real, tested code; `supabase/` has 20 applied migrations + 4 Edge Functions; the mobile app has all its screens.** When a doc says "DESIGNED_NOT_IMPLEMENTED" / "DOCUMENTED_ONLY" but the changelog + a `packages/*/` implementation say otherwise, **trust the changelog + code.** Only treat a capability as designed-not-built if it's *absent from the tree AND absent from the changelog.*
+So: **`apps/` + `packages/` contain real, tested code; `supabase/` has 24 applied migrations (`0001…0023`) + 6 Edge Functions (`fn-agent-run`,`fn-canvas`,`fn-import-course`,`fn-integrations`,`fn-job-dispatcher`,`fn-skills` + `_shared/envelope`); the mobile app has all its screens.** (vérif live 2026-10-07 : 4 jobs pg_cron `aurora_*` 100 % `succeeded` — heartbeat fix v1.10 confirmé —, `job_queue` vide, `skill_catalog` = 607 lignes, `canvas_sessions.locked` + FORCE RLS ✅) When a doc says "DESIGNED_NOT_IMPLEMENTED" / "DOCUMENTED_ONLY" but the changelog + a `packages/*/` implementation say otherwise, **trust the changelog + code.** Only treat a capability as designed-not-built if it's *absent from the tree AND absent from the changelog.*
 
 **Agent session scratch:** `.claude/worktrees/` holds git worktrees + `node_modules` from past agent sessions — **gitignored, regenerable, and NOT part of the codebase. Do not navigate or edit inside it.**
 
@@ -69,7 +69,8 @@ If a *frozen* doc contradicts the working tree, that's a **doc-lag** — surface
 - **`apps/server`** — the server-side workspace member (server kernel/AI/jobs bundle entry). The actual deployable **Supabase Edge Functions live in `supabase/functions/`**.
 
 ### Supporting infra (root)
-- **`supabase/`** — **20 migrations** (`0001…0020`; `0020` = live-applied tracking marker), **4 Edge Functions** (`fn-agent-run`,`fn-import-course`,`fn-job-dispatcher`,`fn-notifications` + `_shared/envelope`), `config.toml` (pg_cron + EF catalog), `README.md`.
+- **`supabase/`** — **24 migrations** (`0001…0023` : `0021` = seed `skill_catalog` marketplace, `0022` = canvas, `0023` = canvas lock), **6 Edge Functions** (`fn-agent-run`,`fn-canvas`,`fn-import-course`,`fn-integrations`,`fn-job-dispatcher`,`fn-skills` + `_shared/envelope`), `config.toml` (pg_cron + EF catalog), `README.md`. ⚠️ le code EF source = `supabase/functions/` (monorepo) ; l'état déployé Supabase peut **retarder** sur le repo (voir [finalisation-v1 G1](docs/plans/finalisation-v1.md)).
+- **`anthropic-skills/`** — **snapshot de référence** : source de curation du seed `skill_catalog` (607 lignes live, `0021`) — pas du code applicatif (bruts non trackés dans `third-party/`).
 - **`powersync/`** — relay schema/config (`relay.sql`,`schema.json`,`sync-config.yaml`,`service.yaml` (supabase client_auth, AD-3 JWKS auto-detect),`cli.yaml`,`roundtrip.md`).
 - **`scripts/`** — the static gates: `check-boundaries.sh` (G1–G4), `check-rls.sh`, `check-view-joins.ts`, `r2-presign.ts`, `ef-test.ts`.
 - **`tests/`** — `spine/` (2 équipes → 1 contrat, AD-15 type-cross-check), `e2e/` (Playwright device + node-native), `rls-penetration.sql`.

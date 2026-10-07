@@ -21,6 +21,17 @@
 | G8 | **Hygiène du repo** : `.claude/worktrees/` + `node_modules` à gitignorer ; artefact vite transitoire untracked (`apps/mobile/vite.config.ts.timestamp-*.mjs`) ; doc-lag `AI_RULES.md` (§3 dit 20 migrations alors que le gate scanne 24) ; `anthropic-skills/` à marquer **snapshot** (source de seed, pas du code). | Hygiène | tree 10-07 |
 | G9 | **Phase 2 non préparée** : Electron adapter, Yjs multi-device, STT local, microservices — **décisions à prendre, pas de code** (ADR additifs uniquement, V1 non-impacts). | Parking lot | ADR §23.1/§23.3 |
 
+### État live vérifié le 2026-10-07 (via `execute_sql` sur `opagfyspdbhxthlxvlrk`)
+
+| Check | Résultat |
+|---|---|
+| `canvas_sessions.locked` (0023) | ✅ colonne `BOOLEAN NOT NULL DEFAULT FALSE` présente ; `RLS enabled + FORCE` ; 2 policies (`_user_isolation` ALL `user_id=auth.uid()` + `_service_role` SELECT) |
+| pg_cron `aurora_*` (jobids 1,2,3,9) | ✅ tous `active=true`, **0 échec** : `event_dispatch` */5 min = 3066 runs « succeeded », dernière 10-07 12:30 UTC ; `fsrs_tick` + `skill_recompute` = 11 runs ; **fix heartbeat v1.10 confirmé** (`keep_alive.last_ping` = 10-07 00:00:00.076, jobid 9 = 10 runs OK) |
+| `job_queue` | ✅ vide (0 job stuck/failed — le dispatcher consomme sans résidu) |
+| `skill_catalog` | ✅ total **607** (18 builtin + 589 marketplace, 0021) ; distribution live : business 199 / legal 160 / finance 128 / documents 24 / research 17 / science 15 / marketing 15 / coding 13 / productivity 12 / healthcare 11 / design 7 / students 4 / social 1 / creative 1 *(drift vs le snapshot du commit 43693d9 = patchs postérieurs, pas un bug)* |
+
+**Restant côté DB = rien** — les résidus G1/G2/G3 sont **EF + client** (à faire depuis le monorepo : `supabase functions deploy` × 6 + round-trip PowerSync avec un user Auth).
+
 ---
 
 ## 2. PLAN D'EXÉCUTION — 7 phases
@@ -29,17 +40,17 @@
 > Dates = jauge (non calendaire) ; le Gantt §3.1 donne un glissement indicatif **10-08 → 10-30 (week-ends inclus)**.
 
 ### Phase 0 — Hygiène & socle (1 j) — owner : Foundation
-- [ ] **P0-1** — gitignorer `.claude/worktrees/**` + `node_modules/**` ; supprimer l'artefact vite untracked (commit `chore: repo hygiene`)
-- [ ] **P0-2** — marquer `anthropic-skills/` **snapshot** (README interne : « source de seed skill_catalog, non du code applicatif ») + corriger `AI_RULES.md` §3 (20 → 24 migrations, état RC)
+- [x] **P0-1** — gitignorer `.claude/worktrees/**` + `node_modules/**` ; supprimer l'artefact vite untracked (commit `chore: repo hygiene`) — *fait 2026-10-07 : `.gitignore` couvrait déjà `.claude/worktrees/` + `node_modules/` ; pattern `vite.config.ts.timestamp-*.mjs` ajouté ; tree propre*
+- [x] **P0-2** — marquer `anthropic-skills/` **snapshot** (README interne : « source de seed skill_catalog, non du code applicatif ») + corriger `AI_RULES.md` §3 (20 → 24 migrations, état RC) — *fait 2026-10-07 : marqueur snapshot ajouté `AI_RULES.md` §3 + `.gitignore` ; §1/§3 corrigés (24 migrations, 6 EF)*
 - [ ] **P0-3** — tag git `v0.1.0` (marker RC officiel ; le tag existe déjà en main, on le fige)
 - [ ] **P0-4** — secrets prod : `set-secrets.ps1` poussé pour les 3 envs (dev / staging / prod, OQ-03) + checklist `supabase/manual-secrets-checklist.md` re-vérifiée post-set
 
 ### Phase 1 — Deploy & données live (2 j) — owner : Data + Orion
 - [ ] **P1-1** — `supabase functions deploy` × 6 EF (`fn-agent-run`, `fn-canvas`, `fn-import-course`, `fn-integrations`, `fn-job-dispatcher`, `fn-skills`) + **vérif** verbes `canvas.create / canvas.lock / canvas.rename` (smoke test curl authed)
 - [ ] **P1-2** — **Résoudre `DISCOVERY_JOB_HANDLERS` côté EF** : le module `packages/discovery` n'est pas résolvable par le runtime Deno → décision entre **bundler** (esbuild/deno bundle du handler dans le EF) ou **copie** (fichier dupliqué + test de drift) ; à encoder dans `fn-job-dispatcher` + `config.toml` catalog
-- [ ] **P1-3** — **Test jobs E2E** (DoD wave 1) : job créé par le pg_cron `aurora_event_dispatch` → `fn-job-dispatcher` le claim → résultat écrit + **idempotence** sur `source_local_mutation_id` (replay = no-op) ; vérif via `job_logs` + `job_queue.attempts`
+- [ ] **P1-3** — **Test jobs E2E** (DoD wave 1) : job créé par le pg_cron `aurora_event_dispatch` → `fn-job-dispatcher` le claim → résultat écrit + **idempotence** sur `source_local_mutation_id` (replay = no-op) ; vérif via `job_logs` + `job_queue.attempts` — *état live vérifié 10-07 : scheduler 4 jobs OK + queue vide ; reste le test de claim par l'EF (après P1-1/P1-2, monorepo)*
 - [ ] **P1-4** — **PowerSync round-trip** (DoD wave 1) : user Supabase Auth (`joynagassi` ou dev user) + client PowerSync local → lecture `tasks`/`goals` → écriture locale → upsync → relecture ; **offline kill-app relaunch = état intact** (03 §5.9)
-- [ ] **P1-5** — **RLS penetration re-run post-0023** : `canvas_sessions.locked` (test A vs B sur la colonne `locked`, `tests/rls-penetration.sql`)
+- [ ] **P1-5** — **RLS penetration re-run post-0023** : `canvas_sessions.locked` (test A vs B sur la colonne `locked`, `tests/rls-penetration.sql`) — *vérif structurelle 10-07 ✅ (RLS enabled + FORCE, policies ALL user + SELECT service_role) ; le test A/B live avec 2 users reste à faire (monorepo)*
 
 ### Phase 2 — Audit & résidus (3 j) — owner : QA + toutes équipes
 - [ ] **P2-1** — **Audit AD-1..AD-17 global** : exécution des 4 gates (`scripts/check-boundaries.sh`, `check-rls.sh`, `check-view-joins.ts`, `tests/spine/spine.test.ts`) + relecture manuelle des invariants (AD-1 vendor, AD-3 secrets, AD-7 single-writer, AD-8 jobs, AD-9 9-év., AD-10 boundary, AD-15 SSoT, AD-14 Home, AD-17 thèmes) ; **rapport classé Critique / High / Medium / Low** (n° W6-E1-1)
