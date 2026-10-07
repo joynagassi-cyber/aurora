@@ -117,7 +117,20 @@ export function createAuroraDataProvider(env: AuroraDataEnv): AuroraDataProvider
     engine,
 
     async connect(): Promise<void> {
-      await engine.init();
+      await engine.init(); // AD-7: the local mirror is ALWAYS available (offline shell)
+      // Relay gate (03 S8.1): without a Supabase session the relay cannot be
+      // authenticated — skip `addScope` so the PowerSync 5-second retry loop
+      // (`fetchCredentials`) does not spam "No Supabase session" errors while
+      // signed out. After sign-in the app reloads (login page → `location.assign('/')`)
+      // and `connect()` runs with the restored session (persistSession); the
+      // local-mirror shell keeps working meanwhile (AD-7 degraded state, honest).
+      const { data: { session } } = await clientFactory().auth.getSession();
+      if (!session) {
+        console.warn(
+          '[Aurora] no Supabase session — local-mirror shell only (AD-7); sign in to enable relay sync.',
+        );
+        return;
+      }
       // `auto_subscribe` streams (sync-config.yaml) — no manual
       // `addScope` at the relay; `addScope` triggers `connect`
       // (`db.connect`, fire-and-forget) + `waitForFirstSync` as the
