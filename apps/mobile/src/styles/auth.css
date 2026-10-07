@@ -1,0 +1,111 @@
+/* =============================================================================
+   auth.css — surface « Compte » /login (P1-4, 10-07) : Connexion +
+   Inscription, refonte design 10-07 (shadcn du design system, shell Ion
+   comme Settings/NotFound).
+   Pack 05 / AD-17 : tokens only (--aurora-*), zéro couleur hardcodée,
+   border-radius ≤ 8 px, tap targets ≥ 44 px, animation 150–250 ms
+   GPU-only (reprise du pattern .is-spinning partagé).
+   ============================================================================= */
+
+.auth-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  max-width: 440px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Tabs plein largeur (50/50) — le TabsList shadcn reste son style token. */
+.auth-tabs-list {
+  width: 100%;
+  display: flex;
+}
+.auth-tabs-list > [role='trigger'] {
+  flex: 1;
+  min-height: var(--aurora-tap-target, 44px);
+}
+
+.auth-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.auth-field input {
+  min-height: var(--aurora-tap-target, 44px);
+}
+
+.auth-full {
+  width: 100%;
+  min-height: var(--aurora-tap-target, 44px);
+  margin-top: 12px;
+}
+
+.auth-error {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--aurora-danger);
+}
+.auth-success-note {
+  margin: 0;
+  font-size: 14px;
+  color: var(--aurora-text-secondary);
+}
+.auth-conn-email {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--aurora-text-primary);
+  word-break: break-all;
+}
+.auth-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--aurora-text-muted);
+}
+
+.auth-result {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Comptes dev (P1-4/P1-5) — pré-remplissage, boutons ghost compacts. */
+.auth-dev-accounts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+/* Bloc de diagnostic DEV-only (fn-dev-auth — SUPPRIMER AVANT v1.0). */
+.auth-diag {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px dashed var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  background: var(--aurora-bg-subtle);
+}
+.auth-diag pre {
+  margin: 0;
+  padding: 8px;
+  max-height: 180px;
+  overflow: auto;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--aurora-text-muted);
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  white-space: pre-wrap;
+  word-break: break-word;
+}

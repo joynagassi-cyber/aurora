@@ -77,3 +77,35 @@ export async function signOut(): Promise<void> {
   if (!client) return;
   await client.auth.signOut();
 }
+
+/**
+ * Inscription (sign-up, 10-07) : création du user par GoTrue lui-même
+ * (admin-canonique) — jamais par INSERT SQL brut (leçon P1-4 : audience,
+ * hash et identité email doivent être celles du projet). Deux issues :
+ *  - session immédiate (confirmation email désactivée) → le seed de
+ *    `user_context` (scope identity, AD-14) s'applique et l'app peut
+ *    recharger ;
+ *  - `needsEmailConfirmation` (confirm-required projet) → l'app montre
+ *    l'état honnête « vérifie ta boîte mail » (AD-13), jamais un faux
+ *    succès.
+ */
+export async function signUp(email: string, password: string): Promise<{ needsEmailConfirmation: boolean }> {
+  const client = resolveClient();
+  if (!client) throw new Error('Aucun accès Supabase configuré (OQ-03).');
+  const { data, error } = await client.auth.signUp({ email: email.trim(), password });
+  if (error) throw new Error(error.message);
+  if (data.session?.user) {
+    await client.from('user_context').upsert(
+      { user_id: data.session.user.id },
+      { onConflict: 'user_id' },
+    );
+    console.log('[Aurora] sign-up réussi — session active, relay PowerSync sous ~5 s', {
+      user: data.session.user.email,
+    });
+    return { needsEmailConfirmation: false };
+  }
+  console.log('[Aurora] sign-up — confirmation email requise avant 1er sign-in', {
+    user: email,
+  });
+  return { needsEmailConfirmation: true };
+}

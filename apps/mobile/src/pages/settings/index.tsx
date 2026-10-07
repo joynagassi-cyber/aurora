@@ -27,6 +27,7 @@ import {
   type ExpressiveThemeName,
   type PresetName,
   Badge,
+  Button,
   Card,
   CardContent,
   CardDescription,
@@ -68,22 +69,19 @@ export function SettingsPage() {
       </IonHeader>
       <IonContent>
         <div data-settings="true" className="settings-page">
-          {/* Connexion — the Supabase Auth entry (P1-4, 10-07): the shell
-              boots local-mirror-only (AD-7); /login restores the session so
-              the PowerSync relay connects. */}
+          {/* Compte — la porte unique d'Auth (P1-4, 10-07) : Connexion ET
+              Inscription sur /login (refonte design 10-07, shadcn). Le
+              shell boote local-mirror-only (AD-7) ; la session y restaurée
+              connecte le relay PowerSync (03 S8.1). */}
           <Card>
             <CardHeader>
-              <CardTitle>Connexion</CardTitle>
-              <CardDescription>Compte Aurora (sync + agent, 03 S8.1).</CardDescription>
+              <CardTitle>Compte</CardTitle>
+              <CardDescription>Connexion / inscription — sync PowerSync + agent (03 S8.1).</CardDescription>
             </CardHeader>
             <CardContent>
-              <button
-                type="button"
-                className="aurora-btn aurora-btn--primary aurora-tap settings-conn-btn"
-                onClick={() => navigate('/login')}
-              >
-                <LogIn size={16} aria-hidden /> Se connecter
-              </button>
+              <Button onClick={() => navigate('/login')}>
+                <LogIn aria-hidden /> Se connecter / s'inscrire
+              </Button>
             </CardContent>
           </Card>
 

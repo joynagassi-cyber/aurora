@@ -1,25 +1,46 @@
 /**
- * Login (P1-4 unblock, 10-07) — the single Supabase Auth entry point.
+ * Compte (P1-4, 10-07) — la porte unique d'Auth de l'app :
+ * Connexion ET Inscription (reprend la place de l'ancienne « login page »
+ * brute — refonte design 10-07 : shadcn Card/Tabs/Label/Input/Button du
+ * design system, shell IonHeader/IonContent comme Settings/NotFound ;
+ * plus aucun IonButton ni bouton HTML nu — pack 05 §3 / AD-17).
  *
- * The shell boots WITHOUT a session by design (AD-7 local-first, 03 S8.1):
- * the PowerSync connector's `fetchCredentials` degrades to the local-mirror
- * shell and logs "No Supabase session — sign in before PowerSync connect".
- * This page is the missing entry: sign in → the persisted session is picked
- * up by the engine's client on the next boot → the sync loop connects.
+ * Le shell boote SANS session par design (AD-7 local-first, 03 S8.1) :
+ * le connector relay dégrade vers le shell local-mirror et ne spame plus
+ * (gate boot-data.ts). Sign-in / sign-up → session persistée (client
+ * partagé main.tsx) → le sync relay se connecte sous ~5 s.
  *
- * AD-13: loading (submitting) / error (credential failure) states, plus the
- * honest empty state when OQ-03 env values are absent (authAvailable = false).
- * AD-17 / pack 05: tokens only, no hardcoded colors, tap targets ≥ 44 px.
+ * AD-13 : loading (submit) / error (alert role) / empty (OQ-03 env absent)
+ * / success (connecté ou inscription confirmée). Tokens only, tap ≥ 44 px.
  *
- * DEV-ONLY (P1-4, 10-07) : bloc de diagnostic `fn-dev-auth` (réparation du
- * hash via l'admin API GoTrue + test de sign-in verbatim) — GATED DEV,
- * SUPPRIMER AVANT v1.0 avec l'EF `supabase/functions/fn-dev-auth`.
+ * DEV-ONLY (P1-4, 10-07) : bloc de diagnostic `fn-dev-auth` (récreation
+ * canonique des comptes dev via l'admin API + test de sign-in verbatim) —
+ * GATED DEV, SUPPRIMER AVANT v1.0 avec l'EF `supabase/functions/fn-dev-auth`.
  */
-import { IonButton, IonContent, IonHeader, IonTitle } from '@ionic/react';
-import { Lock, Loader2, LogOut } from 'lucide-react';
+import { IonContent, IonHeader, IonTitle } from '@ionic/react';
+import { KeyRound, Loader2, LogOut, MailCheck, UserPlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { authAvailable, currentSession, signIn, signOut } from '../../lib/auth';
-import { useNavigate } from 'react-router-dom';
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Input,
+  Label,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@aurora/ui';
+import {
+  authAvailable,
+  currentSession,
+  signIn,
+  signOut,
+  signUp,
+} from '../../lib/auth';
 
 const DEV_EF_URL = 'https://opagfyspdbhxthlxvlrk.supabase.co/functions/v1/fn-dev-auth';
 const DEV_ACCOUNTS: Record<string, string> = {
@@ -28,23 +49,77 @@ const DEV_ACCOUNTS: Record<string, string> = {
 };
 
 export function LoginPage() {
+  const [tab, setTab] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [signedInAs, setSignedInAs] = useState<string | null>(null);
   const [diag, setDiag] = useState<string | null>(null);
-  const navigate = useNavigate();
 
-  // Restore the persisted session state so the page reflects reality.
+  // Restaure l'état réel : session persistée (client partagé persistSession).
   useEffect(() => {
     void currentSession().then((s) => setSignedInAs(s?.user?.email ?? null));
   }, []);
 
-  // DEV-ONLY (P1-4, 10-07 — SUPPRIMER AVANT v1.0, avec l'EF fn-dev-auth) :
-  // répare le hash par l'admin API GoTrue (canonique) + test de sign-in
-  // verbatim. L'EF est public (verify_jwt=false) ; le scope sensible reste
-  // service_role CÔTÉ EF (AD-3 — zéro secret sur device).
+  const switchTab = (t: 'signin' | 'signup') => {
+    setTab(t);
+    setError(null);
+    setSuccess(null);
+  };
+
+  async function submitSignIn(e: React.FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      await signIn(email, password);
+      // Boot neuf : le client partagé restaure la session, le relay
+      // PowerSync se connecte (03 S8.1).
+      window.location.assign('/');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Connexion impossible.');
+      setBusy(false);
+    }
+  }
+
+  async function submitSignUp(e: React.FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const { needsEmailConfirmation } = await signUp(email, password);
+      if (needsEmailConfirmation) {
+        setSuccess(
+          `Compte créé pour ${email.trim()} — un email de confirmation a été envoyé. Vérifie ta boîte mail, puis reviens te connecter.`,
+        );
+      } else {
+        setSuccess(`Compte créé — tu es connecté en tant que ${email.trim()}.`);
+        // La session est active dans le client partagé : le reload active
+        // le relay (03 S8.1).
+        window.setTimeout(() => window.location.assign('/'), 1500);
+      }
+      setBusy(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Inscription impossible.');
+      setBusy(false);
+    }
+  }
+
+  async function logout() {
+    setBusy(true);
+    await signOut();
+    window.location.assign('/');
+  }
+
+  // DEV-ONLY (P1-4 — SUPPRIMER AVANT v1.0 avec l'EF fn-dev-auth) :
+  // récrée les comptes dev via l'admin API GoTrue (canonique) + test de
+  // sign-in verbatim. Scope sensible service_role CÔTÉ EF (AD-3).
   async function runDevAuthDiagnostic() {
     setDiag('Diagnostic en cours (fn-dev-auth)…');
     try {
@@ -57,16 +132,15 @@ export function LoginPage() {
           },
           body: JSON.stringify(payload),
         });
-        return (await r.json().catch(() => ({ ok: false, error: `HTTP ${r.status} (EF non déployée ?)` }))) as unknown;
+        return (await r.json().catch(
+          () => ({ ok: false, error: `HTTP ${r.status} (EF non déployée ?)` }),
+        )) as unknown;
       };
-      // Recréation canonique via l'admin API GoTrue (audience par défaut du
-      // projet + hash canonique + identité email) — les INSERT SQL bruts ne
-      // garantissent pas l'audience du projet, d'où les 400 persistants.
       const recreated = await Promise.all(
-        Object.entries(DEV_ACCOUNTS).map(async ([e, pw]) => {
-          const out = await call({ action: 'recreate', email: e, password: pw });
-          return { email: e, out };
-        }),
+        Object.entries(DEV_ACCOUNTS).map(async ([e, pw]) => ({
+          email: e,
+          out: await call({ action: 'recreate', email: e, password: pw }),
+        })),
       );
       const test = await call({
         action: 'test-signin',
@@ -79,129 +153,197 @@ export function LoginPage() {
     }
   }
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (busy) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await signIn(email.trim(), password);
-      // Fresh boot: the engine's Supabase client (persistSession) restores the
-      // session and the PowerSync sync loop connects (03 S8.1).
-      window.location.assign('/');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Connexion impossible.');
-      setBusy(false);
-    }
-  }
-
-  async function logout() {
-    setBusy(true);
-    await signOut();
-    window.location.assign('/');
-  }
-
   return (
     <>
       <IonHeader>
-        <IonTitle>Connexion</IonTitle>
+        <IonTitle>Compte</IonTitle>
       </IonHeader>
       <IonContent>
-        <div data-login="true" className="login">
+        <div data-auth-page="true" className="auth-page">
           {signedInAs ? (
-            <div data-state="success" className="login-state">
-              <p>Connecté en tant que <strong>{signedInAs}</strong>.</p>
-              <IonButton
-                className="aurora-tap"
-                fill="outline"
-                role="button"
-                aria-label="Se déconnecter"
-                disabled={busy}
-                onClick={() => void logout()}
-              >
-                <LogOut size={16} aria-hidden /> Déconnexion
-              </IonButton>
-            </div>
+            <Card data-state="success">
+              <CardHeader>
+                <CardTitle>Connecté</CardTitle>
+                <CardDescription>Session active — sync relay PowerSync opérationnel.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="auth-conn-email" data-conn-email="true">{signedInAs}</p>
+                <Button
+                  variant="outline"
+                  className="auth-full"
+                  disabled={busy}
+                  onClick={() => void logout()}
+                >
+                  {busy ? <Loader2 aria-hidden className="is-spinning" /> : <LogOut aria-hidden />}
+                  Se déconnecter
+                </Button>
+              </CardContent>
+            </Card>
           ) : authAvailable ? (
-            <>
-              <form
-                className="login-form"
-                onSubmit={submit}
-                data-state={busy ? 'loading' : error ? 'error' : 'idle'}
-              >
-                <label className="login-field">
-                  <span>Email</span>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="dev.aurora@joynagassi.dev"
-                    autoComplete="email"
-                    required
-                  />
-                </label>
-                <label className="login-field">
-                  <span>Mot de passe</span>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    autoComplete="current-password"
-                    required
-                  />
-                </label>
+            <Card>
+              <CardHeader>
+                <CardTitle>Compte Aurora</CardTitle>
+                <CardDescription>
+                  Connexion ou inscription — synchronisation PowerSync + agent (03 S8.1).
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Tabs value={tab} onValueChange={(v) => switchTab(v as typeof tab)}>
+                  <TabsList className="auth-tabs-list">
+                    <TabsTrigger value="signin">Connexion</TabsTrigger>
+                    <TabsTrigger value="signup">Inscription</TabsTrigger>
+                  </TabsList>
 
-                {error ? (
-                  <p className="login-error" role="alert">{error}</p>
-                ) : null}
+                  <TabsContent value="signin">
+                    <form onSubmit={submitSignIn} data-state={busy ? 'loading' : error ? 'error' : 'idle'}>
+                      <div className="auth-fields">
+                        <div className="auth-field">
+                          <Label htmlFor="auth-signin-email">Email</Label>
+                          <Input
+                            id="auth-signin-email"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="prenom@domaine.dev"
+                            autoComplete="email"
+                            required
+                          />
+                        </div>
+                        <div className="auth-field">
+                          <Label htmlFor="auth-signin-password">Mot de passe</Label>
+                          <Input
+                            id="auth-signin-password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            autoComplete="current-password"
+                            required
+                          />
+                        </div>
+                      </div>
 
-                <IonButton
-                  type="submit"
-                  className="aurora-tap"
-                  disabled={busy || email.trim().length === 0 || password.length === 0}
-                >
-                  {busy ? <Loader2 size={16} aria-hidden className="is-spinning" /> : <Lock size={16} aria-hidden />}
-                  {busy ? 'Connexion…' : 'Se connecter'}
-                </IonButton>
-              </form>
+                      {error ? (
+                        <p className="auth-error" role="alert">{error}</p>
+                      ) : null}
 
-              {/* Dev accounts (created in Supabase Auth for the P1-4/P1-5
-                  round-trip + RLS penetration, 10-07) — prefill only, never
-                  auto-submit. */}
-              <div className="login-dev-accounts" role="group" aria-label="Comptes de développement">
-                <button
-                  type="button"
-                  className="aurora-btn aurora-btn--ghost aurora-tap"
-                  onClick={() => { setEmail('dev.aurora@joynagassi.dev'); setPassword('Aurora-Dev1!'); }}
-                >
-                  dev.aurora@…
-                </button>
-                <button
-                  type="button"
-                  className="aurora-btn aurora-btn--ghost aurora-tap"
-                  onClick={() => { setEmail('dev.aurora2@joynagassi.dev'); setPassword('Aurora-Dev2!'); }}
-                >
-                  dev.aurora2@…
-                </button>
-              </div>
+                      <Button
+                        type="submit"
+                        className="auth-full"
+                        disabled={busy || email.trim().length === 0 || password.length === 0}
+                      >
+                        {busy ? <Loader2 aria-hidden className="is-spinning" /> : <KeyRound aria-hidden />}
+                        {busy ? 'Connexion…' : 'Se connecter'}
+                      </Button>
 
-              {import.meta.env.DEV && (
-                <div className="login-diag" data-diag="true">
-                  <button
-                    type="button"
-                    className="aurora-btn aurora-btn--ghost aurora-tap"
-                    onClick={() => void runDevAuthDiagnostic()}
-                  >
-                    DEV — diagnostic comptes (EF fn-dev-auth)
-                  </button>
-                  {diag ? <pre>{diag}</pre> : null}
-                </div>
-              )}
-            </>
+                      {/* Comptes dev P1-4/P1-5 — pré-remplissage uniquement
+                          (jamais d'auto-submit), 10-07. */}
+                      <div className="auth-dev-accounts" role="group" aria-label="Comptes de développement">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => { setEmail('dev.aurora@joynagassi.dev'); setPassword('Aurora-Dev1!'); }}
+                        >
+                          dev.aurora@…
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => { setEmail('dev.aurora2@joynagassi.dev'); setPassword('Aurora-Dev2!'); }}
+                        >
+                          dev.aurora2@…
+                        </Button>
+                      </div>
+                    </form>
+                  </TabsContent>
+
+                  <TabsContent value="signup">
+                    {success ? (
+                      <div data-state="success" className="auth-result">
+                        <p className="auth-success-note">
+                          <MailCheck aria-hidden /> {success}
+                        </p>
+                        <Button
+                          variant="outline"
+                          className="auth-full"
+                          onClick={() => switchTab('signin')}
+                        >
+                          Passer à la connexion
+                        </Button>
+                      </div>
+                    ) : (
+                      <form onSubmit={submitSignUp} data-state={busy ? 'loading' : error ? 'error' : 'idle'}>
+                        <div className="auth-fields">
+                          <div className="auth-field">
+                            <Label htmlFor="auth-signup-email">Email</Label>
+                            <Input
+                              id="auth-signup-email"
+                              type="email"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              placeholder="prenom@domaine.dev"
+                              autoComplete="email"
+                              required
+                            />
+                          </div>
+                          <div className="auth-field">
+                            <Label htmlFor="auth-signup-password">Mot de passe</Label>
+                            <Input
+                              id="auth-signup-password"
+                              type="password"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              autoComplete="new-password"
+                              minLength={8}
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        {error ? (
+                          <p className="auth-error" role="alert">{error}</p>
+                        ) : null}
+
+                        <Button
+                          type="submit"
+                          className="auth-full"
+                          disabled={busy || email.trim().length === 0 || password.length < 8}
+                        >
+                          {busy ? <Loader2 aria-hidden className="is-spinning" /> : <UserPlus aria-hidden />}
+                          {busy ? 'Inscription…' : 'Créer mon compte'}
+                        </Button>
+                        <p className="auth-note">
+                          8 caractères minimum. Si le projet exige la confirmation par email,
+                          tu recevras un lien avant ta première connexion.
+                        </p>
+                      </form>
+                    )}
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
           ) : (
-            <div data-state="empty" className="login-state">
-              <p>Aucun accès Supabase configuré (OQ-03 — valeurs d'env manquantes).</p>
+            <Card data-state="empty">
+              <CardHeader>
+                <CardTitle>Compte indisponible</CardTitle>
+                <CardDescription>
+                  Aucun accès Supabase configuré (OQ-03 — valeurs d'env manquantes).
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          )}
+
+          {import.meta.env.DEV && (
+            <div className="auth-diag" data-diag="true">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void runDevAuthDiagnostic()}
+              >
+                DEV — diagnostic comptes (EF fn-dev-auth)
+              </Button>
+              {diag ? <pre>{diag}</pre> : null}
             </div>
           )}
         </div>
