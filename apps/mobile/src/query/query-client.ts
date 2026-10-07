@@ -124,30 +124,53 @@ export function createMobileQueryClient(provider: MobileDataProvider): QueryClie
     });
   }
 
-  // G-M2 (04 S6.1): the first local re-read completing is the "killed"
-  // clear signal (useKilledDetection). Dispatch `aurora:first-local-read`
-  // EXACTLY ONCE, when the first query reaches `success` — not at add
-  // time (a freshly-added query is still fetching, state is not the
-  // re-read). A module flag keeps later hook mounts informed after the
-  // one-shot event has already fired.
-  // NOTE (v5 API): `Query` keeps its state private in v5 — read it with
-  // `getState()` / subscribe state listeners via `query.subscribe(state)`,
-  // never `query.state` (that field is v4-only and undefined here).
-  let firstReadDispatched = false;
-  client.queryCache.subscribe((_cache, query) => {
-    if (!query) return;
-    query.subscribe((state) => {
-      if (!firstReadDispatched && state.status === 'success') {
-        firstReadDispatched = true;
-        markFirstLocalReadSeen();
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new Event('aurora:first-local-read'));
-        }
-      }
-    });
-  });
+  // G-M2 (04 S6.1): the "first local re-read done" clear signal is NOT
+  // wired here. React Query's internal subscription surface
+  // (`queryCache.subscribe` / `query.subscribe`) is fragile across
+  // bundled builds (the `client.queryCache` property / `query.state`
+  // shape changed between versions → repeated `undefined.subscribe`
+  // crashes). Instead the signal is dispatched at the LOCAL-READ SSoT
+  // path — the repository wrapper in `mobileDataProviderFrom` below
+  // (`withFirstLocalReadSignal`, 03 S5.8). That is exactly where the
+  // "first local re-read" happens and it uses only `Promise.then`
+  // (no library internals, no crash path).
 
   return client;
+}
+
+/**
+ * G-M2 (04 S6.1) — the "first local re-read done" signal. Wraps a
+ * `LocalQueryRepository` so the FIRST successful local read
+ * (`list` / `getById`) dispatches `aurora:first-local-read` EXACTLY ONCE.
+ * This is the 03 S5.8 local-read bridge itself (no network, SQLite), so it
+ * is the honest "re-read complete" moment that clears the killed-state
+ * skeleton (`useKilledDetection`). A local flag + the module flag
+ * (`markFirstLocalReadSeen`) keep later hook mounts informed after the
+ * one-shot event has already fired.
+ */
+function withFirstLocalReadSignal<T>(repo: LocalQueryRepository<T>): LocalQueryRepository<T> {
+  let signaled = false;
+  const signal = () => {
+    if (signaled) return;
+    signaled = true;
+    markFirstLocalReadSeen();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('aurora:first-local-read'));
+    }
+  };
+  return {
+    getById: (id) => {
+      const p = repo.getById(id);
+      void p.then(signal, () => undefined);
+      return p;
+    },
+    list: (filter) => {
+      const p = repo.list(filter);
+      void p.then(signal, () => undefined);
+      return p;
+    },
+    watch: (filter, onChange) => repo.watch(filter, onChange),
+  };
 }
 
 /**
@@ -163,11 +186,19 @@ export function mobileDataProviderFrom(
   skills?: SkillClient,
   canvas?: CanvasClient,
 ): MobileDataProvider {
+  // G-M2: wrap the local read SSoT so the FIRST successful local read
+  // dispatches `aurora:first-local-read` (the killed-clear signal). Pure
+  // `Promise.then` — no React Query internals, no crash path (03 S5.8).
+  const goals = withFirstLocalReadSignal(provider.goals);
+  const tasks = withFirstLocalReadSignal(provider.tasks);
+  const ascent = provider.ascent
+    ? withFirstLocalReadSignal(provider.ascent)
+    : undefined;
   return {
-    goals: provider.goals,
-    tasks: provider.tasks,
+    goals,
+    tasks,
     // A2: expose the Ascent local-mirror repo (snake→camel-mapped, AD-15).
-    ascent: provider.ascent,
+    ascent,
     // AD-3: the publishable-scope agent client (kernel enqueue + mirror read).
     agent,
     // AD-3: the publishable-scope integrations client (Composio v3.1

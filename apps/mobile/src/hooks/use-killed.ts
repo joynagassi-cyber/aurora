@@ -11,11 +11,12 @@
  * This hook exposes `killed` to the 5 UX states (P3) and clears it as
  * soon as the first local re-read completes. The clear signal is the
  * `aurora:first-local-read` window event, dispatched EXACTLY ONCE by
- * the query bridge (`createMobileQueryClient`, 03 S5.8) when the first
- * local query reaches `success` — that is the moment the local store
- * re-read has completed (G-M2: "clear it as soon as the first local
- * re-read completes"). The module flag below keeps the fact for hook
- * instances that mount AFTER the one-shot event already fired.
+ * the LOCAL-READ SSoT path — the repository wrapper
+ * (`withFirstLocalReadSignal`, `mobileDataProviderFrom`, 03 S5.8) when
+ * the first `list`/`getById` resolves. That is the moment the local
+ * store re-read has completed (G-M2: "clear it as soon as the first
+ * local re-read completes"). The module flag below keeps the fact for
+ * hook instances that mount AFTER the one-shot event already fired.
  * It is the UI-only face; the native lifecycle events themselves are
  * delivered by P5's AppLifecycleAdapter (@aurora/platform).
  */
