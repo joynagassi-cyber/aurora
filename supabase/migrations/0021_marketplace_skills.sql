@@ -1,5 +1,5 @@
 -- 0021_marketplace_skills.sql
--- Généré par scripts/skills-seed.ts le 2026-10-05
+-- Généré par scripts/skills-seed.ts le 2026-10-07
 -- Source : anthropic-skills/ (curé de 589 SKILL.md de third-party/anthropic/*)
 -- Règle : le fichier de migration est le SSoT du schéma (règle supabase-mcp.md) ;
 -- le live doit rester aligné. Application via mcp__supabase-aurora__execute_sql,
@@ -58681,7 +58681,7 @@ keep the artifacts consistent:
   ('marketplace:k12-teacher-skills/k12-teacher-skills/plugin/skills/k12-lesson-prep', 'students', 'k12-lesson-prep', '', 'k12-lesson-prep', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:k12-teacher-skills', '', $body$# K-12 Lesson Preparation
 
 The goal is for the teacher to internalize what's most important about the key student tasks of the lesson. You are the teacher's teammate in this process. Get the actual lesson and try its key task first; never prep from a guess. Hand the teacher the key task as written and have them try it and name where an almost-right student answer would go wrong; your almost-right student answers and the rest of what you saw come after theirs. Keep the talk on the task's design rather than their students. If the teacher gets something about the content wrong, say so plainly. Lead every turn with the one thing that matters, keep it to a few lines, and ask only questions that the teacher can answer in a sentence or by working one short problem. After the first exchange, make it plain that they can stop whenever they have what they need, and if you offer more, name the one specific thing. Leave a prep note of 200–300 words at $OUTPUT_DIR/prep_note.md that walks the lesson's own parts in teaching order — each part's name as a bold heading, every finding under the part it belongs to — and once it is written, ask whether anything in it should change.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/bio-research/skills/instrument-data-to-allotrope', 'business', 'instrument-data-to-allotrope', '', 'instrument-data-to-allotrope', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Instrument Data to Allotrope Converter
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/bio-research/skills/instrument-data-to-allotrope', 'science', 'instrument-data-to-allotrope', '', 'instrument-data-to-allotrope', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Instrument Data to Allotrope Converter
 
 Convert instrument files into standardized Allotrope Simple Model (ASM) format for LIMS upload, data lakes, or handoff to data engineering teams.
 
@@ -58956,7 +58956,7 @@ Validate output against Allotrope schemas when available:
 import jsonschema
 # Schema URLs in references/asm_schema_overview.md
 ```$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/bio-research/skills/nextflow-development', 'business', 'nextflow-development', '', 'nextflow-development', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# nf-core Pipeline Deployment
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/bio-research/skills/nextflow-development', 'science', 'nextflow-development', '', 'nextflow-development', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# nf-core Pipeline Deployment
 
 Run nf-core bioinformatics pipelines on local or public sequencing data.
 
@@ -59241,7 +59241,7 @@ When publishing results, cite the appropriate pipeline. Citations are available 
 - **nf-core pipelines:** MIT License (https://nf-co.re/about)
 - **Nextflow:** Apache License, Version 2.0 (https://www.nextflow.io/about-us.html)
 - **NCBI SRA Toolkit:** Public Domain (https://github.com/ncbi/sra-tools/blob/master/LICENSE)$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/bio-research/skills/scientific-problem-selection', 'business', 'scientific-problem-selection', '', 'scientific-problem-selection', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Scientific Problem Selection Skills
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/bio-research/skills/scientific-problem-selection', 'science', 'scientific-problem-selection', '', 'scientific-problem-selection', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Scientific Problem Selection Skills
 
 A conversational framework for systematic scientific problem selection based on Fischbach & Walsh's "Problem choice and decision trees in science and engineering" (Cell, 2024).
 
@@ -59505,7 +59505,7 @@ Detailed skill documentation is available in the `references/` folder:
 **Fischbach, M.A., & Walsh, C.T. (2024).** "Problem choice and decision trees in science and engineering." *Cell*, 187, 1828-1833.
 
 Based on course BIOE 395 taught at Stanford University.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/bio-research/skills/scvi-tools', 'business', 'scvi-tools', '', 'scvi-tools', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# scvi-tools Deep Learning Skill
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/bio-research/skills/scvi-tools', 'science', 'scvi-tools', '', 'scvi-tools', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# scvi-tools Deep Learning Skill
 
 This skill provides guidance for deep learning-based single-cell analysis using scvi-tools, the leading framework for probabilistic models in single-cell genomics.
 
@@ -59655,7 +59655,7 @@ Strong cross-technology batch effects?
 - [scvi-tools Tutorials](https://docs.scvi-tools.org/en/stable/tutorials/index.html)
 - [Model Hub](https://huggingface.co/scvi-tools)
 - [GitHub Issues](https://github.com/scverse/scvi-tools/issues)$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/bio-research/skills/single-cell-rna-qc', 'business', 'single-cell-rna-qc', '', 'single-cell-rna-qc', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Single-Cell RNA-seq Quality Control
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/bio-research/skills/single-cell-rna-qc', 'science', 'single-cell-rna-qc', '', 'single-cell-rna-qc', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Single-Cell RNA-seq Quality Control
 
 Automated QC workflow for single-cell RNA-seq data following scverse best practices.
 
@@ -59825,7 +59825,7 @@ Typical downstream analysis steps:
 - Normalization (log-normalize, scran)
 - Feature selection and dimensionality reduction
 - Clustering and cell type annotation$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/bio-research/skills/start', 'business', 'start', '', 'start', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Bio-Research Start
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/bio-research/skills/start', 'science', 'start', '', 'start', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Bio-Research Start
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -59899,7 +59899,7 @@ Ask the researcher what they're working on today. Suggest starting points based 
 5. **Research strategy** — "Help me evaluate a new project idea"
 
 Wait for the user's response and guide them to the appropriate tools and skills.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/cowork-plugin-management/skills/cowork-plugin-customizer', 'business', 'cowork-plugin-customizer', '', 'cowork-plugin-customizer', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Cowork Plugin Customization
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/cowork-plugin-management/skills/cowork-plugin-customizer', 'productivity', 'cowork-plugin-customizer', '', 'cowork-plugin-customizer', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Cowork Plugin Customization
 
 Customize a plugin for a specific organization — either by setting up a generic plugin template for the first time, or by tweaking and refining an already-configured plugin.
 
@@ -60039,7 +60039,7 @@ If no knowledge MCPs were available in Phase 1, and the user had to answer at le
 - **`references/mcp-servers.md`** — MCP discovery workflow, category-to-keywords mapping, config file locations
 - **`references/search-strategies.md`** — Knowledge MCP query patterns for finding tool names and org values
 - **`examples/customized-mcp.json`** — Example fully configured `.mcp.json`$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/cowork-plugin-management/skills/create-cowork-plugin', 'business', 'create-cowork-plugin', '', 'create-cowork-plugin', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Create Cowork Plugin
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/cowork-plugin-management/skills/create-cowork-plugin', 'productivity', 'create-cowork-plugin', '', 'create-cowork-plugin', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Create Cowork Plugin
 
 Build a new plugin from scratch through guided conversation. Walk the user through discovery, planning, design, implementation, and packaging — delivering a ready-to-install `.plugin` file at the end.
 
@@ -61814,7 +61814,7 @@ We'll follow up with you within [timeframe] with our findings.
 5. Write internal notes that help the next person pick up context quickly
 6. Include what you've already checked or ruled out to avoid duplicate investigation
 7. Flag patterns — if you're seeing the same issue repeatedly, escalate the pattern even if individual tickets are low priority$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/analyze', 'business', 'analyze', '', 'analyze', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /analyze - Answer Data Questions
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/analyze', 'research', 'analyze', '', 'analyze', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /analyze - Answer Data Questions
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -61927,7 +61927,7 @@ When a chart would communicate results more effectively than a table:
 - If you know the table names, mention them to speed up the process
 - For complex questions, Claude may break them into multiple queries
 - Results are always validated before presentation -- if something looks off, Claude will flag it$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/build-dashboard', 'business', 'build-dashboard', '', 'build-dashboard', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /build-dashboard - Build Interactive Dashboards
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/build-dashboard', 'research', 'build-dashboard', '', 'build-dashboard', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /build-dashboard - Build Interactive Dashboards
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -62845,7 +62845,7 @@ function renderTablePage(data, page, pageSize = 50) {
 - For real-time dashboards, consider connecting to a BI tool instead. These dashboards are point-in-time snapshots
 - Request "dark mode" or "presentation mode" for different styling
 - You can request a specific color scheme to match your brand$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/create-viz', 'business', 'create-viz', '', 'create-viz', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /create-viz - Create Visualizations
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/create-viz', 'research', 'create-viz', '', 'create-viz', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /create-viz - Create Visualizations
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -62993,7 +62993,7 @@ plt.show()
 - Specify "presentation" if you need larger fonts and higher contrast
 - You can request multiple charts at once (e.g., "create a 2x2 grid of charts showing...")
 - Charts are saved to your current directory as PNG files$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/data-context-extractor', 'business', 'data-context-extractor', '', 'data-context-extractor', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Data Context Extractor
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/data-context-extractor', 'research', 'data-context-extractor', '', 'data-context-extractor', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Data Context Extractor
 
 A meta-skill that extracts company-specific data knowledge from analysts and generates tailored data analysis skills.
 
@@ -63203,7 +63203,7 @@ Before delivering a generated skill, verify:
 - [ ] At least 2-3 sample queries per domain
 - [ ] SQL uses correct dialect syntax
 - [ ] Reference files are linked from SKILL.md navigation section$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/data-visualization', 'business', 'data-visualization', '', 'data-visualization', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Data Visualization Skill
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/data-visualization', 'research', 'data-visualization', '', 'data-visualization', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Data Visualization Skill
 
 Chart selection guidance, Python visualization code patterns, design principles, and accessibility considerations for creating effective data visualizations.
 
@@ -63502,7 +63502,7 @@ Before sharing a visualization:
 - [ ] Axes are labeled with units
 - [ ] Legend is clear and positioned without obscuring data
 - [ ] Data source and date range are noted$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/explore-data', 'business', 'explore-data', '', 'explore-data', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /explore-data - Profile and Explore a Dataset
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/explore-data', 'research', 'explore-data', '', 'explore-data', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /explore-data - Profile and Explore a Dataset
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -63821,7 +63821,7 @@ When exploring an unfamiliar data environment:
 - For very large tables (100M+ rows), profiling queries use sampling by default -- mention if you need exact counts
 - If exploring a new dataset for the first time, this command gives you the lay of the land before writing specific queries
 - The quality flags are heuristic -- not every flag is a real problem, but each is worth a quick look$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/sql-queries', 'business', 'sql-queries', '', 'sql-queries', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# SQL Queries Skill
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/sql-queries', 'research', 'sql-queries', '', 'sql-queries', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# SQL Queries Skill
 
 Write correct, performant, readable SQL across all major data warehouse dialects.
 
@@ -64243,7 +64243,7 @@ When a query fails:
 4. **Division by zero**: Use `NULLIF(denominator, 0)` or dialect-specific safe division
 5. **Ambiguous columns**: Always qualify column names with table alias in JOINs
 6. **Group by errors**: All non-aggregated columns must be in GROUP BY (except in BigQuery which allows grouping by alias)$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/statistical-analysis', 'business', 'statistical-analysis', '', 'statistical-analysis', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Statistical Analysis Skill
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/statistical-analysis', 'research', 'statistical-analysis', '', 'statistical-analysis', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Statistical Analysis Skill
 
 Descriptive statistics, trend analysis, outlier detection, hypothesis testing, and guidance on when to be cautious about statistical claims.
 
@@ -64482,7 +64482,7 @@ Be wary of false precision:
 - "Churn will be 4.73% next quarter" implies more certainty than is warranted
 - Prefer ranges: "We expect churn between 4-6% based on historical patterns"
 - Round appropriately: "About 5%" is often more honest than "4.73%"$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/validate-data', 'business', 'validate-data', '', 'validate-data', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /validate-data - Validate Analysis Before Sharing
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/validate-data', 'research', 'validate-data', '', 'validate-data', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /validate-data - Validate Analysis Before Sharing
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -64859,7 +64859,7 @@ Output:
 - Even quick analyses benefit from a sanity check -- it takes a minute and can save your credibility
 - If the validation finds issues, fix them and re-validate
 - Share the validation output alongside your analysis to build stakeholder confidence$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/write-query', 'business', 'write-query', '', 'write-query', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /write-query - Write Optimized SQL
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/data/skills/write-query', 'research', 'write-query', '', 'write-query', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /write-query - Write Optimized SQL
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -64975,7 +64975,7 @@ If a data warehouse is connected, offer to run the query and analyze the results
 - If you know the table names, include them -- otherwise Claude will help you find them
 - Specify if you need the query to be idempotent (safe to re-run) or one-time
 - For recurring queries, mention if it should be parameterized for date ranges$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/design/skills/accessibility-review', 'business', 'accessibility-review', '', 'accessibility-review', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /accessibility-review
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/design/skills/accessibility-review', 'design', 'accessibility-review', '', 'accessibility-review', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /accessibility-review
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -65097,7 +65097,7 @@ If **~~project tracker** is connected:
 1. **Start with contrast and keyboard** — These catch the most common and impactful issues.
 2. **Test with real assistive technology** — My audit is a great start, but manual testing with VoiceOver/NVDA catches things I can't.
 3. **Prioritize by impact** — Fix issues that block users first, polish later.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/design/skills/design-critique', 'business', 'design-critique', '', 'design-critique', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /design-critique
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/design/skills/design-critique', 'design', 'design-critique', '', 'design-critique', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /design-critique
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -65209,7 +65209,7 @@ If **~~user feedback** is connected:
 1. **Share the context** — "This is a checkout flow for a B2B SaaS" helps me give relevant feedback.
 2. **Specify your stage** — Early exploration gets different feedback than final polish.
 3. **Ask me to focus** — "Just look at the navigation" gives you more depth on one area.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/design/skills/design-handoff', 'business', 'design-handoff', '', 'design-handoff', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /design-handoff
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/design/skills/design-handoff', 'design', 'design-handoff', '', 'design-handoff', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /design-handoff
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -65334,7 +65334,7 @@ If **~~project tracker** is connected:
 1. **Share the Figma link** — I can pull exact measurements, tokens, and component info.
 2. **Mention edge cases** — "What happens with 100 items?" helps me spec boundary conditions.
 3. **Specify the tech stack** — "We use React + Tailwind" helps me give relevant implementation notes.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/design/skills/design-system', 'business', 'design-system', '', 'design-system', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /design-system
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/design/skills/design-system', 'design', 'design-system', '', 'design-system', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /design-system
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -65518,7 +65518,7 @@ If **~~knowledge base** is connected:
 1. **Start with an audit** — Know where you are before deciding where to go.
 2. **Document as you build** — It's easier to document a component while designing it.
 3. **Prioritize coverage over perfection** — 80% of components documented beats 100% of 10 components.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/design/skills/research-synthesis', 'business', 'research-synthesis', '', 'research-synthesis', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /research-synthesis
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/design/skills/research-synthesis', 'design', 'research-synthesis', '', 'research-synthesis', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /research-synthesis
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -65604,7 +65604,7 @@ If **~~knowledge base** is connected:
 1. **Include raw quotes** — Direct participant quotes make insights credible and memorable.
 2. **Separate observations from interpretations** — "5 of 8 users clicked the wrong button" is an observation. "The button placement is confusing" is an interpretation.
 3. **Quantify where possible** — "Most users" is vague. "7 of 10 users" is specific.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/design/skills/user-research', 'business', 'user-research', '', 'user-research', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# User Research
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/design/skills/user-research', 'design', 'user-research', '', 'user-research', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# User Research
 
 Help plan, execute, and synthesize user research studies.
 
@@ -65640,7 +65640,7 @@ Help plan, execute, and synthesize user research studies.
 - Interview guide (questions, probes, activities)
 - Synthesis report (themes, insights, recommendations)
 - Highlight reel (key quotes and observations)$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/design/skills/ux-copy', 'business', 'ux-copy', '', 'ux-copy', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /ux-copy
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/design/skills/ux-copy', 'design', 'ux-copy', '', 'ux-copy', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /ux-copy
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -65741,7 +65741,7 @@ If **~~design tool** is connected:
 1. **Be specific about context** — "Error message when payment fails" is better than "error message."
 2. **Share your brand voice** — "We're professional but warm" helps me match your tone.
 3. **Consider the user's emotional state** — Error messages need empathy. Success messages can celebrate.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/architecture', 'business', 'architecture', '', 'architecture', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /architecture
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/architecture', 'coding', 'architecture', '', 'architecture', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /architecture
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -65820,7 +65820,7 @@ If **~~project tracker** is connected:
 1. **State constraints upfront** — "We need to ship in 2 weeks" or "Must handle 10K rps" shapes the answer.
 2. **Name your options** — Even if you're leaning one way, I'll give a more balanced analysis with explicit alternatives.
 3. **Include non-functional requirements** — Latency, cost, team expertise, and maintenance burden matter as much as features.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/code-review', 'business', 'code-review', '', 'code-review', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /code-review
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/code-review', 'coding', 'code-review', '', 'code-review', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /code-review
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -65932,7 +65932,7 @@ If **~~knowledge base** is connected:
 1. **Provide context** — "This is a hot path" or "This handles PII" helps me focus.
 2. **Specify concerns** — "Focus on security" narrows the review.
 3. **Include tests** — I'll check test coverage and quality too.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/debug', 'business', 'debug', '', 'debug', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /debug
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/debug', 'coding', 'debug', '', 'debug', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /debug
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -66021,7 +66021,7 @@ If **~~project tracker** is connected:
 1. **Share error messages exactly** — Don't paraphrase. The exact text matters.
 2. **Mention what changed** — Recent deploys, dependency updates, and config changes are top suspects.
 3. **Include context** — "This works in staging but not prod" or "Only affects large payloads" narrows things fast.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/deploy-checklist', 'business', 'deploy-checklist', '', 'deploy-checklist', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /deploy-checklist
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/deploy-checklist', 'coding', 'deploy-checklist', '', 'deploy-checklist', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /deploy-checklist
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -66093,7 +66093,7 @@ If **~~monitoring** is connected:
 1. **Run before every deploy** — Even routine ones. Checklists prevent "I forgot to..."
 2. **Customize once, reuse** — Tell me your stack and I'll remember your deploy process.
 3. **Include rollback criteria** — Decide when to roll back before you deploy, not during.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/documentation', 'business', 'documentation', '', 'documentation', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Technical Documentation
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/documentation', 'coding', 'documentation', '', 'documentation', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Technical Documentation
 
 Write clear, maintainable technical documentation for different audiences and purposes.
 
@@ -66137,7 +66137,7 @@ Write clear, maintainable technical documentation for different audiences and pu
 3. **Show, don't tell** — Code examples, commands, screenshots
 4. **Keep it current** — Outdated docs are worse than no docs
 5. **Link, don't duplicate** — Reference other docs instead of copying$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/incident-response', 'business', 'incident-response', '', 'incident-response', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /incident-response
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/incident-response', 'coding', 'incident-response', '', 'incident-response', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /incident-response
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -66289,7 +66289,7 @@ If **~~chat** is connected:
 1. **Start writing immediately** — Don't wait for complete information. Update as you learn more.
 2. **Keep updates factual** — What we know, what we've done, what's next. No speculation.
 3. **Postmortems are blameless** — Focus on systems and processes, not individuals.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/standup', 'business', 'standup', '', 'standup', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /standup
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/standup', 'coding', 'standup', '', 'standup', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /standup
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -66358,7 +66358,7 @@ If **~~chat** is connected:
 1. **Run it every morning** — Build a habit and never scramble for standup notes.
 2. **Add context** — After I generate, add any nuance about blockers or priorities.
 3. **Share format** — Ask me to format for Slack, email, or your team's standup tool.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/system-design', 'business', 'system-design', '', 'system-design', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# System Design
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/system-design', 'coding', 'system-design', '', 'system-design', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# System Design
 
 Help design systems and evaluate architectural decisions.
 
@@ -66395,7 +66395,7 @@ Help design systems and evaluate architectural decisions.
 ## Output
 
 Produce clear, structured design documents with diagrams (ASCII or described), explicit assumptions, and trade-off analysis. Always identify what you'd revisit as the system grows.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/tech-debt', 'business', 'tech-debt', '', 'tech-debt', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Tech Debt Management
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/tech-debt', 'coding', 'tech-debt', '', 'tech-debt', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Tech Debt Management
 
 Systematically identify, categorize, and prioritize technical debt.
 
@@ -66422,7 +66422,7 @@ Priority = (Impact + Risk) x (6 - Effort)
 ## Output
 
 Produce a prioritized list with estimated effort, business justification for each item, and a phased remediation plan that can be done alongside feature work.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/testing-strategy', 'business', 'testing-strategy', '', 'testing-strategy', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Testing Strategy
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/engineering/skills/testing-strategy', 'coding', 'testing-strategy', '', 'testing-strategy', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Testing Strategy
 
 Design effective testing strategies balancing coverage, speed, and maintenance.
 
@@ -66450,7 +66450,7 @@ Skip: trivial getters/setters, framework code, one-off scripts.
 ## Output
 
 Produce a test plan with: what to test, test type for each area, coverage targets, and example test cases. Identify gaps in existing coverage.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/enterprise-search/skills/digest', 'business', 'digest', '', 'digest', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Digest Command
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/enterprise-search/skills/digest', 'research', 'digest', '', 'digest', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Digest Command
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -66617,7 +66617,7 @@ Across [N] sources · Covering [time range]
 - For weekly digests, prioritize significance over completeness — highlight what matters, skip noise
 - If the user has a memory system (CLAUDE.md), use it to decode people names and project references
 - Include enough context in each item that the user can decide whether to dig deeper without clicking through$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/enterprise-search/skills/knowledge-synthesis', 'business', 'knowledge-synthesis', '', 'knowledge-synthesis', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Knowledge Synthesis
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/enterprise-search/skills/knowledge-synthesis', 'research', 'knowledge-synthesis', '', 'knowledge-synthesis', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Knowledge Synthesis
 
 The last mile of enterprise search. Takes raw results from multiple sources and produces a coherent, trustworthy answer.
 
@@ -66869,7 +66869,7 @@ Want me to dig deeper into any specific aspect?
 - Surface conflicts explicitly
 - Attribute all claims to sources
 - Offer to go deeper when result sets are large$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/enterprise-search/skills/search', 'business', 'search', '', 'search', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Search Command
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/enterprise-search/skills/search', 'research', 'search', '', 'search', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Search Command
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -67041,7 +67041,7 @@ Results above are from [successful sources] only.
 - When a query mentions a specific person, search for their messages/docs/mentions across all sources
 - For time-sensitive queries, prioritize recency in ranking
 - If only one source is connected, still provide useful results from that source$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/enterprise-search/skills/search-strategy', 'business', 'search-strategy', '', 'search-strategy', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Search Strategy
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/enterprise-search/skills/search-strategy', 'research', 'search-strategy', '', 'search-strategy', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Search Strategy
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -67257,7 +67257,7 @@ Always execute searches across sources in parallel, never sequentially. The tota
      ↓
 [Synthesized answer]
 ```$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/enterprise-search/skills/source-management', 'business', 'source-management', '', 'source-management', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Source Management
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/enterprise-search/skills/source-management', 'research', 'source-management', '', 'source-management', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Source Management
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -67424,7 +67424,7 @@ To add a new source:
 1. Add the MCP server configuration to `.mcp.json`
 2. Authenticate if required
 3. The source will be included in subsequent searches automatically$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/finance/skills/audit-support', 'business', 'audit-support', '', 'audit-support', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Audit Support
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/finance/skills/audit-support', 'finance', 'audit-support', '', 'audit-support', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Audit Support
 
 **Important**: This skill assists with SOX compliance workflows but does not provide audit or legal advice. All testing workpapers and assessments should be reviewed by qualified financial professionals. While "significance" and "materiality" are context-specific concepts that are ultimately assessed by auditors, this skill is intended to assist professionals in the creation and evaluation of effective internal controls and documentation for audits.
 
@@ -67792,7 +67792,7 @@ Broad controls that operate at the organizational level and affect multiple proc
 - Entity-level controls can mitigate but typically cannot replace process-level controls
 - Ineffective entity-level controls (especially audit committee oversight and tone at the top) are strong indicators of a material weakness
 - Effective entity-level controls may reduce the extent of testing needed for process-level controls$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/finance/skills/close-management', 'business', 'close-management', '', 'close-management', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Close Management
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/finance/skills/close-management', 'finance', 'close-management', '', 'close-management', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Close Management
 
 **Important**: This skill assists with close management workflows but does not provide financial advice. All close activities should be reviewed by qualified financial professionals.
 
@@ -68007,7 +68007,7 @@ After each close, ask:
 3. What blockers did we encounter and how can we prevent them?
 4. Were there any surprises in the financial results we should have caught earlier?
 5. What can we automate or streamline for next month?$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/finance/skills/financial-statements', 'business', 'financial-statements', '', 'financial-statements', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /financial-statements
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/finance/skills/financial-statements', 'finance', 'financial-statements', '', 'financial-statements', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /financial-statements
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -68336,7 +68336,7 @@ Cash and cash equivalents, end of period
 4. **Discontinued operations:** Reclassify results of discontinued operations to a separate line item
 5. **Equity method adjustments:** Record share of investee income/loss for equity method investments
 6. **Segment reclassifications:** Ensure transactions are properly classified by operating segment$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/finance/skills/journal-entry', 'business', 'journal-entry', '', 'journal-entry', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Journal Entry Preparation
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/finance/skills/journal-entry', 'finance', 'journal-entry', '', 'journal-entry', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Journal Entry Preparation
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -68461,7 +68461,7 @@ Provide:
 3. Comparison to prior period entry of the same type (if available)
 4. Any items flagged for review or follow-up
 5. Instructions for posting (manual entry or upload format for the user's ERP)$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/finance/skills/journal-entry-prep', 'business', 'journal-entry-prep', '', 'journal-entry-prep', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Journal Entry Preparation
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/finance/skills/journal-entry-prep', 'finance', 'journal-entry-prep', '', 'journal-entry-prep', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Journal Entry Preparation
 
 **Important**: This skill assists with journal entry workflows but does not provide financial advice. All entries should be reviewed by qualified financial professionals before posting.
 
@@ -68641,7 +68641,7 @@ Before approving a journal entry, the reviewer should verify:
 10. **Missing intercompany elimination:** Entries between entities without corresponding elimination
 11. **Capitalization errors:** Expenses that should be capitalized, or capitalized items that should be expensed
 12. **Cut-off errors:** Transactions recorded in the wrong period based on delivery or service date$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/finance/skills/reconciliation', 'business', 'reconciliation', '', 'reconciliation', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Reconciliation
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/finance/skills/reconciliation', 'finance', 'reconciliation', '', 'reconciliation', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Reconciliation
 
 **Important**: This skill assists with reconciliation workflows but does not provide financial advice. All reconciliations should be reviewed by qualified financial professionals before sign-off.
 
@@ -68810,7 +68810,7 @@ Define escalation triggers based on your organization's risk tolerance:
 6. **Root cause analysis:** For recurring reconciling items, investigate and fix the underlying process issue
 7. **Standardization:** Use consistent templates and procedures across all accounts
 8. **Retention:** Maintain reconciliations and supporting detail per your organization's document retention policy$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/finance/skills/sox-testing', 'business', 'sox-testing', '', 'sox-testing', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# SOX Compliance Testing
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/finance/skills/sox-testing', 'finance', 'sox-testing', '', 'sox-testing', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# SOX Compliance Testing
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -69022,7 +69022,7 @@ Provide:
 4. Results documentation template
 5. Deficiency evaluation framework (if exceptions are identified)
 6. Suggested remediation actions for any noted deficiencies$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/finance/skills/variance-analysis', 'business', 'variance-analysis', '', 'variance-analysis', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Variance Analysis
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/finance/skills/variance-analysis', 'finance', 'variance-analysis', '', 'variance-analysis', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Variance Analysis
 
 **Important**: This skill assists with variance analysis workflows but does not provide financial advice. All analyses should be reviewed by qualified financial professionals before use in reporting.
 
@@ -69947,7 +69947,7 @@ Help manage the recruiting pipeline from sourcing through offer acceptance.
 ## If ATS Connected
 
 Pull candidate data automatically, update statuses, and track pipeline metrics in real time.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/legal/skills/brief', 'business', 'brief', '', 'brief', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /brief -- Legal Team Briefing
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/legal/skills/brief', 'legal', 'brief', '', 'brief', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /brief -- Legal Team Briefing
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -70149,7 +70149,7 @@ Rapid briefing for developing situations that require immediate legal attention 
 - For daily briefs, learn the user's preferences over time (what they find useful, what they want filtered out)
 - Briefs should be actionable: every item should have a clear next step or reason for inclusion
 - Keep briefs concise. Link to source materials rather than reproducing them in full$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/legal/skills/compliance-check', 'business', 'compliance-check', '', 'compliance-check', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /compliance-check -- Compliance Review
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/legal/skills/compliance-check', 'legal', 'compliance-check', '', 'compliance-check', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /compliance-check -- Compliance Review
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -70417,7 +70417,7 @@ Escalate regulatory developments to senior counsel or leadership when:
 1. **Be specific** — "We want to email all our users" is better than "marketing campaign."
 2. **Include the geography** — Compliance requirements vary by jurisdiction.
 3. **Mention the data** — What personal data is involved? This drives most compliance requirements.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/legal/skills/legal-response', 'business', 'legal-response', '', 'legal-response', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /legal-response -- Generate Response from Templates
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/legal/skills/legal-response', 'legal', 'legal-response', '', 'legal-response', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /legal-response -- Generate Response from Templates
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -70868,7 +70868,7 @@ When helping users create new templates:
 - Track response deadlines and offer to set calendar reminders
 - For regulated responses (DSRs, subpoenas), always note the applicable deadline and regulatory requirements
 - Templates should be living documents; suggest updates when the user modifies a templated response, so the template can be improved over time$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/legal/skills/legal-risk-assessment', 'business', 'legal-risk-assessment', '', 'legal-risk-assessment', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Legal Risk Assessment Skill
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/legal/skills/legal-risk-assessment', 'legal', 'legal-risk-assessment', '', 'legal-risk-assessment', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Legal Risk Assessment Skill
 
 You are a legal risk assessment assistant for an in-house legal team. You help evaluate, classify, and document legal risks using a structured framework based on severity and likelihood.
 
@@ -71128,7 +71128,7 @@ When recommending outside counsel engagement, suggest the user consider:
 - Budget expectations and fee arrangements (hourly, fixed fee, blended rates, success fees)
 - Diversity and inclusion considerations
 - Existing relationships (panel firms, prior engagements)$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/legal/skills/meeting-briefing', 'business', 'meeting-briefing', '', 'meeting-briefing', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Meeting Briefing Skill
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/legal/skills/meeting-briefing', 'legal', 'meeting-briefing', '', 'meeting-briefing', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Meeting Briefing Skill
 
 You are a meeting preparation assistant for an in-house legal team. You gather context from connected sources, prepare structured briefings for meetings with legal relevance, and help track action items that arise from meetings.
 
@@ -71343,7 +71343,7 @@ After the meeting:
 - **Medium priority items**: Check at next team sync or weekly review
 - **Low priority items**: Check at next scheduled meeting or monthly review
 - **Overdue items**: Escalate to the owner and their manager; flag in next relevant meeting$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/legal/skills/review-contract', 'business', 'review-contract', '', 'review-contract', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /review-contract -- Contract Review Against Playbook
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/legal/skills/review-contract', 'legal', 'review-contract', '', 'review-contract', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /review-contract -- Contract Review Against Playbook
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -71695,7 +71695,7 @@ Structure the output as:
 - If the contract is in a language other than English, note this and ask if the user wants a translation or review in the original language
 - For very long contracts (50+ pages), offer to focus on the most material sections first and then do a complete review
 - Always remind the user that this analysis should be reviewed by qualified legal counsel before being relied upon for legal decisions$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/legal/skills/signature-request', 'business', 'signature-request', '', 'signature-request', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /signature-request -- E-Signature Routing
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/legal/skills/signature-request', 'legal', 'signature-request', '', 'signature-request', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /signature-request -- E-Signature Routing
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -71793,7 +71793,7 @@ Gather signing details:
 1. **Check entity names carefully** — The most common signing error is incorrect legal entity names.
 2. **Verify authority** — Make sure each signer is authorized to bind their organization.
 3. **Keep a copy** — Executed copies should be filed in ~~cloud storage or ~~CLM immediately after execution.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/legal/skills/triage-nda', 'business', 'triage-nda', '', 'triage-nda', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /triage-nda -- NDA Pre-Screening
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/legal/skills/triage-nda', 'legal', 'triage-nda', '', 'triage-nda', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /triage-nda -- NDA Pre-Screening
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -72049,7 +72049,7 @@ For YELLOW and RED classifications:
 - If the document is not actually an NDA (e.g., it's labeled as an NDA but contains substantive commercial terms), flag this immediately as a RED and recommend full contract review instead
 - For NDAs that are part of a larger agreement (e.g., confidentiality section in an MSA), note that the broader agreement context may affect the analysis
 - Always note that this is a screening tool and counsel should review any items the user is uncertain about$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/legal/skills/vendor-check', 'business', 'vendor-check', '', 'vendor-check', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /vendor-check -- Vendor Agreement Status
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/legal/skills/vendor-check', 'legal', 'vendor-check', '', 'vendor-check', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /vendor-check -- Vendor Agreement Status
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -72202,7 +72202,7 @@ Always clearly state which sources were checked and which were not, so the user 
 - For vendor groups (e.g., a vendor with multiple subsidiaries), ask whether the user wants to check a specific entity or the entire group
 - Flag any agreements that are expired but may still have surviving obligations (confidentiality, indemnification, etc.)
 - If an agreement is approaching expiration (within 90 days), highlight this prominently$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/marketing/skills/brand-review', 'business', 'brand-review', '', 'brand-review', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Brand Review
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/marketing/skills/brand-review', 'marketing', 'brand-review', '', 'brand-review', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Brand Review
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -72472,7 +72472,7 @@ Ask: "Would you like me to:
 - Focus on fixing just the high-severity issues?
 - Review additional content against the same guidelines?
 - Help you document your brand voice for future reviews?"$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/marketing/skills/campaign-plan', 'business', 'campaign-plan', '', 'campaign-plan', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Campaign Plan
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/marketing/skills/campaign-plan', 'marketing', 'campaign-plan', '', 'campaign-plan', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Campaign Plan
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -72774,7 +72774,7 @@ Present the full campaign brief with clear headings and formatting. After the br
 - Draft specific content pieces from the calendar?
 - Create a competitive analysis to inform the messaging?
 - Adjust the plan for a different budget or timeline?"$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/marketing/skills/competitive-brief', 'business', 'competitive-brief', '', 'competitive-brief', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Competitive Brief
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/marketing/skills/competitive-brief', 'marketing', 'competitive-brief', '', 'competitive-brief', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Competitive Brief
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -73099,7 +73099,7 @@ After the brief, ask:
 - Draft messaging that exploits the positioning gaps identified?
 - Dive deeper into any specific competitor?
 - Set up a competitive monitoring plan?"$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/marketing/skills/content-creation', 'business', 'content-creation', '', 'content-creation', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Content Creation Skill
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/marketing/skills/content-creation', 'marketing', 'content-creation', '', 'content-creation', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Content Creation Skill
 
 Guidelines and frameworks for creating effective marketing content across channels.
 
@@ -73250,7 +73250,7 @@ Guidelines and frameworks for creating effective marketing content across channe
 - At the end of blog posts (after you have earned the reader's trust)
 - In-line within content when contextually relevant (e.g., a related guide mention)
 - Repeat the primary CTA at the bottom of long-form pages$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/marketing/skills/draft-content', 'business', 'draft-content', '', 'draft-content', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Draft Content
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/marketing/skills/draft-content', 'marketing', 'draft-content', '', 'draft-content', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Draft Content
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -73361,7 +73361,7 @@ Present the draft with clear formatting. After the draft, include:
 - Suggestions for next steps (e.g., "Review with your team", "Add customer quotes", "Pair with a visual")
 
 Ask: "Would you like me to revise any section, adjust the tone, or create a variation for a different channel?"$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/marketing/skills/email-sequence', 'business', 'email-sequence', '', 'email-sequence', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Email Sequence
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/marketing/skills/email-sequence', 'marketing', 'email-sequence', '', 'email-sequence', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Email Sequence
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -73575,7 +73575,7 @@ Ask: "Would you like me to:
 - Create a variation of this sequence for a different audience segment?
 - Draft the A/B test variants for the subject lines?
 - Build a companion sequence (e.g., a post-purchase follow-up after this lead nurture converts)?"$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/marketing/skills/performance-report', 'business', 'performance-report', '', 'performance-report', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Performance Report
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/marketing/skills/performance-report', 'marketing', 'performance-report', '', 'performance-report', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Performance Report
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -73961,7 +73961,7 @@ Ask: "Would you like me to:
 - Draft a stakeholder email with the key takeaways?
 - Dive deeper into any specific metric or channel?
 - Set up a reporting template you can reuse next period?"$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/marketing/skills/seo-audit', 'business', 'seo-audit', '', 'seo-audit', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /seo-audit
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/marketing/skills/seo-audit', 'marketing', 'seo-audit', '', 'seo-audit', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# /seo-audit
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -92587,7 +92587,7 @@ Use markdown with clear headers. Keep the document scannable — busy stakeholde
 - Success metrics should be specific and measurable, not vague ("improve user experience").
 - Non-goals are as important as goals. They prevent scope creep during implementation.
 - Open questions should be genuinely open — do not include questions you can answer from context.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/productivity/skills/memory-management', 'business', 'memory-management', '', 'memory-management', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Memory Management
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/productivity/skills/memory-management', 'productivity', 'memory-management', '', 'memory-management', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Memory Management
 
 Memory makes Claude your workplace collaborator - someone who speaks your internal language.
 
@@ -92904,7 +92904,7 @@ Use `/productivity:start` to initialize by scanning your chat, calendar, email, 
 - Term rarely used
 
 This keeps CLAUDE.md fresh and relevant.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/productivity/skills/start', 'business', 'start', '', 'start', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Start Command
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/productivity/skills/start', 'productivity', 'start', '', 'start', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Start Command
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
@@ -93057,7 +93057,7 @@ Use /productivity:update to keep things current (add --comprehensive for a deep 
 - Nicknames are critical — always capture how people are actually referred to
 - If a source isn't available, skip it and note the gap
 - Memory grows organically through natural conversation after bootstrap$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/productivity/skills/task-management', 'business', 'task-management', '', 'task-management', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Task Management
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/productivity/skills/task-management', 'productivity', 'task-management', '', 'task-management', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Task Management
 
 Tasks are tracked in a simple `TASKS.md` file that both you and the user can edit.
 
@@ -93142,7 +93142,7 @@ When summarizing meetings or conversations, offer to add extracted tasks:
 - Follow-ups mentioned
 
 Ask before adding - don't auto-add without confirmation.$body$),
-  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/productivity/skills/update', 'business', 'update', '', 'update', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Update Command
+  ('marketplace:knowledge-work-plugins/knowledge-work-plugins/productivity/skills/update', 'productivity', 'update', '', 'update', '[]'::jsonb, '[]'::jsonb, '[]'::jsonb, 'marketplace:knowledge-work-plugins', '', $body$# Update Command
 
 > If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 

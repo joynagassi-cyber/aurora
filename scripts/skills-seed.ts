@@ -102,27 +102,36 @@ function mappingDomain(repo: string, skillDir: string): string {
   // claude-quickstarts : skills de setup (first-run, verify) → coding
   if (repo === "claude-quickstarts") return "coding";
 
-  // knowledge-work-plugins : skillDir est relatif au repo (ex. "finance/skills/audit-support")
+  // knowledge-work-plugins : skillDir est relatif au repo.
+  // NB : le curate contient un doublon `knowledge-work-plugins/knowledge-work-plugins/`
+  // au niveau 2 (le sous-dossier porte le même nom que le repo). On ne peut donc
+  // pas matcher sur `startsWith("design")` sur le skillDir complet ; on extrait
+  // le **segment de domaine** = 2e segment après le préfixe repo, i.e. on
+  // retire `knowledge-work-plugins/` du skillDir s'il est présent et on teste
+  // le premier segment restant.
   if (repo === "knowledge-work-plugins") {
-    if (skillDir.startsWith("engineering")) return "coding";
-    if (skillDir.startsWith("partner-built/zoom")) return "coding";
-    if (skillDir.startsWith("partner-built/slack")) return "coding";
-    if (skillDir.startsWith("partner-built")) return "business";
-    if (skillDir.startsWith("design")) return "design";
-    if (skillDir.startsWith("marketing")) return "marketing";
-    if (skillDir.startsWith("data")) return "research";
-    if (skillDir.startsWith("enterprise-search")) return "research";
-    if (skillDir.startsWith("bio-research")) return "science";
-    if (skillDir.startsWith("productivity")) return "productivity";
-    if (skillDir.startsWith("legal")) return "legal";
-    if (skillDir.startsWith("sales")) return "business";
-    if (skillDir.startsWith("human-resources")) return "business";
-    if (skillDir.startsWith("operations")) return "business";
-    if (skillDir.startsWith("small-business")) return "business";
-    if (skillDir.startsWith("customer-support")) return "business";
-    if (skillDir.startsWith("product-management")) return "business";
-    if (skillDir.startsWith("cowork-plugin-management")) return "productivity";
-    if (skillDir.startsWith("finance")) return "finance";
+    const domainSegment = skillDir
+      .replace(/^knowledge-work-plugins\//, "")
+      .split("/")[0] ?? "";
+    if (domainSegment === "engineering") return "coding";
+    if (domainSegment.startsWith("partner-built/zoom")) return "coding";
+    if (domainSegment.startsWith("partner-built/slack")) return "coding";
+    if (domainSegment.startsWith("partner-built")) return "business";
+    if (domainSegment === "design") return "design";
+    if (domainSegment === "marketing") return "marketing";
+    if (domainSegment === "data") return "research";
+    if (domainSegment === "enterprise-search") return "research";
+    if (domainSegment === "bio-research") return "science";
+    if (domainSegment === "productivity") return "productivity";
+    if (domainSegment === "legal") return "legal";
+    if (domainSegment === "sales") return "business";
+    if (domainSegment === "human-resources") return "business";
+    if (domainSegment === "operations") return "business";
+    if (domainSegment === "small-business") return "business";
+    if (domainSegment === "customer-support") return "business";
+    if (domainSegment === "product-management") return "business";
+    if (domainSegment === "cowork-plugin-management") return "productivity";
+    if (domainSegment === "finance") return "finance";
     return "business"; // fallback
   }
 
