@@ -8,6 +8,7 @@
  */
 import { IonApp, IonContent, IonMenu, IonRouterOutlet } from '@ionic/react';
 import { Outlet } from 'react-router-dom';
+import { AgentBus } from './AgentBus';
 
 export function Shell() {
   return (
@@ -20,6 +21,10 @@ export function Shell() {
       <IonContent>
         <IonRouterOutlet />
         <Outlet />
+        {/* The single application Command Bus (02 §4, kernel S15) — mounted
+            at the router root so `useNavigate` has the <Router> context;
+            a headless effect channel (returns null), one mount per session. */}
+        <AgentBus />
       </IonContent>
     </IonApp>
   );

@@ -13,7 +13,6 @@ import { RouterProvider } from 'react-router-dom';
 import { useState } from 'react';
 import { appRouter } from './router';
 import { createMobileQueryClient, type MobileDataProvider } from './query/query-client';
-import { AgentBus } from './shell/AgentBus';
 
 export interface AuroraAppProps {
   dataProvider: MobileDataProvider;
@@ -22,14 +21,13 @@ export interface AuroraAppProps {
 export function AuroraApp({ dataProvider }: AuroraAppProps) {
   // The QueryClient is stateful — created exactly once per app mount so
   // the cache survives re-renders (03 S5.8).
+  // The single application Command Bus (02 §4, kernel S15) is mounted at
+  // the router root (<Shell />) — `useNavigate` requires the <Router>
+  // context, so it cannot live beside <RouterProvider>.
   const [client] = useState<QueryClient>(() => createMobileQueryClient(dataProvider));
 
   return (
     <QueryClientProvider client={client}>
-      {/* The single application Command Bus (02 §4, kernel S15): agent
-          UI effects dispatch here — mounted under the router so the
-          executor can navigate (details over the current tab, §6.1). */}
-      <AgentBus />
       <RouterProvider router={appRouter} />
     </QueryClientProvider>
   );
