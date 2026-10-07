@@ -114,8 +114,8 @@ export function OnboardingPage() {
                   {step === 1
                     ? `Content de te voir, ${session.email ?? 'à toi'}.`
                     : step === 2
-                      ? 'Aurora s'adapte à toi : le thème change instantanément (AD-17, tokens).'
-                      : 'Trois portes d'entrée — choisis où commencer.'}
+                      ? "Aurora s'adapte à toi : le thème change instantanément (AD-17, tokens)."
+                      : "Trois portes d'entrée — choisis où commencer."}
                 </CardDescription>
               </CardHeader>
               <CardContent>
