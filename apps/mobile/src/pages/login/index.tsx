@@ -10,6 +10,10 @@
  * AD-13: loading (submitting) / error (credential failure) states, plus the
  * honest empty state when OQ-03 env values are absent (authAvailable = false).
  * AD-17 / pack 05: tokens only, no hardcoded colors, tap targets ≥ 44 px.
+ *
+ * DEV-ONLY (P1-4, 10-07) : bloc de diagnostic `fn-dev-auth` (réparation du
+ * hash via l'admin API GoTrue + test de sign-in verbatim) — GATED DEV,
+ * SUPPRIMER AVANT v1.0 avec l'EF `supabase/functions/fn-dev-auth`.
  */
 import { IonButton, IonContent, IonHeader, IonTitle } from '@ionic/react';
 import { Lock, Loader2, LogOut } from 'lucide-react';
@@ -17,18 +21,66 @@ import { useEffect, useState } from 'react';
 import { authAvailable, currentSession, signIn, signOut } from '../../lib/auth';
 import { useNavigate } from 'react-router-dom';
 
+const DEV_EF_URL = 'https://opagfyspdbhxthlxvlrk.supabase.co/functions/v1/fn-dev-auth';
+const DEV_ACCOUNTS: Record<string, string> = {
+  'dev.aurora@joynagassi.dev': 'Aurora-Dev1!',
+  'dev.aurora2@joynagassi.dev': 'Aurora-Dev2!',
+};
+
 export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signedInAs, setSignedInAs] = useState<string | null>(null);
+  const [diag, setDiag] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Restore the persisted session state so the page reflects reality.
   useEffect(() => {
     void currentSession().then((s) => setSignedInAs(s?.user?.email ?? null));
   }, []);
+
+  // DEV-ONLY (P1-4, 10-07 — SUPPRIMER AVANT v1.0, avec l'EF fn-dev-auth) :
+  // répare le hash par l'admin API GoTrue (canonique) + test de sign-in
+  // verbatim. L'EF est public (verify_jwt=false) ; le scope sensible reste
+  // service_role CÔTÉ EF (AD-3 — zéro secret sur device).
+  async function runDevAuthDiagnostic() {
+    setDiag('Diagnostic en cours (fn-dev-auth)…');
+    try {
+      const call = async (payload: Record<string, unknown>): Promise<unknown> => {
+        const r = await fetch(DEV_EF_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? '',
+          },
+          body: JSON.stringify(payload),
+        });
+        return (await r.json().catch(() => ({ ok: false, error: `HTTP ${r.status} (EF non déployée ?)` }))) as unknown;
+      };
+      const listed = (await call({ action: 'list-users' })) as {
+        ok: boolean;
+        users?: Array<{ id: string; email: string; confirmed: boolean; hasPassword: boolean }>;
+      };
+      const fixes = await Promise.all(
+        (listed.users ?? []).map(async (u) => {
+          const pw = DEV_ACCOUNTS[u.email];
+          if (!pw) return { email: u.email, skipped: true };
+          const out = await call({ action: 'set-password', user_id: u.id, password: pw });
+          return { email: u.email, fix: out };
+        }),
+      );
+      const test = await call({
+        action: 'test-signin',
+        email: 'dev.aurora@joynagassi.dev',
+        password: DEV_ACCOUNTS['dev.aurora@joynagassi.dev'],
+      });
+      setDiag(JSON.stringify({ listed, fixes, test }, null, 2));
+    } catch (e) {
+      setDiag(`Diagnostic impossible : ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -136,6 +188,19 @@ export function LoginPage() {
                   dev.aurora2@…
                 </button>
               </div>
+
+              {import.meta.env.DEV && (
+                <div className="login-diag" data-diag="true">
+                  <button
+                    type="button"
+                    className="aurora-btn aurora-btn--ghost aurora-tap"
+                    onClick={() => void runDevAuthDiagnostic()}
+                  >
+                    DEV — diagnostic comptes (EF fn-dev-auth)
+                  </button>
+                  {diag ? <pre>{diag}</pre> : null}
+                </div>
+              )}
             </>
           ) : (
             <div data-state="empty" className="login-state">

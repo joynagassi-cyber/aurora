@@ -79,3 +79,28 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+
+/* DEV-only diagnostic block (fn-dev-auth, P1-4 — SUPPRIMER AVANT v1.0). */
+.login-diag {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px dashed var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  background: var(--aurora-bg-subtle);
+}
+.login-diag pre {
+  margin: 0;
+  padding: 8px;
+  max-height: 180px;
+  overflow: auto;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--aurora-text-muted);
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
