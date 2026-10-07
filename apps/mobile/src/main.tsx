@@ -40,6 +40,7 @@ import './styles/data.css';
 import './styles/floating.css';
 import './styles/skills.css';
 import './styles/integrations.css';
+import './styles/login.css';
 
 import { AuroraApp } from './app';
 import { FocusThemeAdapter } from './ux/theme-adapter';

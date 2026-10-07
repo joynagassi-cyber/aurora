@@ -1,0 +1,81 @@
+/* =============================================================================
+   login.css — /login surface (P1-4, 10-07).
+   Pack 05: tokens only (--aurora-*), no hardcoded color values; tap targets
+   ≥ 44 px; border-radius ≤ 8 px; no bouncy animation (150–250 ms, GPU-only,
+   prefers-reduced-motion respected via the shared .is-spinning pattern).
+   ============================================================================= */
+
+.login {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.login-state {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  background: var(--aurora-bg-subtle);
+  color: var(--aurora-text-secondary);
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  background: var(--aurora-surface);
+  color: var(--aurora-text-primary);
+  box-shadow: var(--aurora-shadow-card);
+}
+
+/* submitting state (AD-13): subtle top accent, no bounce */
+.login-form[data-state='loading'] {
+  border-top: 3px solid var(--aurora-info);
+}
+.login-form[data-state='error'] {
+  border-top: 3px solid var(--aurora-danger);
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.login-field > span {
+  font-size: 12px;
+  color: var(--aurora-text-muted);
+}
+.login-field input {
+  min-height: var(--aurora-tap-target, 44px);
+  padding: 10px 12px;
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  background: var(--aurora-bg-subtle);
+  color: var(--aurora-text-primary);
+  font: inherit;
+}
+.login-field input:focus {
+  outline: none;
+  border-color: var(--aurora-accent-primary);
+}
+
+.login-error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--aurora-danger);
+}
+
+.login-dev-accounts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

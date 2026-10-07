@@ -47,6 +47,7 @@ import { SettingsPage } from './pages/settings';
 import { NotFoundPage } from './pages/not-found';
 import { SkillsPage } from './pages/skills';
 import { IntegrationsPage } from './pages/integrations';
+import { LoginPage } from './pages/login';
 
 // Explicit annotation (TS2742): the inferred return type of
 // `createBrowserRouter` pulls in @remix-run/router's Router type through
@@ -106,6 +107,9 @@ export const appRouter: AppRouter = createBrowserRouter([
       // --- Integrations (Composio, Google Workspace default preset) ---
       { path: '/integrations', element: <IntegrationsPage /> },
 
+      // --- Supabase Auth entry point (P1-4, 10-07) ---
+      { path: '/login', element: <LoginPage /> },
+
       // --- Flashcards / QCM / exercises: /learn/:id overlays (05 §4.8) ---
       // (already registered under details above; no second registration)
 
@@ -120,5 +124,5 @@ export type AppRoute = '/home' | '/tasks' | '/learn' | '/progress' | '/agent'
   | '/tasks/:id' | '/learn/:id' | '/progress/:id' | '/knowledge' | '/knowledge/:nodeId'
   | '/artifacts/:id' | '/inbox' | '/settings' | '/goals' | '/goals/:id'
   | '/goals/:id/features/:fid' | '/goals/:id/ascent' | '/focus' | '/calendar' | '/projects' | '/discovery'
-  | '/skills' | '/integrations'
+  | '/skills' | '/integrations' | '/login'
   | '/canvas/:id';

@@ -17,8 +17,9 @@
  * swatch is not a shadcn control).
  */
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
-import { Moon, Sun } from 'lucide-react';
+import { LogIn, Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   PRESETS,
   THEMES,
@@ -52,6 +53,7 @@ function swatchGradient(t: AuroraTheme | Record<string, unknown>): string {
 
 export function SettingsPage() {
   const { auroraTheme, setAuroraTheme, theme, setTheme } = useUiStateStore();
+  const navigate = useNavigate();
   // Optimistic local coaching prefs (OQ-47: the write is a local mirror,
   // the sync is an AD-8 job — never blocks the screen).
   const [cadence, setCadence] = useState<'daily' | 'weekly' | 'off'>('daily');
@@ -66,6 +68,25 @@ export function SettingsPage() {
       </IonHeader>
       <IonContent>
         <div data-settings="true" className="settings-page">
+          {/* Connexion — the Supabase Auth entry (P1-4, 10-07): the shell
+              boots local-mirror-only (AD-7); /login restores the session so
+              the PowerSync relay connects. */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Connexion</CardTitle>
+              <CardDescription>Compte Aurora (sync + agent, 03 S8.1).</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <button
+                type="button"
+                className="aurora-btn aurora-btn--primary aurora-tap settings-conn-btn"
+                onClick={() => navigate('/login')}
+              >
+                <LogIn size={16} aria-hidden /> Se connecter
+              </button>
+            </CardContent>
+          </Card>
+
           {/* Layer 2 — expressive theme / preset (10 + 3). */}
           <Card>
             <CardHeader>
