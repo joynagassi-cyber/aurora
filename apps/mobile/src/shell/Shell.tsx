@@ -1,31 +1,39 @@
 /**
- * Ionic app shell (04 S1, 02 S6.1) — root Ionic chrome for the app.
+ * Ionic app shell (04 S1, 02 §6.1) — the root mobile chrome of the app.
  *
- * The router's root element is <Shell />: pages mount through the React
- * Router <Outlet /> rendered inside the Ionic chrome (IonRouterOutlet
- * bridges router navigation into the Ionic nav stack). Details open OVER
- * the current tab (IonModal/IonSlides, never a tab switch — 02 §6.1).
+ * Structure (one chrome, no double-nesting):
+ *   <IonApp>
+ *     <Outlet />          → each page OWNS its own IonHeader + IonContent
+ *                            (screen = page, 02 §6.1) — the shell never
+ *                            wraps pages in an extra IonContent/menu.
+ *     <IonFooter>        → the single global bottom tab bar (02 §6.1:
+ *                            max 5 tabs, 44-60 px; details open OVER the
+ *                            current tab so the bar persists).
+ *     <AgentBus />        → the single application Command Bus (02 §4,
+ *                            kernel S15) — at the router root so
+ *                            useNavigate works; headless (returns null).
+ *
+ * Legacy removals (10-07) : l'IonMenu « reveal » (chrome desktop,
+ * source de l'erreur [ion-menu] "must have a content element") et
+ * l'IonRouterOutlet vide (pont nav Ionic inutile avec React Router)
+ * ne montent PLUS ici — le shell mobile = onglets bas + écrans.
  */
-import { IonApp, IonContent, IonMenu, IonRouterOutlet } from '@ionic/react';
+import { IonApp, IonFooter } from '@ionic/react';
 import { Outlet } from 'react-router-dom';
 import { AgentBus } from './AgentBus';
+import { ShellTabBar } from './ShellTabBar';
 
 export function Shell() {
   return (
     <IonApp>
-      <IonMenu menuId="start" type="reveal">
-        <IonContent className="ion-padding">
-          <h1>Aurora</h1>
-        </IonContent>
-      </IonMenu>
-      <IonContent>
-        <IonRouterOutlet />
-        <Outlet />
-        {/* The single application Command Bus (02 §4, kernel S15) — mounted
-            at the router root so `useNavigate` has the <Router> context;
-            a headless effect channel (returns null), one mount per session. */}
-        <AgentBus />
-      </IonContent>
+      <Outlet />
+      {/* 02 §6.1 : la barre d'onglets est permanente (5 tabs) ; un
+          IonFooter place le chrome sous chaque IonContent de page
+          (layout Ionic natif, safe-area basse gérée en CSS). */}
+      <IonFooter>
+        <ShellTabBar />
+      </IonFooter>
+      <AgentBus />
     </IonApp>
   );
 }

@@ -1,0 +1,57 @@
+/* =============================================================================
+   shell.css — la barre d'onglets mobile du shell (02 §6.1 : 5 tabs,
+   44-60 px, safe-area basse Android/iOS via Capacitor).
+   Pack 05 / AD-17 : tokens only (--aurora-*), radius ≤ 8 px, tap ≥ 44 px,
+   transitions 150–250 ms GPU-only (couleurs/opacity — jamais de layout).
+   ============================================================================= */
+
+.shell-tabbar {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  height: 56px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--aurora-surface);
+  border-top: 1px solid var(--aurora-border);
+  box-shadow: var(--aurora-shadow-card);
+}
+
+.shell-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: var(--aurora-tap-target, 44px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--aurora-text-muted);
+  cursor: pointer;
+  transition: color 150ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.shell-tab svg {
+  color: currentColor;
+}
+.shell-tab-label {
+  font-size: 10px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  color: inherit;
+}
+.shell-tab[data-active] {
+  color: var(--aurora-accent-primary);
+}
+.shell-tab:focus-visible {
+  outline: 2px solid var(--aurora-accent-primary);
+  outline-offset: -2px;
+  border-radius: 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shell-tab {
+    transition: none;
+  }
+}
