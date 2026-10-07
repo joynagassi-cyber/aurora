@@ -55,3 +55,88 @@
     transition: none;
   }
 }
+
+/* ── Skeletons "shape-feature" (AD-13 : le chargement prévisualise la FORME
+   de la feature qui va s'afficher, pas un placeholder générique) ──
+   Pulse opacité (GPU), respect de prefers-reduced-motion (05 §3). */
+.sk {
+  background: color-mix(in srgb, var(--aurora-text-muted) 14%, transparent);
+  border-radius: 6px;
+  animation: sk-pulse 1.4s ease-in-out infinite;
+}
+@keyframes sk-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk { animation: none; }
+}
+
+/* Lignes (t2..t5 = proportions du contenu cible). */
+.sk-line { height: 14px; width: 100%; margin-bottom: 6px; }
+.sk-line-t2 { width: 66%; }
+.sk-line-t3 { width: 40%; }
+.sk-line-t4 { width: 80%; }
+
+/* Carte d'objectif (forme `.goal-card` : avatar + 2 lignes + progression). */
+.sk-card {
+  border: 1px solid var(--aurora-border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+.sk-card-head { display: flex; align-items: center; gap: 12px; }
+.sk-circle { width: 40px; height: 40px; min-width: 40px; border-radius: 50%; }
+.sk-lines { flex: 1; display: flex; flex-direction: column; }
+.sk-progress { height: 8px; margin-top: 10px; width: 100%; }
+
+/* Rangée de tâche (forme `.task-row` : pastille + lignes + chip échéance). */
+.sk-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--aurora-border);
+}
+.sk-row:last-child { border-bottom: 0; }
+.sk-dot { width: 8px; height: 8px; min-width: 8px; border-radius: 50%; }
+.sk-chip { width: 44px; height: 20px; border-radius: 999px; }
+
+/* Rangée de la liste /goals (forme VRAIE `.goal-row` : libellé + titre). */
+.sk-goal-row {
+  padding: 14px 16px;
+  border: 1px solid var(--aurora-border);
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+.sk-goal-row .sk-line { margin-bottom: 4px; }
+.sk-goal-row .sk-line:last-child { margin-bottom: 0; }
+
+/* Goal Dashboard (/goals/:id) — forme VRAIE de `.goal-dashboard`. */
+.sk-dashboard-header {
+  padding: 16px 4px;
+  border-bottom: 1px solid var(--aurora-border);
+  margin-bottom: 20px;
+}
+.sk-lines-column { display: flex; flex-direction: column; gap: 4px; }
+/* Nœuds de feature (`.goal-feature-node` réels : 96×56, gap 8/16). */
+.sk-node-row { display: flex; gap: 8px; height: 56px; margin-bottom: 16px; }
+.sk-node {
+  width: 96px;
+  height: 56px;
+  flex: none;
+  border: 1px solid var(--aurora-border);
+  border-radius: 8px;
+}
+/* Strip de contexte (`.goal-context-strip` : chips de stats + suggestion). */
+.sk-context-strip {
+  background: var(--aurora-surface-alt);
+  border: 1px solid var(--aurora-border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sk-chips { display: flex; gap: 8px; }
+.sk-context-strip .sk-chip { width: 64px; }

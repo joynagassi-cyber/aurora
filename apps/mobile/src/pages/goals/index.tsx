@@ -13,6 +13,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import type { AppError, GoalProject } from '@aurora/domain';
 import { useGoals, useGoal } from '../../query/hooks';
 import { UxStates, type UxStateFlags } from '../../ux-states';
+import { GoalDashboardSkeleton, GoalRowSkeleton } from '../../ux/skeletons';
 import { useKilledDetection } from '../../hooks/use-killed';
 import { useOnlineStatus } from '../../hooks/use-online';
 import {
@@ -66,7 +67,16 @@ export function GoalsPage() {
         <IonTitle>Objectifs</IonTitle>
       </IonHeader>
       <IonContent>
-        <UxStates state={goalState} flags={{ ...flags, emptyCta: "Créer un objectif" }} label="Objectifs">
+        <UxStates
+          state={goalState}
+          flags={{
+            ...flags,
+            emptyCta: "Créer un objectif",
+            emptyCtaHref: "/agent?intent=Crée%20mon%20premier%20objectif",
+          }}
+          label="Objectifs"
+          skeleton={<GoalRowSkeleton />}
+        >
           <div data-goal-list className="goals-list-wrap">
             {goals?.map((g) => (
               <a
@@ -110,7 +120,12 @@ export function GoalDashboardPage() {
         <IonTitle>{goal?.objective ?? 'Objectif'}</IonTitle>
       </IonHeader>
       <IonContent>
-        <UxStates state={dashState} flags={flags} label="Objectif">
+        <UxStates
+          state={dashState}
+          flags={flags}
+          label="Objectif"
+          skeleton={<GoalDashboardSkeleton />}
+        >
           {goal && (
             <GoalDashboard
               goal={goal}

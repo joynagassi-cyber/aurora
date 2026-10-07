@@ -9,14 +9,43 @@
  *     store (AD-7) — "retour foreground = re-sync, pas de crash".
  *
  * This hook exposes `killed` to the 5 UX states (P3) and clears it as
- * soon as the first local re-read completes (auto-resync, 04 S6.1).
+ * soon as the first local re-read completes. The clear signal is the
+ * `aurora:first-local-read` window event, dispatched EXACTLY ONCE by
+ * the query bridge (`createMobileQueryClient`, 03 S5.8) when the first
+ * local query reaches `success` — that is the moment the local store
+ * re-read has completed (G-M2: "clear it as soon as the first local
+ * re-read completes"). The module flag below keeps the fact for hook
+ * instances that mount AFTER the one-shot event already fired.
  * It is the UI-only face; the native lifecycle events themselves are
  * delivered by P5's AppLifecycleAdapter (@aurora/platform).
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+/**
+ * Module-level memory of the first local read (survives the one-shot
+ * window event). Set by `markFirstLocalReadSeen` (called by the query
+ * bridge) and by the event listener itself.
+ */
+let firstLocalReadSeen = false;
+
+/** The query bridge (03 S5.8) calls this when the first local read succeeds. */
+export function markFirstLocalReadSeen(): void {
+  firstLocalReadSeen = true;
+}
 
 export function useKilledDetection(resync: () => void): boolean {
-  const [killed, setKilled] = useState(false);
+  // Cold start (G-M2): the first local re-read happens on this screen's
+  // first query — mark killed so the 5 UX states render the "Reconnexion…"
+  // skeleton for exactly that first pass, then clear on the bridge event.
+  // If the first read already happened (tab re-mount, deep link), the
+  // flag says so and no killed pass is rendered at all.
+  const [killed, setKilled] = useState(firstLocalReadSeen ? false : true);
+
+  // Stable handle: callers pass `() => refetch()` (fresh closure per
+  // render); the effect must NOT re-run on that identity or the
+  // resync + killed marking loops on every render.
+  const resyncRef = useRef(resync);
+  resyncRef.current = resync;
 
   useEffect(() => {
     // Track the last time we saw visibility=hidden. If the browser is
@@ -40,6 +69,7 @@ export function useKilledDetection(resync: () => void): boolean {
         const KILL_GAP_MS = 5 * 60 * 1000;
         if (!backgroundedInSession && gapMs > KILL_GAP_MS) {
           setKilled(true);
+          resyncRef.current();
         }
         lastHiddenAt = null;
       }
@@ -47,21 +77,28 @@ export function useKilledDetection(resync: () => void): boolean {
 
     document.addEventListener('visibilitychange', onVisibility);
 
-    // First paint: if the session boot itself was a cold start, the local
-    // store re-read happens on the screen's first query (AD-7); mark
-    // killed so the 5 UX states render the "Reconnexion…" skeleton for
-    // exactly that first pass, then clear it.
-    setKilled(true);
-    resync();
-
-    const onFirstData = () => setKilled(false);
+    // Cold start (G-M2): the local store re-read happens on the screen's
+    // first query (AD-7). The bridge clears us when it completes.
+    if (!firstLocalReadSeen) {
+      resyncRef.current();
+    }
+    const onFirstData = () => {
+      firstLocalReadSeen = true;
+      setKilled(false);
+    };
     window.addEventListener('aurora:first-local-read', onFirstData);
+
+    // If the one-shot event already fired before this listener attached
+    // (first read completed on another screen), clear immediately.
+    if (firstLocalReadSeen) setKilled(false);
 
     return () => {
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('aurora:first-local-read', onFirstData);
     };
-  }, [resync]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-once:
+    // resync is read through the ref (stable across renders).
+  }, []);
 
   return killed;
 }

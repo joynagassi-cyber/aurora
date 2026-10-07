@@ -13,6 +13,7 @@
 import { QueryClient } from '@tanstack/react-query';
 import type { LocalQueryRepository, LocalFilter } from '@aurora/data';
 import type { AscentLearningIR, GoalProject, Task } from '@aurora/domain';
+import { markFirstLocalReadSeen } from '../hooks/use-killed';
 import type { AgentClient } from '../lib/agent-client';
 import type { CanvasClient } from '../lib/canvas-client';
 import type { IntegrationClient } from '../lib/integrations-client';
@@ -122,6 +123,25 @@ export function createMobileQueryClient(provider: MobileDataProvider): QueryClie
       client.invalidateQueries({ queryKey: qk.ascent.all() });
     });
   }
+
+  // G-M2 (04 S6.1): the first local re-read completing is the "killed"
+  // clear signal (useKilledDetection). Dispatch `aurora:first-local-read`
+  // EXACTLY ONCE, when the first query reaches `success` — not at add
+  // time (a freshly-added query is still fetching, state is not the
+  // re-read). A module flag keeps later hook mounts informed after the
+  // one-shot event has already fired.
+  let firstReadDispatched = false;
+  client.queryCache.subscribe((_cache, query) => {
+    query.state.subscribe(() => {
+      if (!firstReadDispatched && query.state.status === 'success') {
+        firstReadDispatched = true;
+        markFirstLocalReadSeen();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('aurora:first-local-read'));
+        }
+      }
+    });
+  });
 
   return client;
 }

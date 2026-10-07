@@ -95,65 +95,36 @@ const provider = createAuroraDataProvider(
 // mirror; zero provider keys cross this boundary (F-09). Absent env values
 // (OQ-03) leave `agent` undefined → the /agent page shows the honest
 // "agent indisponible" empty state (AD-7), never a fake run.
-const agent =
-  env.supabaseUrl && env.supabasePublishableKey
-    ? createAgentClient(
-        createAuroraSupabaseClient({
-          env: {
-            supabaseUrl: env.supabaseUrl,
-            supabasePublishableKey: env.supabasePublishableKey,
-          },
-        }),
-      )
-    : undefined;
+//
+// Single GoTrue instance (AD-3 / 03 S8.1): every client below reuses the
+// `sharedSupabaseClient` above — one browser GoTrueClient, not one per
+// surface (the 4-client fan-out caused "fetchCredentials stuck" warnings
+// and divergent session state across the agent/integrations/skills/canvas
+// families).
+const agent = sharedSupabaseClient
+  ? createAgentClient(sharedSupabaseClient)
+  : undefined;
 // AD-3: the integrations client runs on the SAME publishable-scope client —
 // the device enqueues Composio calls (`fn-integrations`, v3.1 sessions) and
 // reads connected accounts; zero provider / Composio keys cross this
 // boundary (AD-3). Absent env values leave `integrations` undefined → the
 // /integrations page shows the honest "indisponible" state, never a fake
 // connection.
-const integrations =
-  env.supabaseUrl && env.supabasePublishableKey
-    ? createIntegrationClient(
-        createAuroraSupabaseClient({
-          env: {
-            supabaseUrl: env.supabaseUrl,
-            supabasePublishableKey: env.supabasePublishableKey,
-          },
-        }),
-      )
-    : undefined;
+const integrations = sharedSupabaseClient
+  ? createIntegrationClient(sharedSupabaseClient)
+  : undefined;
 // AD-3: the skills marketplace client runs on the SAME publishable-scope
 // client — the device reads `fn-skills` (skill_catalog + user_skills). Zero
 // provider keys cross this boundary. Absent env values leave `skills`
 // undefined → the /skills page shows the honest "skills indisponibles"
 // empty state (AD-7), never a fake catalog.
-const skills =
-  env.supabaseUrl && env.supabasePublishableKey
-    ? createSkillClient(
-        createAuroraSupabaseClient({
-          env: {
-            supabaseUrl: env.supabaseUrl,
-            supabasePublishableKey: env.supabasePublishableKey,
-          },
-        }),
-      )
-    : undefined;
+const skills = sharedSupabaseClient ? createSkillClient(sharedSupabaseClient) : undefined;
 // AD-3: the canvas client runs on the SAME publishable-scope client —
 // the /canvas page reads/writes canvas sessions + comments (0022, RLS user).
 // Absent env values leave `canvas` undefined → honest "indisponible" state.
-const canvas =
-  env.supabaseUrl && env.supabasePublishableKey
-    ? createCanvasClient(
-        createAuroraSupabaseClient({
-          env: {
-            supabaseUrl: env.supabaseUrl,
-            supabasePublishableKey: env.supabasePublishableKey,
-          },
-        }),
-        env.supabasePublishableKey,
-      )
-    : undefined;
+const canvas = sharedSupabaseClient
+  ? createCanvasClient(sharedSupabaseClient, env.supabasePublishableKey)
+  : undefined;
 const dataProvider = mobileDataProviderFrom(provider, agent, integrations, skills, canvas);
 
 function Root() {

@@ -19,6 +19,7 @@ import type {
 } from '@aurora/domain';
 import { useGoals, useTasks } from '../../query/hooks';
 import { GoalProjectCard } from './goal-card';
+import { GoalCardSkeleton, SlotSkeleton, TaskRowSkeleton } from '../../ux/skeletons';
 import { UxStates, type UxStateFlags } from '../../ux-states';
 import { useKilledDetection } from '../../hooks/use-killed';
 import { useOnlineStatus } from '../../hooks/use-online';
@@ -48,6 +49,8 @@ function Slot({
   state,
   flags,
   emptyCta,
+  emptyCtaHref,
+  skeleton,
   children,
 }: {
   slot: HomeSlot;
@@ -55,12 +58,20 @@ function Slot({
   state: AsyncState<unknown>;
   flags: UxStateFlags;
   emptyCta?: string;
+  /** destination du CTA empty-state (navigable, sinon le CTA est inerte). */
+  emptyCtaHref?: string;
+  /** shape-feature du chargement (prévisualise la forme du slot). */
+  skeleton?: ReactNode;
   children: ReactNode;
 }) {
+  const mergedFlags =
+    emptyCta || emptyCtaHref
+      ? { ...flags, ...(emptyCta ? { emptyCta } : {}), ...(emptyCtaHref ? { emptyCtaHref } : {}) }
+      : flags;
   return (
     <section data-slot={slot} className="aurora-slot">
       <h3>{title}</h3>
-      <UxStates state={state} flags={emptyCta ? { ...flags, emptyCta } : flags} label={title}>
+      <UxStates state={state} flags={mergedFlags} label={title} skeleton={skeleton}>
         {children}
       </UxStates>
     </section>
@@ -78,6 +89,11 @@ export function HomePage() {
     killed,
     onRetry: () => refetch(),
   };
+
+  // Première session (zéro donnée) : le slot greeting devient une
+  // invitation explicite à créer le 1er objectif (CTA pré-bound agent) —
+  // l'app ne "part" jamais en screen vide inexplicable.
+  const firstRun = !isPending && goals.length === 0 && (tasks.data?.length ?? 0) === 0;
 
   // AD-14 slot 2: critical-progress = active GoalProject cards.
   const goalState = isError
@@ -113,13 +129,38 @@ export function HomePage() {
         )}
       </IonHeader>
       <IonContent>
-        {/* AD-14 slot 1: greeting (static, no data dependency). */}
+        {/* AD-14 slot 1: greeting — invitation explicite le 1er lancement
+            (premier objectif via l'agent, intent pré-bound), sinon statut. */}
         <Slot slot="greeting" title="Salut" state={{ status: 'success', data: null }} flags={flags}>
-          <p>Voici ce qui compte maintenant.</p>
+          {firstRun ? (
+            <div data-first-run>
+              <p>
+                Bienvenue dans Aurora. Créez votre premier objectif : l'agent le
+                décompose en features claires, les suit et vous guide.
+              </p>
+              <a
+                className="aurora-btn aurora-btn--primary aurora-tap"
+                href="/agent?intent=Crée%20mon%20premier%20objectif"
+                data-cta="first-goal"
+              >
+                Créer mon premier objectif
+              </a>
+            </div>
+          ) : (
+            <p>Voici ce qui compte maintenant.</p>
+          )}
         </Slot>
 
         {/* AD-14 slot 2: critical-progress — GoalProject cards. */}
-        <Slot slot="critical-progress" title="Progression critique" state={goalState} flags={flags} emptyCta="Créer un objectif">
+        <Slot
+          slot="critical-progress"
+          title="Progression critique"
+          state={goalState}
+          flags={flags}
+          emptyCta="Créer un objectif"
+          emptyCtaHref="/agent?intent=Crée%20mon%20premier%20objectif"
+          skeleton={<GoalCardSkeleton />}
+        >
           <div className="goal-cards">
             {goals?.map((g: GoalProject) => (
               <GoalProjectCard key={g.id} goal={g} />
@@ -128,27 +169,67 @@ export function HomePage() {
         </Slot>
 
         {/* AD-14 slot 3: due-reviews (Learning). */}
-        <Slot slot="due-reviews" title="Révisions dues" state={emptyState} flags={flags} emptyCta="Reprendre l'étude">
+        <Slot
+          slot="due-reviews"
+          title="Révisions dues"
+          state={emptyState}
+          flags={flags}
+          emptyCta="Reprendre l'étude"
+          emptyCtaHref="/learn"
+          skeleton={<SlotSkeleton />}
+        >
           <p>Aucune révision due.</p>
         </Slot>
 
         {/* AD-14 slot 4: coach-suggestion (Agent). */}
-        <Slot slot="coach-suggestion" title="Suggestion de Coach" state={emptyState} flags={flags} emptyCta="Demande à Aurora">
+        <Slot
+          slot="coach-suggestion"
+          title="Suggestion de Coach"
+          state={emptyState}
+          flags={flags}
+          emptyCta="Demande à Aurora"
+          emptyCtaHref="/agent"
+          skeleton={<SlotSkeleton />}
+        >
           <p>Aucune suggestion pour l'instant.</p>
         </Slot>
 
         {/* AD-14 slot 5: today-agenda (Calendar). */}
-        <Slot slot="today-agenda" title="Aujourd'hui" state={emptyState} flags={flags} emptyCta="Ouvrir le calendrier">
+        <Slot
+          slot="today-agenda"
+          title="Aujourd'hui"
+          state={emptyState}
+          flags={flags}
+          emptyCta="Ouvrir le calendrier"
+          emptyCtaHref="/calendar"
+          skeleton={<SlotSkeleton />}
+        >
           <p>Aucun agenda aujourd'hui.</p>
         </Slot>
 
         {/* AD-14 slot 6: immediate-focus (Focus). */}
-        <Slot slot="immediate-focus" title="Focus immédiat" state={emptyState} flags={flags} emptyCta="Démarrer une session">
+        <Slot
+          slot="immediate-focus"
+          title="Focus immédiat"
+          state={emptyState}
+          flags={flags}
+          emptyCta="Démarrer une session"
+          emptyCtaHref="/focus"
+          skeleton={<SlotSkeleton />}
+        >
           <p>Prêt à vous concentrer ?</p>
         </Slot>
 
         {/* AD-14 slot 7: next-actions — the most urgent active tasks. */}
-        <Slot slot="next-actions" title="Prochaines actions" state={taskState} flags={flags} emptyCta="Capturer une tâche">
+        <Slot
+          slot="next-actions"
+          title="Prochaines actions"
+          state={taskState}
+          flags={flags}
+          emptyCta="Capturer une tâche"
+          emptyCtaHref="/inbox"
+          skeleton={<TaskRowSkeleton count={2} />}
+        >
           <ul className="next-actions">
             {activeTasks.slice(0, 5).map((t) => (
               <li key={t.id}>

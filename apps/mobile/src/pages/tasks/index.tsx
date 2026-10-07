@@ -11,6 +11,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import type { AppError, Task, TaskStatus } from '@aurora/domain';
 import { useTasks, useTask } from '../../query/hooks';
 import { useUiStateStore } from '../../state/ui-state';
+import { EisenhowerSkeleton, TaskRowSkeleton } from '../../ux/skeletons';
 import { UxStates, type UxStateFlags } from '../../ux-states';
 import { useKilledDetection } from '../../hooks/use-killed';
 import { useOnlineStatus } from '../../hooks/use-online';
@@ -93,7 +94,14 @@ export function TasksPage() {
             ))}
           </div>
 
-          <UxStates state={taskState} flags={{ ...flags, emptyCta: "Capturer une tâche" }} label="Tâches">
+          <UxStates
+            state={taskState}
+            flags={{ ...flags, emptyCta: "Capturer une tâche" }}
+            label="Tâches"
+            skeleton={
+              view === 'eisenhower' ? <EisenhowerSkeleton /> : <TaskRowSkeleton count={3} />
+            }
+          >
             {view === 'eisenhower' ? (
               <div className="eisenhower" data-state="success">
                 {(

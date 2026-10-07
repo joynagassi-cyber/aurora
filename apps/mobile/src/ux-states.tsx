@@ -75,28 +75,39 @@ export function UxStates({
   flags,
   children,
   label,
+  skeleton,
 }: {
   state: AsyncState<unknown>;
   flags: UxStateFlags;
   children?: ReactNode;
   /** accessible label for the loading/error skeleton (a11y). */
   label?: string;
+  /** shape-feature de la feature chargée (prévisualise le layout réel). */
+  skeleton?: ReactNode;
 }): ReactNode {
   const which = resolveUxState(state, flags);
   switch (which) {
     case 'loading':
       return (
-        <div data-ux="loading" role="status" aria-label={label} className="aurora-skeleton-stack">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
+        <div data-ux="loading" role="status" aria-label={label}>
+          {skeleton ?? (
+            <div className="aurora-skeleton-stack">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          )}
         </div>
       );
     case 'killed':
       return (
-        <div data-ux="killed" role="status" aria-label={label ?? 'Reconnexion…'} className="aurora-skeleton-stack">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-2/3" />
+        <div data-ux="killed" role="status" aria-label={label ?? 'Reconnexion…'}>
+          {skeleton ?? (
+            <div className="aurora-skeleton-stack">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          )}
           <p>Reconnexion…</p>
         </div>
       );
