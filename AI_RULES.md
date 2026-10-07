@@ -279,5 +279,6 @@ Values live in **GitHub Actions secrets** (see `set-secrets.ps1`) — **never in
 | What's shipped / release | [docs/release/changelog.md](docs/release/changelog.md) (live) · [docs/epics-stories.md](docs/epics-stories.md) (wave 0→7 plan; banner stale, see §1) |
 | Gaps / open questions / gates | [docs/architecture/gap-register.md](docs/architecture/gap-register.md) + `…/implementation-readiness-report-*.md` |
 | CI gate / rollback | [docs/ci/gate.md](docs/ci/gate.md) + `.github/BRANCH-PROTECTION.md` |
+| Plan de finalisation v0.1.0 → v1.0 (gap mesuré + 7 phases + parking lot Phase 2) | [docs/plans/finalisation-v1.md](docs/plans/finalisation-v1.md) |
 
 > Conventions: decisions are versioned; a significant change needs a documented ADR (additive = normal, breaking = dedicated PR + review). Merge order: Foundation → Contracts → Data/Core → Features → Agent → UI refinement → QA; `main` buildable after every wave. When a doc banner and the tree disagree, the tree (changelog + code) wins — and **this file is the one you may keep current** (the authority docs stay frozen).
