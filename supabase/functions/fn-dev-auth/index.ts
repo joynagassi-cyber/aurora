@@ -25,6 +25,14 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
+function safeJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -39,10 +47,14 @@ serve(async (req) => {
         const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=50`, {
           headers: { Authorization: `Bearer ${SERVICE_ROLE}`, apikey: SERVICE_ROLE },
         });
-        const json = (await res.json().catch(() => null)) as
-          | { users?: Array<Record<string, unknown>> }
-          | null;
-        const users = ((json?.users ?? []) as Array<Record<string, unknown>>)
+        const raw = await res.text();
+        const json = (safeJson(raw)) as { users?: Array<Record<string, unknown>> } | null;
+        const all = (json?.users ?? []) as Array<Record<string, unknown>>;
+        // Preuve brute : nombre total + emails tels que renvoyés par GoTrue
+        // (le filtre dev.* passe en second temps) — diagnostique un corps
+        // d'API inattendu sans spéculer.
+        const rawEmails = all.map((u) => u["email"] ?? null);
+        const users = all
           .filter((u) => String(u["email"] ?? "").startsWith("dev.aurora"))
           .map((u) => ({
             id: String(u["id"]),
@@ -50,35 +62,56 @@ serve(async (req) => {
             confirmed: Boolean(u["email_confirmed_at"]),
             hasPassword: String(u["encrypted_password"] ?? "").length > 0,
           }));
-        console.log("[fn-dev-auth] list-users", { count: users.length, status: res.status });
-        return Response.json({ ok: res.ok, status: res.status, users }, { headers: corsHeaders });
+        console.log("[fn-dev-auth] list-users", { total: all.length, dev: users.length, status: res.status });
+        return Response.json(
+          {
+            ok: res.ok,
+            status: res.status,
+            total_users: all.length,
+            raw_emails: rawEmails,
+            users,
+            raw_body: raw.slice(0, 600),
+          },
+          { headers: corsHeaders },
+        );
       }
 
-      case "set-password": {
-        const user_id = String(body["user_id"] ?? "");
+      case "recreate": {
+        // Canonicité GoTrue de bout en bout : création via l'ADMIN API →
+        // audience par défaut du projet + hash canonique + identité email,
+        // ce que les INSERT bruts SQL ne garantissent pas. « User already
+        // registered » = le compte existe déjà (dans une audience fautive)
+        // → le nettoyage passe par SQL côté base (ids connus), pas ici.
+        const email = String(body["email"] ?? "");
         const password = String(body["password"] ?? "");
-        if (!user_id || !password) {
+        if (!email || !password) {
           return Response.json(
-            { ok: false, error: "user_id + password required" },
+            { ok: false, error: "email + password required" },
             { status: 400, headers: corsHeaders },
           );
         }
-        const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${user_id}`, {
-          method: "PATCH",
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+          method: "POST",
           headers: {
             Authorization: `Bearer ${SERVICE_ROLE}`,
             apikey: SERVICE_ROLE,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ password }),
+          body: JSON.stringify({ email, password, email_confirm: true }),
         });
-        const json = await res.json().catch(() => null);
-        // Ne jamais renvoyer le hash brut au client (AD-3, hygiène dev).
-        const out = json && typeof json === "object" && "user" in json
-          ? { user_email: String((json as { user?: { email?: string } }).user?.email ?? "") }
-          : json;
-        console.log("[fn-dev-auth] set-password", { user_id, status: res.status });
-        return Response.json({ ok: res.ok, status: res.status, result: out }, { headers: corsHeaders });
+        const raw = await res.text();
+        const json = safeJson(raw) as { user?: { email?: string; aud?: string } } | null;
+        console.log("[fn-dev-auth] recreate", { email, status: res.status });
+        return Response.json(
+          {
+            ok: res.ok,
+            status: res.status,
+            user_email: json?.user?.email ?? null,
+            user_aud: json?.user?.aud ?? null,
+            raw_body: res.ok ? undefined : raw.slice(0, 300),
+          },
+          { headers: corsHeaders },
+        );
       }
 
       case "test-signin": {
@@ -95,14 +128,17 @@ serve(async (req) => {
           headers: { "Content-Type": "application/json", apikey: ANON_KEY },
           body: JSON.stringify({ email, password }),
         });
-        const json = (await res.json().catch(() => null)) as
+        const raw = await res.text();
+        const json = safeJson(raw) as
           | { error?: string; error_description?: string; user?: { email?: string } }
           | null;
-        // Pas d'access_token renvoyé (AD-3) — statut + messages GoTrue verbatim.
+        // Pas d'access_token renvoyé (AD-3) : sur 200 le corps contient le
+        // token — `raw_body` n'est donc joint que sur ÉCHEC (tronqué 400).
         const out = {
           error: json?.error ?? null,
           error_description: json?.error_description ?? null,
           signed_in_user: json?.user?.email ?? null,
+          ...(res.ok ? {} : { raw_body: raw.slice(0, 400) }),
         };
         console.log("[fn-dev-auth] test-signin", { email, status: res.status, error: json?.error });
         return Response.json({ ok: res.ok, status: res.status, result: out }, { headers: corsHeaders });

@@ -59,16 +59,13 @@ export function LoginPage() {
         });
         return (await r.json().catch(() => ({ ok: false, error: `HTTP ${r.status} (EF non déployée ?)` }))) as unknown;
       };
-      const listed = (await call({ action: 'list-users' })) as {
-        ok: boolean;
-        users?: Array<{ id: string; email: string; confirmed: boolean; hasPassword: boolean }>;
-      };
-      const fixes = await Promise.all(
-        (listed.users ?? []).map(async (u) => {
-          const pw = DEV_ACCOUNTS[u.email];
-          if (!pw) return { email: u.email, skipped: true };
-          const out = await call({ action: 'set-password', user_id: u.id, password: pw });
-          return { email: u.email, fix: out };
+      // Recréation canonique via l'admin API GoTrue (audience par défaut du
+      // projet + hash canonique + identité email) — les INSERT SQL bruts ne
+      // garantissent pas l'audience du projet, d'où les 400 persistants.
+      const recreated = await Promise.all(
+        Object.entries(DEV_ACCOUNTS).map(async ([e, pw]) => {
+          const out = await call({ action: 'recreate', email: e, password: pw });
+          return { email: e, out };
         }),
       );
       const test = await call({
@@ -76,7 +73,7 @@ export function LoginPage() {
         email: 'dev.aurora@joynagassi.dev',
         password: DEV_ACCOUNTS['dev.aurora@joynagassi.dev'],
       });
-      setDiag(JSON.stringify({ listed, fixes, test }, null, 2));
+      setDiag(JSON.stringify({ recreated, test }, null, 2));
     } catch (e) {
       setDiag(`Diagnostic impossible : ${e instanceof Error ? e.message : String(e)}`);
     }
