@@ -23,14 +23,22 @@
  * (module Integrations, l'adapter du vendor) est seul autorisé à
  * appeler le vendor (AD-1: vendor stays in the adapter).
  *
- * // TODO(dispatcher): wire research handler → runVeillePipeline
- *   Le handler `research` du `fn-job-dispatcher` (le chevauchement
- *   AD-8) doit appeler cette fonction quand le résultat du job a le
- *   flag `discoverySheet` (une veille, pas une recherche libre), et
- *   enfileter le `notificationJob` retourné (module 'integrations',
- *   jobKind 'notification'). Ce wiring dispatcher est un SUIVEUR
- *   (hors scope de ce batch) — G9 fournit ici uniquement la fonction
- *   pipeline + son contrat pur.
+ * // DONE(wave 3, feature-agentique 2026-10-06 §G9 + open item ①) : le
+ * // wiring dispatcher est branché. Le module Discovery expose
+ * // `DISCOVERY_JOB_HANDLERS` (packages/discovery/src/jobs.ts) que le
+ * // dispatcher (ORION, chevauchement AD-8) enregistre dans sa global
+ * // switch (fn-job-dispatcher/index.ts L21). Quand un `research` job
+ * // porte `payload.discoverySheet === true`, le handler `research`
+ * // module-scoped appelle cette fonction (voir
+ * // packages/discovery/src/jobs.ts L76-100) et retourne les
+ * // `discoveryItems` qualifiés + le `notificationJob` payload que le
+ * // dispatcher enfile sur le module 'integrations' / jobKind
+ * // 'notification' pour le push OneSignal (AD-1 : le vendor reste dans
+ * // l'adapter — le module Discovery n'appelle JAMAIS OneSignal).
+ * //
+ * // Le TODO historique (wire research handler → runVeillePipeline) est
+ * // clôturé : la fonction pipeline + son contrat pur restent le point
+ * // d'entrée du module ; le branchement dispatcher est dans jobs.ts.
  */
 import type { DiscoveryItem } from '@aurora/domain';
 import {

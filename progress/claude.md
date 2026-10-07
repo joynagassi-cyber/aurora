@@ -28,10 +28,38 @@
        supprimé**, vendor OneSignal resté dans l'adapter AD-1) + `canvas_create`/
        `canvas_lock` + `inbox_capture`/`inbox_triage` + `ascent_read` (read-only).
        Tests agent 102→112, discovery 8→13, tous verts.
-     Open items wave 3 : wiring du handler `research` du dispatcher → `runVeillePipeline`
-     (TODO commenté dans `veille-pipeline.ts`) ; colonnes module-side pour `canvas.lock`
-     (décision : `locked boolean` vs `blocks jsonb`) ; `goal_rename` côté module
-     (`renameGoal` à ajouter si absent, pattern `updateGoal` patch title).
+     Wave 3 (2026-10-07, open items) :
+       - ① **Wiring dispatcher `research` → `runVeillePipeline`** : le module
+         Discovery expose `DISCOVERY_JOB_HANDLERS` (table importable par ORION)
+         + `buildDiscoveryResearchHandler` qui appelle `runVeillePipeline` quand
+         `payload.discoverySheet === true` (le flag « c'est une veille, pas une
+         recherche libre ») — retourne `discoveryItems` qualifiés (invariant
+         AD-16b) + `notificationJob` payload à enfileter sur le module
+         'integrations' / jobKind 'notification' pour le push OneSignal
+         (AD-1 : le vendor reste dans l'adapter). Le `fn-job-dispatcher`
+         (L21) importe ce symbol depuis `packages/discovery/src/jobs.ts`
+         (l'ancien import pointait vers `packages/progress/src/jobs.ts` qui
+         n'exportait pas le symbol — fix appliqué). TODO clôturé dans
+         `veille-pipeline.ts` (L26-33 commenté DONE). Tests discovery 13→15
+         (2 tests wiring : flag `discoverySheet` présent/absent).
+       - ② **`canvas.lock` module-side** : colonne `locked BOOLEAN NOT NULL
+         DEFAULT FALSE` ajoutée à `canvas_sessions` (migration `0023_canvas_locked.sql`,
+         appliquée au live Supabase via MCP + SSoT ; ADDITIVE-only, FORCE ROW
+         LEVEL SECURITY inchangé). Endpoint `fn-canvas` : nouveaux verbes
+         `create` / `lock` / `rename` + `write` refuse `canvas/locked` quand
+         `locked === true` (read-only volontaire, 409). `invokeTool` dans
+         `fn-agent-bootstrap.ts` (L531) route désormais les commandes
+         `canvas.create` / `canvas.lock` / `canvas.rename` vers `fn-canvas`
+         (l'ancien routeur couvrait uniquement read/write/comment).
+       - ③ **`goal_rename` module-side** : use-case `renameGoal(goal, title, ctx)`
+         ajouté dans `packages/productivity/src/goals-projects.ts` (L109-130) —
+         délégué à `updateGoal` (patch `title` uniquement, émet `GoalUpdated`
+         fields:['title'] ; no-op branch si title inchangé). Exporté via
+         `packages/productivity/src/index.ts` (`export *`). Tests Productivity
+         14→16 (2 tests renameGoal : happy-path + no-op).
+       - Typecheck pnpm -r : 0 erreur. Tests : agent 112/112, discovery 15/15,
+         Productivity 16/16. Gates : check-rls.sh OK (23 migrations scannées),
+         check-boundaries.sh OK (G1–G4 verts).
   4. **Feature canvas (0022)** : page `/canvas/:id` + mode canvas depuis `/agent` — blocs TipTap
      éditables, commentaires sur sélection, indexation verbatim dans le chat, bascule md ⇄ HTML.
      - Migration `supabase/migrations/0022_canvas.sql` (`canvas_sessions` + `canvas_comments`, RLS user)

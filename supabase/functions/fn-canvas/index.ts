@@ -11,6 +11,15 @@
 // par le JWT (user_id = auth.uid()), pas par un paramètre.
 //
 // Endpoints (POST { verb, ... } — même shape que fn-skills / fn-integrations) :
+//   { verb: 'create',  title, blocks?, artifactId? }
+//        -> { ok, data: { canvasId } }         (canvas.create, G10)
+//   { verb: 'lock',    canvasId, locked }
+//        -> { ok, data: { canvasId, locked } } (canvas.lock, G10)
+//        - lock verrouille/déverrouille la session (colonne `locked`,
+//          0023) : quand locked=true, les `write` ultérieurs sont rejetés
+//          ('canvas/locked') jusqu'à un `lock` avec locked=false.
+//   { verb: 'rename',  canvasId, title }
+//        -> { ok, data: { canvasId, title } }  (canvas.rename, G4)
 //   { verb: 'read',    canvasId, includeComments? }
 //        -> { ok, data: { session, comments } }   (canvas.read)
 //   { verb: 'write',   canvasId, blockId?, markdown }
@@ -125,9 +134,117 @@ async function handleRead(
 }
 
 /**
+ * canvas.create (G10) — crée une session canvas (INSERT). Le titre est
+ * requis ; blocks / artifactId optionnels (pré-remplissage).
+ */
+async function handleCreate(
+  body: Record<string, unknown>,
+  userId: string,
+  supabaseUrl: string,
+  serviceKey: string,
+): Promise<Response> {
+  const title = body.title != null ? String(body.title) : "";
+  if (!title) {
+    return err("canvas/missing_create_payload", "title is required", 400);
+  }
+  const blocks: Block[] = Array.isArray(body.blocks)
+    ? (body.blocks as Block[]).map((b) => ({
+        id: b?.id ?? "b-" + ulid().toLowerCase(),
+        kind: "md",
+        content: b?.content != null ? String(b.content) : "",
+      }))
+    : [];
+  const artifactId = body.artifactId != null ? String(body.artifactId) : undefined;
+  const iRes = await rest(
+    "POST",
+    "/rest/v1/canvas_sessions",
+    "",
+    {
+      id: "c-" + ulid(),
+      user_id: userId,
+      title,
+      blocks,
+      artifact_id: artifactId,
+      locked: false,
+    },
+    supabaseUrl,
+    serviceKey,
+  );
+  if (!iRes.ok) {
+    return err("canvas/create_failed", "canvas create failed: " + (iRes.error ?? String(iRes.status)), 502);
+  }
+  const iRows = (iRes.json as unknown) as Array<Record<string, unknown>>;
+  const row = Array.isArray(iRows) ? iRows[0] : undefined;
+  return ok({ canvasId: row?.id != null ? String(row.id) : "", title, blockCount: blocks.length });
+}
+
+/**
+ * canvas.lock (G10) — (dé)verrouille la session (colonne `locked`, 0023).
+ * Réversible (non-destructif) : le verrou borne les `write` (handleWrite
+ * refuse 'canvas/locked' quand locked=true), jamais la lecture ni les
+ * commentaires.
+ */
+async function handleLock(
+  body: Record<string, unknown>,
+  userId: string,
+  supabaseUrl: string,
+  serviceKey: string,
+): Promise<Response> {
+  const canvasId = String(body.canvasId ?? "");
+  if (!canvasId) {
+    return err("canvas/missing_canvas_id", "canvasId is required", 400);
+  }
+  const locked = body.locked !== false; // défaut : verrouiller (le verrou est la raison d'être du verbe)
+  const updQs =
+    "?id=eq." + encodeURIComponent(canvasId) + "&user_id=eq." + encodeURIComponent(userId);
+  const uRes = await rest("PATCH", "/rest/v1/canvas_sessions", updQs, { locked }, supabaseUrl, serviceKey);
+  if (!uRes.ok) {
+    return err("canvas/lock_failed", "canvas lock failed: " + (uRes.error ?? String(uRes.status)), 502);
+  }
+  const uRows = (uRes.json as unknown) as Array<Record<string, unknown>>;
+  const row = Array.isArray(uRows) ? uRows[0] : undefined;
+  if (!row) {
+    return err("canvas/not_found", "canvas session not found (or not yours)", 404);
+  }
+  return ok({ canvasId, locked: row.locked === true });
+}
+
+/**
+ * canvas.rename (G4) — renomme la session (PATCH `title`). Non-destructif.
+ * Refusé si la session est verrouillée (cohérence avec `write`, G10).
+ */
+async function handleRename(
+  body: Record<string, unknown>,
+  userId: string,
+  supabaseUrl: string,
+  serviceKey: string,
+): Promise<Response> {
+  const canvasId = String(body.canvasId ?? "");
+  const title = body.title != null ? String(body.title) : "";
+  if (!canvasId || !title) {
+    return err("canvas/missing_rename_payload", "canvasId + title are required", 400);
+  }
+  const updQs =
+    "?id=eq." + encodeURIComponent(canvasId) + "&user_id=eq." + encodeURIComponent(userId);
+  const uRes = await rest("PATCH", "/rest/v1/canvas_sessions", updQs, { title }, supabaseUrl, serviceKey);
+  if (!uRes.ok) {
+    return err("canvas/rename_failed", "canvas rename failed: " + (uRes.error ?? String(uRes.status)), 502);
+  }
+  const uRows = (uRes.json as unknown) as Array<Record<string, unknown>>;
+  const row = Array.isArray(uRows) ? uRows[0] : undefined;
+  if (!row) {
+    return err("canvas/not_found", "canvas session not found (or not yours)", 404);
+  }
+  return ok({ canvasId, title: row.title != null ? String(row.title) : title });
+}
+
+/**
  * canvas.write — écrit / remplace un bloc markdown. blockId absent = ajout.
  * L'agent propose, le module applique (AD-7). La mutation porte les blocs
  * complets (jsonb) — on patche la liste, pas une cell, pour rester borné.
+ * G10 : une session verrouillée (`locked=true`) refuse l'écriture (read-only
+ * volontaire) — 'canvas/locked', tant que canvas.lock(locked=false) n'a pas
+ * libéré le canvas.
  */
 async function handleWrite(
   body: Record<string, unknown>,
@@ -152,6 +269,10 @@ async function handleWrite(
   const session = Array.isArray(sRows) ? sRows[0] : undefined;
   if (!session) {
     return err("canvas/not_found", "canvas session not found (or not yours)", 404);
+  }
+  if (session.locked === true) {
+    // G10 : verrou volontaire (0023) — le canvas est en read-only co-édition.
+    return err("canvas/locked", "canvas is locked — unlock with verb 'lock' (locked:false) first", 409);
   }
   const blocks: Block[] = Array.isArray(session.blocks) ? (session.blocks as Block[]) : [];
   let nextBlocks: Block[];
@@ -278,6 +399,12 @@ Deno.serve(async (req: Request) => {
         return handleWrite(body, userId, SUPABASE_URL, SUPABASE_SERVICE_KEY);
       case "comment":
         return handleComment(body, userId, SUPABASE_URL, SUPABASE_SERVICE_KEY);
+      case "create":
+        return handleCreate(body, userId, SUPABASE_URL, SUPABASE_SERVICE_KEY);
+      case "lock":
+        return handleLock(body, userId, SUPABASE_URL, SUPABASE_SERVICE_KEY);
+      case "rename":
+        return handleRename(body, userId, SUPABASE_URL, SUPABASE_SERVICE_KEY);
       default:
         return err("canvas/unknown_verb", 'unknown verb "' + verb + '"', 400);
     }

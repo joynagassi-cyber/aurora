@@ -126,3 +126,74 @@ test('G9: le pipeline est SYNCHRONE + PUR (pas de vendor, pas de job queue) — 
   assert.equal(typeof out.notificationJob.uncertain, 'boolean');
   assert.ok(!('body' in out.notificationJob) || out.notificationJob.body === undefined);
 });
+
+// ——— G9 / wave 3 : le wiring dispatcher (①) ———
+
+test('G9 (wave 3) : le handler research discovery porte discoverySheet=true → le pipeline assemble les items + le notificationJob payload', async () => {
+  // Imports différés du wiring : buildDiscoveryResearchHandler +
+  // DISCOVERY_JOB_HANDLERS (l'export que le dispatcher ORION importe,
+  // packages/discovery/src/jobs.ts).
+  const { buildDiscoveryResearchHandler, DISCOVERY_JOB_HANDLERS } = await import('../src/jobs.ts');
+
+  // La table du module (celle que le dispatcher enregistre dans sa
+  // global switch, L21 de fn-job-dispatcher) porte un handler 'research'
+  // module-scoped : le symbol existe et est branché.
+  assert.ok(
+    DISCOVERY_JOB_HANDLERS.some((h) => h.jobKind === 'research' && h.module === 'discovery'),
+    'DISCOVERY_JOB_HANDLERS expose le handler research/discovery (wiring ORION)',
+  );
+
+  // Un filterCtx AI + un hit AI credible-uncertain (source tierce, AD-16b).
+  const filterCtx = { disciplines: ['AI'] } as unknown as DiscoveryFilterContext;
+  const handler = buildDiscoveryResearchHandler({
+    filterCtx,
+    provider: new OfflineResearchProvider(), // offline : résultats vides, dégradation AD-1
+  });
+
+  const res = await handler.handler('j1', 'u1', {
+    op: 'multi-source',
+    discoverySheet: true, // le flag qui déclenche le pipeline veille
+    channelId: 'ch1',
+    sheetTitle: 'Veille AI',
+    query: {
+      userId: 'u1',
+      topic: 'AI',
+      domains: ['AI'],
+      kinds: ['other'],
+    } as never,
+  });
+
+  assert.equal(res.ok, true, 'le handler ne casse jamais (dégradation AD-1)');
+  const r = res.result as { discoveryItems: unknown[]; notificationJob: { module: string; jobKind: string; uncertain: boolean; channelId: string; title: string } };
+  assert.equal(r.discoveryItems.length, 0, 'offline provider : aucun hit, donc 0 item');
+  // AD-16b : flag JAMAIS supprimé — offline = source absente = uncertain.
+  assert.equal(r.notificationJob.uncertain, true);
+  assert.equal(r.notificationJob.module, 'integrations');
+  assert.equal(r.notificationJob.jobKind, 'notification');
+  assert.equal(r.notificationJob.channelId, 'ch1');
+  assert.equal(r.notificationJob.title, 'Veille AI');
+});
+
+test('G9 (wave 3) : le flag discoverySheet ABSENT → le handler retourne le shape legacy (pas de pipeline) (invariant du comportement par défaut)', async () => {
+  const { buildDiscoveryResearchHandler } = await import('../src/jobs.ts');
+  const filterCtx = { disciplines: ['AI'] } as unknown as DiscoveryFilterContext;
+  const handler = buildDiscoveryResearchHandler({
+    filterCtx,
+    provider: new OfflineResearchProvider(),
+  });
+  const res = await handler.handler('j2', 'u1', {
+    op: 'multi-source',
+    // PAS de flag discoverySheet → comportement legacy (search only)
+    query: {
+      userId: 'u1',
+      topic: 'AI',
+      domains: ['AI'],
+      kinds: ['other'],
+    } as never,
+  });
+  assert.equal(res.ok, true);
+  const r = res.result as { op: string; count: number; discoveryItems?: unknown };
+  assert.equal(r.op, 'multi-source');
+  assert.equal(r.count, 0);
+  assert.equal('discoveryItems' in r, false, 'sans le flag, le shape legacy est conservé (pas de pipeline)');
+});

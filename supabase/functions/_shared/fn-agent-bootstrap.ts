@@ -529,7 +529,7 @@ export function buildAgentKernel(): AgentKernel | null {
       const cmd = (payload?.command ?? tool) as string;
       const userId = (payload?.userId as string | undefined) ?? '';
       if (typeof cmd === 'string' && cmd.startsWith('canvas.')) {
-        const verb = cmd === 'canvas.read' ? 'read' : cmd === 'canvas.write' ? 'write' : cmd === 'canvas.comment' ? 'comment' : null;
+        const verb = cmd === 'canvas.read' ? 'read' : cmd === 'canvas.write' ? 'write' : cmd === 'canvas.comment' ? 'comment' : cmd === 'canvas.create' ? 'create' : cmd === 'canvas.lock' ? 'lock' : cmd === 'canvas.rename' ? 'rename' : null;
         if (verb && userId) {
           // Le body fn-canvas = verb + champs outils, SANS userId (l'identité
           // vient du Bearer user JWT — AD-7 : jamais du body).

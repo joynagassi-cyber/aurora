@@ -18,11 +18,25 @@
 import { ok, err, ulid } from "../_shared/envelope.ts";
 import { PRODUCTIVITY_JOB_HANDLERS } from "../../../packages/productivity/src/jobs.ts";
 import {
-  DISCOVERY_JOB_HANDLERS,
   PROGRESS_JOB_HANDLERS,
   PROGRESS_FSRS_TICK_HANDLER,
   PROGRESS_COURSE_IMPORT_HANDLER,
 } from "../../../packages/progress/src/jobs.ts";
+// G9 (wave 3, feature-agentique 2026-10-06) : le handler `research` du
+// module Discovery (packages/discovery/src/jobs.ts) est importé ICI —
+// l'ancienne référence `DISCOVERY_JOB_HANDLERS` pointait vers
+// packages/progress/src/jobs.ts qui n'exportait pas ce symbol
+// (le builder `buildDiscoveryResearchHandler` + la table
+// `DISCOVERY_JOB_HANDLERS` vivent dans le module Discovery, pas
+// Progress). Ce fix relie la veille-pipeline (runVeillePipeline) au
+// dispatcher : quand un `research` job porte `payload.discoverySheet ===
+// true`, le handler assemble les résultats en DiscoveryItem[] (invariant
+// AD-16b : le flag `uncertain` est JAMAIS supprimé) + construit le
+// notificationJob payload que le dispatcher enfile sur le module
+// 'integrations' / jobKind 'notification' pour le push OneSignal
+// (AD-1 : le vendor reste dans l'adapter, le module Discovery
+// ne l'appelle jamais).
+import { DISCOVERY_JOB_HANDLERS } from "../../../packages/discovery/src/jobs.ts";
 import { SCIENTIFIC_JOB_HANDLERS } from "../../../packages/scientific-engine/src/jobs.ts";
 import { INTEGRATIONS_JOB_HANDLERS } from "../../../packages/integrations/src/automations.ts";
 import { buildAgentRunHandler } from "../../../packages/agent/src/jobs.ts";

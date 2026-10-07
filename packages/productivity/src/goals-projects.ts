@@ -106,6 +106,31 @@ export function achieveGoal(goal: Goal, ctx: Ctx): ProductivityCommand {
   return updateGoal(goal, { status: 'achieved' }, ctx, `go-${goal.id}-achieved`);
 }
 
+/**
+ * G12 — renameGoal : renomme un objectif (patch `title` uniquement).
+ * Fine use-case (AD-7 : le kernel ÉMET `progress.goal_rename` ; c'est ce
+ * module qui applique la mutation) — délégué à `updateGoal` pour rester
+ * borné : le no-op guard (title inchangé → pas d'événement) et l'émission
+ * de `GoalUpdated` (fields: ['title']) viennent d'en-bas.
+ *
+ * Non-destructif : un goal ne se supprime jamais (AD-15 additif,
+ * `goal_abandon` est le seul verbe de retrait).
+ *
+ * NB : le `localMutationId` passe par l'argument de `updateGoal` —
+ * JS n'évalue le default argument que si l'argument est undefined,
+ * donc le no-op branch (L83-87 de ce fichier) retourne l'id
+ * `go-${id}-rename` (l'id du caller) PAS `go-${id}-noop`. C'est un
+ * replay-safe identifier (l'idempotence AD-8 regarde le no-op via
+ * l'absence d'`event`, pas via le mutation id).
+ */
+export function renameGoal(
+  goal: Goal,
+  title: string,
+  ctx: Ctx,
+): ProductivityCommand {
+  return updateGoal(goal, { title }, ctx, `go-${goal.id}-rename`);
+}
+
 // ---------------------------------------------------------------------------
 // Projects
 // ---------------------------------------------------------------------------

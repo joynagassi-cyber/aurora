@@ -28,10 +28,11 @@ import {
   startFocusSession,
   tickPomodoro,
   updateGoal,
+  renameGoal,
   PRODUCTIVITY_PRODUCED_EVENTS,
   buildTaskCompleted,
 } from '../src/index.ts';
-import type { Task } from '../src/index.ts';
+import type { Task, Goal } from '../src/index.ts';
 
 const ctx = { userId: 'u1', clientId: 'c1', now: Date.parse('2026-09-25T09:00:00Z') };
 
@@ -229,4 +230,48 @@ test('recurrence createTask groups series by parent key', () => {
   assert.equal(c.patch.parent_recurrence_key, 'rec-t9');
   assert.equal(c.patch.recurrence_rule, 'FREQ=WEEKLY;INTERVAL=2');
   assert.equal((c.patch.dependencies as Array<{ v: string }>)[0]!.v, 't0');
+});
+
+// G12 — goal_rename (wave 3, open item ③) : renameGoal patche title +
+// émet GoalUpdated (fields: ['title']) ; l'idempotence no-op (title
+// inchangé → pas d'événement) est héritée de updateGoal.
+test('G12 (wave 3): renameGoal patche title + émet GoalUpdated (fields: ["title"])', () => {
+  const goal = {
+    id: 'g1',
+    userId: 'u1',
+    title: 'Ancien',
+    horizon: 'medium' as const,
+    status: 'active' as const,
+    createdAt: '2026-09-01T00:00:00Z',
+    updatedAt: '2026-09-01T00:00:00Z',
+  } as unknown as Goal;
+  const cmd = renameGoal(goal, 'Nouveau titre', ctx);
+  assert.equal(cmd.table, 'goals');
+  assert.equal(cmd.id, 'g1');
+  assert.equal(cmd.patch.title, 'Nouveau titre');
+  assert.equal(cmd.localMutationId, 'go-g1-rename');
+  assert.ok(cmd.event, 'GoalUpdated émise');
+  assert.equal(cmd.event!.type, 'GoalUpdated');
+  const payload = cmd.event!.payload as { fields: string[] };
+  assert.deepEqual(payload.fields, ['title']);
+});
+
+test('G12 (wave 3): renameGoal no-op (title inchangé) → pas de GoalUpdated', () => {
+  const goal = {
+    id: 'g1',
+    userId: 'u1',
+    title: 'Idem',
+    horizon: 'medium' as const,
+    status: 'active' as const,
+    createdAt: '2026-09-01T00:00:00Z',
+    updatedAt: '2026-09-01T00:00:00Z',
+  } as unknown as Goal;
+  const cmd = renameGoal(goal, 'Idem', ctx);
+  assert.equal(cmd.table, 'goals');
+  // NB : le `localMutationId` est l'argument du caller (l'argument
+  // `go-g1-rename` du renameGoal) — le no-op branch (updateGoal L83-87)
+  // n'utilise QUE le default arg quand l'argument est undefined, ici
+  // il est défini → le mutation id reste l'id du caller.
+  assert.equal(cmd.localMutationId, 'go-g1-rename');
+  assert.equal(cmd.event, undefined, 'no-op : pas d\'événement émis');
 });

@@ -16,6 +16,9 @@ export interface CanvasSession {
   title: string;
   blocks: CanvasBlock[];
   artifactId?: string;
+  /** verrou volontaire (wave 3 G10) : true = canvas_write devient read-only
+   *  tant que l'agent ou l'humain n'a pas émis canvas_lock(locked=false). */
+  locked?: boolean;
   createdAt: string;
   updatedAt: string;
 }
