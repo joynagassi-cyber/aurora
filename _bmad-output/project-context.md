@@ -198,6 +198,26 @@ le gate du SPEC. Trancher = noter la décision (additive) dans ce frontmatter
   `region`, `disciplines`, `professional_target`, `budget_constraint`
   (data-driven filtering de Discovery, pas de hardcoding Benin —
   `docs/knowledge/discovery-gap-pipeline.md`).
+- 2026-10-07 — **Vérif live post-RC (Dyad)** : 4 jobs pg_cron `aurora_*` à
+  0 échec (fix heartbeat v1.10 confirmé, `keep_alive.last_ping` 10-07),
+  `job_queue` vide, `skill_catalog` = 607, `canvas_sessions.locked` + FORCE
+  RLS ✅, 14/14 vues `v_*` → `service_role` ✅. **Finding Low → FIXÉ live
+  10-07** : `ALTER TABLE skill_catalog FORCE ROW LEVEL SECURITY` appliqué +
+  confirmé (`forced=true`) — aligne la convention wave 0 (51/51 RLS+FORCE) ;
+  le `service_role` (BYPASSRLS) reste borné mais conserve l'accès `ALL` via
+  `skill_catalog_service_write` (qual nulle) → EF non impactées. **Reste
+  (monorepo)** : 1 ligne FORCE à resyncer dans le SSoT
+  `supabase/migrations/0021` (ou migration `0024` additif) ; input W6-E1-1.
+- 2026-10-07 — **P1-2 tranché (brouillon, à ratifier standup)** : résolu
+  `DISCOVERY_JOB_HANDLERS` côté EF par **copie vendée**
+  (`supabase/functions/_shared/veille-pipeline.ts`) + **gate de drift CI** ;
+  l'Option A (esbuild bundle) reste en backlog. Additif, pas de spine change
+  (`docs/plans/ef-bundling-p1-2.md`).
+- 2026-10-07 — **Parking lot Phase 2 = brouillons de recommandation** :
+  Electron / Yjs / STT local = **différer** ; microservices = **rejeté**
+  sauf échelle multi-produit. Chaque tranché = ADR additif ici (§5), jamais
+  de modif du spine (additive = normal, breaking = PR dédié + review)
+  (`docs/plans/phase2-parking-lot.md`).
 - 2026-09-26 — **OQ-01 ré-ratifié (layout réel 16 packages + 2 apps)** :
   le pnpm workspace contient 4 packages module-owner wave 2
   (`learning`, `productivity`, `progress`, `discovery`/`focus`) +

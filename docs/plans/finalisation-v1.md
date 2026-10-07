@@ -20,6 +20,7 @@
 | G7 | **UI polish « interface lisse et propre »** : pass DAPHNE design-QA (`prompts/dyad-design-qa.md`) à étendre sur **toutes** les pages (horebs S-41 + 49 mockups + 10 thèmes + 3 presets) ; 6 états UX uniformes ; tokens-only (zéro `#000`/`#fff` hardcodés, zéro radius > 8 px, zéro animation bouncy, AD-17 + pack 05 §3). | UX owner-requested | questionnaire 10-07 |
 | G8 | **Hygiène du repo** : `.claude/worktrees/` + `node_modules` à gitignorer ; artefact vite transitoire untracked (`apps/mobile/vite.config.ts.timestamp-*.mjs`) ; doc-lag `AI_RULES.md` (§3 dit 20 migrations alors que le gate scanne 24) ; `anthropic-skills/` à marquer **snapshot** (source de seed, pas du code). | Hygiène | tree 10-07 |
 | G9 | **Phase 2 non préparée** : Electron adapter, Yjs multi-device, STT local, microservices — **décisions à prendre, pas de code** (ADR additifs uniquement, V1 non-impacts). | Parking lot | ADR §23.1/§23.3 |
+| G10 | ~~**Shell mobile boots sans relay** : `apps/mobile/.env.local` absent → `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY`/`VITE_POWERSYNC_URL` vides → `createClient('')` = « supabaseUrl is required » (erreur PowerSync en boucle 5 s).~~ | **RESOLVED 10-07** | `apps/mobile/.env.local` créé (publishable only, AD-3) + restart dev server ; logs post-restart : 0 erreur sync, client pointé sur `sb-opagfyspdbhxthlxvlrk` ✅ |
 
 ### État live vérifié le 2026-10-07 (via `execute_sql` sur `opagfyspdbhxthlxvlrk`)
 
@@ -29,6 +30,9 @@
 | pg_cron `aurora_*` (jobids 1,2,3,9) | ✅ tous `active=true`, **0 échec** : `event_dispatch` */5 min = 3066 runs « succeeded », dernière 10-07 12:30 UTC ; `fsrs_tick` + `skill_recompute` = 11 runs ; **fix heartbeat v1.10 confirmé** (`keep_alive.last_ping` = 10-07 00:00:00.076, jobid 9 = 10 runs OK) |
 | `job_queue` | ✅ vide (0 job stuck/failed — le dispatcher consomme sans résidu) |
 | `skill_catalog` | ✅ total **607** (18 builtin + 589 marketplace, 0021) ; distribution live : business 199 / legal 160 / finance 128 / documents 24 / research 17 / science 15 / marketing 15 / coding 13 / productivity 12 / healthcare 11 / design 7 / students 4 / social 1 / creative 1 *(drift vs le snapshot du commit 43693d9 = patchs postérieurs, pas un bug)* |
+
+| Audit grants live (10-07) | ✅ **14/14 vues `v_*`** granted `service_role` SELECT (relay PowerSync OK) · `expert_skills` + `ascent_paths` : **FORCE RLS** + policies bornées `user_id = auth.uid()` (AD-3 respecté) · `canvas_sessions/comments` : RLS enabled + FORCE · `skill_catalog` : lecture public (anon+authenticated), écriture service-only — **finding Low → FIXÉ au live 10-07** : `ALTER TABLE skill_catalog FORCE ROW LEVEL SECURITY` appliqué + confirmé (`forced=true`) ; le `service_role` (BYPASSRLS) reste borné mais conserve l'accès `ALL` via `skill_catalog_service_write` (qual nulle) → EF non impactées — **reste (monorepo)** : 1 ligne FORCE à resyncer dans le SSoT `supabase/migrations/0021` (ou migration 0024 additif) |
+| Shell dev client (10-07, post-G10) | ✅ `apps/mobile/.env.local` créé (`VITE_SUPABASE_URL` + publishable key + `VITE_POWERSYNC_URL`) → 0 erreur « supabaseUrl is required » post-restart ; GoTrueClient pointé sur `sb-opagfyspdbhxthlxvlrk` (l'erreur d'avant ressemblait à un retry en boucle ~5 s) |
 
 **Restant côté DB = rien** — les résidus G1/G2/G3 sont **EF + client** (à faire depuis le monorepo : `supabase functions deploy` × 6 + round-trip PowerSync avec un user Auth).
 
@@ -47,9 +51,9 @@
 
 ### Phase 1 — Deploy & données live (2 j) — owner : Data + Orion
 - [ ] **P1-1** — `supabase functions deploy` × 6 EF (`fn-agent-run`, `fn-canvas`, `fn-import-course`, `fn-integrations`, `fn-job-dispatcher`, `fn-skills`) + **vérif** verbes `canvas.create / canvas.lock / canvas.rename` (smoke test curl authed)
-- [ ] **P1-2** — **Résoudre `DISCOVERY_JOB_HANDLERS` côté EF** : le module `packages/discovery` n'est pas résolvable par le runtime Deno → décision entre **bundler** (esbuild/deno bundle du handler dans le EF) ou **copie** (fichier dupliqué + test de drift) ; à encoder dans `fn-job-dispatcher` + `config.toml` catalog
+- [ ] **P1-2** — **Résoudre `DISCOVERY_JOB_HANDLERS` côté EF** : le module `packages/discovery` n'est pas résolvable par le runtime Deno → **décision = Option B (copie vendée `_shared/` + gate de drift CI), Option A (esbuild bundle) en backlog** — voir [ef-bundling-p1-2.md](ef-bundling-p1-2.md)
 - [ ] **P1-3** — **Test jobs E2E** (DoD wave 1) : job créé par le pg_cron `aurora_event_dispatch` → `fn-job-dispatcher` le claim → résultat écrit + **idempotence** sur `source_local_mutation_id` (replay = no-op) ; vérif via `job_logs` + `job_queue.attempts` — *état live vérifié 10-07 : scheduler 4 jobs OK + queue vide ; reste le test de claim par l'EF (après P1-1/P1-2, monorepo)*
-- [ ] **P1-4** — **PowerSync round-trip** (DoD wave 1) : user Supabase Auth (`joynagassi` ou dev user) + client PowerSync local → lecture `tasks`/`goals` → écriture locale → upsync → relecture ; **offline kill-app relaunch = état intact** (03 §5.9)
+- [ ] **P1-4** — **PowerSync round-trip** (DoD wave 1) : user Supabase Auth (`joynagassi` ou dev user) + client PowerSync local → lecture `tasks`/`goals` → écriture locale → upsync → relecture ; **offline kill-app relaunch = état intact** (03 §5.9) — *côté client débloqué 10-07 (G10 : `apps/mobile/.env.local` VITE_* créé + restart → 0 erreur sync, client pointé sur `sb-opagfyspdbhxthlxvlrk`) ; ⚠️ reste : `auth.users` = **0 ligne** (les users du test RLS de 09-26 ont disparu) → **prérequis P1-4/P1-5 : créer 2 dev users Auth avant tout test live A/B + round-trip***
 - [ ] **P1-5** — **RLS penetration re-run post-0023** : `canvas_sessions.locked` (test A vs B sur la colonne `locked`, `tests/rls-penetration.sql`) — *vérif structurelle 10-07 ✅ (RLS enabled + FORCE, policies ALL user + SELECT service_role) ; le test A/B live avec 2 users reste à faire (monorepo)*
 
 ### Phase 2 — Audit & résidus (3 j) — owner : QA + toutes équipes
@@ -80,6 +84,7 @@
 - [ ] **P5-6** — **Sentry (errors + perf SLOs) + PostHog (EU)** actifs ; SLOs monitorés (pas de regression sur les 3 budgets post-release)
 
 ### Phase 6 — Parking lot Phase 2 (1 j) — owner : owner + Foundation
+> **Mémo de décision prêt** : [phase2-parking-lot.md](phase2-parking-lot.md) (recommandations : Electron/Yjs/STT = **différer**, microservices = **rejeté** sauf échelle multi-produit ; chaque décision = ADR additif noté §5, zéro code V1).
 - [ ] **P6-1** — **Décision Electron adapter** : ADR additif (V1 = mobile-only, Electron = adapter ajouté au Phase 2, core platform-agnostic — ADR §23.1/§23.3)
 - [ ] **P6-2** — **Décision Yjs multi-device** : ADR additif (V1 = CRDT OR-Set figé, Yjs = Phase 2 seulement)
 - [ ] **P6-3** — **Décision STT local** : exclus V1 (pack 04 R8), à ratifier ou non pour le Phase 2 (le transcribe = optionnel via `Audio/Transcription` port, jamais local dans V1)

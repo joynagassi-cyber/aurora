@@ -1,5 +1,44 @@
 # Changelog project-context.md
 
+## v1.11 — 2026-10-07 (Vérif live post-RC + plan de finalisation v1.0 + décisions P1-2 / parking lot)
+
+- **Vérif live (workspace Dyad, `execute_sql` sur `opagfyspdbhxthlxvlrk`)** :
+  - `canvas_sessions.locked` (0023) présente (`BOOLEAN NOT NULL DEFAULT FALSE`) +
+    **RLS enabled + FORCE** + 2 policies (`_user_isolation` ALL `user_id=auth.uid()`
+    + `_service_role` SELECT) ✅
+  - pg_cron `aurora_*` (jobids 1,2,3,9) : **0 échec** — `event_dispatch` */5 min =
+    3066 runs `succeeded` (dern. 10-07 12:30 UTC), `fsrs_tick` + `skill_recompute`
+    = 11 runs ; **fix heartbeat v1.10 confirmé** (`keep_alive.last_ping` =
+    10-07 00:00:00.076, jobid 9 = 10 runs OK)
+  - `job_queue` vide (0 stuck/failed) ; `skill_catalog` = **607 lignes**
+    (distribution live ≠ snapshot commit `43693d9` = patchs postérieurs,
+    **pas un bug**)
+  - **Audit grants** : 14/14 vues `v_*` granted `service_role` SELECT (relay OK) ;
+    `expert_skills` + `ascent_paths` = FORCE RLS + policies bornées
+    `user_id=auth.uid()` (AD-3 respecté) ; `skill_catalog` = lecture public +
+    écriture service-only. **Finding Low → FIXÉ au live le même jour** :
+    `ALTER TABLE skill_catalog FORCE ROW LEVEL SECURITY` appliqué + confirmé
+    (`forced=true`) — aligne la convention wave 0 (51/51 RLS+FORCE). Vérif de
+    non-régression : `skill_catalog_service_write` = ALL **qual/with_check
+    `true`** (inconditionnelle : sans USING → `true`) → le `service_role`
+    (BYPASSRLS, désormais borné par FORCE) conserve l'accès complet,
+    EF `fn-skills` non impactées ;
+    `powersync_role` non concerné (non-BYPASSRLS, comportement inchangé).
+    **Reste (monorepo)** : 1 ligne FORCE à resyncer dans le SSoT
+    `supabase/migrations/0021` (ou migration `0024` additif) + input W6-E1-1.
+- **Plan de finalisation** `docs/plans/finalisation-v1.md` (gap G1–G9, phases
+  P0–P6, 3 diagrammes Mermaid) + pointeur `AI_RULES.md` §11. Phase 0 P0-1/P0-2
+  exécutées ici ; le résidu G1 (EF non déployées) reste bloquant sur
+  `supabase functions deploy` × 6 depuis le monorepo.
+- **P1-2 tranché en brouillon** (`docs/plans/ef-bundling-p1-2.md`) :
+  **Option B** = copie vendée `supabase/functions/_shared/veille-pipeline.ts`
+  + **gate de drift CI** ; Option A (esbuild bundle) = backlog post-v1.0.
+  **À ratifier au standup** (convention module-owner Orion/Discovery/Foundation).
+- **Parking lot Phase 2** (`docs/plans/phase2-parking-lot.md`) : recommandations
+  **Electron/Yjs/STT local = différer**, **microservices = rejeté** sauf échelle
+  multi-produit ; chaque décision future = ADR additif (§5), spine read-only.
+- **§1 État** : inchangé (`IMPLEMENTING` RC v0.1.0 → finalisation v1.0 en cours).
+
 ## v1.10 — 2026-09-27 (Vérification live heartbeat 0018 + correction du 1er run quotidien)
 
 - **Vérification de bout en bout du heartbeat 0018 (demande Joy, 2026-09-27)** : le
