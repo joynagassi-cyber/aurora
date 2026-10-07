@@ -130,10 +130,14 @@ export function createMobileQueryClient(provider: MobileDataProvider): QueryClie
   // time (a freshly-added query is still fetching, state is not the
   // re-read). A module flag keeps later hook mounts informed after the
   // one-shot event has already fired.
+  // NOTE (v5 API): `Query` keeps its state private in v5 — read it with
+  // `getState()` / subscribe state listeners via `query.subscribe(state)`,
+  // never `query.state` (that field is v4-only and undefined here).
   let firstReadDispatched = false;
   client.queryCache.subscribe((_cache, query) => {
-    query.state.subscribe(() => {
-      if (!firstReadDispatched && query.state.status === 'success') {
+    if (!query) return;
+    query.subscribe((state) => {
+      if (!firstReadDispatched && state.status === 'success') {
         firstReadDispatched = true;
         markFirstLocalReadSeen();
         if (typeof window !== 'undefined') {

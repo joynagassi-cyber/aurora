@@ -26,6 +26,7 @@
 import { Compass } from 'lucide-react';
 import * as React from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { IN_APP_LOGO, IN_APP_LOGO_ASSET } from '../../brand/logo';
 import { cn } from '../../lib/utils';
 import type { GoalProject } from '@aurora/domain';
 import {
@@ -36,17 +37,13 @@ import {
   type GoalDashboardLayout,
 } from '@aurora/goal-engine';
 
-/**
- * The in-app logo (S9: header / empty states — WITHOUT background).
- * `assets/` at the repo root is the SSoT (docs/ui-libraries.md §9); the
- * bundler resolves the file name; the `data-asset` marker records which
- * asset a rule demands so the build can pin it (no re-invented logo).
- */
-const IN_APP_LOGO =
-  "aurora_icon_a_integre_dans_l'applciation"; // assets/ SSoT, imported at bundle time
-
 // ---------------------------------------------------------------------------
 // Header band — "the what and the how far" (goal-dashboard-ui.md S2 Top)
+//
+// The in-app logo (S9: header / empty states — WITHOUT background) comes
+// from the brand module (`brand/logo.ts`), which imports the repo-root
+// `assets/` SSoT file (docs/ui-libraries.md §9). The `data-asset` marker
+// below records which asset a rule demands so the build can pin it.
 // ---------------------------------------------------------------------------
 
 export function GoalHeader({
@@ -70,7 +67,7 @@ export function GoalHeader({
         className="goal-dashboard-logo"
         width={20}
         height={20}
-        data-asset="aurora_icon_a_integre_dans_l'applciation"
+        data-asset={IN_APP_LOGO_ASSET}
       />
       <div className="goal-dashboard-header-text">
         <h2 className="goal-dashboard-title">{layout.header.objective}</h2>

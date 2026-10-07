@@ -21,6 +21,7 @@ import {
   CardDescription,
   CardTitle,
 } from '@aurora/ui';
+import { IN_APP_LOGO, IN_APP_LOGO_ASSET } from '../../brand/logo';
 
 export function NotFoundPage() {
   const { pathname } = useLocation();
@@ -34,11 +35,19 @@ export function NotFoundPage() {
         <div data-state="feature-disabled" data-path={pathname} className="a404-root">
           <Card className="a404-card">
             <CardContent className="a404-card-body">
-              {/* S9: the in-app logo (colored, centered on the 404 — OQ-7). */}
-              <span
+              {/* S9 (§9.1 l.387): the 404 is a LIVING empty state → COLORED
+                  without-background in-app logo, CENTERED. The real asset
+                  (repo-root `assets/` SSoT via brand/logo.ts), never the
+                  external full-logo and never a re-invented mark. */}
+              <img
+                src={IN_APP_LOGO}
+                alt=""
                 className="a404-logo"
-                data-asset="aurora_icon_a_integre_dans_l'applciation"
-                aria-hidden
+                width={64}
+                height={64}
+                data-asset={IN_APP_LOGO_ASSET}
+                loading="eager"
+                decoding="async"
               />
               <CardTitle>« {pathname} » n'est pas disponible</CardTitle>
               <CardDescription>

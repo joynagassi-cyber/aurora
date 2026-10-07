@@ -21,3 +21,5 @@ interface ImportMeta {
 
 // Vite bundles CSS/asset imports; declare them for the type-checker.
 declare module '*.css';
+declare module '*.png';
+declare module '*.svg';

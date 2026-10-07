@@ -221,28 +221,14 @@
 }
 
 /* The in-app logo (S9: no-background variant, centered on the 404 + empty
- * states). When the real asset is pinned via `data-asset` it renders as an
- * <img>; until then a token emblem stands in — the S9 "A" in the accent. */
-[data-state="feature-disabled"] .aurora-logo-center,
+ * states). The REAL asset (repo-root `assets/` SSoT, imported in
+ * brand/logo.ts): transparent, COLORED, no recolor / no crop / no
+ * background color behind it (§9 l.396 — "transparent background ONLY"). */
 .a404-logo {
-  display: grid;
-  place-items: center;
-  width: 96px;
-  height: 96px;
+  display: block;
+  width: 64px;
+  height: 64px;
   object-fit: contain;
-  filter: none; /* S9: the color asset, not a monochrome mark, on the 404. */
-  background: radial-gradient(
-    circle at 30% 30%,
-    var(--aurora-accent-secondary),
-    var(--aurora-accent-primary) 70%
-  );
-  color: var(--aurora-accent-on-primary);
-  font-size: 40px;
-  font-weight: 800;
-  border-radius: 24px;
-}
-.a404-logo::before {
-  content: "A";
 }
 .a404-actions {
   display: flex;

@@ -5,6 +5,45 @@
    transitions 150–250 ms GPU-only (couleurs/opacity — jamais de layout).
    ============================================================================= */
 
+/* ── Global app header (ui-libraries §9.1 l.380) : la marque COLOREE sans
+   fond porte TOUJOURS le header (owner decision 2026-09-27). Slim brand
+   bar au-dessus du header de page : logo in-app 20px + wordmark. Tokens
+   only, pas de fond coloré derrière le logo transparent (S9 l.367–368). */
+[data-app-header] {
+  background: var(--aurora-surface);
+}
+.app-brand-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px; /* tap target 44 px (05 §3) */
+  padding: 0 12px;
+  border: 0;
+  border-bottom: 1px solid var(--aurora-border);
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.app-brand-bar .app-brand-logo {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  object-fit: contain;
+}
+.app-brand-bar .app-brand-wordmark {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--aurora-text-primary);
+  text-align: left;
+}
+.app-brand-bar .app-brand-settings {
+  flex: none;
+  color: var(--aurora-text-muted);
+}
+
 .shell-tabbar {
   display: flex;
   flex-direction: row;
