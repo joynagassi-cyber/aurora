@@ -7,6 +7,12 @@
     "accent": "#B7D83D",
     "surface": "#FFF0B8"
   },
+  "colorsDark": {
+    "primary": "#F8A13C",
+    "secondary": "#FFD46B",
+    "accent": "#C9E65C",
+    "surface": "#3A2A08"
+  },
   "gradients": "orange → jaune → lime (fruits du soleil)",
   "illustrationMood": "agrumes, soleil, énergie",
   "iconTreatment": "outline 1.5px, couleur #F28C28 + accents lime",

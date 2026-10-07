@@ -95,18 +95,72 @@ export interface AgentClient {
   run(runId: string): Promise<AgentRunRow | null>;
 }
 
+/**
+ * Typed agent errors (roadmap 10-07): the UI translates these kinds into
+ * plain French (« connecte-toi » / « service en cours de démarrage » /
+ * « réessaie ») — never raw vendor messages (AD-13 honest state).
+ *   auth     — no user session (the kernel runs under the user's JWT)
+ *   service  — `fn-agent-run` not deployed yet (gap G1, 404)
+ *   server   — 5xx (the run job / AI gateway failed)
+ *   network  — offline (fetch failed, no HTTP status)
+ *   unknown  — anything else
+ */
+export type AgentErrorKind = 'auth' | 'service' | 'server' | 'network' | 'unknown';
+
+export class AgentClientError extends Error {
+  readonly kind: AgentErrorKind;
+  constructor(kind: AgentErrorKind, message: string, cause?: unknown) {
+    super(message);
+    this.name = 'AgentClientError';
+    this.kind = kind;
+    if (cause instanceof Error && cause.cause === undefined) {
+      (this as { cause?: unknown }).cause = cause;
+    }
+  }
+}
+
+/** Map a `functions.invoke` failure to a kind the UI can translate. */
+export function categorizeAgentError(error: unknown): AgentClientError {
+  const status = (error as { status?: unknown } | null)?.status;
+  const message = error instanceof Error ? error.message : String(error);
+  const http = typeof status === 'number' ? status : undefined;
+  if (http === 404) {
+    return new AgentClientError(
+      'service',
+      'Le service agent n\'est pas encore en ligne — réessaie dans un instant.',
+      error,
+    );
+  }
+  if (http !== undefined && http >= 500) {
+    return new AgentClientError('server', 'Un problème serveur est survenu — réessaie.', error);
+  }
+  if (http === 400 || http === 401 || http === 403) {
+    return new AgentClientError('auth', 'Connecte-toi pour lancer l\'agent.', error);
+  }
+  if (http === undefined && /fetch|network|timeout|econn/i.test(message)) {
+    return new AgentClientError('network', 'Pas de connexion — réessaie quand tu es en ligne.', error);
+  }
+  return new AgentClientError('unknown', 'Le lancement a échoué — réessaie.', error);
+}
+
 export function createAgentClient(supabase: AuroraSupabaseClient): AgentClient {
   return {
     async start(run) {
+      // The kernel runs under the USER'S JWT (AD-3) — without a session the
+      // EF is uselessly enqueued; surface the honest "sign in" state (10-07).
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session) {
+        throw new AgentClientError('auth', 'Connecte-toi pour lancer l\'agent.');
+      }
       const { data, error } = await supabase.functions.invoke('fn-agent-run', {
         body: run,
       });
-      if (error) throw error;
+      if (error) throw categorizeAgentError(error);
       // ApiEnvelope (01 §3.1): `ok` returns `{ ok: true, data }` —
       // supabase-js `data` IS that envelope body.
       const handle = (data as { ok?: boolean; data?: AgentRunHandle })?.data;
       if (!handle?.agentRunId) {
-        throw new Error('agent: fn-agent-run returned no agentRunId');
+        throw new AgentClientError('service', 'Le service agent n\'a pas répondu — réessaie.');
       }
       return handle;
     },

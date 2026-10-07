@@ -7,6 +7,12 @@
     "accent": "#8CCF8A",
     "surface": "#DFF3E3"
   },
+  "colorsDark": {
+    "primary": "#35A878",
+    "secondary": "#52C98A",
+    "accent": "#A8E2A2",
+    "surface": "#12301F"
+  },
   "gradients": "vert profond → menthe (canopée)",
   "illustrationMood": "végétation, canopée, nature vivante",
   "iconTreatment": "outline 1.5px, couleur #247A55",

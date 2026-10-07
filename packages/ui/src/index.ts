@@ -18,6 +18,7 @@ export {
   IMAGE_THEMES,
   IMAGE_THEME_FILES,
   getImageTheme,
+  resolveImageThemeFile,
   type ImageThemeEntry,
   type ImageThemeOrientation,
   type ImageThemeSlug,
@@ -26,6 +27,9 @@ export {
   resolveToken,
   resolveThemeCSSVars,
   toShadcnVars,
+  accentInk,
+  contrastRatio,
+  hexLuminance,
 } from "./themes/resolve";
 export {
   AuroraThemeProvider,

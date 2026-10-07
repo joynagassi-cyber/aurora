@@ -24,6 +24,7 @@ import { UxStates, type UxStateFlags } from '../../ux-states';
 import { useKilledDetection } from '../../hooks/use-killed';
 import { useOnlineStatus } from '../../hooks/use-online';
 import { CaptureFab } from '../../ux/floating';
+import { ModuleQuickAccess } from '../../ux/module-quick-access';
 
 /**
  * The 7 AD-14 Home slots, in display order (goal-dashboard-ui S1):
@@ -127,6 +128,10 @@ export function HomePage() {
             Hors ligne
           </span>
         )}
+        {/* G-M7 : les 8 modules cibles (calendrier, focus, …) — rangée
+            d'accès rapide visible seulement pour les modules actifs ; le
+            « module désactivé » n'apparaît nulle part (S6, jamais de 404). */}
+        <ModuleQuickAccess />
       </IonHeader>
       <IonContent>
         {/* AD-14 slot 1: greeting — invitation explicite le 1er lancement

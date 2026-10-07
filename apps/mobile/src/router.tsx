@@ -49,6 +49,7 @@ import { SkillsPage } from './pages/skills';
 import { IntegrationsPage } from './pages/integrations';
 import { LoginPage } from './pages/login';
 import { OnboardingPage } from './pages/onboarding';
+import { FeatureGate } from './ux/feature-gate';
 
 // Explicit annotation (TS2742): the inferred return type of
 // `createBrowserRouter` pulls in @remix-run/router's Router type through
@@ -68,18 +69,22 @@ export const appRouter: AppRouter = createBrowserRouter([
       { path: '/agent', element: <AgentPage /> },
       // Canvas (0022): dedicated session-editing surface — blocs TipTap,
       // commentaires, bascule md ⇄ HTML. 'new' = creation mode (Task 6).
-      { path: '/canvas/:id', element: <CanvasPage /> },
+      // G-M7: gated (creation mode opens over the module home).
+      { path: '/canvas/:id', element: <FeatureGate feature="canvas"><CanvasPage /></FeatureGate> },
 
       // --- Details over the current tab (IonModal/IonSlides, 02 §6.1) ---
       { path: '/tasks/:id', element: <TaskDetailPage /> },
       { path: '/learn/:id', element: <LearnDetailPage /> },
       { path: '/progress/:id', element: <ProgressDetailPage /> },
-      { path: '/knowledge', element: <KnowledgePage /> },
-      { path: '/knowledge/:nodeId', element: <KnowledgeNodePage /> },
+      // G-M7 (feature-registry S6): the 8 module routes are gated — a deep
+      // link into a disabled module renders the « module désactivé » state
+      // (CTA → /settings?section=modules), NEVER the 404 fallback.
+      { path: '/knowledge', element: <FeatureGate feature="knowledge"><KnowledgePage /></FeatureGate> },
+      { path: '/knowledge/:nodeId', element: <FeatureGate feature="knowledge"><KnowledgeNodePage /></FeatureGate> },
       { path: '/artifacts/:id', element: <ArtifactPage /> },
 
       // --- Tab-adjacent routes (02 §6.1 page matrix) ---
-      { path: '/inbox', element: <InboxPage /> },
+      { path: '/inbox', element: <FeatureGate feature="inbox"><InboxPage /></FeatureGate> },
       { path: '/settings', element: <SettingsPage /> },
 
       // --- Goals family (goal-dashboard-ui.md S6) ---
@@ -92,21 +97,21 @@ export const appRouter: AppRouter = createBrowserRouter([
       //   session (05 §4.8); Slide-Ascent renders the local mirror.
       { path: '/goals/:id/ascent', element: <SlideAscentPage userId="me" /> },
 
-      // --- Focus + calendar family views ---
-      { path: '/focus', element: <FocusPage service={null} /> },
-      { path: '/calendar', element: <CalendarPage /> },
+      // --- Focus + calendar family views (G-M7 gated) ---
+      { path: '/focus', element: <FeatureGate feature="focus"><FocusPage service={null} /></FeatureGate> },
+      { path: '/calendar', element: <FeatureGate feature="calendar"><CalendarPage /></FeatureGate> },
 
       // --- Projects family view ---
       { path: '/projects', element: <ProjectsPage /> },
 
-      // --- Discovery feed ---
-      { path: '/discovery', element: <DiscoveryPage /> },
+      // --- Discovery feed (G-M7 gated) ---
+      { path: '/discovery', element: <FeatureGate feature="discovery"><DiscoveryPage /></FeatureGate> },
 
-      // --- Skills (ADR S14, ClawHub marketplace + expert skills) ---
-      { path: '/skills', element: <SkillsPage /> },
+      // --- Skills (ADR S14, ClawHub marketplace + expert skills; G-M7 gated) ---
+      { path: '/skills', element: <FeatureGate feature="skills"><SkillsPage /></FeatureGate> },
 
-      // --- Integrations (Composio, Google Workspace default preset) ---
-      { path: '/integrations', element: <IntegrationsPage /> },
+      // --- Integrations (Composio, Google Workspace default preset; G-M7 gated) ---
+      { path: '/integrations', element: <FeatureGate feature="integrations"><IntegrationsPage /></FeatureGate> },
 
       // --- Supabase Auth entry point (P1-4, 10-07) ---
       { path: '/login', element: <LoginPage /> },

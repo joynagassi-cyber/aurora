@@ -26,6 +26,11 @@
   /* Scrim (modal/sheet background dimming, light G-H2). Dark override below. */
   --aurora-scrim: rgba(15, 23, 42, 0.4);
 
+  /* Image-theme scrim (05 §5.4-annexe, 10-07): readability wash ON TOP of
+   * the image canvas so the neutral text tokens stay readable. Light style
+   * = a bright wash; dark = a deep wash (override below). */
+  --aurora-bg-image-scrim: rgba(255, 255, 255, 0.42);
+
   /* Text (light: WCAG AA ≥4.5:1 on #FFFFFF — muted = #64748B, review 2026-10-05) */
   --aurora-text-primary: #0f172a;
   --aurora-text-secondary: #334155;
@@ -171,6 +176,8 @@
   --aurora-node-fragile-h: 43 94% 61%;
   --aurora-node-forgotten-h: 0 84% 69%;
   --aurora-scrim: rgba(0, 0, 0, 0.5);
+  /* Image-theme scrim, dark style (05 §5.4-annexe): deep wash. */
+  --aurora-bg-image-scrim: rgba(8, 10, 14, 0.58);
 }
 
 /* ---- Base resets ------------------------------------------------------ */

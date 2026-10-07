@@ -50,6 +50,53 @@ export type TokenKey =
   | "accent.surface"
   | keyof (typeof NEUTRAL_STYLES)["light"];
 
+// ---- WCAG contrast helpers (05 §5.4 calibration, roadmap 10-07) ----
+
+/** sRGB relative luminance of a `#RRGGBB` hex (WCAG 2.x formula). */
+export function hexLuminance(hex: string): number {
+  const h = hex.replace("#", "");
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const n = parseInt(full, 16);
+  if (Number.isNaN(n) || full.length !== 6) return 0;
+  const channel = (shift: number) => {
+    const v = ((n >> shift) & 0xff) / 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * channel(16) + 0.7152 * channel(8) + 0.0722 * channel(0);
+}
+
+/** WCAG contrast ratio (1–21) between two hex colors. */
+export function contrastRatio(a: string, b: string): number {
+  const la = hexLuminance(a);
+  const lb = hexLuminance(b);
+  const [hi, lo] = la >= lb ? [la, lb] : [lb, la];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/**
+ * Pick the readable ink over an accent background (05 §5.4.1): between
+ * the neutral-style ink and its opposite (dark `#0F172A` / light
+ * `#F1F5F9`), return whichever maximizes the WCAG contrast. This keeps
+ * both the light-palette accents AND the brighter dark-variant accents
+ * readable — the JSON never hardcodes an `on-primary` per style.
+ */
+export function accentInk(bgHex: string, styleInk: string, oppositeInk: string): string {
+  return contrastRatio(bgHex, styleInk) >= contrastRatio(bgHex, oppositeInk)
+    ? styleInk
+    : oppositeInk;
+}
+
+/**
+ * Style-aware accent colors (05 §5.4 calibration, roadmap 10-07): the
+ * dark neutral style uses the theme's `colorsDark` variant (per-token,
+ * falling back to `colors`), the light style the base palette.
+ */
+function accentColorsFor(theme: AuroraTheme, style: NeutralStyle): AuroraTheme["colors"] {
+  return style === "dark"
+    ? { ...theme.colors, ...(theme.colorsDark ?? {}) }
+    : theme.colors;
+}
+
 /**
  * Resolve a token value for (theme, preset?, neutral style).
  * 05 §5.3: theme layer wins on accent tokens; neutral style wins on
@@ -78,26 +125,39 @@ export function resolveToken(
       : presetNameOf(themeName);
   if (presetParam && PRESETS[presetParam]) {
     const preset = PRESETS[presetParam];
-    if (preset) {
-      if (preset.styleOverride) neutralStyle = preset.styleOverride;
-      if (preset.colors && Object.keys(preset.colors).length > 0) {
-        theme = { ...theme, colors: { ...theme.colors, ...preset.colors } };
-      }
-    }
+    if (preset?.styleOverride) neutralStyle = preset.styleOverride;
   }
 
   const neutral = NEUTRAL_STYLES[neutralStyle];
 
-  // Accent tokens — theme layer (05 §5.3 row 1).
+  // Accent tokens — theme layer (05 §5.3 row 1), style-calibrated
+  // (colorsDark on the dark canvas, roadmap 10-07). A preset's accent
+  // overrides (05 §5.5 technical modes: slate / high-contrast) apply LAST,
+  // on top of the style-selected accents, so a preset wins in BOTH styles.
+  const styleAccents = accentColorsFor(theme, neutralStyle);
+  const presetColors = presetParam
+    ? PRESETS[presetParam]?.colors
+    : undefined;
+  const accents =
+    presetColors && Object.keys(presetColors).length > 0
+      ? { ...styleAccents, ...(presetColors as Partial<typeof styleAccents>) }
+      : styleAccents;
+  // on-primary = the readable ink over the resolved primary accent:
+  // auto-picked between the style's ink and its opposite (WCAG, 05 §5.4.1).
+  const onPrimaryInk = accentInk(
+    accents.primary,
+    neutral["text-primary"],
+    neutralStyle === "dark" ? "#0F172A" : "#F1F5F9",
+  );
   const accentMap: Record<string, string | undefined> = {
-    "accent.primary": theme.colors.primary,
-    "accent.secondary": theme.colors.secondary,
-    "accent.punctual": theme.colors.accent,
-    "accent.selected-surface": theme.colors.surface,
-    "accent.surface": theme.colors.surface,
-    "accent.on-primary": neutral["text-primary"],
+    "accent.primary": accents.primary,
+    "accent.secondary": accents.secondary,
+    "accent.punctual": accents.accent,
+    "accent.selected-surface": accents.surface,
+    "accent.surface": accents.surface,
+    "accent.on-primary": onPrimaryInk,
     // Focus ring = primary accent (05 §5.4.1 "Focus: ring 2px <primary>").
-    "accent.focus-ring": theme.colors.primary,
+    "accent.focus-ring": accents.primary,
   };
   const themeValue = accentMap[tokenKey];
   if (themeValue !== undefined && tokenKey.startsWith("accent.")) {

@@ -8,6 +8,12 @@
     "accent": "#7B61FF",
     "surface": "#B8DFFF"
   },
+  "colorsDark": {
+    "primary": "#4C8DFF",
+    "secondary": "#2FD4E4",
+    "accent": "#9E8BFF",
+    "surface": "#14324F"
+  },
   "gradients": "cyan → blue → violet",
   "illustrationMood": "ciel à l'aube, nuages légers, lueurs douces",
   "iconTreatment": "outline 1.5px, couleur #3678F6 + accents cyan",

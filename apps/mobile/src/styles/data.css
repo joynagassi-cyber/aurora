@@ -322,6 +322,78 @@
   color: var(--aurora-text-secondary);
 }
 
+/* Image-theme grid (05 §5.4-annexe, 10-07): 26 thumbnails + "Aucun".
+ * Each tile = the portrait variant (lazy) + the "chromatic anchor" dot.
+ * Tokens only, radius ≤ 8 px, tap ≥ 44 px. */
+.image-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.image-theme-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  background: var(--aurora-surface);
+  cursor: pointer;
+  min-height: var(--aurora-tap-target, 44px);
+}
+.image-theme-tile[data-pressed="true"] {
+  border-color: var(--aurora-accent-primary);
+  box-shadow: 0 0 0 1px var(--aurora-accent-primary);
+}
+.image-theme-thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--aurora-bg-subtle);
+}
+.image-theme-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* The "chromatic anchor" — the color that will drive the accents. */
+.image-theme-anchor {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--aurora-surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+/* The "Aucun" tile: a neutral empty-preview chip. */
+.image-theme-thumb--none {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.image-theme-thumb-cross {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--aurora-border-strong);
+  border-radius: 50%;
+  position: relative;
+}
+.image-theme-thumb-cross::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--aurora-border-strong);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
 /* ---- Calendar surface (FullCalendar `CalendarView` mounted here) ------ */
 .cal-page {
   padding: 12px 16px;

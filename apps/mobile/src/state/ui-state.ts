@@ -18,7 +18,7 @@
  */
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import type { ThemeName } from '@aurora/ui';
+import type { ImageThemeSlug, ThemeName } from '@aurora/ui';
 
 export type TabId = 'home' | 'tasks' | 'learn' | 'progress' | 'agent';
 
@@ -40,6 +40,13 @@ export interface UiStateStore {
    * 'auto' = the default (aurora) theme.
    */
   auroraTheme: ThemeName | 'auto';
+  /**
+   * AD-17 image theme (05 §5.4-annexe, 10-07): the chosen image-theme slug,
+   * or 'none' for the plain neutral canvas. Skin only — the image becomes
+   * the app background + the anchor color drives the accents (see
+   * `ux/image-theme.tsx`); the neutral canvas + semantic states never move.
+   */
+  auroraImageTheme: ImageThemeSlug | 'none';
   /** focus session active flag (drives 5 UX states + notification scope). */
   focusActive: boolean;
   /** killed = app was force-killed; re-hydrate on open (04 S6.1, G-M2). */
@@ -57,6 +64,7 @@ export interface UiStateStore {
   toggleKnowledgeNode: (nodeId: string, expanded: boolean) => void;
   setTheme: (theme: UiStateStore['theme']) => void;
   setAuroraTheme: (theme: UiStateStore['auroraTheme']) => void;
+  setAuroraImageTheme: (theme: UiStateStore['auroraImageTheme']) => void;
   setFocusActive: (active: boolean) => void;
   /** called at boot when the lifecycle adapter detects a return-from-kill. */
   markKilled: (killed: boolean) => void;
@@ -72,6 +80,7 @@ export const useUiStateStore = create<UiStateStore>()(
       knowledgeExpanded: {},
       theme: 'auto',
       auroraTheme: 'auto',
+      auroraImageTheme: 'none',
       focusActive: false,
       killed: false,
       onboardingSeen: false,
@@ -82,6 +91,7 @@ export const useUiStateStore = create<UiStateStore>()(
         set((s) => ({ knowledgeExpanded: { ...s.knowledgeExpanded, [nodeId]: expanded } })),
       setTheme: (theme) => set({ theme }),
       setAuroraTheme: (auroraTheme) => set({ auroraTheme }),
+      setAuroraImageTheme: (auroraImageTheme) => set({ auroraImageTheme }),
       setFocusActive: (focusActive) => set({ focusActive }),
       markKilled: (killed) => set({ killed }),
       setOnboardingSeen: (onboardingSeen) => set({ onboardingSeen }),
@@ -98,6 +108,7 @@ export const useUiStateStore = create<UiStateStore>()(
         knowledgeExpanded: s.knowledgeExpanded,
         theme: s.theme,
         auroraTheme: s.auroraTheme,
+        auroraImageTheme: s.auroraImageTheme,
         onboardingSeen: s.onboardingSeen,
       }),
     },

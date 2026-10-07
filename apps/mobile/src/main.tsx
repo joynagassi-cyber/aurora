@@ -46,6 +46,7 @@ import './styles/shell.css';
 
 import { AuroraApp } from './app';
 import { FocusThemeAdapter } from './ux/theme-adapter';
+import { ImageThemeLayer } from './ux/image-theme';
 import { MobileDataCtx } from './query/context';
 import { mobileDataProviderFrom } from './query/query-client';
 import { createAuroraDataProvider, type AuroraDataEnv } from './lib/boot-data';
@@ -54,6 +55,7 @@ import { createCanvasClient } from './lib/canvas-client';
 import { createIntegrationClient } from './lib/integrations-client';
 import { createSkillClient } from './lib/skills-client';
 import { setAuthClient } from './lib/auth';
+import { createUserContextClient, setUserContextClient } from './lib/user-context-client';
 import { useUiStateStore } from './state/ui-state';
 import { createAuroraSupabaseClient } from '@aurora/data';
 
@@ -125,6 +127,11 @@ const skills = sharedSupabaseClient ? createSkillClient(sharedSupabaseClient) : 
 const canvas = sharedSupabaseClient
   ? createCanvasClient(sharedSupabaseClient, env.supabasePublishableKey)
   : undefined;
+// G-M7 (feature-registry S8): the `user_context.features` access rides the
+// SAME shared client — no 5th GoTrue instance (AD-3 / 03 S8.1). Absent
+// env values leave the client undefined → features resolve from the seed
+// defaults only (honest, AD-7).
+if (sharedSupabaseClient) setUserContextClient(createUserContextClient(sharedSupabaseClient));
 const dataProvider = mobileDataProviderFrom(provider, agent, integrations, skills, canvas);
 
 function Root() {
@@ -138,6 +145,9 @@ function Root() {
   const themeName = auroraTheme === 'auto' ? 'aurora' : auroraTheme;
   return (
     <FocusThemeAdapter focusActive={focusActive} style={style} theme={themeName}>
+      {/* 05 §5.4-annexe: the image-theme background + anchor overrides ride
+          on the same theme system (headless, writes CSS vars / body bg). */}
+      <ImageThemeLayer />
       <MobileDataCtx value={dataProvider}>
         <AuroraApp dataProvider={dataProvider} />
       </MobileDataCtx>

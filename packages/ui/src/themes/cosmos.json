@@ -7,6 +7,12 @@
     "accent": "#E95BAA",
     "surface": "#5964E8"
   },
+  "colorsDark": {
+    "primary": "#5A5DE0",
+    "secondary": "#33D6E8",
+    "accent": "#F06BBE",
+    "surface": "#1B1F5E"
+  },
   "gradients": "indigo → cyan → magenta (nébuleuse)",
   "illustrationMood": "nébuleuse, étoiles, particules",
   "iconTreatment": "outline 1.5px, couleur #3B3FA7 (dominante)",

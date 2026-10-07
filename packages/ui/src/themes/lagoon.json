@@ -7,6 +7,12 @@
     "accent": "#50D8C0",
     "surface": "#D9F5EF"
   },
+  "colorsDark": {
+    "primary": "#14B4CC",
+    "secondary": "#2CD9BC",
+    "accent": "#6FE8D4",
+    "surface": "#0F3B38"
+  },
   "gradients": "teal → turquoise → sable vert",
   "illustrationMood": "eau tropicale, vagues, reflets",
   "iconTreatment": "outline 1.5px, couleur #007C91 + accents turquoise",

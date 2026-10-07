@@ -87,6 +87,23 @@ export interface AuroraTheme {
     accent: string;
     surface: string;
   };
+  /**
+   * Dark-canvas variant of the 4 accent colors (05 §5.4 contrast
+   * calibration, roadmap 10-07): when the neutral style is `dark`,
+   * resolution picks these values per-token (falling back to `colors`
+   * when a key is absent). The theme's identity (hues / universe) is NOT
+   * changed — only the calibration for the `#121212` canvas: accents a
+   * touch brighter, `surface` (the selection chip) a dark tint of the
+   * theme hue instead of the light one. `accent.on-primary` ink is
+   * picked automatically against the resolved accent (resolve.ts), so a
+   * dark variant never fights the ink.
+   */
+  colorsDark?: {
+    primary?: string;
+    secondary?: string;
+    accent?: string;
+    surface?: string;
+  };
   /** Theme-owned gradient (05 §5.4: "propriétaire du thème"). */
   gradients: string;
   illustrationMood: string;

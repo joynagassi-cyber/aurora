@@ -7,6 +7,12 @@
     "accent": "#E86F42",
     "surface": "#FFF0C2"
   },
+  "colorsDark": {
+    "primary": "#F2B33C",
+    "secondary": "#FFCB5C",
+    "accent": "#F5825A",
+    "surface": "#3A2A10"
+  },
   "gradients": "or → ambre → corail (golden hour)",
   "illustrationMood": "golden hour, soleil, lumières dorées",
   "iconTreatment": "outline 1.5px, couleur #D99A24",

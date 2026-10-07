@@ -113,6 +113,9 @@ interface Entry {
   id: string;
   role: 'user' | 'agent';
   body: string;
+  /** optional action CTA under the body (plain French, plain route). */
+  ctaLabel?: string;
+  ctaHref?: string;
   /** run id for agent entries (the `agent_runs` row they belong to). */
   runId?: string;
   /**
@@ -125,19 +128,20 @@ interface Entry {
   routeLabel?: string;
 }
 
+/** Plain French status lines (roadmap 10-07: zéro jargon utilisateur). */
 function statusLine(row: AgentRunRow | null): string {
-  if (!row) return 'run lancé côté serveur — en attente du job…';
+  if (!row) return 'Lancé côté serveur — en attente de démarrage…';
   switch (row.status) {
     case 'running':
       return row.confirmationMessage
-        ? 'confirmation attendue : « ' + row.confirmationMessage + ' »'
-        : 'run en cours…';
+        ? 'Une confirmation est nécessaire : « ' + row.confirmationMessage + ' »'
+        : 'En cours…';
     case 'completed':
-      return 'task accomplie — les modules propriétaires ont appliqué les mutations (AD-7)';
+      return 'C’est fait — tes changements ont été appliqués.';
     case 'failed':
-      return 'run en échec — résultat dégradé signalé, rien n’a été appliqué en silence (kernel §8)';
+      return 'Un problème est survenu — rien n’a été modifié sans ton accord.';
     case 'cancelled':
-      return 'run annulé';
+      return 'Annulé.';
   }
 }
 
@@ -271,11 +275,32 @@ export function AgentPage() {
         },
       });
       setActiveRun(handle.traceId);
-    } catch {
-      push({
-        role: 'agent',
-        body: `Lancement du run impossible (agent indisponible côté serveur). ${registerCopy(register, 'conn')}`,
-      });
+    } catch (err) {
+      // Typed agent errors (roadmap 10-07) → plain French + a CTA that fixes
+      // the state (sign in / retry). Never a raw vendor message.
+      const kind =
+        err && typeof err === 'object' && 'kind' in err
+          ? (err as { kind?: string }).kind
+          : 'unknown';
+      if (kind === 'auth') {
+        push({
+          role: 'agent',
+          body: 'Connecte-toi pour lancer l’agent.',
+          ctaLabel: 'Se connecter',
+          ctaHref: '/login',
+        });
+      } else if (kind === 'network') {
+        push({
+          role: 'agent',
+          body: 'Pas de connexion — tes messages partiront dès que tu seras en ligne.',
+        });
+      } else {
+        // service / server / unknown — the service is still warming up.
+        push({
+          role: 'agent',
+          body: 'Le service est en cours de démarrage — réessaie dans un instant.',
+        });
+      }
     }
   }
 
@@ -519,9 +544,15 @@ export function AgentPage() {
             {!agent && (
               <div className="agent-empty">
                 <p>
-                  L'agent est indisponible — l'environnement serveur (OQ-03) n'est pas configuré. Les
-                  intentions reprendront dès que la clé de publication est injectée.
+                  L'agent n'est pas encore disponible.
                 </p>
+                <a
+                  className="aurora-btn aurora-btn--primary aurora-tap"
+                  href="/login"
+                  data-cta="agent-login"
+                >
+                  Se connecter
+                </a>
               </div>
             )}
 
@@ -552,6 +583,15 @@ export function AgentPage() {
                   onPointerCancel={() => setPeel(null)}
                 >
                   <div className="agent-entry-body">{e.body}</div>
+                  {e.ctaLabel && e.ctaHref && (
+                    <a
+                      className="agent-entry-cta"
+                      href={e.ctaHref}
+                      data-cta={e.ctaLabel}
+                    >
+                      {e.ctaLabel}
+                    </a>
+                  )}
                   {e.route && (
                     /* Peel affordance (agent-chat §5.1 G4): a focusable button
                        in addition to the drag gesture — the keyboard / SR

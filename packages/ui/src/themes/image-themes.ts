@@ -23,11 +23,12 @@
  *   `<slug>_<portrait|paysage>.png`  ex. `jazz_portrait.png`,
  *   `new_york_paysage.png`.
  *
- * CATALOG ONLY (data + types, no React/rendering) — the consumption
- * layer (which image to load for the current orientation + screen, and
- * how to inject the anchor color into the theme provider) is a
- * separate concern, to be wired in when image-theme support is
- * implemented (05 §5.4-annexe, TODO).
+ * CATALOG ONLY (data + types, no React/rendering — the AD-10 boundary
+ * keeps this module free of engines/components). The consumption layer
+ * (which image to load for the current orientation + screen, and how to
+ * inject the anchor color) lives in the app shell:
+ * `apps/mobile/src/ux/image-theme.tsx` (`<ImageThemeLayer />`, wired in
+ * 10-07, 05 §5.4-annexe) — it consumes `resolveImageThemeFile` below.
  */
 
 export interface ImageThemeEntry {
@@ -125,4 +126,44 @@ export const IMAGE_THEME_FILES: Record<ImageThemeSlug, ImageThemeOrientation> = 
 /** Look up an image theme by slug (returns `undefined` for unknown slugs). */
 export function getImageTheme(slug: string): ImageThemeEntry | undefined {
   return IMAGE_THEMES.find((t) => t.slug === slug);
+}
+
+/**
+ * Which image FILE to load for a theme + screen orientation (05 §5.4-annexe
+ * consumer contract, 10-07): a LANDSCAPE screen loads the `paysage` variant
+ * when present, otherwise it falls back to `portrait` (never a blank); a
+ * portrait screen (Phase 1 = mobile portrait-first) loads `portrait`,
+ * falling back to `paysage` if absent. Catalog-only — the app decides the
+ * orientation (matchMedia / Capacitor) and where to serve the file from.
+ */
+export function resolveImageThemeFile(
+  slug: string,
+  orientation: "portrait" | "landscape",
+): string | undefined {
+  const files = IMAGE_THEME_FILES[slug as ImageThemeSlug];
+  if (!files) return undefined;
+  const preferred =
+    orientation === "landscape" ? files.paysage : files.portrait;
+  const fallback =
+    orientation === "landscape" ? files.portrait : files.paysage;
+  return preferred ?? fallback;
+}
+
+/**
+ * Resolve the image FILE for a theme + screen orientation (05 §5.4-annexe
+ * consumer-side helper, catalog-only — no React here, AD-10 boundary):
+ * a landscape screen loads the `paysage` variant, everything else the
+ * `portrait` variant; a missing variant falls back to the other one.
+ * Returns `undefined` for an unknown slug (the caller degrades to the
+ * plain neutral canvas — never a crash, AD-13 honest state).
+ */
+export function resolveImageThemeFile(
+  slug: string,
+  orientation: "portrait" | "landscape" = "portrait",
+): string | undefined {
+  const entry = IMAGE_THEME_FILES[slug as ImageThemeSlug];
+  if (!entry) return undefined;
+  const primary = orientation === "landscape" ? entry.paysage : entry.portrait;
+  const fallback = orientation === "landscape" ? entry.portrait : entry.paysage;
+  return primary ?? fallback;
 }

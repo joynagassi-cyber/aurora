@@ -1,0 +1,90 @@
+/**
+ * theme-dark.test.ts — 05 §5.4 contrast calibration (roadmap 10-07).
+ *
+ * The 10 expressive themes now carry a `colorsDark` variant: on the dark
+ * neutral canvas (#121212) resolution switches to the recalibrated
+ * accents (brighter accents, a DARK surface tint instead of the light
+ * chip) while the theme identity (hues) is preserved. `accent.on-primary`
+ * is auto-picked (WCAG) over the resolved accent. Catalog-only image
+ * theme helper `resolveImageThemeFile` is covered too.
+ */
+import { describe, expect, it } from "vitest";
+import {
+  EXPRESSIVE_THEMES,
+  THEMES,
+} from "../src/themes";
+import {
+  accentInk,
+  contrastRatio,
+  resolveImageThemeFile,
+  resolveToken,
+} from "../src/themes/resolve";
+
+describe("style-aware theme resolution (05 §5.4 calibration)", () => {
+  it("light style keeps the base accent palette", () => {
+    for (const name of EXPRESSIVE_THEMES) {
+      const t = THEMES[name];
+      expect(resolveToken(name, "light", "accent.primary")).toBe(t.colors.primary);
+      expect(resolveToken(name, "light", "accent.surface")).toBe(t.colors.surface);
+    }
+  });
+
+  it("every expressive theme ships a colorsDark variant", () => {
+    for (const name of EXPRESSIVE_THEMES) {
+      expect(THEMES[name].colorsDark, `theme ${name} lacks colorsDark`).toBeDefined();
+    }
+  });
+
+  it("dark style resolves the recalibrated accents (not the light ones)", () => {
+    for (const name of EXPRESSIVE_THEMES) {
+      const t = THEMES[name];
+      expect(resolveToken(name, "dark", "accent.primary")).toBe(t.colorsDark?.primary ?? t.colors.primary);
+      // The dark surface is a DARK tint (lower luminance than the light chip).
+      const darkSurface = t.colorsDark?.surface ?? t.colors.surface;
+      const hex = darkSurface.replace("#", "");
+      const lum = (r: number, g: number, b: number) => {
+        const f = (v: number) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+        return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+      };
+      const val = (shift: number) => Math.floor(hex.slice(shift, shift + 2), 16) / 255;
+      const L = lum(val(4), val(2), val(0));
+      // A light-canvas surface chip would be L > 0.55; the dark variant must be dark.
+      expect(L, `theme ${name} colorsDark.surface too bright`).toBeLessThan(0.55);
+    }
+  });
+
+  it("neutral tokens stay style-driven (theme never redefines semantics)", () => {
+    expect(resolveToken("aurora", "dark", "bg")).toBe("#121212");
+    expect(resolveToken("aurora", "light", "bg")).toBe("#FFFFFF");
+    // success/warning/danger are theme-independent (blocking rule 05 §5.1).
+    expect(resolveToken("citrus", "light", "success")).toBe(resolveToken("aurora", "light", "success"));
+    expect(resolveToken("citrus", "dark", "danger")).toBe(resolveToken("aurora", "dark", "danger"));
+  });
+});
+
+describe("auto on-primary ink (WCAG)", () => {
+  it("picks the higher-contrast ink over the accent background", () => {
+    // Dark ink on a light-ish amber ≈ 7:1 vs light ink ≈ 1.6:1 → dark wins.
+    expect(accentInk("#F0A82C", "#0F172A", "#F1F5F9")).toBe("#0F172A");
+    // Light ink on a dark surface tint ≈ high vs dark ink → light wins.
+    expect(accentInk("#14324F", "#F1F5F9", "#0F172A")).toBe("#F1F5F9");
+  });
+
+  it("contrastRatio is the WCAG formula (≥ the picked pair's ratio)", () => {
+    const bg = "#14324F";
+    const picked = accentInk(bg, "#F1F5F9", "#0F172A");
+    expect(contrastRatio(bg, picked)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe("resolveImageThemeFile (orientation, catalog-only)", () => {
+  it("picks the paysage variant on landscape when present", () => {
+    expect(resolveImageThemeFile("new_york", "landscape")).toBe("new_york_paysage.png");
+  });
+  it("picks the portrait variant on portrait", () => {
+    expect(resolveImageThemeFile("tokyo", "portrait")).toBe("tokyo_portrait.png");
+  });
+  it("returns undefined for an unknown slug (caller degrades, no crash)", () => {
+    expect(resolveImageThemeFile("does_not_exist", "portrait")).toBeUndefined();
+  });
+});

@@ -7,6 +7,12 @@
     "accent": "#D05AA8",
     "surface": "#E7DDF8"
   },
+  "colorsDark": {
+    "primary": "#8B7BE8",
+    "secondary": "#A87BEE",
+    "accent": "#E06BC4",
+    "surface": "#2A1E4A"
+  },
   "gradients": "indigo → violet → magenta (horizon crépusculaire)",
   "illustrationMood": "crépuscule, halos, lumières diffuses",
   "iconTreatment": "outline 1.5px, couleur #6554C0",

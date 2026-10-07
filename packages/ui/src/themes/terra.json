@@ -7,6 +7,12 @@
     "accent": "#D8AE72",
     "surface": "#F2E1C3"
   },
+  "colorsDark": {
+    "primary": "#E07850",
+    "secondary": "#E09A50",
+    "accent": "#E8C088",
+    "surface": "#3A2417"
+  },
   "gradients": "sable → ocre → terracotta (strates de terre)",
   "illustrationMood": "argile, strates de terre, matiere vive",
   "iconTreatment": "outline 1.5px, couleur #B85C38",

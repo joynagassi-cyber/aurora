@@ -179,3 +179,101 @@
 }
 .sk-chips { display: flex; gap: 8px; }
 .sk-context-strip .sk-chip { width: 64px; }
+
+/* ── G-M7 : rangée d'accès rapide des modules (header Home, 02 §6.1) ──
+   Chip = icône 20 px + libellé, tap ≥ 44 px, tokens only, radius ≤ 8 px.
+   Scroll horizontal (jamais de 2e ligne — le scroll est l'affordance). */
+.module-quick-access {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 12px calc(6px + 0px);
+  overflow-x: auto;
+  scrollbar-width: none; /* Android/webview : pas de bandeau */
+  -ms-overflow-style: none;
+}
+.module-quick-access::-webkit-scrollbar { display: none; }
+.module-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--aurora-tap-target, 44px);
+  padding: 6px 14px;
+  border: 1px solid var(--aurora-border);
+  border-radius: 8px;
+  background: var(--aurora-surface-alt);
+  color: var(--aurora-text-primary);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 150ms ease, border-color 150ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.module-chip svg { color: var(--aurora-accent-primary); }
+.module-chip:active {
+  border-color: var(--aurora-accent-primary);
+  color: var(--aurora-accent-primary);
+}
+.module-chip:focus-visible {
+  outline: 2px solid var(--aurora-accent-primary);
+  outline-offset: -2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .module-chip { transition: none; }
+}
+
+/* ── G-M7 S6 : état « module désactivé » (deep-link, pas de 404) ── */
+.feature-gated {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 48px 20px;
+  text-align: center;
+}
+.feature-gated p {
+  max-width: 320px;
+  color: var(--aurora-text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── G-M7 : section « Modules » Paramètres (switchs, user_context.features) ── */
+.module-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.module-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--aurora-tap-target, 44px);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--aurora-border);
+}
+.module-row:last-child { border-bottom: 0; }
+.module-row svg { color: var(--aurora-accent-primary); flex: none; }
+.module-row-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.module-row-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+}
+.module-row-hint {
+  font-size: 12px;
+  color: var(--aurora-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

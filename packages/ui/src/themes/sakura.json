@@ -7,6 +7,12 @@
     "accent": "#9B78C9",
     "surface": "#F8DCE7"
   },
+  "colorsDark": {
+    "primary": "#F07CA0",
+    "secondary": "#F5A9C0",
+    "accent": "#B493E0",
+    "surface": "#4A2338"
+  },
   "gradients": "rose → lilas (doux, vertical)",
   "illustrationMood": "fleurs de cerisier, pétales, lumière douce",
   "iconTreatment": "outline 1.5px, couleur #D85B86 + accents lilas",
