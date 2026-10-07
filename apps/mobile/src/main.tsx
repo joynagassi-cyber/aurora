@@ -41,6 +41,7 @@ import './styles/floating.css';
 import './styles/skills.css';
 import './styles/integrations.css';
 import './styles/auth.css';
+import './styles/onboarding.css';
 
 import { AuroraApp } from './app';
 import { FocusThemeAdapter } from './ux/theme-adapter';

@@ -44,6 +44,12 @@ export interface UiStateStore {
   focusActive: boolean;
   /** killed = app was force-killed; re-hydrate on open (04 S6.1, G-M2). */
   killed: boolean;
+  /**
+   * Onboarding first-run flag (usage personnel, 10-07) : `true` une fois
+   * le parcours /onboarding terminé (sign-up → onboarding → app). State
+   * cosmétique par device (jamais de données entités — AD-7).
+   */
+  onboardingSeen: boolean;
 
   setActiveTab: (tab: TabId) => void;
   setTasksView: (view: UiStateStore['tasksView']) => void;
@@ -54,6 +60,7 @@ export interface UiStateStore {
   setFocusActive: (active: boolean) => void;
   /** called at boot when the lifecycle adapter detects a return-from-kill. */
   markKilled: (killed: boolean) => void;
+  setOnboardingSeen: (seen: boolean) => void;
 }
 
 export const useUiStateStore = create<UiStateStore>()(
@@ -67,6 +74,7 @@ export const useUiStateStore = create<UiStateStore>()(
       auroraTheme: 'auto',
       focusActive: false,
       killed: false,
+      onboardingSeen: false,
       setActiveTab: (activeTab) => set({ activeTab }),
       setTasksView: (tasksView) => set({ tasksView }),
       setProgressPeriod: (progressPeriod) => set({ progressPeriod }),
@@ -76,6 +84,7 @@ export const useUiStateStore = create<UiStateStore>()(
       setAuroraTheme: (auroraTheme) => set({ auroraTheme }),
       setFocusActive: (focusActive) => set({ focusActive }),
       markKilled: (killed) => set({ killed }),
+      setOnboardingSeen: (onboardingSeen) => set({ onboardingSeen }),
     }),
     {
       // ui-state only — never entity data (AD-7). localStorage bridge for
@@ -89,6 +98,7 @@ export const useUiStateStore = create<UiStateStore>()(
         knowledgeExpanded: s.knowledgeExpanded,
         theme: s.theme,
         auroraTheme: s.auroraTheme,
+        onboardingSeen: s.onboardingSeen,
       }),
     },
   ),

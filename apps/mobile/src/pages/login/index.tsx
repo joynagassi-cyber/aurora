@@ -95,14 +95,17 @@ export function LoginPage() {
     try {
       const { needsEmailConfirmation } = await signUp(email, password);
       if (needsEmailConfirmation) {
+        // Repli honnête (AD-13) — normalement inactif : le projet est
+        // configuré SANS confirmation email (trigger auto_confirm, 10-07).
         setSuccess(
           `Compte créé pour ${email.trim()} — un email de confirmation a été envoyé. Vérifie ta boîte mail, puis reviens te connecter.`,
         );
       } else {
-        setSuccess(`Compte créé — tu es connecté en tant que ${email.trim()}.`);
-        // La session est active dans le client partagé : le reload active
-        // le relay (03 S8.1).
-        window.setTimeout(() => window.location.assign('/'), 1500);
+        setSuccess(`Compte créé — tu es connecté en tant que ${email.trim()}. Ouverture de ton onboarding…`);
+        // Sign-up → onboarding → app (flux première entrée, 10-07) : le
+        // reload restaure la session (client partagé, 03 S8.1) puis le
+        // wizard de bienvenue s'affiche une seule fois (ui-state).
+        window.setTimeout(() => window.location.assign('/onboarding'), 1500);
       }
       setBusy(false);
     } catch (err) {
@@ -314,8 +317,8 @@ export function LoginPage() {
                           {busy ? 'Inscription…' : 'Créer mon compte'}
                         </Button>
                         <p className="auth-note">
-                          8 caractères minimum. Si le projet exige la confirmation par email,
-                          tu recevras un lien avant ta première connexion.
+                          8 caractères minimum. Compte activé immédiatement, sans
+                          confirmation par email (usage personnel, 10-07).
                         </p>
                       </form>
                     )}

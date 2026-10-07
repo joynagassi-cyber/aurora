@@ -48,6 +48,7 @@ import { NotFoundPage } from './pages/not-found';
 import { SkillsPage } from './pages/skills';
 import { IntegrationsPage } from './pages/integrations';
 import { LoginPage } from './pages/login';
+import { OnboardingPage } from './pages/onboarding';
 
 // Explicit annotation (TS2742): the inferred return type of
 // `createBrowserRouter` pulls in @remix-run/router's Router type through
@@ -109,6 +110,9 @@ export const appRouter: AppRouter = createBrowserRouter([
 
       // --- Supabase Auth entry point (P1-4, 10-07) ---
       { path: '/login', element: <LoginPage /> },
+      // --- Onboarding first-run (usage personnel, 10-07 : sign-up →
+      //     onboarding → app) — state cosmétique par device (ui-state). ---
+      { path: '/onboarding', element: <OnboardingPage /> },
 
       // --- Flashcards / QCM / exercises: /learn/:id overlays (05 §4.8) ---
       // (already registered under details above; no second registration)
@@ -124,5 +128,5 @@ export type AppRoute = '/home' | '/tasks' | '/learn' | '/progress' | '/agent'
   | '/tasks/:id' | '/learn/:id' | '/progress/:id' | '/knowledge' | '/knowledge/:nodeId'
   | '/artifacts/:id' | '/inbox' | '/settings' | '/goals' | '/goals/:id'
   | '/goals/:id/features/:fid' | '/goals/:id/ascent' | '/focus' | '/calendar' | '/projects' | '/discovery'
-  | '/skills' | '/integrations' | '/login'
+  | '/skills' | '/integrations' | '/login' | '/onboarding'
   | '/canvas/:id';

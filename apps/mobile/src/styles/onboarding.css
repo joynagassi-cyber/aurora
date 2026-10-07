@@ -1,0 +1,82 @@
+/* =============================================================================
+   onboarding.css — /onboarding (usage personnel, 10-07).
+   Pack 05 / AD-17 : tokens only (--aurora-*), radius ≤ 8 px, tap ≥ 44 px,
+   animation 150–250 ms GPU-only (pattern .is-spinning partagé).
+   ============================================================================= */
+
+.onb-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  max-width: 440px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.onb-full {
+  width: 100%;
+  min-height: var(--aurora-tap-target, 44px);
+}
+
+/* Ligne titre + compteur d'étape. */
+.onb-stepline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Étape 1 — points de bienvenue (icônes lucide alignées). */
+.onb-points p {
+  margin: 0 0 10px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--aurora-text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.onb-points p svg {
+  color: var(--aurora-accent-primary);
+}
+
+/* Étape 2 — style. */
+.onb-style-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.onb-style-row > button {
+  flex: 1;
+  min-height: var(--aurora-tap-target, 44px);
+}
+.onb-note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--aurora-text-muted);
+}
+
+/* Étape 3 — CTA premiers pas. */
+.onb-ctas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.onb-cta {
+  justify-content: flex-start;
+  min-height: var(--aurora-tap-target, 44px);
+}
+
+/* Barre d'actions (Retour / Suivant / Commencer). */
+.onb-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 16px;
+}
+.onb-actions > button {
+  flex: 1;
+  min-height: var(--aurora-tap-target, 44px);
+}
