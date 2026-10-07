@@ -51,6 +51,7 @@ import { createAgentClient } from './lib/agent-client';
 import { createCanvasClient } from './lib/canvas-client';
 import { createIntegrationClient } from './lib/integrations-client';
 import { createSkillClient } from './lib/skills-client';
+import { setAuthClient } from './lib/auth';
 import { useUiStateStore } from './state/ui-state';
 import { createAuroraSupabaseClient } from '@aurora/data';
 
@@ -60,8 +61,33 @@ const env: AuroraDataEnv = {
   powersyncUrl: import.meta.env.VITE_POWERSYNC_URL ?? '',
 };
 
+// Shared Supabase client (single GoTrue instance, AD-3 publishable-only):
+// used by the data provider's PowerSync relay connector (via `clientFactory`)
+// AND by the auth surface (`lib/auth.ts`) — the browser `storage` event does
+// NOT propagate within the same tab, so two separate client instances would
+// never see each other's sessions and `fetchCredentials` would stay stuck
+// on "No Supabase session" even after sign-in.
+const sharedSupabaseClient =
+  env.supabaseUrl && env.supabasePublishableKey
+    ? createAuroraSupabaseClient({
+        env: {
+          supabaseUrl: env.supabaseUrl,
+          supabasePublishableKey: env.supabasePublishableKey,
+        },
+      })
+    : undefined;
+
+// Single-instance design (AD-3 / 03 S8.1): the auth surface (login, session,
+// sign-out) operates on the SAME GoTrueClient as the relay connector, so a
+// sign-in is visible to `fetchCredentials` without a page reload.
+if (sharedSupabaseClient) setAuthClient(sharedSupabaseClient);
+
 // The local-mirror data provider (A2: `ascent` is wired through here).
-const provider = createAuroraDataProvider(env);
+const provider = createAuroraDataProvider(
+  sharedSupabaseClient
+    ? { ...env, clientFactory: () => sharedSupabaseClient }
+    : env,
+);
 // AD-3: the agent client runs on the SAME publishable-scope client — the
 // device enqueues kernel runs (`fn-agent-run`) and reads the `agent_runs`
 // mirror; zero provider keys cross this boundary (F-09). Absent env values

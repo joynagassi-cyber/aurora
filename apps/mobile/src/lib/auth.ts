@@ -1,15 +1,18 @@
 /**
  * auth.ts — minimal Supabase Auth surface for the shell (P1-4 unblock, 10-07).
  *
+ * Single-client design (AD-3, 03 S8.1): `main.tsx` owns ONE shared
+ * `AuroraSupabaseClient` (publishable-only) and injects it here via
+ * `setAuthClient` — the SAME instance backs the PowerSync relay connector
+ * (`boot-data.ts` `clientFactory`). So a sign-in here is immediately visible
+ * to the relay's `fetchCredentials` retry (~5 s) without a reload: the browser
+ * `storage` event does not sync two separate GoTrueClient instances in the
+ * same tab, so sharing the instance is what makes live sign-in work.
+ *
  * AD-1: the shell consumes the `@aurora/data` surface ONLY — never imports
  * `@supabase/supabase-js` directly. `createAuroraSupabaseClient` is the sole
- * client construction site (packages/data, supabase.ts).
- * AD-3: publishable key only (env-injected, 03 S2.1 / OQ-03) — RLS is the
- * enforcement layer; the service_role secret never reaches the device.
- *
- * The engine's PowerSync connector reads `client.auth.getSession()` from a
- * client built with `persistSession: true` (default) at boot — so a session
- * signed in here is restored on the next boot and the sync loop connects.
+ * client construction site. AD-3: publishable key only (env-injected,
+ * 03 S2.1 / OQ-03) — RLS is the enforcement layer; service_role never ships.
  */
 import { createAuroraSupabaseClient, type AuroraSupabaseClient } from '@aurora/data';
 
@@ -19,12 +22,27 @@ const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? 
 /** OQ-03: absent env values degrade to the local-mirror shell (AD-7, honest state). */
 export const authAvailable = Boolean(supabaseUrl && supabasePublishableKey);
 
-const client: AuroraSupabaseClient | undefined = authAvailable
-  ? createAuroraSupabaseClient({ env: { supabaseUrl, supabasePublishableKey } })
-  : undefined;
+/** The boot's shared client (injected by `main.tsx`); `null` until then. */
+let sharedClient: AuroraSupabaseClient | null = null;
+
+/**
+ * Wire the shared Supabase client (single-instance design, AD-3 / 03 S8.1).
+ * Call once at boot BEFORE the relay starts reconnecting.
+ */
+export function setAuthClient(client: AuroraSupabaseClient): void {
+  sharedClient = client;
+}
+
+/** Shared instance when available, else a standalone client (env-present). */
+function resolveClient(): AuroraSupabaseClient | undefined {
+  if (sharedClient) return sharedClient;
+  if (!authAvailable) return undefined;
+  return createAuroraSupabaseClient({ env: { supabaseUrl, supabasePublishableKey } });
+}
 
 /** The active session (restored from device-local storage on boot). */
 export async function currentSession() {
+  const client = resolveClient();
   if (!client) return null;
   const { data } = await client.auth.getSession();
   return data.session;
@@ -36,9 +54,16 @@ export async function currentSession() {
  * RLS: `user_context_user_isolation` allows the user to upsert their OWN row.
  */
 export async function signIn(email: string, password: string): Promise<void> {
+  const client = resolveClient();
   if (!client) throw new Error('Aucun accès Supabase configuré (OQ-03).');
   const { data, error } = await client.auth.signInWithPassword({ email, password });
   if (error) throw new Error(error.message);
+  // Diagnostic (AD-7): the relay's `fetchCredentials` retry sees this session
+  // on the SAME client instance within ~5 s — the "No Supabase session" spam
+  // must stop (no reload required).
+  console.log('[Aurora] sign-in réussi — relay PowerSync se connecte sous ~5 s', {
+    user: data.session?.user?.email,
+  });
   if (data.session?.user) {
     await client.from('user_context').upsert(
       { user_id: data.session.user.id },
@@ -48,6 +73,7 @@ export async function signIn(email: string, password: string): Promise<void> {
 }
 
 export async function signOut(): Promise<void> {
+  const client = resolveClient();
   if (!client) return;
   await client.auth.signOut();
 }
