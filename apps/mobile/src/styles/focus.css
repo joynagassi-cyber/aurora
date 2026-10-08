@@ -265,3 +265,16 @@
   background: var(--aurora-bg-subtle);
   border-radius: var(--aurora-radius, 0.5rem);
 }
+
+/* PRD-FOC-02 (Statistiques de Focus) : les KPI du jour (Pomo / focus
+ * time). 2-up grid reusing the premium `.stat-tile` language (data.css,
+ * 3px accent top edge). Tokens only (AD-17), radius ≤ 8 px. */
+.focus-stats {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.focus-stats-hint {
+  grid-column: 1 / -1;
+}

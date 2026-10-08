@@ -8,9 +8,18 @@
  *
  * Icons = lucide 20 px (ui-libraries §4: real icons, never emoji/SVG).
  */
-import { Award, Brain, Calendar, Compass, Inbox, PenTool, Plug, Timer } from 'lucide-react';
+import { Award, Brain, Calendar, Compass, Flame, Inbox, PenTool, Plug, Timer } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUserFeatures } from '../query/user-features';
+
+/**
+ * Core module chips (2026-10, PRD-1 §4.5) : ALWAYS visible — they are not
+ * feature-gated (habits = core productivity domain entity, like /projects).
+ * `FEATURE_REGISTRY_CHIPS` below stay gated by `useUserFeatures`.
+ */
+const CORE_CHIPS = [
+  { id: 'habits', label: 'Habitudes', href: '/habits', Icon: Flame },
+] as const;
 
 const MODULE_CHIPS = [
   { id: 'calendar', label: 'Calendrier', href: '/calendar', Icon: Calendar },
@@ -27,8 +36,8 @@ const MODULE_CHIPS = [
 export function ModuleQuickAccess() {
   const { isEnabled } = useUserFeatures();
   const navigate = useNavigate();
-  const visible = MODULE_CHIPS.filter((m) => isEnabled(m.id));
-  if (visible.length === 0) return null;
+  const gated = MODULE_CHIPS.filter((m) => isEnabled(m.id));
+  const visible = [...CORE_CHIPS, ...gated];
 
   return (
     <nav className="module-quick-access" aria-label="Modules">

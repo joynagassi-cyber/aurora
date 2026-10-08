@@ -1089,6 +1089,174 @@
   }
 }
 
+/* ---- Projects: Kanban board + reports (PRD-4, lot 2026-10) -----------
+ * Horizontal column board (PRD-PM-02/03) with a themed top band per
+ * column (frozen semantic tokens, 05 §5.1) + the synthesis-report list
+ * (PRD-PM-01). Tokens only (AD-17), radius ≤ 8 px, tap ≥ 44 px. */
+/* Kanban board : a horizontal scroller track of fixed-width columns
+ * (PRD-PM-02 : « colonnes côte à côte à défilement horizontal »). The
+ * `data-board` attr and `.projects-board` class live on the SAME
+ * element — one definition, no duplication. */
+.projects-board {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding: 0 16px;
+  margin-bottom: 14px;
+}
+.projects-board .projects-col {
+  scroll-snap-align: start;
+}
+.projects-col {
+  display: inline-flex;
+  flex-direction: column;
+  flex: 0 0 240px;
+  min-height: 160px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+  overflow: hidden;
+}
+/* The themed column band (PRD-PM-03 « bandeau coloré ») — a 3px semantic
+ * top edge per column state (the premium language of the KPI tiles /
+ * goal cards). WCAG-safe: the title stays on the neutral surface, only
+ * the band carries the state color (theme-independent, 05 §5.1). */
+.projects-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--aurora-border);
+}
+.projects-col--info {
+  border-top: 3px solid var(--aurora-info);
+}
+.projects-col--accent {
+  border-top: 3px solid var(--aurora-accent-primary);
+}
+.projects-col--warning {
+  border-top: 3px solid var(--aurora-warning);
+}
+.projects-col--success {
+  border-top: 3px solid var(--aurora-success);
+}
+.projects-col-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--aurora-text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+/* Counter pill on the column header (monospace, AD-7 = derived count). */
+.projects-col-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.18);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 700;
+}
+/* Column body: the add-card affordance (routes to the agent — a real
+ * action, never a dead control). */
+.projects-col-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+}
+.projects-col-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--aurora-tap-target, 44px);
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--aurora-accent-primary);
+  background: var(--aurora-accent-selected-surface);
+  border: 1px dashed var(--aurora-accent-primary);
+  border-radius: var(--aurora-radius, 0.5rem);
+}
+/* The primary « Créer un projet » CTA, OUTSIDE the scroller track. */
+.projects-create-wrap {
+  padding: 0 16px 16px;
+}
+.projects-create {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+/* Reports list (PRD-PM-01) : report rows = dot + title + description,
+ * each routes to the agent intent that GENERATES the report. */
+.projects-reports {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+.projects-reports-hint {
+  padding: 0 4px 4px;
+}
+.report-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  min-height: var(--aurora-tap-target, 44px);
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+  color: var(--aurora-text-primary);
+  transition: border-color 0.18s ease;
+}
+.report-row:hover {
+  border-color: var(--aurora-accent-primary);
+}
+.report-row-dot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--aurora-accent-primary);
+}
+.report-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.report-row-text strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+}
+.report-row-text small {
+  font-size: 12px;
+  color: var(--aurora-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .report-row {
+    transition: none;
+  }
+}
+
 /* ---- Generic screen-content padding for the stub families ------------ */
 ion-content div[data-state],
 ion-content [data-artifact-id] {

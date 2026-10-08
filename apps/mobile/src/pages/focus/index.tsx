@@ -391,6 +391,24 @@ export function FocusPage({ service, onSession }: FocusPageProps) {
               )}
             </section>
           )}
+
+          {/* PRD-FOC-02 (Statistiques de Focus) : les KPI du jour.
+              Le miroir FocusSession n'est pas encore câblé (AD-7) →
+              état vide honnête (« — »), jamais de chiffre inventé. */}
+          <section className="focus-stats" data-focus-stats>
+            <div className="stat-tile">
+              <p className="stat-label">Pomo aujourd'hui</p>
+              <p className="stat-value">—</p>
+            </div>
+            <div className="stat-tile">
+              <p className="stat-label">Temps de focus</p>
+              <p className="stat-value">—</p>
+            </div>
+            <p className="page-hint focus-stats-hint">
+              Les nombres se remplissent au fil de tes sessions de
+              concentration.
+            </p>
+          </section>
         </div>
       </IonContent>
     </>

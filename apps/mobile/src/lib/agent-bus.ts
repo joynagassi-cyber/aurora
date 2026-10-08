@@ -126,7 +126,7 @@ export function applyUiCommand(cmd: UiStateCommand, nav: NavFn, ui: UiCommander)
       // a view-mode switch when it names one, otherwise a no-op projection
       // (the page owns the full filter surface — AD-7, no data here).
       const view = String(payload.view ?? '');
-      if (view === 'list' || view === 'eisenhower' || view === 'calendar') {
+      if (view === 'today' || view === 'list' || view === 'eisenhower' || view === 'calendar') {
         ui.setTasksView(view);
       }
       const period = String(payload.period ?? '');
