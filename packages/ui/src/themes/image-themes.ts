@@ -9,7 +9,7 @@
  *   - accentue sa couleur principale (« chromatic anchor », SSoT =
  *     `.stitch/prompts_v4.md`, table des couleurs phares) : le canvas
  *     reste l'image elle-même (ni teinte, ni flouté), le style neutre
- *     (clair `#FFFFFF` / dark `#121212`) reste inchangé ; la couleur
+ *     (clair `#FFFFFF` / dark `#000000` pur) reste inchangé ; la couleur
  *     anchor pilote les accents / primary.
  *
  * Batch 2026-10-B (régénération professionnelle + complétion,

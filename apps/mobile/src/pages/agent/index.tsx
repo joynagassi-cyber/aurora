@@ -65,6 +65,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useReducedMotion } from 'motion/react';
 import { useMobileData } from '../../query/context';
 import { useAgentRun } from '../../query/agent-runs';
+import { useKilledDetection } from '../../hooks/use-killed';
 import type { AgentRunRow } from '../../lib/agent-client';
 
 // ——— Model picker catalog (AD-3: static, public config — no key here). ———
@@ -200,8 +201,13 @@ export function AgentPage() {
   const [peel, setPeel] = useState<{ entryId: string; dx: number } | null>(null);
   const peelStart = useRef<{ x: number; entryId: string } | null>(null);
 
-  const { data: runRow, isFetching } = useAgentRun(activeRun);
+  const { data: runRow, isFetching, refetch: refetchRun } = useAgentRun(activeRun);
   const thinking = activeRun !== undefined && !runRow;
+
+  // Killed (G-M2, AD-13): after a foreground gap the in-flight mirror row
+  // may be stale — force one re-read, and surface "Reconnexion…" while it
+  // settles. The hook clears itself on the first local re-read.
+  const killed = useKilledDetection(() => refetchRun());
 
   // Reduced-motion guard (emotion-design §3, 05 §2.6 règle 2): smooth scroll
   // → instant scroll when the OS preference is ON.
@@ -538,7 +544,15 @@ export function AgentPage() {
             aria-labelledby={`tab-${agentMode}`}
             tabIndex={0}
             data-state={
-              agent ? (entries.length || inFlightRow ? 'streaming' : thinking ? 'loading' : 'empty') : 'offline'
+              agent
+                ? killed && thinking
+                  ? 'killed'
+                  : entries.length || inFlightRow
+                    ? 'streaming'
+                    : thinking
+                      ? 'loading'
+                      : 'empty'
+                : 'offline'
             }
           >
             {!agent && (
@@ -617,6 +631,16 @@ export function AgentPage() {
                 label={`L'agent réfléchit (${thinkingLevel})…`}
                 className="agent-thinking"
               />
+            )}
+
+            {/* Killed (G-M2): sub-state of loading — the mirror re-reads on
+                foreground return; honest "Reconnexion…" line, no fake state. */}
+            {killed && (thinking || inFlightRow) && (
+              <div className="agent-entry agent-entry--agent">
+                <div className="agent-entry-status" aria-live="polite">
+                  Reconnexion…
+                </div>
+              </div>
             )}
 
             {inFlightRow && (

@@ -36,6 +36,18 @@
 .task-row:hover {
   border-color: var(--aurora-accent-primary);
 }
+/* Right-edge chevron (pure-CSS 45° affordance, token border) — "tap → détail". */
+.task-row::after {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-left: auto;
+  border-top: 2px solid var(--aurora-text-muted);
+  border-right: 2px solid var(--aurora-text-muted);
+  transform: rotate(45deg) translate(-1px, -1px);
+  opacity: 0.7;
+}
 .task-row-title {
   flex: 1;
 }

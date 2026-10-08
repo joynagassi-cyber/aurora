@@ -148,22 +148,24 @@ export function GoalFeatureDetailPage() {
   const goalId = searchParams.get('goalId') ?? id;
   const subGoalId = searchParams.get('subGoalId') ?? '';
 
+  const featureName = featureLabel(fid);
+
   return (
     <IonContent>
       <IonHeader>
-        <IonTitle>{fid}</IonTitle>
+        <IonTitle>{featureName}</IonTitle>
       </IonHeader>
       <div
         data-goal-context={goalId}
         data-sub-goal={subGoalId}
         data-feature-detail
       >
-        <span className="breadcrumb">Objectif &rsaquo; {fid}</span>
+        <span className="breadcrumb">Objectif &rsaquo; {featureName}</span>
         {/* Feature node detail (AD-7 local read). Rendered by the feature
             module when wired; 6 states covered by the parent dashboard. */}
         <div data-feature-body>
-          <h2 className="feature-title">{fid}</h2>
-          <p className="feature-desc">Détails de la feature (lecture locale).</p>
+          <h2 className="feature-title">{featureName}</h2>
+          <p className="feature-desc">Cette étape fait partie de ton objectif.</p>
         </div>
       </div>
     </IonContent>

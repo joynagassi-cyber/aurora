@@ -51,10 +51,10 @@ export type DisclosureLevel = 1 | 2 | 3 | 4;
 
 /** What each disclosure level shows (S11, frozen). */
 export const DISCLOSURE_LEVELS = {
-  1: 'Level 1 (always visible): "what to learn next" = current + next step',
-  2: 'Level 2 (on tap/expand): current step detail — concept, formula, 1 example, the activity to do NOW',
-  3: 'Level 3 (on demand): full path overview, prerequisites map, depth + why, sources (AD-11)',
-  4: 'Level 4 (contextual panel): related concepts, cross-domain bridges, progress history, "why this order?" (adaptation log)',
+  1: 'Niveau 1 (toujours visible) : « qu\'apprendrai-je ensuite » = l\'étape actuelle + la suivante',
+  2: 'Niveau 2 (en tapant) : le détail de l\'étape — le concept, la formule, un exemple, l\'activité à faire MAINTENANT',
+  3: 'Niveau 3 (à la demande) : l\'aperçu du parcours, les prérequis, le « pourquoi » de la profondeur, les sources',
+  4: 'Niveau 4 (panneau contextuel) : concepts liés, ponts entre domaines, historique de progression, « pourquoi cet ordre ? »',
 } as const satisfies Record<DisclosureLevel, string>;
 
 /**

@@ -75,7 +75,8 @@ export function ImageThemeLayer() {
     const neutral = NEUTRAL_STYLES[style];
     const anchor = entry.anchorColor;
     const styleInk = neutral['text-primary'];
-    const oppositeInk = style === 'dark' ? '#0F172A' : '#F1F5F9';
+    // Pure palettes (owner 10-07): the opposite ink is pure black / pure white.
+    const oppositeInk = style === 'dark' ? '#000000' : '#FFFFFF';
 
     doc.dataset.auroraImageTheme = entry.slug;
     doc.style.setProperty('--aurora-bg-image', `url("/themes/${file}")`);

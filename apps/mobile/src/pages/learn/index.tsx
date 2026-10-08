@@ -51,7 +51,7 @@ export function LearnPage() {
           >
             <div className="learn-section">
               <h2 className="learn-section-title">Révisions dues</h2>
-              <p>Aucune révision due (05 §4.8).</p>
+              <p>Rien à réviser pour l'instant.</p>
             </div>
           </UxStates>
 
@@ -75,15 +75,16 @@ export function LearnDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [mode, setMode] = useState<StudyMode>('sheet');
   const { flags } = emptyFlags();
+  const modeLabel = STUDY_MODES.find(([m]) => m === mode)?.[1] ?? 'Fiche';
 
   return (
     <>
       <IonHeader>
-        <IonTitle>{id}</IonTitle>
+        <IonTitle>Cours</IonTitle>
       </IonHeader>
       <IonContent>
         <div data-course-detail data-course-id={id}>
-          <span className="breadcrumb">Apprendre &rsaquo; {id}</span>
+          <span className="breadcrumb">Apprendre &rsaquo; Cours</span>
 
           <UxStates state={{ status: 'empty' }} flags={flags} label="Étude">
             <div className="learn-detail">
@@ -107,7 +108,8 @@ export function LearnDetailPage() {
                 ))}
               </div>
               <p className="learn-detail-hint">
-                Contenu d'étude ({mode}) — lecture locale.
+                Le contenu de ton cours s'affichera ici — mode {modeLabel.toLowerCase()}
+                prêt à l'emploi.
               </p>
             </div>
           </UxStates>

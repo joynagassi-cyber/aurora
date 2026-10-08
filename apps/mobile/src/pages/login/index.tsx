@@ -331,7 +331,7 @@ export function LoginPage() {
               <CardHeader>
                 <CardTitle>Compte indisponible</CardTitle>
                 <CardDescription>
-                  Aucun accès Supabase configuré (OQ-03 — valeurs d'env manquantes).
+                  Le service n'est pas configuré pour l'instant — vérifie que l'app est bien branchée.
                 </CardDescription>
               </CardHeader>
             </Card>

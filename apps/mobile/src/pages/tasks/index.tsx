@@ -16,6 +16,15 @@ import { UxStates, type UxStateFlags } from '../../ux-states';
 import { useKilledDetection } from '../../hooks/use-killed';
 import { useOnlineStatus } from '../../hooks/use-online';
 
+/** Statuts tâches → libellé simple (zéro jargon, roadmap 10-07). */
+const TASK_STATUS_FR: Record<string, string> = {
+  todo: 'À faire',
+  in_progress: 'En cours',
+  done: 'Terminée',
+  blocked: 'Bloquée',
+  cancelled: 'Annulée',
+};
+
 /** The 2 in-page views (T4 — the router does NOT know about them). */
 const TASK_VIEWS = [
   ['list', 'Liste'],
@@ -96,7 +105,7 @@ export function TasksPage() {
 
           <UxStates
             state={taskState}
-            flags={{ ...flags, emptyCta: "Capturer une tâche" }}
+            flags={{ ...flags, emptyCta: "Capturer une tâche", emptyCtaHref: "/inbox" }}
             label="Tâches"
             skeleton={
               view === 'eisenhower' ? <EisenhowerSkeleton /> : <TaskRowSkeleton count={3} />
@@ -172,7 +181,7 @@ export function TaskDetailPage() {
                   className="task-status-chip"
                   data-status={status}
                 >
-                  {status.replace('_', ' ')}
+                  {TASK_STATUS_FR[status] ?? status.replace('_', ' ')}
                 </span>
                 {task.dueAt && (
                   <span className="task-due mono">échéance {task.dueAt.slice(0, 10)}</span>

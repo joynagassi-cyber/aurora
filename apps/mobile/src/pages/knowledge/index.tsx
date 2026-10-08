@@ -111,9 +111,9 @@ export function KnowledgePage() {
               <span>
                 {hasMirrorData
                   ? matchCount > 0
-                    ? `Recherche locale : « ${query} » — ${matchCount} nœud(s) trouvé(s) sur le miroir.`
-                    : `Recherche locale : « ${query} » — aucun résultat sur le miroir (recherche sémantique complète = en ligne, 01 §4.3).`
-                  : `Recherche locale : « ${query} » — miroir vide, importez d'abord un cours ou une fiche.`}
+                    ? `Recherche : « ${query} » — ${matchCount} résultat(s).`
+                    : `Recherche : « ${query} » — aucun résultat hors ligne. La recherche complète demande une connexion.`
+                  : `Recherche : « ${query} » — rien à chercher pour l'instant, importez un cours ou une fiche.`}
               </span>
               <a
                 className="aurora-btn aurora-btn--ghost aurora-tap"
@@ -151,7 +151,7 @@ export function KnowledgePage() {
               <SemanticTreeRenderer nodes={nodes} edges={edges} fitView />
               {!hasMirrorData && (
                 <div className="knowledge-tree-cta">
-                  <p>Aucun concept sur le miroir local — importez un cours ou une fiche.</p>
+                  <p>Aucun contenu pour l'instant — importez un cours ou une fiche.</p>
                   <a
                     className="aurora-btn aurora-btn--primary aurora-tap"
                     href="/learn"
@@ -162,7 +162,7 @@ export function KnowledgePage() {
               )}
               {!online && hasMirrorData && (
                 <span className="aurora-badge" data-badge="offline">
-                  Hors ligne — arbre figé sur le dernier miroir connu (AD-7)
+                  Hors ligne — dernier arbre connu affiché
                 </span>
               )}
             </div>

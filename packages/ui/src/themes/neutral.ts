@@ -2,19 +2,21 @@
  * @aurora/ui — Neutral style catalog (05 §5.2 level 1, G-H2 resolved).
  *
  * Light canvas = #FFFFFF (plain white, G-H2 re-2026-10).
- * Dark canvas = #121212 (true dark, G-H2 re-2026-10).
+ * Dark canvas = #000000 (PURE deepest black, owner 10-07 — re-anchors the
+ * G-H2 #121212: the user wants no blue/slate cast, the deepest #000000).
  *
  * These are the FROZEN semantic tokens of 05 §2.1.2/§2.1.3 — normative
  * for wave 1. A theme NEVER redefines success/warning/danger/info
  * (blocking rule 05 §5.1): these values come from here, not from
  * packages/ui/src/themes/*.json.
  *
- * 2026-10 (G-H2 re-2026-10): canvas values re-anchored to plain white
- * (#FFFFFF) light / #121212 dark — the blue-tinted near-black
- * (#0A0E1A) and slate.50 (#F8FAFC) canvases are deprecated. No tinted
- * or gradient canvas: the two neutral styles define the only two
- * canvas values. Theme expressive colors overlay accents only, they
- * never tint the canvas itself.
+ * 2026-10 (owner 10-07 "dark pur"): the DARK neutral style is now PURE —
+ * canvas #000000 + a hue-0 gray ramp (surfaces/borders/text are neutral
+ * black-white-gray, no 210-220° blue tint). The old bluish slate values
+ * (#121212 canvas, #1E2026/#25282F surfaces) are deprecated. No tinted or
+ * gradient canvas: the two neutral styles define the only two canvas
+ * values. Theme expressive colors overlay accents only, they never tint
+ * the canvas itself.
  */
 
 import type { NeutralStyleCatalog } from "./types";
@@ -48,17 +50,21 @@ export const NEUTRAL_STYLES: NeutralStyleCatalog = {
     "skeleton": "#E2E8F0",
   },
   dark: {
-    "bg": "#121212",
-    "bg-subtle": "#1E1E1E",
-    "surface": "#1E2026",
-    "surface-alt": "#25282F",
-    "surface-overlay": "rgba(24,24,24,0.88)",
-    "text-primary": "#F1F5F9",
-    "text-secondary": "#94A3B8",
-    "text-muted": "#64748B",
-    "text-disabled": "#475569",
-    "border": "#334155",
-    "border-strong": "#64748B",
+    // DARK PUR (owner 10-07): the deepest black canvas #000000 + a pure
+    // neutral gray ramp (hue 0 — NO blue/slate tint, the "coloré" cast the
+    // old #121212/#1E2026 values had). Semantic states below stay colored
+    // (blocking rule 05 §5.1: a theme never redefines them).
+    "bg": "#000000",
+    "bg-subtle": "#0A0A0A",
+    "surface": "#121212",
+    "surface-alt": "#1C1C1C",
+    "surface-overlay": "rgba(0,0,0,0.88)",
+    "text-primary": "#FFFFFF",
+    "text-secondary": "#D6D6D6",
+    "text-muted": "#8F8F8F",
+    "text-disabled": "#5A5A5A",
+    "border": "#262626",
+    "border-strong": "#4A4A4A",
     "success": "#34D399",
     "success-surface": "#064E3B",
     "warning": "#FBBF24",
@@ -69,9 +75,9 @@ export const NEUTRAL_STYLES: NeutralStyleCatalog = {
     "node-mastered": "#34D399",
     "node-fragile": "#FBBF24",
     "node-forgotten": "#F87171",
-    "habit-weak": "#25282F",
+    "habit-weak": "#1C1C1C",
     "habit-med": "#818CF8",
     "habit-strong": "#9AA4F4",
-    "skeleton": "#25282F",
+    "skeleton": "#1C1C1C",
   },
 };

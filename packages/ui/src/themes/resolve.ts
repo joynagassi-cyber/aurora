@@ -144,10 +144,11 @@ export function resolveToken(
       : styleAccents;
   // on-primary = the readable ink over the resolved primary accent:
   // auto-picked between the style's ink and its opposite (WCAG, 05 §5.4.1).
+  // Pure palettes (owner 10-07): dark opposite = #000000, light = #FFFFFF.
   const onPrimaryInk = accentInk(
     accents.primary,
     neutral["text-primary"],
-    neutralStyle === "dark" ? "#0F172A" : "#F1F5F9",
+    neutralStyle === "dark" ? "#000000" : "#FFFFFF",
   );
   const accentMap: Record<string, string | undefined> = {
     "accent.primary": accents.primary,

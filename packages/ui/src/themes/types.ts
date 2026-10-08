@@ -2,8 +2,9 @@
  * @aurora/ui — Theme system types (AD-17, 05-design-system §5 v2).
  *
  * Architecture: 3 resolution layers (05 §5.2):
- *   Layer 1 — Neutral Style (Light `#FFFFFF` / Dark `#121212`): plain
- *     white / plain dark canvas (G-H2 re-2026-10) — frozen semantic
+ *   Layer 1 — Neutral Style (Light `#FFFFFF` / Dark `#000000` pure): plain
+ *     white / the deepest pure-black canvas (owner 10-07; hue-0 grays,
+ *     no blue cast) — frozen semantic
  *     tokens §2.1.2/§2.1.3 (surfaces, text, borders, semantic states
  *     success/warning/danger/info, node states, habit streaks).
  *   Layer 2 — Expressive Theme (10 living themes §5.4 or 1 of 3 presets
@@ -92,7 +93,8 @@ export interface AuroraTheme {
    * calibration, roadmap 10-07): when the neutral style is `dark`,
    * resolution picks these values per-token (falling back to `colors`
    * when a key is absent). The theme's identity (hues / universe) is NOT
-   * changed — only the calibration for the `#121212` canvas: accents a
+   * changed — only the calibration for the pure-black `#000000` canvas
+   * (owner 10-07): accents a
    * touch brighter, `surface` (the selection chip) a dark tint of the
    * theme hue instead of the light one. `accent.on-primary` ink is
    * picked automatically against the resolved accent (resolve.ts), so a
@@ -167,7 +169,7 @@ export const PRESETS: readonly ["slate", "nocturne", "high-contrast"] = [
   "slate", "nocturne", "high-contrast",
 ] as const;
 
-/** Neutral style catalog: Light (#FFFFFF) / Dark (#121212) — G-H2 re-2026-10. */
+/** Neutral style catalog: Light (#FFFFFF) / Dark (#000000 pure) — owner 10-07. */
 export type NeutralStyleCatalog = Record<NeutralStyle, NeutralTokens>;
 
 /** The theme catalog: expressive themes + presets, keyed by name. */

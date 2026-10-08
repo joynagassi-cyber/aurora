@@ -1,7 +1,7 @@
 {
   "name": "nocturne",
   "kind": "preset",
-  "role": "dark doux spécifique pour la nuit (moins éblouissant que le Dark standard)",
+  "role": "dark doux spécifique pour la nuit (accents désaturés)",
   "styleOverride": "dark",
-  "note": "Preset technique (05 §5.5) — canvas #121212 (G-H2 re-2026-10), surfaces plus foncées, accents désaturés. OQ-15 tranché V1 : preset autonome, se combine avec un thème expressif."
+  "note": "Preset technique (05 §5.5) — force le style dark (canvas noir pur #000000, owner 10-07), accents désaturés. OQ-15 tranché V1 : preset autonome, se combine avec un thème expressif."
 }

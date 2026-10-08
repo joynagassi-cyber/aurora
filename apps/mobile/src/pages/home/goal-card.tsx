@@ -50,15 +50,21 @@ export function GoalProjectCard({ goal }: { goal: GoalProject }) {
       <IonLabel>
         <span data-shape-icon={goalShapeIcon(goal)} />
         <strong>{goal.objective}</strong>
-        {/* progress bar — `info` token, AD-17 */}
-        <div
-          role="progressbar"
-          aria-valuenow={goal.progress.overallPct}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          className="goal-progress"
-        >
-          <div className="goal-progress-fill" style={{ width: `${goal.progress.overallPct}%` }} />
+        {/* progress bar — `info` token, AD-17 + the % readout (value first,
+            05 §3.3) on one line: bar + mono number. */}
+        <div className="goal-progress-line">
+          <div
+            role="progressbar"
+            aria-valuenow={goal.progress.overallPct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            className="goal-progress"
+          >
+            <div className="goal-progress-fill" style={{ width: `${goal.progress.overallPct}%` }} />
+          </div>
+          <span className="goal-progress-pct" aria-hidden>
+            {goal.progress.overallPct}%
+          </span>
         </div>
         {nextLabel && <em>Prochain : {nextLabel}</em>}
       </IonLabel>

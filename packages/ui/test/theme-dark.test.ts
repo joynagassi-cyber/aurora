@@ -9,16 +9,16 @@
  * theme helper `resolveImageThemeFile` is covered too.
  */
 import { describe, expect, it } from "vitest";
-import {
-  EXPRESSIVE_THEMES,
-  THEMES,
-} from "../src/themes";
+import { THEMES } from "../src/themes";
 import {
   accentInk,
   contrastRatio,
   resolveImageThemeFile,
   resolveToken,
 } from "../src/themes/resolve";
+
+/** The 10 expressive theme names (05 §5.4). */
+const EXPRESSIVE_THEMES = Object.keys(THEMES) as Array<keyof typeof THEMES>;
 
 describe("style-aware theme resolution (05 §5.4 calibration)", () => {
   it("light style keeps the base accent palette", () => {
@@ -54,11 +54,28 @@ describe("style-aware theme resolution (05 §5.4 calibration)", () => {
   });
 
   it("neutral tokens stay style-driven (theme never redefines semantics)", () => {
-    expect(resolveToken("aurora", "dark", "bg")).toBe("#121212");
+    expect(resolveToken("aurora", "dark", "bg")).toBe("#000000");
     expect(resolveToken("aurora", "light", "bg")).toBe("#FFFFFF");
     // success/warning/danger are theme-independent (blocking rule 05 §5.1).
     expect(resolveToken("citrus", "light", "success")).toBe(resolveToken("aurora", "light", "success"));
     expect(resolveToken("citrus", "dark", "danger")).toBe(resolveToken("aurora", "dark", "danger"));
+  });
+
+  it("dark canvas is PURE #000000 with a neutral (hue-0) gray ramp, no blue cast", () => {
+    // owner 10-07: the dark neutral is the deepest black + pure grays.
+    expect(resolveToken("aurora", "dark", "bg")).toBe("#000000");
+    expect(resolveToken("aurora", "dark", "surface")).toBe("#121212");
+    expect(resolveToken("aurora", "dark", "text-primary")).toBe("#FFFFFF");
+    // A hue-0 color has R==G==B (no blue/slate tint).
+    const isNeutral = (hex: string) => {
+      const h = hex.replace("#", "").toUpperCase();
+      const r = h.slice(0, 2), g = h.slice(2, 4), b = h.slice(4, 6);
+      return r === g && g === b;
+    };
+    for (const key of ["bg", "bg-subtle", "surface", "surface-alt"] as const) {
+      expect(isNeutral(resolveToken("aurora", "dark", key)), `dark ${key} must be hue-0`)
+        .toBe(true);
+    }
   });
 });
 

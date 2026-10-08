@@ -8,12 +8,14 @@
  */
 
 .aurora-slot {
+  position: relative;
   margin: 12px 16px;
   padding: 16px;
   background: var(--aurora-surface);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   box-shadow: var(--aurora-shadow-card);
+  overflow: hidden;
 }
 .aurora-slot h3 {
   margin: 0 0 10px;
@@ -29,6 +31,41 @@
   color: var(--aurora-text-secondary);
 }
 
+/* Greeting hero (AD-14 slot 1) — the premium opener: a soft theme-accent
+   wash (a theme-aware tint, tokens only — AD-17) + stronger typography.
+   The ::before layer is a plain accent at 7 % opacity (no color-mix,
+   works on every webview). */
+.aurora-slot[data-slot="greeting"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--aurora-accent-primary);
+  opacity: 0.07;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.aurora-slot[data-slot="greeting"] h3 {
+  position: relative;
+}
+.aurora-slot[data-slot="greeting"] p {
+  position: relative;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+}
+[data-first-run] {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+[data-first-run] p {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--aurora-text-secondary);
+  line-height: 1.45;
+}
+
 /* The 7 slots stack into a single scroll (IonContent); tighten the gap. */
 .aurora-slot + .aurora-slot {
   margin-top: 4px;
@@ -42,10 +79,18 @@
 }
 
 /* Ionic renders IonItem with `.goal-project-card`; style it as a premium
- * card row (a single tappable surface, 02 S9: fixed height, no shift). */
+ * card row (a single tappable surface, 02 S9: fixed height, no shift).
+ * A 3px left accent edge marks the card as "live" (the theme's accent,
+ * never a semantic color — progress state lives on the bar). */
 .goal-project-card {
   padding: 12px 4px;
   min-height: var(--aurora-tap-target, 44px);
+  border-left: 3px solid var(--aurora-accent-primary);
+  border-radius: var(--aurora-radius, 0.5rem);
+  transition: background 0.15s ease;
+}
+.goal-project-card:hover {
+  background: var(--aurora-surface-alt);
 }
 .goal-project-card ion-label {
   display: flex;
@@ -89,6 +134,28 @@
   background: var(--aurora-info);
   transition: width 0.2s ease;
 }
+/* The % readout (JetBrains Mono, 05 §2.2 data = mono) sits right of the
+ * bar — the goal summary is "value first" (05 §3.3 KPI, never a dead bar). */
+.goal-progress-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.goal-progress-line .goal-progress {
+  flex: 1;
+}
+.goal-progress-pct {
+  flex: none;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--aurora-text-muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  .goal-progress-fill {
+    transition: none;
+  }
+}
 
 /* ---- Next-actions slot (AD-14 slot 7, real tasks mirror) ------------ */
 .next-actions {
@@ -120,6 +187,19 @@
 }
 .next-action-row:hover {
   background: var(--aurora-accent-selected-surface);
+}
+/* Right-edge chevron affordance (a pure-CSS 45° chevron, token border —
+   "tap → détail" without a 6th icon library weight). */
+.next-action-row::after {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-top: 2px solid var(--aurora-text-muted);
+  border-right: 2px solid var(--aurora-text-muted);
+  transform: rotate(45deg) translate(-1px, -1px);
+  opacity: 0.7;
 }
 
 /* Home header badge (offline) sits inside IonHeader; keep it quiet. */

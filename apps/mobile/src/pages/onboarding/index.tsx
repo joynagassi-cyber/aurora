@@ -114,7 +114,7 @@ export function OnboardingPage() {
                   {step === 1
                     ? `Content de te voir, ${session.email ?? 'à toi'}.`
                     : step === 2
-                      ? "Aurora s'adapte à toi : le thème change instantanément (AD-17, tokens)."
+                      ? "Aurora s'adapte à toi : le thème change instantanément."
                       : "Trois portes d'entrée — choisis où commencer."}
                 </CardDescription>
               </CardHeader>
@@ -123,16 +123,16 @@ export function OnboardingPage() {
                   <div className="onb-points" data-step="welcome">
                     <p>
                       <Sparkles aria-hidden /> Tes objectifs, tes apprentissages et ton
-                      agent vivent <strong>localement d'abord</strong> : la synchro
-                      PowerSync se passe en arrière-plan, hors-ligne compris (AD-7).
+                      agent vivent <strong>localement d'abord</strong> : la synchro se fait
+                      en arrière-plan, même hors ligne.
                     </p>
                     <p>
                       <Target aria-hidden /> L'accueil répond toujours à une question :
-                      « Qu'est-ce qui compte maintenant ? » (AD-14) — jamais un mur de widgets.
+                      « Qu'est-ce qui compte maintenant ? » — jamais un mur de widgets.
                     </p>
                     <p>
                       <Timer aria-hidden /> Sessions Focus, coachings et agent t'accompagnent
-                      sans jamais bloquer l'interface (jobs asynchrones, AD-8).
+                      sans jamais bloquer l'interface (tout tourne en arrière-plan).
                     </p>
                   </div>
                 )}
