@@ -89,6 +89,12 @@ export function TasksPage() {
       </IonHeader>
       <IonContent>
         <div data-tasks-view={view}>
+          {/* Le but du module, en une ligne simple (pattern lots 1+2,
+              zéro jargon technique visible par l'utilisateur). */}
+          <p className="page-purpose">
+            Tout ce qu'il y a à faire, dans le bon ordre.
+          </p>
+
           <div className="segmented" role="tablist" aria-label="Vue tâches">
             {TASK_VIEWS.map(([value, label]) => (
               <button

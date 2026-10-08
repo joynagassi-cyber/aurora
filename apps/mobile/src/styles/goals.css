@@ -10,6 +10,11 @@
  */
 
 /* ---- Goals list (/goals) -------------------------------------------- */
+/* La phrase de but du module (pattern lots 1+2) s'aligne sur le gabarit
+ * 16 px de la liste. */
+[data-goals-screen] > .page-purpose {
+  padding: 0 16px;
+}
 .goals-list,
 .goals-list-wrap {
   list-style: none;

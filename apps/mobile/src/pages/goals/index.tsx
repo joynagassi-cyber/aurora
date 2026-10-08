@@ -67,6 +67,13 @@ export function GoalsPage() {
         <IonTitle>Objectifs</IonTitle>
       </IonHeader>
       <IonContent>
+        <div data-goals-screen>
+          {/* Le but du module, en une ligne simple (pattern lots 1+2,
+              zéro jargon technique visible par l'utilisateur). */}
+          <p className="page-purpose">
+            Où tu veux aller, et quoi faire pour y arriver.
+          </p>
+
         <UxStates
           state={goalState}
           flags={{
@@ -93,6 +100,7 @@ export function GoalsPage() {
             ))}
           </div>
         </UxStates>
+        </div>
       </IonContent>
     </>
   );

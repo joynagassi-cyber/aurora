@@ -22,6 +22,12 @@ export function InboxPage() {
       </IonHeader>
       <IonContent>
         <div data-inbox="true" className="inbox">
+          {/* Le but du module, en une ligne simple (pattern lots 1+2,
+              zéro jargon technique visible par l'utilisateur). */}
+          <p className="page-purpose">
+            Attrape tout au vol : idées, tâches, questions. On range
+            ça ensemble après.
+          </p>
           {/* Capture composer (quick capture, 02 §6.1). The draft is
               re-readable and persisted locally (AD-7) — nothing typed is
               lost. Two actions:

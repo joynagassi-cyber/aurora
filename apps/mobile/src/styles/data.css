@@ -196,8 +196,15 @@
 }
 /* La phrase de but du module s'aligne sur le gabarit 16 px de la page
  * (le container n'a pas de padding horizontal de son côté). */
-[data-progress-screen] > .page-purpose {
+[data-progress-screen] > .page-purpose,
+[data-tasks-view] > .page-purpose,
+[data-projects-view] > .page-purpose {
   padding: 0 16px;
+}
+/* Dans les containers déjà espacés (inbox), la phrase se cale sans
+ * double-marge. */
+.inbox > .page-purpose {
+  margin-top: 0;
 }
 
 /* KPI tiles (05 §3.3) — 2-up grid on mobile. */

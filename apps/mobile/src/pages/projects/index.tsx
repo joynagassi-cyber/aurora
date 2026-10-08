@@ -23,6 +23,12 @@ export function ProjectsPage() {
       </IonHeader>
       <IonContent>
         <div data-projects-view={view}>
+          {/* Le but du module, en une ligne simple (pattern lots 1+2,
+              zéro jargon technique visible par l'utilisateur). */}
+          <p className="page-purpose">
+            Tes grands objectifs, découpés en projets, jalons et étapes.
+          </p>
+
           {/* T4 pager (05 §3.4): in-page view switch, cosmetic + persistent. */}
           <div className="segmented" role="tablist" aria-label="Vue projet">
             {(
@@ -48,6 +54,10 @@ export function ProjectsPage() {
           {/* Empty (AD-7: no mirror repo yet → honest empty + goal CTA). */}
           <div data-state="empty">
             <p>Aucun projet</p>
+            <p className="page-hint">
+              Les jalons et les modèles de projet apparaîtront dès que
+              tu auras créé ton premier projet.
+            </p>
             <a className="aurora-btn aurora-btn--primary aurora-tap" href="/goals">
               Créer un objectif
             </a>
