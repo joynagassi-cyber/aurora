@@ -45,7 +45,7 @@ export function DiscoveryPage() {
             <div className="discovery-feed" data-research="running">
               <div className="discovery-item discovery-item--running">
                 <Search size={20} aria-hidden />
-                <span>Recherche en cours (job pending)</span>
+                <span>Recherche en cours…</span>
               </div>
             </div>
           </UxStates>

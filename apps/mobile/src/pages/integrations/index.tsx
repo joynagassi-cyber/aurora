@@ -150,7 +150,7 @@ export function IntegrationsPage() {
         <IonContent>
           <div className="integrations-page integrations-degraded">
             <CircleOff size={32} className="is-muted" aria-hidden />
-            <p>Intégrations indisponibles — configure les valeurs Supabase de l'appareil.</p>
+            <p>Les intégrations ne sont pas encore prêtes sur cet appareil.</p>
           </div>
         </IonContent>
       </>

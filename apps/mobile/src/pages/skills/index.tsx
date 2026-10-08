@@ -68,6 +68,18 @@ const DOMAIN_LABELS: Record<string, string> = {
   coding: 'Développement',
 };
 
+/**
+ * Etiquette lisible pour l'origine d'un skill (valeurs brutes de la seed
+ * 0021 : `marketplace:<id>`, `builtin`, `user-created`). Jargon jamais affiché
+ * tel quel à l'utilisateur.
+ */
+function sourceLabel(source: string): string {
+  if (source.startsWith('marketplace:')) return 'Catalogue';
+  if (source === 'user-created') return 'Créée par toi';
+  if (source === 'builtin') return 'Intégrée';
+  return source;
+}
+
 type Tab = 'catalog' | 'personal' | 'expert';
 
 export function SkillsPage() {
@@ -192,11 +204,9 @@ export function SkillsPage() {
         <IonContent>
           <div className="skills-page">
             <div className="skills-empty">
-              <p>Skills indisponibles.</p>
+              <p>Les compétences ne sont pas encore disponibles sur cet appareil.</p>
               <p>
-                Le catalogue de skills est servi par le backend
-                (fn-skills). Configure l'environnement Supabase (URL +
-                publishable key) pour l'activer.
+                Elles arriveront dès que le service sera en place.
               </p>
             </div>
           </div>
@@ -235,7 +245,7 @@ export function SkillsPage() {
   return (
     <>
       <IonHeader>
-        <IonTitle>Skills</IonTitle>
+        <IonTitle>Compétences</IonTitle>
       </IonHeader>
       <IonContent>
         <div className="skills-page">
@@ -244,7 +254,7 @@ export function SkillsPage() {
             {(
               [
                 ['catalog', 'Catalogue'],
-                ['personal', 'Mes skills'],
+                ['personal', 'Les miennes'],
                 ['expert', 'Expert'],
               ] as Array<[Tab, string]>
             ).map(([t, label]) => {
@@ -353,11 +363,11 @@ export function SkillsPage() {
                             <div className="skill-card-header">
                               <Sparkles size={14} aria-hidden />
                               <h4>{entry.name}</h4>
-                              <span className="skill-source-tag">{entry.source}</span>
+                              <span className="skill-source-tag">{sourceLabel(entry.source)}</span>
                             </div>
                             {entry.objective && <p>{entry.objective}</p>}
                             {entry.trigger && (
-                              <p className="skill-trigger">Trigger : {entry.trigger}</p>
+                              <p className="skill-trigger">S'active quand : {entry.trigger}</p>
                             )}
                             {entry.procedure.length > 0 && (
                               <ol className="skill-procedure">
@@ -426,13 +436,13 @@ export function SkillsPage() {
                 onClick={() => setShowCreate((v) => !v)}
               >
                 <Plus size={14} aria-hidden />
-                <span>Créer un skill perso</span>
+                <span>Créer une compétence perso</span>
               </button>
 
               {showCreate && (
                 <div className="skill-create-form">
                   <div className="skill-create-header">
-                    <h4>Nouveau skill</h4>
+                    <h4>Nouvelle compétence</h4>
                     <button type="button" onClick={() => setShowCreate(false)} aria-label="Annuler">
                       <X size={14} />
                     </button>
@@ -459,7 +469,7 @@ export function SkillsPage() {
                     </select>
                   </label>
                   <label>
-                    Trigger (quand ça s'active)
+                    Quand ça s'active
                     <input
                       value={newSkillTrigger}
                       onChange={(e) => setNewSkillTrigger(e.target.value)}
@@ -495,7 +505,7 @@ export function SkillsPage() {
                           <Trash2 size={12} />
                         </button>
                       </div>
-                      {s.trigger && <p className="skill-trigger">Trigger : {s.trigger}</p>}
+                      {s.trigger && <p className="skill-trigger">S'active quand : {s.trigger}</p>}
                       <button
                         type="button"
                         className={`skill-activate-btn ${s.active ? 'is-on' : ''}`}
@@ -505,7 +515,7 @@ export function SkillsPage() {
                             else await skills.activateSkill(s.skillKey);
                             setUserSkills(await skills.listUserSkills());
                           } catch (e) {
-                            setLoadError(e instanceof Error ? e.message : 'action skill en échec');
+                            setLoadError(e instanceof Error ? e.message : 'Cette action a échoué.');
                           }
                         }}
                       >
@@ -539,7 +549,7 @@ export function SkillsPage() {
                               await skills.deactivateSkill(s.skillKey);
                               setUserSkills(await skills.listUserSkills());
                             } catch (e) {
-                              setLoadError(e instanceof Error ? e.message : 'action skill en échec');
+                              setLoadError(e instanceof Error ? e.message : 'Cette action a échoué.');
                             }
                           }}
                         >
@@ -553,8 +563,8 @@ export function SkillsPage() {
 
               {personalSkills.length === 0 && catalogActivated.length === 0 && (
                 <div className="skills-empty">
-                  Pas encore de skill actif. Active un skill depuis le catalogue
-                  ou crée ton premier skill perso.
+                  Pas encore de compétence active. Active-en une depuis le
+                  catalogue ou crée ta première compétence perso.
                 </div>
               )}
             </div>
@@ -571,10 +581,10 @@ export function SkillsPage() {
               <div className="skills-hint">
                 <Brain size={16} aria-hidden />
                 <p>
-                  Les expert skills sont créées par l'agent à partir de ses erreurs
-                  et réussites (ADR S14). Elles sont activées automatiquement quand
-                  leur trigger se déclenche. Tu peux les consulter ici — l'agent ne
-                  les expose pas dans le chat.
+                  Les compétences expert sont créées par l'agent à partir de ses
+                  erreurs et réussites. Elles s'activent automatiquement au bon
+                  moment. Tu peux les consulter ici — l'agent ne les montre pas
+                  dans le chat.
                 </p>
               </div>
               {/*
@@ -585,10 +595,10 @@ export function SkillsPage() {
                * wired. No hardcoded mock data.
                */}
               <div className="skills-empty">
-                <p>Aucune expert skill disponible.</p>
+                <p>Aucune compétence expert pour l'instant.</p>
                 <p>
-                  L'agent apprend de ses propres exécutions et crée des expert
-                  skills validées. Consulte le rapport de l'agent pour voir ce
+                  L'agent apprend de ses propres exécutions et crée des compétences
+                  expert validées. Consulte le rapport de l'agent pour voir ce
                   qu'il a appris.
                 </p>
               </div>

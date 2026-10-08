@@ -20,6 +20,9 @@ import type {
   RenderCalendarEvent,
   TimelineEvent,
 } from "@aurora/ui";
+import { UxStates, type UxStateFlags } from "../../ux-states";
+import { useOnlineStatus } from "../../hooks/use-online";
+import { useUiStateStore } from "../../state/ui-state";
 
 /**
  * The always-on task list strip under the calendar: two modes
@@ -67,6 +70,11 @@ function toTimelineEvent(ev: RenderCalendarEvent): TimelineEvent {
 export function CalendarPage() {
   const [view, setView] = useState<CalendarPageView>("timeGridWeek");
   const [taskMode, setTaskMode] = useState<TaskListMode>("liste");
+  // AD-13 (6 états) : le calendrier lit le local (AD-7) — hors ligne il
+  // reste lisible (last-known), tué l'app = reconnexion + resync.
+  const killed = useUiStateStore((s) => s.killed);
+  const online = useOnlineStatus();
+  const flags: UxStateFlags = { offline: !online, killed };
 
   // AD-7: events come from the calendar mirror (not yet wired → empty).
   const events: RenderCalendarEvent[] = [];
@@ -81,7 +89,14 @@ export function CalendarPage() {
         <IonTitle>Calendrier</IonTitle>
       </IonHeader>
       <IonContent>
+        <UxStates state={{ status: "success", data: null }} flags={flags} label="Calendrier">
         <div data-calendar="true" className="cal-page space-y-2">
+          {/* Le but du module, en une ligne simple (pattern lots 1+2,
+              zéro jargon technique visible par l'utilisateur). */}
+          <p className="page-purpose">
+            Tous tes blocs et tes tâches sur une seule vue.
+          </p>
+
           {/* T4 in-page SegmentedControl (05 §3.4 — sous-option, non-push,
               z-chrome=10 per floating.css). The page owns the 6-view strip;
               `CalendarView` below receives whichever view is active.
@@ -124,7 +139,7 @@ export function CalendarPage() {
             }
             mobile
             height={view === "dayGridMonth" || view === "yearGrid" ? 380 : 420}
-            emptyMessage="Aucun événement — planifiez un bloc."
+            emptyMessage="Aucun événement — planifie un bloc."
           />
 
           {/* Always-on task list strip under the calendar — two modes
@@ -169,6 +184,7 @@ export function CalendarPage() {
             Planifier
           </a>
         </div>
+        </UxStates>
       </IonContent>
     </>
   );

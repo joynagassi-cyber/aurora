@@ -13,7 +13,7 @@
  */
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
 import { useParams } from 'react-router-dom';
-import { Download, FileQuestion } from 'lucide-react';
+import { FileQuestion } from 'lucide-react';
 import { UxStates, type UxStateFlags } from '../../ux-states';
 import { useOnlineStatus } from '../../hooks/use-online';
 import { useUiStateStore } from '../../state/ui-state';
@@ -31,24 +31,25 @@ export function ArtifactPage() {
       </IonHeader>
       <IonContent>
         <div data-artifact-id={id}>
-          <span className="breadcrumb">Artefact &rsaquo; {id}</span>
+          {/* Jargon jamais visible : l'identifiant technique n'est jamais
+              affiché tel quel à l'utilisateur. */}
+          <span className="breadcrumb">Artefact</span>
 
           {/* The preview mirror is not wired yet (F-06): this is the
               "preview not available for this format" state. An empty, not a
               perpetual loading — a `loading` skeleton would pulse forever.
-              The "Télécharger" button is the CTA that routes somewhere. */}
+              The empty-state CTA routes to the agent (where the export job
+              that produces the artifact lives) — never a dead button. */}
           <UxStates
             state={{ status: 'empty' }}
-            flags={{ ...flags, emptyCta: 'Télécharger' }}
+            flags={{ ...flags, emptyCta: "Voir l'agent", emptyCtaHref: "/agent" }}
             label="Aperçu"
           >
             <div className="artifact-preview" data-preview="unsupported">
               <FileQuestion size={40} aria-hidden />
-              <p>Aperçu indisponible pour ce format</p>
-              <button className="aurora-btn aurora-btn--ghost aurora-tap" type="button">
-                <Download size={18} aria-hidden />
-                Télécharger
-              </button>
+              <p>
+                L'aperçu s'affichera ici dès que le document sera prêt.
+              </p>
             </div>
           </UxStates>
         </div>

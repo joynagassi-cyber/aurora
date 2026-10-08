@@ -135,7 +135,7 @@ export function KnowledgePage() {
           {killed ? (
             <UxStates
               state={{ status: 'empty' }}
-              flags={{ ...flags, emptyCta: "Importer un concept" }}
+              flags={{ ...flags, emptyCta: "Importer un concept", emptyCtaHref: "/learn" }}
               label="Arbre"
             />
           ) : (
@@ -206,12 +206,14 @@ export function KnowledgeNodePage() {
                 ? { status: 'success', data: mirror.data }
                 : { status: 'empty' }
             }
-            flags={{ ...flags, emptyCta: 'Étudier ce concept' }}
-            label={`Nœud ${nodeTitle}`}
+            flags={{ ...flags, emptyCta: 'Étudier ce concept', emptyCtaHref: '/learn' }}
+            label={`Notion ${nodeTitle}`}
           >
             {/* Provenance drill-down (AD-11) + lazy deeper branches mount here. */}
             <div className="knowledge-node">
-              <p>Nœud « {nodeTitle} » — lecture locale + provenance.</p>
+              <p>
+                Cette notion est consultable sur ton appareil, avec ses sources.
+              </p>
               <a className="aurora-btn aurora-btn--ghost aurora-tap" href="/learn">
                 Étudier ce concept
               </a>

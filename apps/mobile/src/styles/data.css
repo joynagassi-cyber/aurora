@@ -169,6 +169,23 @@
   gap: 8px;
 }
 
+/* ---- Generic page intro (but du module + ligne d'appoint) ------------
+ * Le pattern des lots 1+2 (home/goals/tasks/learn) : une phrase de but
+ * simple, une ligne d'appoint sous un bloc. Tokens only (AD-17), zéro
+ * jargon (l'utilisateur ne voit jamais de référence technique). */
+.page-purpose {
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--aurora-text-secondary);
+}
+.page-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--aurora-text-muted);
+}
+
 /* ---- Progress / analytics (ADR §18.6, 05 §4) ------------------------ */
 [data-period] {
   padding: 0 0 16px;
@@ -176,6 +193,11 @@
 [data-progress-screen] {
   display: flex;
   flex-direction: column;
+}
+/* La phrase de but du module s'aligne sur le gabarit 16 px de la page
+ * (le container n'a pas de padding horizontal de son côté). */
+[data-progress-screen] > .page-purpose {
+  padding: 0 16px;
 }
 
 /* KPI tiles (05 §3.3) — 2-up grid on mobile. */
@@ -192,11 +214,39 @@
   padding: 14px 16px;
   background: var(--aurora-surface);
   border: 1px solid var(--aurora-border);
+  /* KPI = value first (05 §3.3): a 3px accent top edge marks the tile as
+     the dashboard's live data (same premium language as the goal cards). */
+  border-top: 3px solid var(--aurora-accent-primary);
   border-radius: var(--aurora-radius, 0.5rem);
   box-shadow: var(--aurora-shadow-card);
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+/* The chart placeholder ("not enough data yet") — a quiet dashed card,
+   never a fake chart (AD-7 honest state). Column layout: the label +
+   the hint line stack and stay centered. */
+[data-chart-mount] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 72px;
+  padding: 14px 16px;
+  border: 1px dashed var(--aurora-border-strong);
+  border-radius: var(--aurora-radius, 0.5rem);
+}
+/* Calendar task strip (02 S6.1): a card surface under the calendar engine. */
+.cal-task-strip {
+  padding: 12px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 .stat-tile .stat-value {
   margin: 0;
@@ -690,10 +740,82 @@
   flex-direction: column;
   gap: 16px;
 }
+/* Le but du module (spec Learning) — une ligne introductive, jamais du jargon. */
+.learn-purpose {
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--aurora-text-secondary);
+}
 .learn-section {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+/* Modes d'étude (spec Learning — le cataloge complet du module).
+   Grille 2 colonnes, carte = icône accent + nom + ligne simple.
+   Tokens only (AD-17), radius ≤ 8 px, tap ≥ 44 px. */
+.learn-modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.learn-mode-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  min-height: var(--aurora-tap-target, 44px);
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+  transition: border-color 0.18s ease;
+}
+.learn-mode-card:hover {
+  border-color: var(--aurora-accent-primary);
+}
+.learn-mode-card:focus-visible {
+  outline: 2px solid var(--aurora-accent-focus-ring);
+  outline-offset: 2px;
+}
+.learn-mode-icon {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--aurora-accent-selected-surface);
+  color: var(--aurora-accent-primary);
+}
+.learn-mode-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.learn-mode-text strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+  line-height: 1.25;
+}
+.learn-mode-text small {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--aurora-text-muted);
+}
+.learn-modes-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--aurora-text-muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  .learn-mode-card {
+    transition: none;
+  }
 }
 .learn-section-title {
   margin: 0;

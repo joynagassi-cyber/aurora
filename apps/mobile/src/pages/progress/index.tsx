@@ -20,7 +20,7 @@ const PERIODS = [
   ['today', "Aujourd'hui"],
   ['week', 'Semaine'],
   ['month', 'Mois'],
-  ['trajectory', 'Trajectoire'],
+  ['trajectory', 'Évolution'],
 ] as const;
 
 export function ProgressPage() {
@@ -37,6 +37,12 @@ export function ProgressPage() {
       </IonHeader>
       <IonContent>
         <div data-period={period} data-progress-screen>
+          {/* Le but du module, en une ligne simple (pattern lots 1+2,
+              zéro jargon technique visible par l'utilisateur). */}
+          <p className="page-purpose">
+            Vois comment ta compréhension et ta mémoire progressent.
+          </p>
+
           {/* T4 period pager (05 §3.4 / 05 §4.6: 4 options). */}
           <div className="segmented" role="tablist" aria-label="Période">
             {PERIODS.map(([value, label]) => (
@@ -60,7 +66,7 @@ export function ProgressPage() {
               honest empty state (AD-7, 05 §4). G2 mounts here when wired. */}
           <UxStates
             state={{ status: 'empty' }}
-            flags={{ ...flags, emptyCta: "Reprendre l'étude" }}
+            flags={{ ...flags, emptyCta: "Reprendre l'étude", emptyCtaHref: "/learn" }}
             label="Progrès"
           >
             <div data-progress-empty>
@@ -74,9 +80,11 @@ export function ProgressPage() {
               </div>
               <div data-chart-mount>
                 <p className="stat-label">
-                  Pas encore assez de données pour {PERIODS.find(
-                    (p) => p[0] === period,
-                  )?.[1]}
+                  Pas encore assez de données pour cette période
+                </p>
+                <p className="page-hint">
+                  Les graphes se remplissent dès que tu fais des révisions et
+                  des quiz.
                 </p>
               </div>
             </div>
@@ -95,6 +103,7 @@ export function ProgressDetailPage() {
     offline: !online,
     killed,
     emptyCta: 'Étudier ce concept',
+    emptyCtaHref: '/learn',
   };
   return (
     <>
@@ -103,7 +112,7 @@ export function ProgressDetailPage() {
       </IonHeader>
       <IonContent>
         <div data-progress-detail data-detail-id={id}>
-          <span className="breadcrumb">Progrès &rsaquo; {id}</span>
+          <span className="breadcrumb">Progrès &rsaquo; Concept</span>
           {/* Trajectory (ADR §18.6): the skill trajectory for one concept.
               G2 `line`/`area` ChartSpec mounts here when the mirror is wired.
               Not wired yet → the honest EMPTY state (AD-7, 05 §4), never a
@@ -111,11 +120,11 @@ export function ProgressDetailPage() {
           <UxStates
             state={{ status: 'empty' }}
             flags={flags}
-            label={`Trajectoire ${id}`}
+            label="Évolution"
           >
             <div data-progress-empty>
               <p className="stat-label">
-                Pas encore de trajectoire pour ce concept
+                Pas encore de progression pour ce concept
               </p>
               <a
                 className="aurora-btn aurora-btn--ghost aurora-tap"
