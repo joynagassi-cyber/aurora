@@ -14,6 +14,22 @@ import type { AgentRunRow } from '../lib/agent-client';
 export type { AgentClient, AgentRunRequest, AgentRunHandle, AgentRunRow } from '../lib/agent-client';
 
 /**
+ * The user's run history, antéchronologique (PRD-AI-01 « Conversations »).
+ * Read-only — the device NEVER writes `agent_runs` (kernel-owned,
+ * AD-2/F-03 single-writer). Absent client = empty, not an error; the
+ * page surfaces a sign-in CTA instead (AD-13 honest states).
+ */
+export function useAgentRuns() {
+  const { agent } = useMobileData();
+  return useQuery<AgentRunRow[]>({
+    queryKey: qk.agent.list(),
+    queryFn: () => (agent ? agent.list() : Promise.resolve([])),
+    enabled: agent !== undefined,
+    retry: false,
+  });
+}
+
+/**
  * Poll the `agent_runs` mirror row for a run. Terminal statuses
  * (`completed` / `failed` / `cancelled`) stop the poll; `running`
  * keeps a short cadence (the job executor updates the row on stage

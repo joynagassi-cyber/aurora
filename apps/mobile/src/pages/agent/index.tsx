@@ -37,7 +37,7 @@
  *    (navigate + push-state so the back button returns to the chat).
  *    The bubble « peels » (transform follows the finger, clamped).
  */
-import { IonContent, IonHeader, IonTitle } from '@ionic/react';
+import { IonButton, IonButtons, IonContent, IonHeader, IonTitle } from '@ionic/react';
 import { AgentThinkingLoader } from '@aurora/ui';
 import {
   Bot,
@@ -45,10 +45,14 @@ import {
   Compass,
   Cpu,
   Link2,
+  Menu,
+  MessageSquare,
+  MessageSquarePlus,
   PenLine,
   Plus,
   Search,
   Send,
+  SlidersHorizontal,
   Sparkles,
   Zap,
   Copy,
@@ -60,6 +64,7 @@ import {
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useReducedMotion } from 'motion/react';
@@ -173,9 +178,14 @@ export function AgentPage() {
   const [modelChoice, setModelChoice] = useState<{ provider: string; model: string } | null>(null);
   const [showPicker, setShowPicker] = useState(false);
   const [showPlusSheet, setShowPlusSheet] = useState(false);
+  const [showMenuSheet, setShowMenuSheet] = useState(false);
   const [agentMode, setAgentMode] = useState<AgentMode>('agent');
   const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>('medium');
-  const [researchMode, setResearchMode] = useState<ResearchMode>('off');
+  // PRD-AI-06 (10-08) : la préférence de recherche web est PARTAGÉE entre
+  // /agent (chip + feuille « + ») et /agent/capacites (l'onglet Capacités)
+  // — persistée (ui-state) et envoyée avec chaque requête (taskProfile).
+  const researchMode = useUiStateStore((s) => s.agentResearchMode);
+  const setResearchMode = useUiStateStore((s) => s.setAgentResearchMode);
   const [connectors, setConnectors] = useState<string[]>(DEFAULT_CONNECTORS);
   // files: local surface state — kernel not yet wired (wave-N, see docs/kernel §files)
   const transcriptRef = useRef<HTMLDivElement>(null);
@@ -253,16 +263,30 @@ export function AgentPage() {
   // ——— Overlay dismissal (Escape) for the model picker + the + sheet
   // (pattern: src/ux/floating.tsx). ———
   useEffect(() => {
-    if (!showPicker && !showPlusSheet) return;
+    if (!showPicker && !showPlusSheet && !showMenuSheet) return;
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         setShowPicker(false);
         setShowPlusSheet(false);
+        setShowMenuSheet(false);
       }
     }
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [showPicker, showPlusSheet]);
+  }, [showPicker, showPlusSheet, showMenuSheet]);
+
+  // PRD-AI §3 (10-08) : le menu du module Assistant — chaque entrée
+  // route vers une surface RÉELLE (jamais de contrôle mort) : les
+  // vues du module (conversations / capacités) ou des modules voisins
+  // (connecteurs / skills / canvas).
+  const MENU_ITEMS: Array<{ label: string; href: string; Icon: ReactNode }> = [
+    { label: 'Nouvelle conversation', href: '/agent', Icon: <MessageSquare size={16} /> },
+    { label: 'Conversations', href: '/agent/conversations', Icon: <MessageSquarePlus size={16} /> },
+    { label: 'Capacités', href: '/agent/capacites', Icon: <SlidersHorizontal size={16} /> },
+    { label: 'Connecteurs', href: '/integrations', Icon: <Link2 size={16} /> },
+    { label: 'Skills', href: '/skills', Icon: <Sparkles size={16} /> },
+    { label: 'Canvas', href: '/canvas/new', Icon: <PenLine size={16} /> },
+  ];
 
   async function submit() {
     const intent = draft.trim();
@@ -496,6 +520,18 @@ export function AgentPage() {
   return (
     <>
       <IonHeader>
+        {/* PRD-AI §2/§3 (10-08) : « bouton menu rond en haut à gauche »
+            — le menu du module Assistant (pas de barre d'onglets interne :
+            navigation par feuille basse), titre centré. */}
+        <IonButtons slot="start">
+          <IonButton
+            fill="clear"
+            onClick={() => { setShowPicker(false); setShowPlusSheet(false); setShowMenuSheet(true); }}
+            aria-label="Ouvrir le menu de l'assistant"
+          >
+            <Menu size={20} />
+          </IonButton>
+        </IonButtons>
         <IonTitle>Aurora</IonTitle>
       </IonHeader>
       <IonContent>
@@ -983,6 +1019,44 @@ export function AgentPage() {
                   <span>Gérer mes skills (marketplace + perso)</span>
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Menu du module Assistant (PRD-AI §2/§3, 10-08) : bouton rond
+              en haut à gauche → feuille basse. Chaque entrée route vers
+              une surface réelle (jamais de contrôle mort, AD-7). */}
+          {showMenuSheet && (
+            <div
+              className="agent-plus-sheet"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Menu de l'assistant"
+              onMouseDown={(e) => {
+                if (e.target === e.currentTarget) setShowMenuSheet(false);
+              }}
+            >
+              <div className="agent-plus-header">
+                <h3>Assistant</h3>
+                <button
+                  type="button"
+                  className="agent-plus-close"
+                  onClick={() => setShowMenuSheet(false)}
+                  aria-label="Fermer"
+                >
+                  ×
+                </button>
+              </div>
+              {MENU_ITEMS.map(({ label, href, Icon }) => (
+                <a
+                  key={href}
+                  className="agent-plus-option agent-menu-item aurora-tap"
+                  href={href}
+                  onClick={() => setShowMenuSheet(false)}
+                >
+                  {Icon}
+                  <span>{label}</span>
+                </a>
+              ))}
             </div>
           )}
         </div>

@@ -89,6 +89,8 @@ export const qk = {
   agent: {
     all: () => ['agent'] as const,
     run: (runId: string) => [...qk.agent.all(), 'run', runId] as const,
+    // PRD-AI-01 (Conversations) : the user's run history (read-only, AD-7).
+    list: () => [...qk.agent.all(), 'list'] as const,
   },
   // Canvas (0022): per-session queries (load + save + comments).
   canvas: {

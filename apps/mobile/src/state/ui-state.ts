@@ -60,6 +60,14 @@ export interface UiStateStore {
    * cosmétique par device (jamais de données entités — AD-7).
    */
   onboardingSeen: boolean;
+  /**
+   * Agent research setting (PRD-AI-06 « Capacités », 10-08) : the user's
+   * web-search preference, SHARED between the /agent composer chips and
+   * the /agent/capacites screen (cosmetic user preference, AD-7 — it is
+   * SENT with each request via `taskProfile.researchMode`, never a
+   * domain-entity cache).
+   */
+  agentResearchMode: 'off' | 'standard' | 'deep';
 
   setActiveTab: (tab: TabId) => void;
   setTasksView: (view: UiStateStore['tasksView']) => void;
@@ -72,6 +80,7 @@ export interface UiStateStore {
   /** called at boot when the lifecycle adapter detects a return-from-kill. */
   markKilled: (killed: boolean) => void;
   setOnboardingSeen: (seen: boolean) => void;
+  setAgentResearchMode: (mode: UiStateStore['agentResearchMode']) => void;
 }
 
 export const useUiStateStore = create<UiStateStore>()(
@@ -89,6 +98,9 @@ export const useUiStateStore = create<UiStateStore>()(
       focusActive: false,
       killed: false,
       onboardingSeen: false,
+      // PRD-AI-06 (10-08) : préférence de recherche web par défaut « off »
+      // (l'agent ne cherche sur le web que si l'utilisateur l'autorise).
+      agentResearchMode: 'off',
       setActiveTab: (activeTab) => set({ activeTab }),
       setTasksView: (tasksView) => set({ tasksView }),
       setProgressPeriod: (progressPeriod) => set({ progressPeriod }),
@@ -100,6 +112,7 @@ export const useUiStateStore = create<UiStateStore>()(
       setFocusActive: (focusActive) => set({ focusActive }),
       markKilled: (killed) => set({ killed }),
       setOnboardingSeen: (onboardingSeen) => set({ onboardingSeen }),
+      setAgentResearchMode: (agentResearchMode) => set({ agentResearchMode }),
     }),
     {
       // ui-state only — never entity data (AD-7). localStorage bridge for
@@ -115,6 +128,7 @@ export const useUiStateStore = create<UiStateStore>()(
         auroraTheme: s.auroraTheme,
         auroraImageTheme: s.auroraImageTheme,
         onboardingSeen: s.onboardingSeen,
+        agentResearchMode: s.agentResearchMode,
       }),
     },
   ),

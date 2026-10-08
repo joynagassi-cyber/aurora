@@ -595,3 +595,245 @@
   outline-offset: 2px;
 }
 
+/* ————————————————————————————————————————————————————————————————
+ * PRD-AI-01 (10-08) — Conversations list (/agent/conversations).
+ * Token-only (AD-17), radius ≤ 8 px, tap targets ≥ 44 px. The rows are
+ * READ-ONLY records (the device never writes agent_runs, AD-7/F-03) —
+ * calm 1px-bordered cards, a status chip per run, a quiet date line.
+ * ———————————————————————————————————————————————————————————————— */
+
+.agent-convo-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 16px;
+  padding: 0 12px;
+  min-height: var(--aurora-tap-target, 44px);
+  background: var(--aurora-bg-subtle);
+  border: 1px solid var(--aurora-border);
+  border-radius: 9999px; /* SearchPill (PRD-AI §2) */
+  color: var(--aurora-text-muted);
+}
+.agent-convo-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--aurora-text-primary);
+  font-size: 14px;
+  outline: none;
+}
+.agent-convo-search input::placeholder {
+  color: var(--aurora-text-muted);
+}
+
+[data-conversations] [data-ux] {
+  padding: 0 16px;
+}
+
+[data-convo-list] {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 16px;
+}
+
+.agent-convo-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  min-height: var(--aurora-tap-target, 44px);
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+}
+
+.agent-convo-icon {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--aurora-accent-surface);
+  color: var(--aurora-accent-primary);
+}
+
+.agent-convo-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Title généré (PRD-AI-01) : the intent, truncated on two lines. */
+.agent-convo-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.agent-convo-date {
+  font-size: 12px;
+  color: var(--aurora-text-muted);
+}
+
+/* Status chip (theme-independent semantics, 05 §5.1 — frozen). */
+.agent-convo-status {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+.agent-convo-status--running {
+  color: var(--aurora-info);
+  background: color-mix(in srgb, var(--aurora-info) 14%, transparent);
+}
+.agent-convo-status--completed {
+  color: var(--aurora-success);
+  background: color-mix(in srgb, var(--aurora-success) 14%, transparent);
+}
+.agent-convo-status--failed {
+  color: var(--aurora-danger);
+  background: color-mix(in srgb, var(--aurora-danger) 14%, transparent);
+}
+.agent-convo-status--cancelled {
+  color: var(--aurora-text-muted);
+  background: var(--aurora-bg-subtle);
+}
+
+.agent-convo-hint {
+  margin: 0;
+  padding: 0 4px;
+}
+
+/* ————————————————————————————————————————————————————————————————
+ * PRD-AI-06 (10-08) — Capacités screen (/agent/capacites).
+ * ToggleRow language (PRD-AI §2): icon + title + description + control.
+ * Live controls = the web-search level + tool access; the locked rows
+ * ship GRISÉES AVEC RAISON (AD-13: a visible reason, never a dead
+ * toggle). Tokens only, radius ≤ 8 px.
+ * ———————————————————————————————————————————————————————————————— */
+
+[data-capacites] {
+  padding: 0 16px 24px;
+}
+
+.agent-cap-section {
+  margin-top: 20px;
+}
+.agent-cap-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--aurora-text-muted);
+}
+
+/* The live level picker (off / standard / détail) — a calm segmented
+   control, full width, 44 px taps. */
+.agent-cap-segmented {
+  display: flex;
+  gap: 6px;
+}
+.agent-cap-level {
+  flex: 1;
+  min-height: var(--aurora-tap-target, 44px);
+  padding: 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--aurora-text-secondary);
+  background: var(--aurora-bg-subtle);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  cursor: pointer;
+}
+.agent-cap-level.is-active {
+  color: var(--aurora-accent-on-primary);
+  background: var(--aurora-accent-primary);
+  border-color: var(--aurora-accent-primary);
+}
+/* Locked levels stay tappable-disabled (the reason is the hint below). */
+.agent-cap-level:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.agent-cap-hint {
+  margin: 8px 2px 0;
+}
+
+/* Locked rows (PRD-AI-06 « Option verrouillée : grisée avec raison »). */
+.agent-cap-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  min-height: var(--aurora-tap-target, 44px);
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+}
+.agent-cap-row + .agent-cap-row {
+  margin-top: 8px;
+}
+.agent-cap-row.is-locked {
+  opacity: 0.72;
+}
+.agent-cap-icon {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--aurora-bg-subtle);
+  color: var(--aurora-text-secondary);
+}
+.agent-cap-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.agent-cap-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+}
+.agent-cap-reason {
+  font-size: 12px;
+  color: var(--aurora-text-muted);
+}
+.agent-cap-badge {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--aurora-bg-subtle);
+  color: var(--aurora-text-muted);
+}
+
+/* The Assistant module menu (PRD-AI §2/§3) — rows reuse the + sheet's
+   option language; the entry links add a hover/active tint. */
+.agent-menu-item:hover {
+  background: var(--aurora-bg-subtle);
+}
+

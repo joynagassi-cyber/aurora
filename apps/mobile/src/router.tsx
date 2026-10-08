@@ -41,6 +41,8 @@ import { ProgressPage, ProgressDetailPage } from './pages/progress';
 import { FocusPage } from './pages/focus';
 import { ArtifactPage } from './pages/artifacts';
 import { AgentPage } from './pages/agent';
+import { AgentConversationsPage } from './pages/agent/conversations';
+import { AgentCapacitesPage } from './pages/agent/capacites';
 import { CanvasPage } from './pages/canvas';
 import { SlideAscentPage } from './pages/ascent';
 import { SettingsPage } from './pages/settings';
@@ -68,6 +70,11 @@ export const appRouter: AppRouter = createBrowserRouter([
       { path: '/learn', element: <LearnPage /> },
       { path: '/progress', element: <ProgressPage /> },
       { path: '/agent', element: <AgentPage /> },
+      // PRD-AI-01/06 (10-08) : the Assistant module's secondary views —
+      // details that open OVER the agent tab (02 §6.1 : the tab bar stays,
+      // /agent/* keeps the agent tab active via ShellTabBar's prefix rule).
+      { path: '/agent/conversations', element: <AgentConversationsPage /> },
+      { path: '/agent/capacites', element: <AgentCapacitesPage /> },
       // Canvas (0022): dedicated session-editing surface — blocs TipTap,
       // commentaires, bascule md ⇄ HTML. 'new' = creation mode (Task 6).
       // G-M7: gated (creation mode opens over the module home).
@@ -135,6 +142,7 @@ export const appRouter: AppRouter = createBrowserRouter([
 ]);
 
 export type AppRoute = '/home' | '/tasks' | '/learn' | '/progress' | '/agent'
+  | '/agent/conversations' | '/agent/capacites'
   | '/tasks/:id' | '/learn/:id' | '/progress/:id' | '/knowledge' | '/knowledge/:nodeId'
   | '/artifacts/:id' | '/inbox' | '/settings' | '/goals' | '/goals/:id'
   | '/goals/:id/features/:fid' | '/goals/:id/ascent' | '/focus' | '/calendar' | '/projects' | '/habits' | '/discovery'

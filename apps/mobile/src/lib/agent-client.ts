@@ -93,6 +93,13 @@ export interface AgentClient {
   start(run: AgentRunRequest): Promise<AgentRunHandle>;
   /** Latest `agent_runs` mirror row for a run (AD-7 local read). */
   run(runId: string): Promise<AgentRunRow | null>;
+  /**
+   * The user's most recent runs, antéchronologique (PRD-AI-01
+   * « Conversations » : read-only history list). AD-7 read side —
+   * the device NEVER writes `agent_runs` (kernel-owned, AD-2/F-03
+   * single-writer : only `fn-agent-run` + the job executor mutate it).
+   */
+  list(): Promise<AgentRunRow[]>;
 }
 
 /**
@@ -143,6 +150,29 @@ export function categorizeAgentError(error: unknown): AgentClientError {
   return new AgentClientError('unknown', 'Le lancement a échoué — réessaie.', error);
 }
 
+/**
+ * Map one raw `agent_runs` row (0008, snake_case) to the device-side
+ * `AgentRunRow` view. Shared by `run()` (single row) and `list()` (the
+ * PRD-AI-01 conversation history) — one mapper, no drift.
+ */
+function mapAgentRunRow(row: Record<string, unknown>): AgentRunRow {
+  const steps = Array.isArray(row.steps_json)
+    ? (row.steps_json as Array<Record<string, unknown>>)
+    : [];
+  const pending = steps.find((s) => s?.kind === 'confirmation' && s.status === 'pending');
+  return {
+    id: String(row.id),
+    userId: String(row.user_id ?? ''),
+    intent: String(row.intent ?? ''),
+    status: (row.status as AgentRunRow['status']) ?? 'running',
+    agentRunId: row.trace_id ? String(row.trace_id) : undefined,
+    jobId: row.trace_id ? String(row.trace_id) : undefined,
+    confirmationMessage: pending ? String(pending.message ?? '') : undefined,
+    startedAt: String(row.started_at ?? ''),
+    completedAt: row.completed_at ? String(row.completed_at) : undefined,
+  } satisfies AgentRunRow;
+}
+
 export function createAgentClient(supabase: AuroraSupabaseClient): AgentClient {
   return {
     async start(run) {
@@ -165,6 +195,22 @@ export function createAgentClient(supabase: AuroraSupabaseClient): AgentClient {
       return handle;
     },
 
+    async list() {
+      // PRD-AI-01 (Conversations) : read-only history — the device NEVER
+      // writes agent_runs (kernel-owned, AD-2/F-03 single-writer : only
+      // `fn-agent-run` + the job executor mutate it). RLS user isolation
+      // keeps the device on its own runs (0008).
+      const { data, error } = await supabase
+        .from('agent_runs')
+        .select('id, intent, status, started_at, completed_at, trace_id, steps_json')
+        .order('started_at', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return ((data as unknown as Record<string, unknown>[] | undefined) ?? []).map(
+        (row) => mapAgentRunRow(row),
+      );
+    },
+
     async run(runId) {
       // AD-7 local-first mirror (agent_runs, 0008): read side only — RLS
       // user isolation keeps the device on its own runs; a null row = the
@@ -173,19 +219,7 @@ export function createAgentClient(supabase: AuroraSupabaseClient): AgentClient {
       if (error) throw error;
       const row = (data as unknown as Record<string, unknown>[] | null)?.[0];
       if (!row) return null;
-      const steps = Array.isArray(row.steps_json) ? (row.steps_json as Array<Record<string, unknown>>) : [];
-      const pending = steps.find((s) => s?.kind === 'confirmation' && s.status === 'pending');
-      return {
-        id: String(row.id),
-        userId: String(row.user_id ?? ''),
-        intent: String(row.intent ?? ''),
-        status: (row.status as AgentRunRow['status']) ?? 'running',
-        agentRunId: row.trace_id ? String(row.trace_id) : undefined,
-        jobId: row.trace_id ? String(row.trace_id) : undefined,
-        confirmationMessage: pending ? String(pending.message ?? '') : undefined,
-        startedAt: String(row.started_at ?? ''),
-        completedAt: row.completed_at ? String(row.completed_at) : undefined,
-      } satisfies AgentRunRow;
+      return mapAgentRunRow(row);
     },
   };
 }
