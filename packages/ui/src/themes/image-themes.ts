@@ -129,27 +129,6 @@ export function getImageTheme(slug: string): ImageThemeEntry | undefined {
 }
 
 /**
- * Which image FILE to load for a theme + screen orientation (05 §5.4-annexe
- * consumer contract, 10-07): a LANDSCAPE screen loads the `paysage` variant
- * when present, otherwise it falls back to `portrait` (never a blank); a
- * portrait screen (Phase 1 = mobile portrait-first) loads `portrait`,
- * falling back to `paysage` if absent. Catalog-only — the app decides the
- * orientation (matchMedia / Capacitor) and where to serve the file from.
- */
-export function resolveImageThemeFile(
-  slug: string,
-  orientation: "portrait" | "landscape",
-): string | undefined {
-  const files = IMAGE_THEME_FILES[slug as ImageThemeSlug];
-  if (!files) return undefined;
-  const preferred =
-    orientation === "landscape" ? files.paysage : files.portrait;
-  const fallback =
-    orientation === "landscape" ? files.portrait : files.paysage;
-  return preferred ?? fallback;
-}
-
-/**
  * Resolve the image FILE for a theme + screen orientation (05 §5.4-annexe
  * consumer-side helper, catalog-only — no React here, AD-10 boundary):
  * a landscape screen loads the `paysage` variant, everything else the
