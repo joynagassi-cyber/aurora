@@ -150,6 +150,44 @@
   --aurora-accent-focus-ring-h: 221 91% 59%;
 }
 
+/* ---- Ionic shell chrome → Aurora tokens (AD-17, 2026-10) -------------
+ * @ionic/react/css/core.css pins its own `--ion-*` vars to LIGHT defaults
+ * (#fff canvas, #000 ink) — the app chrome (IonHeader/IonContent/IonFooter,
+ * back button, tab bar) would stay light in DARK style ("dark mode n'est
+ * pas chargé" symptom, 2026-10-08). This block re-maps the `--ion-*` vars
+ * onto the Aurora tokens: they resolve at computed time, so the runtime
+ * provider values (inline on <html>) drive both light and dark. */
+:root {
+  --ion-background-color: var(--aurora-bg);
+  --ion-text-color: var(--aurora-text-primary);
+  --ion-primary: var(--aurora-accent-primary);
+  --ion-secondary: var(--aurora-accent-secondary);
+  --ion-tertiary: var(--aurora-accent-punctual);
+  --ion-success: var(--aurora-success);
+  --ion-warning: var(--aurora-warning);
+  --ion-danger: var(--aurora-danger);
+  --ion-color: var(--aurora-accent-primary);
+  --ion-toolbar-background: var(--aurora-surface);
+  --ion-toolbar-color: var(--aurora-text-primary);
+  --ion-toolbar-border-color: var(--aurora-border);
+  --ion-item-background: var(--aurora-surface);
+  --ion-item-color: var(--aurora-text-primary);
+  --ion-item-border-color: var(--aurora-border);
+  --ion-back-button-color: var(--aurora-text-primary);
+  --ion-back-button-ripple-color: var(--aurora-text-muted);
+  --ion-tabs-background: var(--aurora-surface);
+  --ion-tabs-color: var(--aurora-text-muted);
+  --ion-tabs-border-color: var(--aurora-border);
+  --ion-footer-background: var(--aurora-surface);
+  --ion-footer-color: var(--aurora-text-primary);
+  --ion-footer-border-color: var(--aurora-border);
+  /* `-rgb` triplets can't take var() — fixed per style (light = light
+     canvas values, G-H2). The dark style overrides them below. */
+  --ion-background-color-rgb: 255, 255, 255;
+  --ion-text-color-rgb: 15, 23, 42;
+  --ion-color-rgb: 54, 120, 246;
+}
+
 /* Dark neutral style — DARK PUR (owner 10-07): canvas #000000 (the deepest
  * black) + a hue-0 gray ramp (NO blue/slate tint). Triplet override when
  * <AuroraThemeProvider> sets `data-aurora-style="dark"` on <html>. */
@@ -178,6 +216,12 @@
   --aurora-scrim: rgba(0, 0, 0, 0.5);
   /* Image-theme scrim, dark style (05 §5.4-annexe): deep wash. */
   --aurora-bg-image-scrim: rgba(0, 0, 0, 0.6);
+  /* Ionic `-rgb` triplets (the hex/`var()` `--ion-*` vars above follow the
+     dark tokens automatically; the triplets are fixed values). */
+  --ion-background-color-rgb: 0, 0, 0;
+  --ion-text-color-rgb: 255, 255, 255;
+  /* Native form controls / scrollbars: dark color-scheme in dark style. */
+  color-scheme: dark;
 }
 
 /* ---- Base resets ------------------------------------------------------ */
