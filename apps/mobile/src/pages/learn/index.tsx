@@ -48,16 +48,16 @@ const STUDY_MODES = [
  * Compétences → le suivi de progression.
  */
 const MODE_CATALOG = [
-  { id: 'sheet', label: 'Fiches d'étude', desc: 'Des fiches générées par l'IA, fidèles à ton cours.', Icon: FileText, href: '/inbox' },
-  { id: 'summary', label: 'Résumés', desc: 'L'essentiel de tes cours, condensé.', Icon: AlignLeft, href: '/inbox' },
-  { id: 'qcm', label: 'QCM', desc: 'Teste ta compréhension, question par question.', Icon: ListChecks, href: '/inbox' },
-  { id: 'flashcards', label: 'Flashcards', desc: 'Répétition espacée : reviens au bon moment.', Icon: Layers, href: '/inbox' },
-  { id: 'recall', label: 'Rappel actif', desc: 'Réponds d'abord, regarde la réponse ensuite.', Icon: Brain, href: '/inbox' },
-  { id: 'exercises', label: 'Exercices', desc: 'Progressifs, du simple au complexe.', Icon: TrendingUp, href: '/inbox' },
-  { id: 'correction', label: 'Correction', desc: 'Tes erreurs analysées, pour ne plus les refaire.', Icon: SearchCheck, href: '/inbox' },
-  { id: 'coach', label: 'Coach', desc: 'L'IA t'accompagne pas à pas dans tes révisions.', Icon: Sparkles, href: '/agent' },
-  { id: 'mirror', label: 'Miroir', desc: 'Explique ce que tu as appris, on t'évalue sur ta compréhension.', Icon: Eye, href: '/inbox' },
-  { id: 'skills', label: 'Compétences', desc: 'Ton niveau par compétence, qui évolue avec toi.', Icon: Award, href: '/progress' },
+  { id: "sheet", label: "Fiches d'étude", desc: "Des fiches générées par l'IA, fidèles à ton cours.", Icon: FileText, href: "/inbox" },
+  { id: "summary", label: "Résumés", desc: "L'essentiel de tes cours, condensé.", Icon: AlignLeft, href: "/inbox" },
+  { id: "qcm", label: "QCM", desc: "Teste ta compréhension, question par question.", Icon: ListChecks, href: "/inbox" },
+  { id: "flashcards", label: "Flashcards", desc: "Répétition espacée : reviens au bon moment.", Icon: Layers, href: "/inbox" },
+  { id: "recall", label: "Rappel actif", desc: "Réponds d'abord, regarde la réponse ensuite.", Icon: Brain, href: "/inbox" },
+  { id: "exercises", label: "Exercices", desc: "Progressifs, du simple au complexe.", Icon: TrendingUp, href: "/inbox" },
+  { id: "correction", label: "Correction", desc: "Tes erreurs analysées, pour ne plus les refaire.", Icon: SearchCheck, href: "/inbox" },
+  { id: "coach", label: "Coach", desc: "L'IA t'accompagne pas à pas dans tes révisions.", Icon: Sparkles, href: "/agent" },
+  { id: "mirror", label: "Miroir", desc: "Explique ce que tu as appris, on t'évalue sur ta compréhension.", Icon: Eye, href: "/inbox" },
+  { id: "skills", label: "Compétences", desc: "Ton niveau par compétence, qui évolue avec toi.", Icon: Award, href: "/progress" },
 ] as const;
 
 type StudyMode = (typeof STUDY_MODES)[number][0];
