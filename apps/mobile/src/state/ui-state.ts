@@ -25,8 +25,11 @@ export type TabId = 'home' | 'tasks' | 'learn' | 'progress' | 'agent';
 export interface UiStateStore {
   /** active primary tab (02 §6.1: max 5, 44-60 px tab bar). */
   activeTab: TabId;
-  /** tasks view mode (list / eisenhower / calendar family, G-L5). */
-  tasksView: 'list' | 'eisenhower' | 'calendar';
+  /**
+   * tasks view mode (G-L5 + PRD-1 2026-10 : `today` = la vue quotidienne
+   * « Aujourd'hui » — en retard / aujourd'hui / habitudes / terminées).
+   */
+  tasksView: 'today' | 'list' | 'eisenhower' | 'calendar';
   /** progress period selector (02 S6.1 / page matrix "PERIOD"). */
   progressPeriod: 'today' | 'week' | 'month' | 'trajectory';
   /** knowledge tree expansion + zoom (page matrix "tree expansion state"). */
@@ -75,7 +78,9 @@ export const useUiStateStore = create<UiStateStore>()(
   persist(
     (set) => ({
       activeTab: 'home',
-      tasksView: 'list',
+      // PRD-1 (2026-10) : la vue quotidienne est la vue par défaut du
+      // module Tâches (« Aujourd'hui » avant « Liste »).
+      tasksView: 'today',
       progressPeriod: 'today',
       knowledgeExpanded: {},
       theme: 'auto',

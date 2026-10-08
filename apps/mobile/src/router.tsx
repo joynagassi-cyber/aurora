@@ -46,6 +46,7 @@ import { SlideAscentPage } from './pages/ascent';
 import { SettingsPage } from './pages/settings';
 import { NotFoundPage } from './pages/not-found';
 import { SkillsPage } from './pages/skills';
+import { HabitsPage } from './pages/habits';
 import { IntegrationsPage } from './pages/integrations';
 import { LoginPage } from './pages/login';
 import { OnboardingPage } from './pages/onboarding';
@@ -104,6 +105,10 @@ export const appRouter: AppRouter = createBrowserRouter([
       // --- Projects family view ---
       { path: '/projects', element: <ProjectsPage /> },
 
+      // --- Habits family view (PRD-1 §4.5) — daily check-in + gallery.
+      //     Ungated (core productivity domain entity), like /projects. ---
+      { path: '/habits', element: <HabitsPage /> },
+
       // --- Discovery feed (G-M7 gated) ---
       { path: '/discovery', element: <FeatureGate feature="discovery"><DiscoveryPage /></FeatureGate> },
 
@@ -132,6 +137,6 @@ export const appRouter: AppRouter = createBrowserRouter([
 export type AppRoute = '/home' | '/tasks' | '/learn' | '/progress' | '/agent'
   | '/tasks/:id' | '/learn/:id' | '/progress/:id' | '/knowledge' | '/knowledge/:nodeId'
   | '/artifacts/:id' | '/inbox' | '/settings' | '/goals' | '/goals/:id'
-  | '/goals/:id/features/:fid' | '/goals/:id/ascent' | '/focus' | '/calendar' | '/projects' | '/discovery'
+  | '/goals/:id/features/:fid' | '/goals/:id/ascent' | '/focus' | '/calendar' | '/projects' | '/habits' | '/discovery'
   | '/skills' | '/integrations' | '/login' | '/onboarding'
   | '/canvas/:id';

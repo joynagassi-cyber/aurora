@@ -72,6 +72,129 @@
   background: var(--aurora-accent-primary);
 }
 
+/* ---- Daily « Aujourd'hui » view (PRD-1, PRD-TASK-01) ----------------
+ * Sections En retard / Aujourd'hui / Mes habitudes / Terminées — dérivées
+ * du miroir local (AD-7), heure en accent, échéance en retard en danger,
+ * terminées = texte barré grisé. Tokens only, tap ≥ 44 px. */
+.task-today {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 0 12px;
+}
+.task-today-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.task-today-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+}
+.task-today-header h3 {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--aurora-text-muted);
+}
+/* Compteur de section (PRD-TASK-01 : « Déjà passée 101 »). */
+.task-today-count {
+  display: inline-block;
+  min-width: 22px;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background: var(--aurora-bg-subtle);
+  border: 1px solid var(--aurora-border);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--aurora-text-secondary);
+}
+.task-today-section--overdue .task-today-count {
+  color: var(--aurora-danger);
+  background: var(--aurora-danger-surface);
+  border-color: transparent;
+}
+/* CTA « Reporter » — replanification assistée par l'agent (AD-7). */
+.task-today-postpone {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+/* Lignes de la vue du jour : échéance en retard = danger ; heure du jour
+   = accent (PRD-TASK-01 « heure en bleu à droite »). */
+.task-row-due--overdue {
+  color: var(--aurora-danger);
+}
+.task-row-time {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--aurora-accent-primary);
+}
+/* Ligne « Mes habitudes » (navigation honnête → /habits, PRD-1 §4.5). */
+.task-today-habits {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--aurora-tap-target, 44px);
+  margin: 0 16px;
+  padding: 10px 14px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--aurora-text-secondary);
+}
+.task-today-habits-chevron {
+  margin-left: auto;
+  color: var(--aurora-text-muted);
+}
+/* Right-pointing chevron (the « Mes habitudes » row affordance → /habits). */
+.task-today-chevron--right {
+  transform: rotate(90deg);
+}
+/* Section « Terminées » : toggle repliable + texte barré grisé. */
+.task-today-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--aurora-tap-target, 44px);
+  padding: 8px 16px;
+  background: none;
+  border: 0;
+  text-align: left;
+}
+.task-today-toggle h3 {
+  margin: 0;
+}
+.task-today-chevron {
+  transition: transform 0.18s ease;
+  color: var(--aurora-text-muted);
+}
+.task-today-chevron.is-open {
+  transform: rotate(180deg);
+}
+.task-row-title.is-done {
+  text-decoration: line-through;
+  color: var(--aurora-text-disabled);
+}
+@media (prefers-reduced-motion: reduce) {
+  .task-today-chevron {
+    transition: none;
+  }
+}
+
 /* ---- Eisenhower (G-L5 ratified, T4 under /tasks) -------------------- */
 .eisenhower {
   display: grid;
@@ -847,6 +970,123 @@
   margin: 8px 0 0;
   font-size: 14px;
   color: var(--aurora-text-secondary);
+}
+
+/* ---- Habits (PRD-1 §4.5, lot 2026-10) --------------------------------
+ * Jour / Actives / Catalogue. Tokens only (AD-17), radius ≤ 8 px,
+ * tap ≥ 44 px, zéro contenu inventé (AD-7). */
+.habits-page {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.habits-page > .page-purpose {
+  margin-top: 0;
+}
+/* Empty card (Jour / Actives) : honest empty + CTA. */
+.habits-empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px;
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+  font-size: 15px;
+  color: var(--aurora-text-primary);
+}
+.habits-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--aurora-text-muted);
+}
+/* Catalog (PRD-HAB-03) : category groups + a 2-up grid of cards. */
+.habits-category {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.habits-category-title {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--aurora-text-muted);
+}
+.habits-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.habits-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  min-height: var(--aurora-tap-target, 44px);
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+  position: relative;
+  transition: border-color 0.18s ease;
+}
+.habits-card:hover {
+  border-color: var(--aurora-accent-primary);
+}
+.habits-card-icon {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--aurora-accent-selected-surface);
+  color: var(--aurora-accent-primary);
+}
+.habits-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.habits-card-text strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+  line-height: 1.25;
+}
+.habits-card-text small {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--aurora-text-muted);
+}
+/* « + » affordance (pré-remplit l'intent agent, PRD-HAB-03). */
+.habits-card-add {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--aurora-accent-on-primary);
+  background: var(--aurora-accent-primary);
+}
+@media (prefers-reduced-motion: reduce) {
+  .habits-card {
+    transition: none;
+  }
 }
 
 /* ---- Generic screen-content padding for the stub families ------------ */
