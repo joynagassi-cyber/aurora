@@ -111,6 +111,10 @@ function makeJwtContext(initial: string) {
   };
 }
 
+/** A stand-in for the user JWT (shape only — "eyJ" = JWT base64 header,
+ *  never a real secret, G2-safe). */
+const MOCK_JWT = `eyJ${'u'.repeat(40)}`;
+
 /** The invokeTool canvas-route header decision (bootstrap contract). */
 function canvasAuthDecision(userJwt: string) {
   // The seam's fail-closed rule: no JWT → no call, the documented error.
@@ -128,11 +132,10 @@ test('LOT 1.2: no user JWT → no fetch, the error is auth/missing_user_jwt', ()
 });
 
 test('LOT 1.2: a user JWT → the Authorization header carries the JWT, never the userId', () => {
-  const ctx = makeJwtContext('eyJ-valid-user-jwt');
-  ctx.set('eyJ-valid-user-jwt');
+  const ctx = makeJwtContext(MOCK_JWT);
   const d = canvasAuthDecision(ctx.get());
   assert.equal(d.called, true);
-  assert.equal(d.headers?.Authorization, 'Bearer eyJ-valid-user-jwt');
+  assert.equal(d.headers?.Authorization, `Bearer ${MOCK_JWT}`);
   // The header is built ONLY from the JWT — a userId string would never
   // enter the Authorization value. Prove it: even if the userId were
   // concatenated, the header still must not carry it.

@@ -197,19 +197,39 @@ async function rest<T>(method: string, path: string, body?: unknown): Promise<T 
 }
 
 function sel(view: string) {
+  // Story 1.3: no longer used for user-scoped views — those go through
+  // selUser() so the user_id filter runs in the database. Kept only as
+  // a global-read convenience (e.g. job_queue dispatch, unscoped reads).
   return `${view}?select=*&limit=500`;
 }
-function byUser<T extends { user_id?: string }>(rows: T[], userId: string): T[] {
-  return rows.filter((r) => r.user_id === userId);
+/**
+ * LOT 1 / Story 1.3 — user-scoped REST read. The PostgREST filter
+ * (`user_id=eq.<id>`) runs in the database: only this user's rows are
+ * transferred — no in-memory filtering of other users' data (the old
+ * `sel()` + `byUser()` loaded every user's rows up to 500 then threw
+ * away the others). The user id is URL-encoded (encodeURIComponent) so
+ * a malformed id can never break the query string. `sel()` is kept
+ * only for the global, intentionally public reads (skill_catalog,
+ * job_queue dispatch).
+ */
+function selUser(view: string, userId: string, extraQs = "") {
+  const q = `select=*&user_id=eq.${encodeURIComponent(userId)}${extraQs}`;
+  return `${view}?${q}`;
 }
-
 // ——— The 9-form ContextAssembler (AD-2 public views, 0012) ———
+// LOT 1 / Story 1.3: every user-scoped read goes through `selUser(view,
+// userId)` — the `user_id=eq.` filter runs in the database (PostgREST),
+// so no other user's data is ever transferred, and there is no 500-row
+// global cap truncating one user's rows. `skill_catalog` stays global
+// (public table, intentional AD-3 read-open).
 export function buildContextAssembler(): ContextAssembler {
   return {
     async loadPersonal(userId) {
-      const rows = await rest<Array<Record<string, unknown>>>("GET", sel("user_context_public"));
+      // One row per user (user_context is a 1:1 profile table) — a
+      // PostgREST user_id filter, not a full-table scan.
+      const rows = await rest<Array<Record<string, unknown>>>("GET", selUser("user_context_public", userId));
       if (!rows) return null;
-      const row = rows.find((r) => r.user_id === userId);
+      const row = rows[0];
       if (!row) return null;
       const out: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(row)) {
@@ -219,42 +239,44 @@ export function buildContextAssembler(): ContextAssembler {
     },
     async loadProductivity(userId) {
       const [goals, tasks, focus] = await Promise.all([
-        rest<Array<Record<string, unknown>>>("GET", sel("user_goals_public")),
-        rest<Array<Record<string, unknown>>>("GET", sel("tasks_public")),
-        rest<Array<Record<string, unknown>>>("GET", sel("focus_sessions_public")),
+        rest<Array<Record<string, unknown>>>("GET", selUser("user_goals_public", userId)),
+        rest<Array<Record<string, unknown>>>("GET", selUser("tasks_public", userId)),
+        rest<Array<Record<string, unknown>>>("GET", selUser("focus_sessions_public", userId)),
       ]);
       if (!goals || !tasks || !focus) return null;
       const openTasks = tasks.filter((t) => t.status !== "done" && t.status !== "archived");
+      // The rows are already user-scoped by the query (Story 1.3) — no
+      // in-memory byUser() left to run.
       return {
-        goals: byUser(goals, userId) as never[],
-        openTasks: byUser(openTasks, userId) as never[],
-        focusSessions: byUser(focus, userId) as never[],
+        goals: goals as never[],
+        openTasks: openTasks as never[],
+        focusSessions: focus as never[],
         examPeriod: undefined,
       };
     },
     async loadLearning(userId) {
       const [courses, items, skills] = await Promise.all([
-        rest<Array<Record<string, unknown>>>("GET", sel("courses_public")),
-        rest<Array<Record<string, unknown>>>("GET", sel("learning_items_public")),
-        rest<Array<Record<string, unknown>>>("GET", sel("skills_public")),
+        rest<Array<Record<string, unknown>>>("GET", selUser("courses_public", userId)),
+        rest<Array<Record<string, unknown>>>("GET", selUser("learning_items_public", userId)),
+        rest<Array<Record<string, unknown>>>("GET", selUser("skills_public", userId)),
       ]);
       if (!courses || !items || !skills) return null;
       const due = items.filter((i) => i.status !== "done" && i.status !== "archived");
       return {
-        courses: byUser(courses, userId) as never[],
-        due: byUser(due, userId) as never[],
-        skills: byUser(skills, userId) as never[],
+        courses: courses as never[],
+        due: due as never[],
+        skills: skills as never[],
       };
     },
     async loadDiscovery(userId) {
       const [items, skillStates] = await Promise.all([
-        rest<Array<Record<string, unknown>>>("GET", sel("discovery_items_public")),
-        rest<Array<Record<string, unknown>>>("GET", sel("skill_states_public")),
+        rest<Array<Record<string, unknown>>>("GET", selUser("discovery_items_public", userId)),
+        rest<Array<Record<string, unknown>>>("GET", selUser("skill_states_public", userId)),
       ]);
       if (!items || !skillStates) return null;
       return {
-        items: byUser(items, userId) as never[],
-        skillStates: byUser(skillStates, userId) as never[],
+        items: items as never[],
+        skillStates: skillStates as never[],
       };
     },
     async loadSemantic(userId) {
@@ -264,24 +286,25 @@ export function buildContextAssembler(): ContextAssembler {
       // (AD-7); this is a read-only join. The shape here matches
       // `ContextAssembler.loadSemantic` verbatim ({ node, state } pairs
       // are only required by `KnowledgeGraphPort`, not the assembler).
-      const nodes = await rest<Array<Record<string, unknown>>>("GET", sel("semantic_nodes_public"));
+      const nodes = await rest<Array<Record<string, unknown>>>("GET", selUser("semantic_nodes_public", userId));
       if (!nodes) return null;
-      return { nodes: byUser(nodes, userId) as never[] };
+      return { nodes: nodes as never[] };
     },
     async loadExpertSkills(userId) {
-      const rows = await rest<Array<Record<string, unknown>>>("GET", sel("expert_skills"));
+      const rows = await rest<Array<Record<string, unknown>>>("GET", selUser("expert_skills", userId));
       if (!rows) return [];
-      return byUser(rows, userId) as never[];
+      return rows as never[];
     },
     // Task 1/2 (2026-10-04): the user's ACTIVE skills (user_skills, migration
     // 0019). Builtin rows carry the catalog payload (procedure/constraints/
     // tools are copied at activation, see fn-skills activate_skill); user-
     // created rows are self-contained. Feeds prompt layer 1. Degrades to []
     // when the table is absent (AD-1: the kernel loop continues).
+    // Story 1.3: user-scoped + active-only filter pushed into the query.
     async loadUserSkills(userId) {
-      const rows = await rest<Array<Record<string, unknown>>>("GET", sel("user_skills"));
+      const rows = await rest<Array<Record<string, unknown>>>("GET", selUser("user_skills", userId, "&active=eq.true"));
       if (!rows) return [];
-      return byUser(rows, userId).filter((r) => r.active === true);
+      return rows as never[];
     },
     // 0021 marketplace: the GLOBAL skill_catalog index (compact — key + name
     // + domain + trigger only, never the markdown body). Feeds prompt
@@ -320,9 +343,10 @@ export function buildContextAssembler(): ContextAssembler {
       };
     },
     async loadPermission(userId) {
-      const rows = await rest<Array<Record<string, unknown>>>("GET", sel("user_context_public"));
+      // Story 1.3: user-scoped read — one row per user (1:1 profile).
+      const rows = await rest<Array<Record<string, unknown>>>("GET", selUser("user_context_public", userId));
       if (!rows) return null;
-      const row = rows.find((r) => r.user_id === userId);
+      const row = rows[0];
       if (!row) return null;
       const prefs = (row.preferences as Record<string, unknown>) ?? {};
       return {
@@ -405,9 +429,11 @@ export function clearUserJwt(): void {
 export function buildMemoryEngine(): MemoryEngine {
   const deps: MemoryDeps = {
     async load(userId) {
-      const rows = await rest<Array<Record<string, unknown>>>("GET", sel("expert_skills"));
+      // Story 1.3: user-scoped read in the database (no 500-row global
+      // scan of every user's expert skills, no in-memory byUser()).
+      const rows = await rest<Array<Record<string, unknown>>>("GET", selUser("expert_skills", userId));
       if (!rows) return [];
-      return byUser(rows, userId) as never[];
+      return rows as never[];
     },
     async upsert(skill) {
       const payload = {
