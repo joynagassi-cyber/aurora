@@ -49,43 +49,55 @@ interface AgentRunRequest {
   contextRefs?: string[];
   taskProfile?: Record<string, unknown>;
   /**
-   * LOT 1 / Story 1.1 — user confirmation decisions (ADR S5): the
-   * answers to the `confirmation` events of a previous pass. The kernel
-   * only proceeds past a write/destructive step with a matching
-   * `confirmed` entry. Optional + loosely validated (mirrors the job
-   * handler's normalization in packages/agent/src/jobs.ts): a bad
-   * entry drops out of the array — the run degrades to "stop at the
-   * confirmation point", never auto-confirm.
+   * LOT 1-bis / Story 1.1-bis — user confirmation decisions now carry the
+   * step content hash (`stepHash`, stamped server-side at prompt time,
+   * exposed on the `confirmation` event). A decision whose stepHash no
+   * longer matches is treated as "no decision" (the kernel re-prompts,
+   * never auto-confirms). A client-supplied `resumeFrom.pendingPlan` is
+   * rejected with 400 `agent/plan_not_accepted` before the /auth/v1/user
+   * validation: the pending plan is ALWAYS re-loaded server-side from
+   * `agent_runs` by (agentRunId, user_id).
    */
-  decisions?: Array<{ stepId: string; answer: 'confirmed' | 'rejected' }>;
+  decisions?: Array<{ stepId: string; answer: 'confirmed' | 'rejected'; stepHash?: string }>;
   /**
-   * LOT 1 / Story 1.1 — resume surface: the previous pass's pendingPlan
-   * (stable step ids — decisions key off those). Optional; absent = a
-   * fresh run.
+   * LOT 1-bis / Story 1.1-bis — resume surface: the previous pass's run
+   * handle. The client sends ONLY `{ agentRunId }` — the pending plan is
+   * re-loaded SERVER-SIDE from `agent_runs` BY agentRunId + user_id (the
+   * user_id comes from the validated Bearer JWT, never the body). A
+   * client-supplied `pendingPlan` is REJECTED with 400
+   * `agent/plan_not_accepted` — a forged plan must never bypass the
+   * confirmation points.
    */
-  resumeFrom?: { agentRunId: string; pendingPlan: unknown };
+  resumeFrom?: { agentRunId: string; pendingPlan?: unknown };
 }
 
 /**
  * Normalise a raw `decisions` body into the closed
- * `{ stepId: string; answer: 'confirmed' | 'rejected' }` shape.
- * Anything else (non-array, non-object entries, unknown answers) is
- * dropped — a malformed decision must NOT become an auto-confirm.
+ * `{ stepId: string; answer: 'confirmed' | 'rejected'; stepHash?: string }`
+ * shape (LOT 1-bis / Story 1.1-bis: `stepHash` = the step content hash
+ * that binds the answer to its exact step). Anything else (non-array,
+ * non-object entries, unknown answers, non-string stepHash) is dropped —
+ * a malformed decision must NOT become an auto-confirm.
  */
 export function normalizeDecisions(
   raw: unknown,
-): Array<{ stepId: string; answer: 'confirmed' | 'rejected' }> {
+): Array<{ stepId: string; answer: 'confirmed' | 'rejected'; stepHash?: string }> {
   if (!Array.isArray(raw)) return [];
   return raw
     .filter(
-      (d): d is { stepId: string; answer: 'confirmed' | 'rejected' } =>
+      (d): d is { stepId: string; answer: 'confirmed' | 'rejected'; stepHash?: string } =>
         typeof d === "object" &&
         d !== null &&
         typeof (d as { stepId?: unknown }).stepId === "string" &&
         ((d as { answer?: unknown }).answer === "confirmed" ||
-          (d as { answer?: unknown }).answer === "rejected"),
+          (d as { answer?: unknown }).answer === "rejected") &&
+        ((d as { stepHash?: unknown }).stepHash === undefined ||
+          typeof (d as { stepHash?: unknown }).stepHash === "string"),
     )
-    .map((d) => ({ stepId: d.stepId, answer: d.answer }));
+    .map((d) => {
+      const stepHash = (d as { stepHash?: unknown }).stepHash;
+      return { stepId: d.stepId, answer: d.answer, ...(stepHash ? { stepHash: stepHash as string } : {}) };
+    });
 }
 
 /**
@@ -104,7 +116,6 @@ export function normalizeDecisions(
 async function enqueueAgentRun(req: {
   agentRunId: string;
   userId: string;
-  userJwt: string;
   body: AgentRunRequest;
 }): Promise<{ jobId: string; agentRunsId: string; alreadyQueued: boolean } | null> {
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) return null;
@@ -119,15 +130,16 @@ async function enqueueAgentRun(req: {
     // vocabulary: stepId + confirmed/rejected). No secret material
     // (AD-3) — the kernel handler normalises it once more on its side.
     ...(Array.isArray(req.body.decisions) ? { decisions: req.body.decisions } : {}),
-    ...(req.body.resumeFrom ? { resumeFrom: req.body.resumeFrom } : {}),
-    // LOT 1 / Story 1.2: the caller's validated user JWT — the dispatcher
-    // hands it to the kernel execution context (setUserJwt) so the
-    // invokeTool seam can reach fn-canvas as the real user (AD-7: identity
-    // by JWT, never by body). Validated at request time by /auth/v1/user
-    // below; a stale/absent JWT is an empty string → the canvas route fails
-    // closed with auth/missing_user_jwt. NOT logged, NOT passed to the tool
-    // body — context only.
-    userJwt: req.userJwt ?? "",
+    // LOT 1-bis / Story 1.1-bis: only the run handle is carried — the
+    // pending plan is re-loaded server-side (agent_runs, by agentRunId +
+    // user_id), never the client's.
+    ...(req.body.resumeFrom?.agentRunId ? { resumeFrom: { agentRunId: req.body.resumeFrom.agentRunId } } : {}),
+    // LOT 1-bis / Story 1.2-bis: NO user JWT in the payload. The
+    // dispatcher's agent_run handler carries the job_queue row's
+    // `user_id` (validated here at enqueue via /auth/v1/user, below)
+    // explicitly to the kernel run; the invokeTool seam reaches
+    // fn-canvas over the internal channel (x-aurora-internal +
+    // x-aurora-user-id). No token persists in the DB, no module global.
     // AD-3: no provider / key / router material in the payload.
   };
 
@@ -195,6 +207,16 @@ Deno.serve(async (req) => {
     // LOT 1 / Story 1.1: normalise decisions (closed vocabulary — invalid
     // entries are dropped, never an auto-confirm) before enqueuing.
     body.decisions = normalizeDecisions(body.decisions);
+    // LOT 1-bis / Story 1.1-bis: a FORGED resume plan is rejected
+    // outright — the pending plan must be re-loaded server-side from
+    // `agent_runs` by (agentRunId, user_id), never taken from the body.
+    if (body.resumeFrom !== undefined && body.resumeFrom.pendingPlan !== undefined) {
+      return err(
+        "agent/plan_not_accepted",
+        "resumeFrom.pendingPlan is not accepted; the pending plan is re-loaded server-side from agent_runs (LOT 1-bis)",
+        400,
+      );
+    }
     if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
       console.warn("[fn-agent-run] SERVICE_ROLE_KEY not configured — cannot enqueue agent job");
       return err("agent/secrets_missing", "Server env not configured", 503);
@@ -219,12 +241,14 @@ Deno.serve(async (req) => {
     const userId = user.id ?? "";
 
     const agentRunId = ulid();
-    // LOT 1 / Story 1.2: the validated user JWT is carried in the job
-    // payload (`userJwt`) so the dispatcher can set it on the kernel
-    // execution context. The value passed here is the EXACT header value
-    // that /auth/v1/user accepted above — not the userId, not a fresh
-    // token. Never logged.
-    const enq = await enqueueAgentRun({ agentRunId, userId, userJwt: match[1], body });
+    // LOT 1-bis / Story 1.2-bis: the Bearer token validated above is
+    // NEVER carried into the job payload — only the userId (validated
+    // here by /auth/v1/user) is. The dispatcher's agent_run handler
+    // carries that userId EXPLICITLY to the kernel run, and the
+    // invokeTool seam reaches fn-canvas over the internal channel
+    // (x-aurora-internal + x-aurora-user-id). No token is persisted,
+    // no module global, no identity leak across concurrent runs.
+    const enq = await enqueueAgentRun({ agentRunId, userId, body });
     if (enq === null) {
       return err("agent/enqueue_failed", "could not persist the agent_run job", 503);
     }

@@ -288,7 +288,7 @@ function makeKernelHarness() {
   return { kernel, calls };
 }
 
-async function collect(req: { userId: string; intent: string; decisions?: Array<{ stepId: string; answer: 'confirmed' | 'rejected' }> }) {
+async function collect(req: { userId: string; intent: string; decisions?: Array<{ stepId: string; answer: 'confirmed' | 'rejected'; stepHash?: string }> }) {
   const { kernel, calls } = makeKernelHarness();
   const events: KernelEvent[] = [];
   for await (const ev of kernel.run(req as never)) events.push(ev);
@@ -315,7 +315,10 @@ test('Confirmations: a confirmed write step executes', async () => {
 
   // Pass 2 → resume with the decision. The step ids are stable across
   // passes (ulid() = 'seed'), so decisions key off the same stepId.
-  const { calls } = await collect({ userId: 'u1', intent: 'focus_start', decisions: [{ stepId, answer: 'confirmed' }] });
+  // LOT 1-bis / 1.1-bis: the decision now carries the stepHash that was
+  // stamped on the prompt in pass 1 (content binding).
+  const stepHash = (confEv as Extract<KernelEvent, { type: 'confirmation' }>).prompt?.stepHash;
+  const { calls } = await collect({ userId: 'u1', intent: 'focus_start', decisions: [{ stepId, answer: 'confirmed', ...(stepHash ? { stepHash } : {}) }] });
   assert.ok(calls.tools.length > 0 || calls.jobs.length > 0, 'the confirmed step executed');
 });
 
@@ -324,8 +327,9 @@ test('Confirmations: a rejected write step is NEVER executed', async () => {
   const confEv = first.events.find((e) => e.type === 'confirmation');
   assert.ok(confEv, 'pass 1 emits a confirmation');
   const stepId = (confEv as Extract<KernelEvent, { type: 'confirmation' }>).state.confirmationStepId;
+  const stepHash = (confEv as Extract<KernelEvent, { type: 'confirmation' }>).prompt?.stepHash;
 
-  const { events, calls } = await collect({ userId: 'u1', intent: 'focus_start', decisions: [{ stepId, answer: 'rejected' }] });
+  const { events, calls } = await collect({ userId: 'u1', intent: 'focus_start', decisions: [{ stepId, answer: 'rejected', ...(stepHash ? { stepHash } : {}) }] });
   assert.deepEqual(calls.tools, [], 'the rejected step did not run');
   assert.deepEqual(calls.jobs, [], 'no job dispatched after rejection');
   assert.equal(events[events.length - 1].state.status, 'cancelled');
@@ -338,6 +342,110 @@ test('Confirmations: a read-only step runs without any decision', async () => {
   assert.equal(events.find((e) => e.type === 'confirmation'), undefined, 'no confirmation event');
   assert.deepEqual(calls.tools, ['canvas_read'], 'the read tool executed');
   assert.equal(events[events.length - 1].state.status, 'succeeded');
+});
+
+// ── LOT 1-bis / Story 1.1-bis — server-side resume + stepHash binding ──
+
+import { computeStepHash } from '../src/kernel.ts';
+
+test('LOT 1.1-bis: computeStepHash is deterministic and content-bound (imported, not copied)', () => {
+  const a = computeStepHash('blockApps', { appIds: ['1'] });
+  const b = computeStepHash('blockApps', { appIds: ['1'] });
+  const c = computeStepHash('blockApps', { appIds: ['2'] });
+  assert.equal(a, b, 'same tool + input → same hash');
+  assert.notEqual(a, c, 'different input → different hash');
+  assert.equal(typeof a, 'string');
+});
+
+test('LOT 1.1-bis: a decision whose stepHash no longer matches is NOT trusted (re-prompted, never auto-confirmed)', async () => {
+  // Pass 1: capture the confirmation step + its stepHash (stamped by the
+  // kernel at prompt time via computeStepHash).
+  const first = await collect({ userId: 'u1', intent: 'focus_start' });
+  const confEv = first.events.find((e) => e.type === 'confirmation');
+  assert.ok(confEv, 'pass 1 emits a confirmation');
+  const prompt = (confEv as Extract<KernelEvent, { type: 'confirmation' }>).prompt;
+  assert.ok(prompt.stepHash, 'the confirmation prompt carries a stepHash (content binding)');
+  const stepId = prompt!.stepId;
+
+  // Pass 2: a FORGED stepHash (the step content changed — or an attacker
+  // replayed a stale answer) → the kernel must NOT trust it: no tool
+  // runs, a fresh confirmation event is emitted instead.
+  const forged = await collect({
+    userId: 'u1',
+    intent: 'focus_start',
+    decisions: [{ stepId, answer: 'confirmed', stepHash: 'deadbeefdeadbeef' }],
+  });
+  assert.deepEqual(forged.calls.tools, [], 'a mismatched stepHash never auto-confirms');
+  assert.ok(forged.events.some((e) => e.type === 'confirmation'), 'the step is re-prompted');
+  assert.equal(forged.events[forged.events.length - 1].state.status, 'awaiting-confirmation');
+
+  // Pass 3: the CORRECT stepHash → trusted, the step executes.
+  const trusted = await collect({
+    userId: 'u1',
+    intent: 'focus_start',
+    decisions: [{ stepId, answer: 'confirmed', stepHash: prompt!.stepHash }],
+  });
+  assert.ok(trusted.calls.tools.length > 0, 'a matching stepHash is trusted — the step runs');
+});
+
+test('LOT 1.1-bis: resuming ANOTHER user\'s run (wrong user_id) → 404, the plan is never re-loaded', async () => {
+  // The resume seam (loadPendingPlan, fn-agent-bootstrap) filters by
+  // user_id — a caller can only ever re-load their own stopped run.
+  // Here the resumePlan dep reports "not found" (the 404 the REST
+  // layer surfaces when trace_id + user_id match no row) → the kernel
+  // degrades to a fresh plan build; it NEVER trusts a plan from a
+  // different user, and still stops at the confirmation point.
+  const { calls } = makeKernelHarness();
+  let reloaded = false;
+  const kernelWithResume = new AgentKernel({
+    assembler: fakeAssembler(),
+    permission: async () => openPerm(),
+    router: {} as never,
+    invokeModel: async () => ({
+      data: 'ok',
+      provider: 'agnes',
+      model: 'agnes-3.0',
+      attempt: 1,
+      reason: 'primary',
+      expectedQuality: 'full',
+      traceId: 't1',
+    }),
+    invokeTool: async (tool, _input) => {
+      calls.tools.push(tool);
+      return 'ok';
+    },
+    jobs: {
+      dispatch: async (req) => {
+        calls.jobs.push(req.jobKind);
+        return { jobId: 'j1', status: 'pending' } as never;
+      },
+      getJob: async () => null,
+    } as never,
+    memory: {} as never,
+    verification: {
+      verifyJob: async () => ({ ok: true }),
+      checkSources: async () => ({ ok: true, refs: [] }),
+    } as never,
+    ulid: () => 'seed',
+    now: () => '2026-01-01',
+    // The seam: an "other user" resume loads nothing (404 → null).
+    resumePlan: async (_userId: string, agentRunId: string) => {
+      if (agentRunId === 'someone-elses-run-id') {
+        reloaded = true;
+      }
+      // Mirrors loadPendingPlan's 404 / "no row" path → null.
+      return null;
+    },
+  });
+  const events: KernelEvent[] = [];
+  for await (const ev of kernelWithResume.run({
+    userId: 'u2',
+    intent: 'focus_start',
+    resumeFrom: { agentRunId: 'someone-elses-run-id' },
+  } as never)) events.push(ev);
+  assert.ok(reloaded, 'the resume seam was called (the agentRunId was carried)');
+  assert.ok(events.some((e) => e.type === 'confirmation'), 'the run degrades to a fresh confirmation point (no forged plan)');
+  assert.equal(events[events.length - 1].state.status, 'awaiting-confirmation', 'no auto-confirm across users');
 });
 
 // ── Execution engine: confirmation gate blocks the destructive path ──

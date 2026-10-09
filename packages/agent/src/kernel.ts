@@ -15,6 +15,7 @@
  * (Observability).
  */
 import type { AgentRunState, Intent, AgentContext, Plan, TaskProfile } from './types.ts';
+import type { ConfirmationDecision } from './types.ts';
 import { classifyIntent } from './intent.ts';
 import { buildAgentContext, type ContextAssembler } from './context.ts';
 import { buildPlan, replanRemaining, type PlannerDeps } from './planner.ts';
@@ -47,7 +48,7 @@ export interface KernelDeps {
     envelope: AIResponseEnvelope<unknown>;
   }): Promise<RawModelResponse>;
   /** run inline tool handlers (Vercel SDK tools). */
-  invokeTool(tool: string, input: Record<string, unknown>): Promise<unknown>;
+  invokeTool(tool: string, input: Record<string, unknown>, runCtx?: { userId?: string }): Promise<unknown>;
   /** persist a heavy step as a job (AD-8). */
   jobs: JobDispatcherPort;
   /** the expert-skill memory store (server-only). */
@@ -57,6 +58,13 @@ export interface KernelDeps {
   /** id + clock (injectable) */
   ulid(): string;
   now(): string;
+  /**
+   * LOT 1-bis / Story 1.1-bis — load a run's pending plan server-side
+   * (from `agent_runs.pending_plan`, by agentRunId + user_id). Absent /
+   * unconfigured = resume degrades to a fresh plan build (the run still
+   * stops at the confirmation point — no auto-confirm).
+   */
+  resumePlan?: (userId: string, agentRunId: string) => Promise<Plan | null>;
 }
 
 export interface KernelRequest {
@@ -65,17 +73,64 @@ export interface KernelRequest {
   contextRefs?: string[];
   taskProfile?: TaskProfile;
   signals?: import('./intent.ts').IntentRequest['signals'];
-  /** resume an interrupted run (AD-8 recovery: state in Postgres) */
-  resumeFrom?: { agentRunId: string; pendingPlan: Plan };
   /**
-   * User confirmation decisions (ADR S5) — the answer to the `confirmation`
-   * events of a previous pass, keyed by stepId. The run proceeds a
-   * confirmation point only when a matching `confirmed` decision exists;
-   * `rejected` marks the step skipped (never executed); absent → the run
-   * stops at that step (event `confirmation` emitted, nothing after it
-   * runs — no auto-confirmation, AD-12/S5).
+   * Resume an interrupted run (AD-8 recovery).
+   *
+   * LOT 1-bis / Story 1.1-bis — the resume plan NEVER comes from the
+   * client. The previous pass's plan is re-loaded server-side from
+   * `agent_runs` BY `agentRunId` AND `user_id` (the user_id is the
+   * auth-validated id, never the HTTP body). A client-supplied
+   * `resumeFrom.pendingPlan` is rejected by fn-agent-run with 400
+   * `agent/plan_not_accepted` and is not part of this type.
    */
-  decisions?: Array<{ stepId: string; answer: 'confirmed' | 'rejected' }>;
+  resumeFrom?: { agentRunId: string };
+  /**
+   * User confirmation decisions (ADR S5) — the answers to the
+   * `confirmation` events of a previous pass, keyed by stepId. The run
+   * proceeds a confirmation point only when a matching `confirmed`
+   * decision exists AND its `stepHash` still matches the step's content
+   * hash (`computeStepHash` — a mismatch is treated as "no decision",
+   * the step must be re-confirmed, never auto-approved); `rejected`
+   * marks the step skipped (never executed); absent → the run stops at
+   * that step (event `confirmation` emitted, nothing after it runs — no
+   * auto-confirmation, AD-12/S5).
+   */
+  decisions?: ConfirmationDecision[];
+}
+
+/**
+ * LOT 1-bis / Story 1.1-bis — the content hash that binds a
+ * ConfirmationDecision to the step it was emitted for
+ * (`FNV-1a 64-bit on tool + canonical JSON of input`). Canonical JSON = object
+ * keys sorted recursively, so the digest is stable across
+ * serializations of the same logical input.
+ */
+export function computeStepHash(tool: string, input: Record<string, unknown> | undefined): string {
+  const canon = JSON.stringify(canonicalize(input ?? {}));
+  // FNV-1a 64-bit on `${tool}\u0000${canon}` — a content-BINDING digest
+  // (a mismatch means "the step changed, the decision no longer
+  // applies"), not a signing key. Kept dependency-free: pure TS, runs
+  // in the Deno EF, the Node test runner, and any future bundle.
+  let h = 0xcbf29ce484222325n;
+  const data = `${tool}\u0000${canon}`;
+  for (let i = 0; i < data.length; i++) {
+    h ^= BigInt(data.charCodeAt(i));
+    h = (h * 0x100000001b3n) & 0xffffffffffffffffn;
+  }
+  return h.toString(16).padStart(16, '0');
+}
+
+/** Recursive key-sort JSON canonicalization (stable byte order). */
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map((v) => canonicalize(v));
+  if (value !== null && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const k of Object.keys(value as Record<string, unknown>).sort()) {
+      out[k] = canonicalize((value as Record<string, unknown>)[k]);
+    }
+    return out;
+  }
+  return value;
 }
 
 /**
@@ -141,8 +196,14 @@ export class AgentKernel {
       ulid: () => this.deps.ulid(),
     };
     let plan: Plan;
-    if (req.resumeFrom?.pendingPlan) {
-      plan = replanRemaining(req.resumeFrom.pendingPlan, ctx, perm, planner);
+    // LOT 1-bis / Story 1.1-bis — on resume, the pending plan is ALWAYS
+    // re-loaded server-side (agent_runs, by agentRunId + user_id) — it
+    // NEVER comes from the client. The kernel receives it through a new
+    // `resumePlan` dep injected by the deployment bootstrap; a fresh
+    // run (no resumeFrom) builds the plan from scratch.
+    if (req.resumeFrom?.agentRunId) {
+      const reloaded = await this.deps.resumePlan?.(req.userId, req.resumeFrom.agentRunId);
+      plan = reloaded ? replanRemaining(reloaded, ctx, perm, planner) : buildPlan(ctx, perm, planner);
     } else {
       plan = buildPlan(ctx, perm, planner);
     }
@@ -156,7 +217,7 @@ export class AgentKernel {
     // ── 5. TOOLS (Execution Engine, step-by-step) ──
     const confirmations = new ConfirmationEngine(() => this.deps.now());
     const execution = new ExecutionEngine({
-      invoke: (tool, input) => this.deps.invokeTool(tool, input),
+      invoke: (tool, input, runCtx) => this.deps.invokeTool(tool, input, runCtx),
       dispatchJob: (step) =>
         this.deps.jobs.dispatch({
           jobKind: step.jobKind as JobKind,
@@ -176,14 +237,28 @@ export class AgentKernel {
     //  - rejected     → the step is skipped / never executed; the run
     //    stops the same way.
     //  - confirmed    → feed the ConfirmationEngine; execution proceeds.
-    // Resume (reprise) goes through the existing `resumeFrom` + a new
-    // decisions array: re-running carries its own pendingPlan via
-    // resumeFrom (whose stepIds are stable, unlike a fresh buildPlan) and
-    // the decisions key off those stepIds.
-    const decisions = new Map((req.decisions ?? []).map((d) => [d.stepId, d.answer]));
+    // LOT 1-bis / Story 1.1-bis: every confirmation-carrying step has its
+    // `stepHash` (FNV-1a 64-bit of tool + canonical input) computed here, at
+    // prompt time, and stamped on the step itself — a decision whose
+    // stepHash does not match (a stale / forged answer) is treated as if
+    // the decision were absent (the step is re-prompted, never run).
+    const decisions = new Map((req.decisions ?? []).map((d) => [d.stepId, d]));
     for (const step of plan.steps) {
       if (step.confirmationRequired && step.status === 'pending') {
-        const answer = decisions.get(step.stepId);
+        const decision = decisions.get(step.stepId);
+        const stepHash = computeStepHash(step.tool, step.input);
+        step.stepHash = stepHash;
+        // LOT 1-bis / 1.1-bis — the decision is trusted only when it
+        // binds to this exact step content (stepHash). A stale / forged
+        // decision (wrong or missing stepHash) behaves like "no
+        // decision" → the step is re-prompted, never auto-confirmed.
+        const trustedDecision =
+          decision &&
+          (decision.stepHash === stepHash ||
+            (decision.stepHash === undefined && !step.stepHash))
+            ? decision
+            : undefined;
+        const answer = trustedDecision?.answer;
         if (answer === 'confirmed') {
           confirmations.decide({ stepId: step.stepId, answer: 'confirmed', at: this.deps.now() });
           continue;
@@ -213,6 +288,7 @@ export class AgentKernel {
           tool: step.tool,
           risk: step.risk,
           message: `${step.tool}: ${JSON.stringify(step.input ?? '')}`,
+          stepHash,
         });
         confirmations.decide({ stepId: prompt.stepId, answer: 'timeout', at: this.deps.now() });
         step.status = 'skipped';
@@ -227,6 +303,10 @@ export class AgentKernel {
           confirmationStepId: prompt.stepId,
         });
         yield { type: 'confirmation', state, prompt };
+        // LOT 1-bis / Story 1.1-bis: the terminal snapshot is the `done`
+        // state (status awaiting-confirmation) — the dispatcher's
+        // persistRun writes `plan` onto `agent_runs.pending_plan` so a
+        // later resume re-loads it server-side (never from the client).
         state = this.state(agentRunId, 'action', 'awaiting-confirmation', t0, {
           plan,
           confirmationMessage: prompt.message,

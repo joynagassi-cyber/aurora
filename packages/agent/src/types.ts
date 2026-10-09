@@ -103,6 +103,15 @@ export interface PlanStep {
   risk: 'read' | 'write' | 'destructive';
   /** confirmation points (ADR S5) — destructive/important => required */
   confirmationRequired: boolean;
+  /**
+   * LOT 1-bis / Story 1.1-bis — the step's content hash
+   * (`FNV-1a 64-bit on tool + canonical JSON of input`, `computeStepHash`,
+   * exposed on the `confirmation` event so the device's answer binds to
+   * the exact step it confirmed. A decision whose stepHash no longer
+   * matches is treated as "no decision" — the user must re-confirm a
+   * changed step.
+   */
+  stepHash?: string;
   /** the compensating action applied on abort / verification failure */
   compensation?: Record<string, unknown>;
   /** heavy steps persist as a job (AD-8) instead of inline execution */
@@ -110,6 +119,23 @@ export interface PlanStep {
   /** outcome of the step once executed */
   status: 'pending' | 'running' | 'done' | 'failed' | 'skipped' | 'awaiting-confirmation';
   result?: unknown;
+}
+
+/**
+ * LOT 1-bis / Story 1.1-bis — the user confirmation decision that the
+ * device sends back. `stepHash` binds the answer to the exact step
+ * content that was presented (FNV-1a 64-bit on tool + canonical input,
+ * computed server-side at prompt time and exposed on the `confirmation`
+ * event). A decision whose stepHash does not match the re-loaded step's
+ * hash is treated as if it were absent (the step must be re-confirmed)
+ * — this prevents a stale / forged decision from confirming a changed
+ * step.
+ */
+export interface ConfirmationDecision {
+  stepId: string;
+  /** FNV-1a 64-bit hash of tool + canonical JSON of input — absent = pre-bis run */
+  stepHash?: string;
+  answer: 'confirmed' | 'rejected';
 }
 
 /** The planner output: ordered steps + confirmation points (plan = data). */
@@ -195,3 +221,4 @@ export interface AgentRunState {
 }
 
 export type { PlanStep as AgentKernelPlanStep };
+export type { ConfirmationDecision as KernelConfirmationDecision };

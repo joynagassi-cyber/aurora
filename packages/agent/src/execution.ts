@@ -21,7 +21,7 @@ export interface StepOutcome {
 
 export interface ExecutionDeps {
   /** invoke an inline tool (the Vercel SDK's tool handler). */
-  invoke(tool: string, input: Record<string, unknown>): Promise<unknown>;
+  invoke(tool: string, input: Record<string, unknown>, runCtx?: { userId?: string }): Promise<unknown>;
   /** persist a heavy step as a job (AD-8). Returns the job id. */
   dispatchJob(step: PlanStep): Promise<{ jobId: string }>;
   /** the confirmation engine (component 8) */
@@ -46,7 +46,6 @@ export class ExecutionEngine {
   }
 
   async execute(plan: Plan, userId: string): Promise<{ outcomes: StepOutcome[]; aborted: boolean }> {
-    void userId;
     const outcomes: StepOutcome[] = [];
     let aborted = false;
     for (const step of plan.steps) {
@@ -80,7 +79,11 @@ export class ExecutionEngine {
           outcomes.push(out);
           this.deps.trace?.({ step, outcome: out, at: this.deps.now() });
         } else {
-          const result = await this.deps.invoke(step.tool, step.input);
+          // LOT 1-bis / 1.2-bis — the run's explicit user id is passed to
+          // the tool seam (server-to-server identity, never the body,
+          // never a global): two concurrent runs for two users each carry
+          // their own userId in their own closure.
+          const result = await this.deps.invoke(step.tool, step.input, { userId });
           const out: StepOutcome = { stepId: step.stepId, ok: true, result };
           step.status = 'done';
           step.result = out;

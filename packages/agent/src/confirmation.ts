@@ -25,6 +25,14 @@ export interface ConfirmationPrompt {
   at: string;
   /** timeout → safe-cancel (ADR S5) */
   timeoutMs?: number;
+  /**
+   * LOT 1-bis / Story 1.1-bis — the step content hash
+   * (FNV-1a 64-bit on tool + canonical JSON of input, `computeStepHash`)
+   * exposed at prompt time so the device's ConfirmationDecision can bind to
+   * the exact step. A decision whose stepHash no longer matches is
+   * treated as "no decision" (the step must be re-confirmed).
+   */
+  stepHash?: string;
 }
 
 export type ConfirmationDecision =
@@ -47,7 +55,7 @@ export class ConfirmationEngine {
     this.now = now ?? (() => new Date().toISOString());
   }
 
-  prompt(step: { stepId: string; tool: string; risk: PlanStepLikeRisk; effects?: string; message: string }, timeoutMs?: number): ConfirmationPrompt {
+  prompt(step: { stepId: string; tool: string; risk: PlanStepLikeRisk; effects?: string; message: string; stepHash?: string }, timeoutMs?: number): ConfirmationPrompt {
     const p: ConfirmationPrompt = {
       stepId: step.stepId,
       tool: step.tool,
@@ -56,6 +64,7 @@ export class ConfirmationEngine {
       risk: step.risk === 'destructive' ? 'destructive' : 'write',
       at: this.now(),
       timeoutMs,
+      ...(step.stepHash ? { stepHash: step.stepHash } : {}),
     };
     this.pending.set(step.stepId, p);
     return p;

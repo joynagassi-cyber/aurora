@@ -47,8 +47,6 @@ export type AppCommand =
   | {
       kind: 'cancel-run';
       agentRunId: string;
-      /** the pending plan to persist for resume (AD-8 recovery) */
-      pendingPlan?: unknown;
       at: string;
     };
 

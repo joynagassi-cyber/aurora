@@ -24,7 +24,7 @@ import type {
   MemoryEngine,
   VerificationDeps,
 } from './index.ts';
-import type { AgentRunState, Plan } from './types.ts';
+import type { AgentRunState, ConfirmationDecision, Plan } from './types.ts';
 
 export interface AgentJobHandler {
   jobKind: 'agent_run';
@@ -59,7 +59,7 @@ export interface AgentHandlerDeps {
       | 'now'
       | 'invokeModel'
       | 'invokeTool'
-    >,
+    > & Pick<KernelDeps, 'resumePlan'>,
   ) => AgentKernel;
   assembler: ContextAssembler | null;
   permission: ((userId: string) => Promise<PermissionContext>) | null;
@@ -71,6 +71,14 @@ export interface AgentHandlerDeps {
   /** persist the terminal AgentRunState snapshot (module-owned
    *  server-only table, AD-12: the device's SSoT run state) */
   persistRun(userId: string, state: AgentRunState): Promise<void>;
+  /**
+   * LOT 1-bis / Story 1.1-bis — re-load a run's pending plan from
+   * `agent_runs` BY agentRunId + user_id (the plan NEVER comes from
+   * the client). Injected by the deployment bootstrap; when absent
+   * (pre-bis deployment) the resume degrades to a fresh plan build —
+   * the run still stops at the confirmation point (no auto-confirm).
+   */
+  resumePlan?: (userId: string, agentRunId: string) => Promise<Plan | null>;
 }
 
 /**
@@ -100,6 +108,7 @@ export function buildAgentRunHandler(
     ulid,
     now,
     persistRun,
+    resumePlan,
   } = deps;
   return {
     jobKind: 'agent_run',
@@ -116,25 +125,45 @@ export function buildAgentRunHandler(
       const taskProfile = payload.taskProfile as
         | KernelRequest['taskProfile']
         | undefined;
+      // LOT 1-bis / Story 1.1-bis — the resume plan NEVER comes from the
+      // client: only the `agentRunId` is accepted; `pendingPlan` (if a
+      // legacy payload carries it) is IGNORED here, and fn-agent-run
+      // rejects it with 400 `agent/plan_not_accepted` before enqueueing.
+      // The plan is re-loaded server-side (agent_runs, by agentRunId +
+      // user_id) through the `resumePlan` seam.
       const resumeFrom = payload.resumeFrom as
-        | { agentRunId: string; pendingPlan: Plan }
+        | { agentRunId?: string; pendingPlan?: unknown }
         | undefined;
-      // LOT 1 / Story 1.1 — user confirmation decisions (ADR S5): the
-      // device answers the `confirmation` events of a previous pass; the
-      // run only proceeds past a write/destructive step with a matching
-      // `confirmed` decision. Absent/invalid entries degrade to [] (the
-      // run stops at the confirmation point, never auto-confirms).
+      const resumeAgentRunId =
+        typeof resumeFrom?.agentRunId === 'string' && resumeFrom.agentRunId
+          ? resumeFrom.agentRunId
+          : undefined;
+      // LOT 1-bis / Story 1.1-bis — user confirmation decisions (ADR S5)
+      // now carry the step's content hash (`stepHash`, set server-side at
+      // prompt time and exposed on the `confirmation` event). An entry
+      // whose stepHash no longer matches the re-loaded step is treated as
+      // "no decision" (the kernel re-prompts, never auto-confirms).
+      // Absent / malformed entries degrade to [] (no auto-confirm).
       const rawDecisions = Array.isArray(payload.decisions) ? payload.decisions : [];
-      const decisions = rawDecisions
+      const decisions: ConfirmationDecision[] = rawDecisions
         .filter(
-          (d): d is { stepId: string; answer: 'confirmed' | 'rejected' } =>
+          (d): d is ConfirmationDecision =>
             typeof d === 'object' &&
             d !== null &&
             typeof (d as { stepId?: unknown }).stepId === 'string' &&
             ((d as { answer?: unknown }).answer === 'confirmed' ||
-              (d as { answer?: unknown }).answer === 'rejected'),
+              (d as { answer?: unknown }).answer === 'rejected') &&
+            (typeof (d as { stepHash?: unknown }).stepHash === 'string' ||
+              (d as { stepHash?: unknown }).stepHash === undefined),
         )
-        .map((d) => ({ stepId: d.stepId, answer: d.answer }));
+        .map((d) => {
+          const stepHash = (d as { stepHash?: unknown }).stepHash;
+          return {
+            stepId: (d as { stepId: string }).stepId,
+            answer: (d as { answer: 'confirmed' | 'rejected' }).answer,
+            ...(stepHash ? { stepHash: stepHash as string } : {}),
+          };
+        });
 
       // Degraded no-op when the server bootstrap is not yet wired:
       // the job completes idempotently (AD-8: no data loss, the run
@@ -160,6 +189,7 @@ export function buildAgentRunHandler(
         jobs,
         ulid,
         now,
+        ...(resumePlan ? { resumePlan } : {}),
         invokeModel: () => {
           throw new Error(
             'agent_run handler: invokeModel must be injected via the kernel factory',
@@ -176,7 +206,7 @@ export function buildAgentRunHandler(
         intent,
         contextRefs,
         taskProfile,
-        resumeFrom,
+        ...(resumeAgentRunId ? { resumeFrom: { agentRunId: resumeAgentRunId } } : {}),
         ...(decisions.length > 0 ? { decisions } : {}),
       };
       try {

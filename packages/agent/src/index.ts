@@ -67,7 +67,6 @@ export {
 // 8. Confirmation Engine
 export {
   ConfirmationEngine,
-  type ConfirmationDecision,
   type ConfirmationPrompt,
 } from './confirmation.ts';
 
@@ -130,11 +129,13 @@ export {
   type Plan,
   type AgentContext,
   type AgentRunState,
+  type ConfirmationDecision,
 } from './types.ts';
 
 // The orchestrating loop
 export {
   AgentKernel,
+  computeStepHash,
   type KernelDeps,
   type KernelRequest,
   type KernelEvent,
