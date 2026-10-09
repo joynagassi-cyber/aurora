@@ -34,6 +34,13 @@ $secrets = @(
   @("SUPABASE_URL",               "FILL_IN_FROM_KEY_VAULT"),
   @("SUPABASE_PUBLISHABLE_KEY",   "FILL_IN_FROM_KEY_VAULT"),
   @("SUPABASE_SECRET_KEY",        "FILL_IN_FROM_KEY_VAULT"),
+  # LOT 1-bis / Story 1.2-bis — the internal server-to-server secret for the
+  # kernel → fn-canvas channel (header `x-aurora-internal`). Server-only
+  # (AD-3: NEVER on the device, never in the app bundle). Set alongside
+  # SERVICE_ROLE_KEY in Supabase's Edge Function secret store; absent or
+  # wrong → fn-canvas fails closed with 401 on the internal path (the
+  # device-JWT path is unaffected, unchanged).
+  @("INTERNAL_FN_SECRET",         "FILL_IN_FROM_KEY_VAULT"),
   @("POWERSYNC_URL",              "FILL_IN_FROM_KEY_VAULT"),
   @("PS_ADMIN_TOKEN",            "FILL_IN_FROM_KEY_VAULT"),
   @("CF_ACCOUNT_ID",             "FILL_IN_FROM_KEY_VAULT"),

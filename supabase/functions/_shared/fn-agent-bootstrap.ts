@@ -30,7 +30,7 @@ import {
   type ProviderSettings,
   makeAgnesRouter,
 } from "../../../packages/agent/src/providers.ts";
-import type { TaskProfile } from "../../../packages/agent/src/types.ts";
+import type { TaskProfile, Plan } from "../../../packages/agent/src/types.ts";
 import type { RawModelResponse } from "../../../packages/agent/src/result.ts";
 import {
   invokeModel as invokeModelFn,
@@ -174,6 +174,12 @@ export function modelPicker(): Array<{ id: string; label: string; provider: stri
 // l'envoyer QUE sur le header apikey (pas Authorization).
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+// LOT 1-bis / Story 1.2-bis — the internal server-to-server secret for
+// the kernel → fn-canvas channel (header x-aurora-internal). Absent on
+// the device, added to set-secrets.template.ps1 + secrets-checklist.
+// A legacy JWT ("eyJ...") or a modern token both work — same rule as
+// SERVICE_ROLE_KEY above (Bearer goes only when it's a legacy JWT).
+const INTERNAL_FN_SECRET = Deno.env.get("INTERNAL_FN_SECRET") ?? "";
 function restHeaders(): Record<string, string> {
   const isLegacyJwt = SERVICE_ROLE_KEY.startsWith("eyJ");
   const h: Record<string, string> = { "Content-Type": "application/json" };
@@ -386,43 +392,57 @@ export function buildJobPort(): JobDispatcherPort {
   };
 }
 
-// ——— LOT 1 / Story 1.2 — user-JWT context for the kernel's invokeTool seam —
+// ——— LOT 1-bis / Story 1.2-bis — server-to-server canvas channel —
 //
-// The kernel's `invokeTool` seam (below, canvas.* routing) needs the
-// caller's user JWT to reach fn-canvas, which identifies the user by
-// JWT (AD-7: identity NEVER comes from the HTTP body). The job
-// dispatcher boots the kernel WITHOUT any request context, so the
-// bootstrap carries the validated JWT here — in a module-local var,
-// set by the caller (fn-agent-run, after the /auth/v1/user
-// validation) before the kernel run, never in the tool body,
-// never logged. Absent/empty = no user JWT → the canvas route must
-// fail closed with `auth/missing_user_jwt` (no call at all).
-let activeUserJwt = "";
+// The kernel's `invokeTool` seam reaches fn-canvas through an INTERNAL
+// channel (NOT the device's user JWT path): the call carries
+//   x-aurora-internal = INTERNAL_FN_SECRET (env-only, never on the
+//   device, constant-time compared on fn-canvas's side)
+//   x-aurora-user-id  = the run's user_id (explicit parameter, NEVER
+//   from the tool body, never a module-global — two concurrent runs
+//   for two users each carry their own id in their own closure)
+// Absent / wrong secret → fn-canvas fails closed with 401. The user's
+// JWT is NEVER persisted (job_queue / agent_runs) and NEVER a module
+// global — the identity that reaches fn-canvas is the job_queue row's
+// validated user_id, handed explicitly to the kernel run.
+const INTERNAL_USER_ID_HEADER = "x-aurora-user-id";
+const INTERNAL_SECRET_HEADER = "x-aurora-internal";
 
 /**
- * Set the user JWT that the kernel's invokeTool seam propagates to
- * fn-canvas (`Authorization: Bearer <jwt>`). Must be called with the
- * caller's VALIDATED JWT (the one that passed the /auth/v1/user
- * check in fn-agent-run) — never a raw header value, never the
- * user id. Clear on every run boundary: a stale JWT from another
- * caller must not leak into the next run (AD-7 identity hygiene).
+ * The invokeTool canvas-route call (LOT 1-bis / 1.2-bis). Exported for
+ * unit-testing with a mocked `fetch` (the tests in fn-agent-run/test.ts
+ * pass a fake global fetch). `userId` is the EXPLICIT run identity —
+ * the dispatcher's job_queue row user_id (validated at enqueue by
+ * /auth/v1/user), NEVER the tool body, never a module global.
  */
-export function setUserJwt(jwt: string): void {
-  activeUserJwt = jwt ?? "";
-}
-
-/** The active caller's user JWT (empty string when unset / cleared). */
-export function getUserJwt(): string {
-  return activeUserJwt;
-}
-
-/**
- * Clear the active user JWT (run boundary). Call after the kernel
- * run finishes so a subsequent unauthenticated / different-caller
- * run never inherits the previous caller's identity.
- */
-export function clearUserJwt(): void {
-  activeUserJwt = "";
+export async function callCanvasInternal(
+  verb: string,
+  userId: string,
+  body: Record<string, unknown>,
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ ok: boolean; executed: boolean; error?: string; data?: unknown }> {
+  // Fail closed: no internal secret / no user id → no call at all.
+  if (!INTERNAL_FN_SECRET || !userId) {
+    return { ok: false, executed: false, error: "auth/missing_internal_secret" };
+  }
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    [INTERNAL_SECRET_HEADER]: INTERNAL_FN_SECRET,
+    [INTERNAL_USER_ID_HEADER]: userId,
+  };
+  if (SERVICE_ROLE_KEY) {
+    headers.apikey = SERVICE_ROLE_KEY;
+    if (SERVICE_ROLE_KEY.startsWith("eyJ")) headers.Authorization = `Bearer ${SERVICE_ROLE_KEY}`;
+  }
+  const res = await fetchImpl(`${SUPABASE_URL}/functions/v1/fn-canvas`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ verb, ...body }),
+  });
+  if (!res.ok) {
+    return { ok: false, executed: false, error: `fn-canvas ${res.status}` };
+  }
+  return { ok: true, executed: true, data: await res.json() };
 }
 
 // ——— Memory engine (expert_skills server-only, AD-12) ———
@@ -496,6 +516,32 @@ function buildVerificationDeps(jobs: JobDispatcherPort): VerificationDeps {
 // the verify kind is 'verify', NOT 'agent_verify' (AD-15 closed set).
 const VERIFY_JOB_KIND = "verify" as import("../../../packages/domain/src/index.ts").JobKind;
 
+// ——— LOT 1-bis / Story 1.1-bis — server-side plan re-load (resumée) ———
+// The kernel's `resumePlan` seam: re-loads a stopped run's pending plan
+// FROM `agent_runs.pending_plan` BY (id = agent_runs PK, user_id) — NEVER
+// from the client. The dispatcher persists it (persistRun, below) when
+// the terminal AgentRunState status is `awaiting-confirmation`. Absent
+// / non-configured env = null → the kernel degrades to a fresh plan build
+// (the run still stops at the confirmation point — no auto-confirm).
+export async function loadPendingPlan(userId: string, agentRunId: string): Promise<Plan | null> {
+  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) return null;
+  // The `agent_runs.id` is the uuid PK (fn-agent-run creates the row);
+  // `trace_id` carries the kernel's ULID agentRunId (the resume handle
+  // the device polls / the dispatcher passes through). Query by BOTH
+  // (user_id + trace_id) so a caller can only ever re-load ITS OWN run.
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/agent_runs?trace_id=eq.${encodeURIComponent(agentRunId)}&user_id=eq.${encodeURIComponent(userId)}&select=pending_plan&limit=1`,
+    { headers: restHeaders() },
+  );
+  if (!res.ok) return null;
+  const rows = (await res.json().catch(() => [])) as Array<{ pending_plan?: Plan | null }>;
+  const pending = rows[0]?.pending_plan;
+  if (!pending) return null;
+  // Light validation: the persisted shape must carry a steps array.
+  if (!Array.isArray((pending as Plan).steps)) return null;
+  return pending;
+}
+
 // ——— The kernel factory (AD-12: one kernel, server-side) ———
 export function buildAgentKernel(): AgentKernel | null {
   const chain = providerChain();
@@ -511,6 +557,9 @@ export function buildAgentKernel(): AgentKernel | null {
 
   const deps: KernelDeps = {
     assembler,
+    // LOT 1-bis / Story 1.1-bis: the resume seam (agent_runs.pending_plan,
+    // by trace_id + user_id) — the client never carries a plan.
+    resumePlan: (userId, agentRunId) => loadPendingPlan(userId, agentRunId),
     permission: async (userId) => {
       const form = await assembler.loadPermission(userId);
       const featureState: Record<string, boolean> = form?.featureState ?? {};
@@ -580,41 +629,27 @@ export function buildAgentKernel(): AgentKernel | null {
         catalogIndex,
       });
     },
-    invokeTool: async (tool, input) => {
+    invokeTool: async (tool, input, runCtx) => {
       // OQ-03 seam — route les commandes canvas.* vers fn-canvas (le module
       // Canvas = single-writer AD-7 qui applique la mutation sur canvas_*) ;
       // les autres commandes restent le no-op documenté (AD-8 : pas de
       // perte, le module concerné n'existe pas encore côté serveur).
       //
-      // L'identité (userId) est portée par le PAYLOAD de l'outil canvas
-      // (AD-7 : le kernel l'injecte depuis le contexte courant ; l'EF fn-canvas
-      // ne fait JAMAIS confiance au body pour l'identité — ici le payload est
-      // le contexte kernel, pas le body HTTP).
+      // LOT 1-bis / Story 1.2-bis: the identity is the RUN's explicit user id
+      // (kernel RequestContext.userId — the job_queue row's validated user,
+      // never the tool body, never a module global). The call goes over the
+      // internal channel (x-aurora-internal + x-aurora-user-id headers);
+      // fn-canvas accepts it only when the secret matches (constant-time),
+      // else 401 (fail-closed). No user JWT anywhere.
       const payload = (input?.payload ?? input) as Record<string, unknown>;
       const cmd = (payload?.command ?? tool) as string;
-      const userId = (payload?.userId as string | undefined) ?? '';
+      const runUserId = runCtx?.userId ?? '';
       if (typeof cmd === 'string' && cmd.startsWith('canvas.')) {
         const verb = cmd === 'canvas.read' ? 'read' : cmd === 'canvas.write' ? 'write' : cmd === 'canvas.comment' ? 'comment' : cmd === 'canvas.create' ? 'create' : cmd === 'canvas.lock' ? 'lock' : cmd === 'canvas.rename' ? 'rename' : null;
-        if (verb && userId) {
-          // LOT 1 / Story 1.2: fn-canvas identifies the caller by user JWT
-          // (AD-7: never from the body). The caller's validated JWT arrives
-          // through the kernel execution context (setUserJwt, set by
-          // fn-agent-run after the /auth/v1/user check) — NOT via the tool
-          // body, NOT logged. Missing / stale JWT → fail closed, no call.
-          const userJwt = getUserJwt();
-          if (!userJwt) {
-            return { ok: false, executed: false, error: 'auth/missing_user_jwt' };
-          }
+        if (verb && runUserId) {
           const { userId: _omit, command: _omitCmd, ...canvasBody } = payload;
-          const res = await fetch(SUPABASE_URL + '/functions/v1/fn-canvas', {
-            method: 'POST',
-            headers: { ...restHeaders(), Authorization: `Bearer ${userJwt}`, apikey: SERVICE_ROLE_KEY },
-            body: JSON.stringify({ verb, ...canvasBody }),
-          });
-          if (res.ok) {
-            return { ...(await res.json()), executed: true };
-          }
-          return { ok: false, executed: false, error: `fn-canvas ${res.status}` };
+          const r = await callCanvasInternal(verb, runUserId, canvasBody);
+          return { ...r, note: r.executed ? undefined : `canvas internal channel: ${r.error}` };
         }
       }
       return { note: `tool seam pending — OQ-03 bootstrap (cmd: ${cmd ?? 'unknown'})`, executed: false };

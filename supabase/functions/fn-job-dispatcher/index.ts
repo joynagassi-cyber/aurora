@@ -46,8 +46,7 @@ import {
   buildJobPort,
   buildMemoryEngine,
   buildAgentKernel,
-  setUserJwt,
-  clearUserJwt,
+  loadPendingPlan,
 } from "../_shared/fn-agent-bootstrap.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -169,6 +168,9 @@ function buildAgentRunDispatchers() {
       // The dispatcher injects the full KernelDeps through the bootstrap;
       // `d` is the seam surface the handler carries — the kernel already
       // owns its own deps (the factory returns a ready AgentKernel).
+      // LOT 1-bis / 1.1-bis: the resume seam is wired inside the
+      // bootstrap's `buildAgentKernel()` (agent_runs.pending_plan, by
+      // trace_id + user_id — the client never carries a plan).
       void d;
       return kernel;
     },
@@ -210,27 +212,42 @@ function buildAgentRunDispatchers() {
     jobs,
     ulid,
     now: () => new Date().toISOString(),
+    // LOT 1-bis / Story 1.1-bis — the server-side resume seam (agent_runs
+    // .pending_plan, by trace_id + user_id). Absent env = the resume
+    // degrades to a fresh plan build (the run still stops at the
+    // confirmation point — no auto-confirm).
+    resumePlan: configured
+      ? async (userId, agentRunId) => loadPendingPlan(userId, agentRunId)
+      : undefined,
     persistRun: async (userId, state) => {
       // Terminal AgentRunState → agent_runs (F-09 SSoT). Absent env or
       // a non-terminal state = no-op (the dispatcher reports via result).
       if (!SUPABASE_URL || !SERVICE_ROLE_KEY) return;
+      // LOT 1-bis / Story 1.1-bis: a halted run (status
+      // `awaiting-confirmation`) persists its pending plan on the run's
+      // own row so a later re-dispatch re-loads it server-side (the
+      // client never carries a plan). Terminal (succeeded/failed) runs
+      // clear it.
+      const patch: Record<string, unknown> = {
+        status:
+          state.status === "succeeded"
+            ? "completed"
+            : state.status === "failed"
+              ? "failed"
+              : "running",
+        completed_at:
+          state.status === "succeeded" || state.status === "failed"
+            ? state.updatedAt
+            : null,
+        pending_plan:
+          state.status === "awaiting-confirmation" ? (state.plan ?? null) : null,
+      };
       const res = await fetch(
         `${SUPABASE_URL}/rest/v1/agent_runs?user_id=eq.${userId}&id=eq.${state.agentRunId}`,
         {
           method: "PATCH",
           headers: restHeaders(),
-          body: JSON.stringify({
-            status:
-              state.status === "succeeded"
-                ? "completed"
-                : state.status === "failed"
-                  ? "failed"
-                  : "running",
-            completed_at:
-              state.status === "succeeded" || state.status === "failed"
-                ? state.updatedAt
-                : null,
-          }),
+          body: JSON.stringify(patch),
         },
       ).catch(() => null);
       if (res && !res.ok) {
@@ -250,17 +267,14 @@ function buildAgentRunDispatchers() {
         userId: string,
         payload: Record<string, unknown>,
       ): Promise<HandlerResult> => {
-        // LOT 1 / Story 1.2: hand the caller's validated user JWT to the
-        // kernel execution context (setUserJwt) so the invokeTool seam can
-        // reach fn-canvas as the real user. Clear it in a finally so a
-        // subsequent run never inherits the previous caller's identity.
-        setUserJwt(typeof payload.userJwt === "string" ? payload.userJwt : "");
-        let res: HandlerResult;
-        try {
-          res = await handler.handler(jobId, userId, payload);
-        } finally {
-          clearUserJwt();
-        }
+        // LOT 1-bis / Story 1.2-bis: NO user JWT, NO module global. The
+        // run's identity is `userId` (the job_queue row's user, validated
+        // at enqueue by /auth/v1/user in fn-agent-run) passed EXPLICITLY
+        // to the kernel run; the invokeTool seam carries it on the
+        // internal channel (x-aurora-user-id). A concurrent run for
+        // another user runs in its own closure — no shared state to
+        // leak.
+        const res: HandlerResult = await handler.handler(jobId, userId, payload);
         // SSoT update: patch the agent_runs row BY its uuid PK
         // (payload.agentRunsId, set by fn-agent-run at enqueue).
         // A missing agentRunsId (legacy payload) is a no-op.

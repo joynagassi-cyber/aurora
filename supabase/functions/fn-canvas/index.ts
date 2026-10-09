@@ -10,6 +10,21 @@
 // JAMAIS du body. L'EF écrit via la service key (REST) ; le scope user est porté
 // par le JWT (user_id = auth.uid()), pas par un paramètre.
 //
+// LOT 1-bis / Story 1.2-bis — SECOND entry point (server-to-server):
+// the kernel's invokeTool seam reaches fn-canvas over an INTERNAL
+// channel instead of the user's JWT:
+//   x-aurora-internal = INTERNAL_FN_SECRET (env-only, constant-time
+//                       compared — a wrong/absent secret is a 401,
+//                       fail-closed)
+//   x-aurora-user-id  = the run's user_id (the dispatcher's job_queue
+//                       row user, validated at enqueue by /auth/v1/user)
+// The user-JWT device path is UNCHANGED; a request is accepted on
+// EITHER the device JWT OR the internal (secret + user id) pair — the
+// internal path carries NO token on the wire beyond the server secret
+// (which is NOT persisted anywhere, never logged), so a user JWT is
+// never written to the DB and two concurrent runs for two users each
+// carry their own x-aurora-user-id (no module global, no leak).
+//
 // Endpoints (POST { verb, ... } — même shape que fn-skills / fn-integrations) :
 //   { verb: 'create',  title, blocks?, artifactId? }
 //        -> { ok, data: { canvasId } }         (canvas.create, G10)
@@ -34,6 +49,38 @@
 import { ok, err, ulid } from "../_shared/envelope.ts";
 
 type Block = { id: string; kind: string; content: string };
+
+// LOT 1-bis / Story 1.2-bis — the internal channel's secret (env-only,
+// never on the device). Set alongside SERVICE_ROLE_KEY in the project's
+// Edge Function secrets; added to set-secrets.template.ps1 +
+// secrets-checklist. Absent = the internal path is simply unavailable
+// (device-JWT path keeps working, unchanged).
+const INTERNAL_FN_SECRET = Deno.env.get("INTERNAL_FN_SECRET") ?? "";
+
+/** Constant-time string compare (timing-attack safe — the secret is
+ *  compared byte-by-byte; a mismatch is only known after the full walk). */
+function constantTimeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= (a.charCodeAt(i) & 0xff) ^ (b.charCodeAt(i) & 0xff);
+  }
+  return diff === 0;
+}
+
+/**
+ * LOT 1-bis / Story 1.2-bis — resolve the run's user id over the
+ * INTERNAL channel (x-aurora-internal + x-aurora-user-id). Returns
+ * null on any failure (absent / wrong secret, or absent user id) —
+ * the caller must fail closed with 401.
+ */
+function resolveInternalUserId(req: Request): string | null {
+  const secret = req.headers.get("x-aurora-internal") ?? "";
+  const userId = req.headers.get("x-aurora-user-id") ?? "";
+  if (!INTERNAL_FN_SECRET || !secret || !userId) return null;
+  if (!constantTimeEqual(secret, INTERNAL_FN_SECRET)) return null;
+  return userId;
+}
 
 async function rest(
   method: string,
@@ -374,12 +421,6 @@ Deno.serve(async (req: Request) => {
 
     const body = await readBody(req);
     const verb = String(body.verb ?? "");
-
-    // Tous les verbes canvas sont authed (AD-7 : identité du JWT, jamais du body).
-    const bearer = /Bearer\s+(.+)/.exec(rawAuth)?.[1] ?? "";
-    if (!bearer) {
-      return err("canvas/unauthorized", "Bearer user token required", 401);
-    }
     if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
       return err(
         "canvas/env",
@@ -387,9 +428,29 @@ Deno.serve(async (req: Request) => {
         503,
       );
     }
-    const userId = await resolveUserId(bearer, SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    // LOT 1-bis / Story 1.2-bis — identity on EITHER channel:
+    //   (1) internal (kernel → fn-canvas): x-aurora-internal + x-aurora-user-id
+    //       (the server secret, constant-time compared; the user id is the
+    //        dispatcher's validated job_queue row user — NEVER the body).
+    //   (2) device: the Authorization Bearer user JWT (unchanged path).
+    // Both are fail-closed: no valid identity → 401.
+    let userId: string | null = null;
+    const internalUserId = resolveInternalUserId(req);
+    if (internalUserId) {
+      userId = internalUserId;
+    } else {
+      // Tous les verbes canvas sont authed (AD-7 : identité du JWT, jamais du body).
+      const bearer = /Bearer\s+(.+)/.exec(rawAuth)?.[1] ?? "";
+      if (bearer) {
+        userId = await resolveUserId(bearer, SUPABASE_URL, SUPABASE_SERVICE_KEY);
+      }
+    }
     if (!userId) {
-      return err("canvas/unauthorized", "invalid user token", 401);
+      return err(
+        "canvas/unauthorized",
+        "no valid identity: internal channel (x-aurora-internal) or Bearer user JWT required",
+        401,
+      );
     }
 
     switch (verb) {

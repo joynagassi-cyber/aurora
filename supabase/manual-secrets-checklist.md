@@ -45,6 +45,24 @@
 #                            + le shared `fn-agent-bootstrap.ts` lisent
 #                            `SERVICE_ROLE_KEY` dans `Deno.env`.
 #
+#   INTERNAL_FN_SECRET     ← LOT 1-bis / Story 1.2-bis (2026-10-09) : le
+#                            secret interne serveur-à-serveur du channel
+#                            `x-aurora-internal` (kernel → fn-canvas,
+#                            `fn-agent-bootstrap.ts` + `fn-canvas/index.ts`).
+#                            AD-3 : JAMAIS côté device, jamais dans le
+#                            bundle. À set côté Dashboard > Edge Functions >
+#                            Secrets (ou `supabase secrets set` si le compte
+#                            y a le scope) :
+#                              supabase secrets set INTERNAL_FN_SECRET="<valeur>"
+#                            Valeur = une chaîne aléatoire de ~32+ chars
+#                            (ex. `openssl rand -hex 32`), à stocker dans
+#                            .env.local + l'key vault, JAMAIS en clair ici.
+#                            Absent ou faux → fn-canvas refuse le chemin
+#                            interne avec 401 (fail-closed) ; le chemin
+#                            device (user JWT) reste inchangé. Redéploiement
+#                            requis de fn-canvas + fn-job-dispatcher après
+#                            le set.
+#
 #   SUPABASE_JWKS_URL      ← .env.local (présente)
 #                            → utilisé par : fn-skills, fn-integrations (validation JWT publishable)
 #
