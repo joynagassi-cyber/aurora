@@ -48,6 +48,44 @@ interface AgentRunRequest {
   intent?: string;
   contextRefs?: string[];
   taskProfile?: Record<string, unknown>;
+  /**
+   * LOT 1 / Story 1.1 — user confirmation decisions (ADR S5): the
+   * answers to the `confirmation` events of a previous pass. The kernel
+   * only proceeds past a write/destructive step with a matching
+   * `confirmed` entry. Optional + loosely validated (mirrors the job
+   * handler's normalization in packages/agent/src/jobs.ts): a bad
+   * entry drops out of the array — the run degrades to "stop at the
+   * confirmation point", never auto-confirm.
+   */
+  decisions?: Array<{ stepId: string; answer: 'confirmed' | 'rejected' }>;
+  /**
+   * LOT 1 / Story 1.1 — resume surface: the previous pass's pendingPlan
+   * (stable step ids — decisions key off those). Optional; absent = a
+   * fresh run.
+   */
+  resumeFrom?: { agentRunId: string; pendingPlan: unknown };
+}
+
+/**
+ * Normalise a raw `decisions` body into the closed
+ * `{ stepId: string; answer: 'confirmed' | 'rejected' }` shape.
+ * Anything else (non-array, non-object entries, unknown answers) is
+ * dropped — a malformed decision must NOT become an auto-confirm.
+ */
+export function normalizeDecisions(
+  raw: unknown,
+): Array<{ stepId: string; answer: 'confirmed' | 'rejected' }> {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter(
+      (d): d is { stepId: string; answer: 'confirmed' | 'rejected' } =>
+        typeof d === "object" &&
+        d !== null &&
+        typeof (d as { stepId?: unknown }).stepId === "string" &&
+        ((d as { answer?: unknown }).answer === "confirmed" ||
+          (d as { answer?: unknown }).answer === "rejected"),
+    )
+    .map((d) => ({ stepId: d.stepId, answer: d.answer }));
 }
 
 /**
@@ -76,6 +114,11 @@ async function enqueueAgentRun(req: {
     intent: req.body.intent,
     contextRefs: req.body.contextRefs ?? [],
     taskProfile: req.body.taskProfile,
+    // LOT 1 / Story 1.1: the device's confirmation answers (closed
+    // vocabulary: stepId + confirmed/rejected). No secret material
+    // (AD-3) — the kernel handler normalises it once more on its side.
+    ...(Array.isArray(req.body.decisions) ? { decisions: req.body.decisions } : {}),
+    ...(req.body.resumeFrom ? { resumeFrom: req.body.resumeFrom } : {}),
     // AD-3: no provider / key / router material in the payload.
   };
 
@@ -140,6 +183,9 @@ Deno.serve(async (req) => {
     const body = (await req.json().catch(() => ({}))) as AgentRunRequest;
 
     if (!body.intent) return err("agent/missing_intent", "intent is required", 400);
+    // LOT 1 / Story 1.1: normalise decisions (closed vocabulary — invalid
+    // entries are dropped, never an auto-confirm) before enqueuing.
+    body.decisions = normalizeDecisions(body.decisions);
     if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
       console.warn("[fn-agent-run] SERVICE_ROLE_KEY not configured — cannot enqueue agent job");
       return err("agent/secrets_missing", "Server env not configured", 503);

@@ -30,6 +30,7 @@ import {
   buildPlan,
   type ContextAssembler,
   type PermissionContext,
+  type KernelEvent,
 } from '../src/index.ts';
 
 // ── helpers ──
@@ -240,6 +241,104 @@ function buildAgentContextSync(intent: string) {
     permission: {},
   };
 }
+
+// ── LOT 1 / Story 1.1 — confirmation gating (no auto-confirm) ──
+
+/**
+ * A minimal kernel whose invokeTool / jobs / invokeModel record every
+ * call, so the tests can assert what actually ran.
+ */
+function makeKernelHarness() {
+  const calls = {
+    tools: [] as string[],
+    jobs: [] as string[],
+  };
+  const kernel = new AgentKernel({
+    assembler: fakeAssembler(),
+    permission: async () => openPerm(),
+    router: {} as never,
+    invokeModel: async () => ({
+      data: 'ok',
+      provider: 'agnes',
+      model: 'agnes-3.0',
+      attempt: 1,
+      reason: 'primary',
+      expectedQuality: 'full',
+      traceId: 't1',
+    }),
+    invokeTool: async (tool, _input) => {
+      calls.tools.push(tool);
+      return 'ok';
+    },
+    jobs: {
+      dispatch: async (req) => {
+        calls.jobs.push(req.jobKind);
+        return { jobId: 'j1', status: 'pending' } as never;
+      },
+      getJob: async () => null,
+    } as never,
+    memory: {} as never,
+    verification: {
+      verifyJob: async () => ({ ok: true }),
+      checkSources: async () => ({ ok: true, refs: [] }),
+    } as never,
+    ulid: () => 'seed',
+    now: () => '2026-01-01',
+  });
+  return { kernel, calls };
+}
+
+async function collect(req: { userId: string; intent: string; decisions?: Array<{ stepId: string; answer: 'confirmed' | 'rejected' }> }) {
+  const { kernel, calls } = makeKernelHarness();
+  const events: KernelEvent[] = [];
+  for await (const ev of kernel.run(req as never)) events.push(ev);
+  return { events, calls };
+}
+
+test('Confirmations: a write step with no decision → nothing executes, confirmation event emitted', async () => {
+  const { events, calls } = await collect({ userId: 'u1', intent: 'focus_start' });
+  assert.deepEqual(calls.tools, [], 'no inline tool ran');
+  assert.deepEqual(calls.jobs, [], 'no job dispatched');
+  assert.ok(events.some((e) => e.type === 'confirmation'), 'a confirmation event was emitted');
+  assert.equal(events[events.length - 1].type, 'done', 'the run terminates cleanly');
+  assert.equal(events[events.length - 1].state.status, 'awaiting-confirmation');
+});
+
+test('Confirmations: a confirmed write step executes', async () => {
+  // Pass 1 → capture the confirmation step id (stable: deterministic ulid).
+  const first = await collect({ userId: 'u1', intent: 'focus_start' });
+  const confEv = first.events.find((e) => e.type === 'confirmation');
+  assert.ok(confEv, 'pass 1 emits a confirmation');
+  assert.equal(confEv!.type, 'confirmation');
+  const stepId = (confEv as Extract<KernelEvent, { type: 'confirmation' }>).state.confirmationStepId;
+  assert.ok(stepId, 'the confirmation state carries the step id');
+
+  // Pass 2 → resume with the decision. The step ids are stable across
+  // passes (ulid() = 'seed'), so decisions key off the same stepId.
+  const { calls } = await collect({ userId: 'u1', intent: 'focus_start', decisions: [{ stepId, answer: 'confirmed' }] });
+  assert.ok(calls.tools.length > 0 || calls.jobs.length > 0, 'the confirmed step executed');
+});
+
+test('Confirmations: a rejected write step is NEVER executed', async () => {
+  const first = await collect({ userId: 'u1', intent: 'focus_start' });
+  const confEv = first.events.find((e) => e.type === 'confirmation');
+  assert.ok(confEv, 'pass 1 emits a confirmation');
+  const stepId = (confEv as Extract<KernelEvent, { type: 'confirmation' }>).state.confirmationStepId;
+
+  const { events, calls } = await collect({ userId: 'u1', intent: 'focus_start', decisions: [{ stepId, answer: 'rejected' }] });
+  assert.deepEqual(calls.tools, [], 'the rejected step did not run');
+  assert.deepEqual(calls.jobs, [], 'no job dispatched after rejection');
+  assert.equal(events[events.length - 1].state.status, 'cancelled');
+});
+
+test('Confirmations: a read-only step runs without any decision', async () => {
+  // canvas_read is risk 'read' in the capability registry → no
+  // confirmation point: it must execute straight through.
+  const { events, calls } = await collect({ userId: 'u1', intent: 'canvas_read' });
+  assert.equal(events.find((e) => e.type === 'confirmation'), undefined, 'no confirmation event');
+  assert.deepEqual(calls.tools, ['canvas_read'], 'the read tool executed');
+  assert.equal(events[events.length - 1].state.status, 'succeeded');
+});
 
 // ── Execution engine: confirmation gate blocks the destructive path ──
 

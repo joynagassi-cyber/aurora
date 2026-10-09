@@ -119,6 +119,22 @@ export function buildAgentRunHandler(
       const resumeFrom = payload.resumeFrom as
         | { agentRunId: string; pendingPlan: Plan }
         | undefined;
+      // LOT 1 / Story 1.1 — user confirmation decisions (ADR S5): the
+      // device answers the `confirmation` events of a previous pass; the
+      // run only proceeds past a write/destructive step with a matching
+      // `confirmed` decision. Absent/invalid entries degrade to [] (the
+      // run stops at the confirmation point, never auto-confirms).
+      const rawDecisions = Array.isArray(payload.decisions) ? payload.decisions : [];
+      const decisions = rawDecisions
+        .filter(
+          (d): d is { stepId: string; answer: 'confirmed' | 'rejected' } =>
+            typeof d === 'object' &&
+            d !== null &&
+            typeof (d as { stepId?: unknown }).stepId === 'string' &&
+            ((d as { answer?: unknown }).answer === 'confirmed' ||
+              (d as { answer?: unknown }).answer === 'rejected'),
+        )
+        .map((d) => ({ stepId: d.stepId, answer: d.answer }));
 
       // Degraded no-op when the server bootstrap is not yet wired:
       // the job completes idempotently (AD-8: no data loss, the run
@@ -161,6 +177,7 @@ export function buildAgentRunHandler(
         contextRefs,
         taskProfile,
         resumeFrom,
+        ...(decisions.length > 0 ? { decisions } : {}),
       };
       try {
         for await (const ev of kernel.run(req)) {

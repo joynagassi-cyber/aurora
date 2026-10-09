@@ -51,3 +51,49 @@ test('AD-8: the idempotency key is agent:<agentRunId>', () => {
   const idempotencyKey = `agent:${agentRunId}`;
   assert.equal(idempotencyKey, 'agent:run-42');
 });
+
+// ── LOT 1 / Story 1.1 — decisions normalisation (no auto-confirm) ──
+
+function normalizeDecisions(raw: unknown) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter(
+      (d): d is { stepId: string; answer: 'confirmed' | 'rejected' } =>
+        typeof d === 'object' &&
+        d !== null &&
+        typeof (d as { stepId?: unknown }).stepId === 'string' &&
+        ((d as { answer?: unknown }).answer === 'confirmed' ||
+          (d as { answer?: unknown }).answer === 'rejected'),
+    )
+    .map((d) => ({ stepId: d.stepId, answer: d.answer }));
+}
+
+test('LOT 1: a valid decisions array passes through verbatim', () => {
+  const raw = [
+    { stepId: 'seed-1', answer: 'confirmed' },
+    { stepId: 'seed-2', answer: 'rejected' },
+  ];
+  assert.deepEqual(normalizeDecisions(raw), raw);
+});
+
+test('LOT 1: a non-array / absent input degrades to [] (never an auto-confirm)', () => {
+  assert.deepEqual(normalizeDecisions(undefined), []);
+  assert.deepEqual(normalizeDecisions('nope'), []);
+  assert.deepEqual(normalizeDecisions(null), []);
+});
+
+test('LOT 1: malformed entries are dropped, valid ones kept', () => {
+  const raw: unknown[] = [
+    { stepId: 's1', answer: 'confirmed' },
+    { stepId: 's2', answer: 'maybe' }, // unknown answer → dropped
+    { answer: 'confirmed' }, // missing stepId → dropped
+    { stepId: 42, answer: 'rejected' }, // non-string stepId → dropped
+    'garbage',
+    null,
+    { stepId: 's3', answer: 'rejected' },
+  ];
+  assert.deepEqual(normalizeDecisions(raw), [
+    { stepId: 's1', answer: 'confirmed' },
+    { stepId: 's3', answer: 'rejected' },
+  ]);
+});

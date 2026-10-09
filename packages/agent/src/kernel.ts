@@ -67,6 +67,15 @@ export interface KernelRequest {
   signals?: import('./intent.ts').IntentRequest['signals'];
   /** resume an interrupted run (AD-8 recovery: state in Postgres) */
   resumeFrom?: { agentRunId: string; pendingPlan: Plan };
+  /**
+   * User confirmation decisions (ADR S5) — the answer to the `confirmation`
+   * events of a previous pass, keyed by stepId. The run proceeds a
+   * confirmation point only when a matching `confirmed` decision exists;
+   * `rejected` marks the step skipped (never executed); absent → the run
+   * stops at that step (event `confirmation` emitted, nothing after it
+   * runs — no auto-confirmation, AD-12/S5).
+   */
+  decisions?: Array<{ stepId: string; answer: 'confirmed' | 'rejected' }>;
 }
 
 /**
@@ -159,25 +168,72 @@ export class AgentKernel {
       now: () => this.deps.now(),
     });
 
-    // Confirmation points (write / destructive steps).
+    // Confirmation points (write / destructive steps, ADR S5).
+    // No auto-confirmation: a step is decided ONLY by `req.decisions`
+    // (answers returned by the device on the previous pass).
+    //  - no decision  → emit `confirmation`, mark the step skipped, stop
+    //    the run properly (yield `done`); nothing after it executes.
+    //  - rejected     → the step is skipped / never executed; the run
+    //    stops the same way.
+    //  - confirmed    → feed the ConfirmationEngine; execution proceeds.
+    // Resume (reprise) goes through the existing `resumeFrom` + a new
+    // decisions array: re-running carries its own pendingPlan via
+    // resumeFrom (whose stepIds are stable, unlike a fresh buildPlan) and
+    // the decisions key off those stepIds.
+    const decisions = new Map((req.decisions ?? []).map((d) => [d.stepId, d.answer]));
     for (const step of plan.steps) {
       if (step.confirmationRequired && step.status === 'pending') {
+        const answer = decisions.get(step.stepId);
+        if (answer === 'confirmed') {
+          confirmations.decide({ stepId: step.stepId, answer: 'confirmed', at: this.deps.now() });
+          continue;
+        }
+        // Rejected → the step is NEVER executed; stop the run so that
+        // no subsequent (potentially write/destructive) step runs either.
+        if (answer === 'rejected') {
+          step.status = 'skipped';
+          step.result = { stepId: step.stepId, ok: false, error: 'confirmation_rejected' };
+          confirmations.decide({ stepId: step.stepId, answer: 'rejected', at: this.deps.now() });
+          for (const later of plan.steps) {
+            if (later.status === 'pending') later.status = 'skipped';
+          }
+          state = this.state(agentRunId, 'action', 'cancelled', t0, {
+            plan,
+            confirmationMessage: `${step.tool} rejected by the user`,
+            confirmationStepId: step.stepId,
+          });
+          yield { type: 'done', state };
+          return;
+        }
+
+        // No decision yet → ask the user, then end the run properly here
+        // (ADR S5: never proceed past an unanswered confirmation point).
         const prompt = confirmations.prompt({
           stepId: step.stepId,
           tool: step.tool,
           risk: step.risk,
           message: `${step.tool}: ${JSON.stringify(step.input ?? '')}`,
         });
+        confirmations.decide({ stepId: prompt.stepId, answer: 'timeout', at: this.deps.now() });
+        step.status = 'skipped';
+        step.result = { stepId: step.stepId, ok: false, error: 'confirmation_pending' };
+        // Nothing after this point may run without a decision.
+        for (const later of plan.steps) {
+          if (later.status === 'pending') later.status = 'skipped';
+        }
         state = this.state(agentRunId, 'action', 'awaiting-confirmation', t0, {
           plan,
           confirmationMessage: prompt.message,
           confirmationStepId: prompt.stepId,
         });
         yield { type: 'confirmation', state, prompt };
-        // The decision comes back through the command bus; in this
-        // single-pass loop we assume confirmed (the job system + the
-        // device surface drive the real decision flow, 02 S4).
-        confirmations.decide({ stepId: prompt.stepId, answer: 'confirmed', at: this.deps.now() });
+        state = this.state(agentRunId, 'action', 'awaiting-confirmation', t0, {
+          plan,
+          confirmationMessage: prompt.message,
+          confirmationStepId: prompt.stepId,
+        });
+        yield { type: 'done', state };
+        return;
       }
     }
 
