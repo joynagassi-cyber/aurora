@@ -46,6 +46,8 @@ import {
   buildJobPort,
   buildMemoryEngine,
   buildAgentKernel,
+  setUserJwt,
+  clearUserJwt,
 } from "../_shared/fn-agent-bootstrap.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
@@ -248,7 +250,17 @@ function buildAgentRunDispatchers() {
         userId: string,
         payload: Record<string, unknown>,
       ): Promise<HandlerResult> => {
-        const res: HandlerResult = await handler.handler(jobId, userId, payload);
+        // LOT 1 / Story 1.2: hand the caller's validated user JWT to the
+        // kernel execution context (setUserJwt) so the invokeTool seam can
+        // reach fn-canvas as the real user. Clear it in a finally so a
+        // subsequent run never inherits the previous caller's identity.
+        setUserJwt(typeof payload.userJwt === "string" ? payload.userJwt : "");
+        let res: HandlerResult;
+        try {
+          res = await handler.handler(jobId, userId, payload);
+        } finally {
+          clearUserJwt();
+        }
         // SSoT update: patch the agent_runs row BY its uuid PK
         // (payload.agentRunsId, set by fn-agent-run at enqueue).
         // A missing agentRunsId (legacy payload) is a no-op.

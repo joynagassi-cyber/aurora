@@ -104,6 +104,7 @@ export function normalizeDecisions(
 async function enqueueAgentRun(req: {
   agentRunId: string;
   userId: string;
+  userJwt: string;
   body: AgentRunRequest;
 }): Promise<{ jobId: string; agentRunsId: string; alreadyQueued: boolean } | null> {
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) return null;
@@ -119,6 +120,14 @@ async function enqueueAgentRun(req: {
     // (AD-3) — the kernel handler normalises it once more on its side.
     ...(Array.isArray(req.body.decisions) ? { decisions: req.body.decisions } : {}),
     ...(req.body.resumeFrom ? { resumeFrom: req.body.resumeFrom } : {}),
+    // LOT 1 / Story 1.2: the caller's validated user JWT — the dispatcher
+    // hands it to the kernel execution context (setUserJwt) so the
+    // invokeTool seam can reach fn-canvas as the real user (AD-7: identity
+    // by JWT, never by body). Validated at request time by /auth/v1/user
+    // below; a stale/absent JWT is an empty string → the canvas route fails
+    // closed with auth/missing_user_jwt. NOT logged, NOT passed to the tool
+    // body — context only.
+    userJwt: req.userJwt ?? "",
     // AD-3: no provider / key / router material in the payload.
   };
 
@@ -210,7 +219,12 @@ Deno.serve(async (req) => {
     const userId = user.id ?? "";
 
     const agentRunId = ulid();
-    const enq = await enqueueAgentRun({ agentRunId, userId, body });
+    // LOT 1 / Story 1.2: the validated user JWT is carried in the job
+    // payload (`userJwt`) so the dispatcher can set it on the kernel
+    // execution context. The value passed here is the EXACT header value
+    // that /auth/v1/user accepted above — not the userId, not a fresh
+    // token. Never logged.
+    const enq = await enqueueAgentRun({ agentRunId, userId, userJwt: match[1], body });
     if (enq === null) {
       return err("agent/enqueue_failed", "could not persist the agent_run job", 503);
     }

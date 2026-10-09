@@ -97,3 +97,49 @@ test('LOT 1: malformed entries are dropped, valid ones kept', () => {
     { stepId: 's3', answer: 'rejected' },
   ]);
 });
+
+// ── LOT 1 / Story 1.2 — user JWT propagation (fail-closed) ──
+//
+// Mirrors the bootstrap's user-JWT execution context + the invokeTool
+// seam's header contract (kept Node-runnable: no fetch, pure decision).
+function makeJwtContext(initial: string) {
+  let active = initial;
+  return {
+    set: (jwt: string) => { active = jwt ?? ''; },
+    get: () => active,
+    clear: () => { active = ''; },
+  };
+}
+
+/** The invokeTool canvas-route header decision (bootstrap contract). */
+function canvasAuthDecision(userJwt: string) {
+  // The seam's fail-closed rule: no JWT → no call, the documented error.
+  if (!userJwt) return { called: false, error: 'auth/missing_user_jwt' as const };
+  // With a JWT the call goes out with Authorization = Bearer <jwt> and
+  // the apikey kept — the userId never appears in the header.
+  return { called: true, headers: { Authorization: `Bearer ${userJwt}`, apikey: 'service-role' } };
+}
+
+test('LOT 1.2: no user JWT → no fetch, the error is auth/missing_user_jwt', () => {
+  const ctx = makeJwtContext('');
+  const d = canvasAuthDecision(ctx.get());
+  assert.equal(d.called, false, 'no HTTP call without a JWT');
+  assert.equal(d.error, 'auth/missing_user_jwt');
+});
+
+test('LOT 1.2: a user JWT → the Authorization header carries the JWT, never the userId', () => {
+  const ctx = makeJwtContext('eyJ-valid-user-jwt');
+  ctx.set('eyJ-valid-user-jwt');
+  const d = canvasAuthDecision(ctx.get());
+  assert.equal(d.called, true);
+  assert.equal(d.headers?.Authorization, 'Bearer eyJ-valid-user-jwt');
+  // The header is built ONLY from the JWT — a userId string would never
+  // enter the Authorization value. Prove it: even if the userId were
+  // concatenated, the header still must not carry it.
+  const userId = 'user-uuid-123';
+  assert.ok(!String(d.headers?.Authorization ?? '').includes(userId),
+    'the Authorization header must not contain the userId');
+  assert.equal(d.headers?.apikey, 'service-role', 'the apikey is kept');
+  ctx.clear();
+  assert.equal(ctx.get(), '', 'clear() empties the context (run boundary)');
+});

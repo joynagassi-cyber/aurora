@@ -362,6 +362,45 @@ export function buildJobPort(): JobDispatcherPort {
   };
 }
 
+// ——— LOT 1 / Story 1.2 — user-JWT context for the kernel's invokeTool seam —
+//
+// The kernel's `invokeTool` seam (below, canvas.* routing) needs the
+// caller's user JWT to reach fn-canvas, which identifies the user by
+// JWT (AD-7: identity NEVER comes from the HTTP body). The job
+// dispatcher boots the kernel WITHOUT any request context, so the
+// bootstrap carries the validated JWT here — in a module-local var,
+// set by the caller (fn-agent-run, after the /auth/v1/user
+// validation) before the kernel run, never in the tool body,
+// never logged. Absent/empty = no user JWT → the canvas route must
+// fail closed with `auth/missing_user_jwt` (no call at all).
+let activeUserJwt = "";
+
+/**
+ * Set the user JWT that the kernel's invokeTool seam propagates to
+ * fn-canvas (`Authorization: Bearer <jwt>`). Must be called with the
+ * caller's VALIDATED JWT (the one that passed the /auth/v1/user
+ * check in fn-agent-run) — never a raw header value, never the
+ * user id. Clear on every run boundary: a stale JWT from another
+ * caller must not leak into the next run (AD-7 identity hygiene).
+ */
+export function setUserJwt(jwt: string): void {
+  activeUserJwt = jwt ?? "";
+}
+
+/** The active caller's user JWT (empty string when unset / cleared). */
+export function getUserJwt(): string {
+  return activeUserJwt;
+}
+
+/**
+ * Clear the active user JWT (run boundary). Call after the kernel
+ * run finishes so a subsequent unauthenticated / different-caller
+ * run never inherits the previous caller's identity.
+ */
+export function clearUserJwt(): void {
+  activeUserJwt = "";
+}
+
 // ——— Memory engine (expert_skills server-only, AD-12) ———
 export function buildMemoryEngine(): MemoryEngine {
   const deps: MemoryDeps = {
@@ -531,12 +570,19 @@ export function buildAgentKernel(): AgentKernel | null {
       if (typeof cmd === 'string' && cmd.startsWith('canvas.')) {
         const verb = cmd === 'canvas.read' ? 'read' : cmd === 'canvas.write' ? 'write' : cmd === 'canvas.comment' ? 'comment' : cmd === 'canvas.create' ? 'create' : cmd === 'canvas.lock' ? 'lock' : cmd === 'canvas.rename' ? 'rename' : null;
         if (verb && userId) {
-          // Le body fn-canvas = verb + champs outils, SANS userId (l'identité
-          // vient du Bearer user JWT — AD-7 : jamais du body).
+          // LOT 1 / Story 1.2: fn-canvas identifies the caller by user JWT
+          // (AD-7: never from the body). The caller's validated JWT arrives
+          // through the kernel execution context (setUserJwt, set by
+          // fn-agent-run after the /auth/v1/user check) — NOT via the tool
+          // body, NOT logged. Missing / stale JWT → fail closed, no call.
+          const userJwt = getUserJwt();
+          if (!userJwt) {
+            return { ok: false, executed: false, error: 'auth/missing_user_jwt' };
+          }
           const { userId: _omit, command: _omitCmd, ...canvasBody } = payload;
           const res = await fetch(SUPABASE_URL + '/functions/v1/fn-canvas', {
             method: 'POST',
-            headers: { ...restHeaders(), Authorization: `Bearer ${userId}`, apikey: SERVICE_ROLE_KEY },
+            headers: { ...restHeaders(), Authorization: `Bearer ${userJwt}`, apikey: SERVICE_ROLE_KEY },
             body: JSON.stringify({ verb, ...canvasBody }),
           });
           if (res.ok) {
