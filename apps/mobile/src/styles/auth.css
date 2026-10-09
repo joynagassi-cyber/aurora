@@ -104,6 +104,7 @@
   line-height: 1.5;
   color: var(--aurora-text-muted);
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   white-space: pre-wrap;

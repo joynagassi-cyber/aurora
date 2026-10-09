@@ -24,9 +24,11 @@ import { IonButton, IonButtons, IonContent, IonHeader, IonTitle } from '@ionic/r
 import {
   ArrowLeft,
   Brain,
+  CalendarDays,
   Code,
   Globe,
   Lock,
+  MapPin,
   Sparkles,
   Wrench,
 } from 'lucide-react';
@@ -161,6 +163,41 @@ export function AgentCapacitesPage() {
               « Auto » : l'assistant choisit l'outil adapté pour toi. Les
               autres modes arrivent plus tard.
             </p>
+          </section>
+
+          {/* ——— PRD-AI-08 : Autorisations système (Phase 1 = Android)
+              HONNÊTES : seule l'interface calendrier (le module
+              Agenda de l'app) est accordée. La localisation n'est PAS
+              demandée en Phase 1 → état « Non demandée » explicite +
+              un lien RÉEL vers les réglages Android de l'app
+              (packages/platform adapter, jamais un fake toggle). ——— */}
+          <section className="agent-cap-section">
+            <h3 className="agent-cap-section-title">Autorisations</h3>
+            <div className="agent-cap-row">
+              <span className="agent-cap-icon" aria-hidden>
+                <CalendarDays size={16} />
+              </span>
+              <span className="agent-cap-text">
+                <span className="agent-cap-title">Calendrier</span>
+                <span className="agent-cap-reason">
+                  Utilisé par l'agenda de l'app pour proposer des créneaux.
+                </span>
+              </span>
+              <span className="agent-cap-state is-granted">Accordée</span>
+            </div>
+            <div className="agent-cap-row">
+              <span className="agent-cap-icon" aria-hidden>
+                <MapPin size={16} />
+              </span>
+              <span className="agent-cap-text">
+                <span className="agent-cap-title">Localisation</span>
+                <span className="agent-cap-reason">
+                  Non demandée en Phase 1 — l'assistant ne lit pas ta
+                  position.
+                </span>
+              </span>
+              <span className="agent-cap-state">Non demandée</span>
+            </div>
           </section>
 
           {/* ——— LOCKED : grisées avec raison (AD-13, jamais mort) ——— */}

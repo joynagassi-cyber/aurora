@@ -44,6 +44,7 @@ import {
   Brain,
   Compass,
   Cpu,
+  FolderOpen,
   Link2,
   Menu,
   MessageSquare,
@@ -72,6 +73,7 @@ import { useMobileData } from '../../query/context';
 import { useAgentRun } from '../../query/agent-runs';
 import { useKilledDetection } from '../../hooks/use-killed';
 import type { AgentRunRow } from '../../lib/agent-client';
+import { useUiStateStore } from '../../state/ui-state';
 
 // ——— Model picker catalog (AD-3: static, public config — no key here). ———
 const MODEL_CATALOG: Array<{ provider: string; name: string; models: string[] }> = [
@@ -283,6 +285,7 @@ export function AgentPage() {
     { label: 'Nouvelle conversation', href: '/agent', Icon: <MessageSquare size={16} /> },
     { label: 'Conversations', href: '/agent/conversations', Icon: <MessageSquarePlus size={16} /> },
     { label: 'Capacités', href: '/agent/capacites', Icon: <SlidersHorizontal size={16} /> },
+    { label: 'Bibliothèque', href: '/agent/bibliotheque', Icon: <FolderOpen size={16} /> },
     { label: 'Connecteurs', href: '/integrations', Icon: <Link2 size={16} /> },
     { label: 'Skills', href: '/skills', Icon: <Sparkles size={16} /> },
     { label: 'Canvas', href: '/canvas/new', Icon: <PenLine size={16} /> },

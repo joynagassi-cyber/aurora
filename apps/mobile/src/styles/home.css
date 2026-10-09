@@ -12,6 +12,7 @@
   margin: 12px 16px;
   padding: 16px;
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   box-shadow: var(--aurora-shadow-card);

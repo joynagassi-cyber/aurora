@@ -37,8 +37,10 @@ import {
   IMAGE_THEMES,
   PRESETS,
   THEMES,
+  gradientCSS,
   resolveImageThemeFile,
   type AuroraTheme,
+  type AuroraPreset,
   type ExpressiveThemeName,
   type PresetName,
   Button,
@@ -57,15 +59,64 @@ import {
 import { useUiStateStore } from '../../state/ui-state';
 import { useUserFeatures } from '../../query/user-features';
 
-/** The accent swatch for a theme / preset (its OWN tokens, 05 §5.7). */
-function swatchGradient(t: AuroraTheme | Record<string, unknown>): string {
-  const colors =
-    t && 'colors' in t ? ((t as AuroraTheme).colors ?? {}) : {};
-  // A preset may carry only a partial color set — fall back to the
-  // default aurora accents (THEMES.aurora) so the swatch is never empty.
-  const base = (THEMES as Record<string, AuroraTheme>).aurora?.colors ?? {};
-  const c = { ...base, ...(colors as Partial<AuroraTheme['colors']>) };
-  return `linear-gradient(120deg, ${c.primary}, ${c.secondary}, ${c.accent})`;
+/**
+ * The 13 swatches (10 expressive + 3 presets) grouped by FAMILY, so a
+ * "plain color" theme and a "gradient" theme are never shown as the same
+ * thing on the settings screen (05 §5.4: the gradient is theme-owned,
+ * distinct from a flat palette). This is DISPLAY-ONLY categorization
+ * (not in the JSON — AD-15 keeps adding a theme to a JSON file + 1 index
+ * line, never re-shuffling the catalog).
+ */
+const GRADIENT_FAMILY: readonly ExpressiveThemeName[] = [
+  'aurora', 'lagoon', 'cosmos', 'vesper', 'solara',
+] as const;
+
+/**
+ * The honest preview swatch for a theme / preset (05 §5.7 — the theme's
+ * OWN tokens, never a re-invented palette):
+ *   - expressive theme → its theme-owned `gradient` when declared
+ *     (`gradientCSS`, no fake fallback), else its flat palette
+ *     (2+ colors = primary → secondary, 1 color = plain);
+ *   - preset → ONLY the colors it actually carries (slate = 2-color
+ *     gradient, nocturne = plain deep black, high-contrast = black/white
+ *     split) — never a borrow from the default theme.
+ */
+function swatchBackground(
+  t: AuroraTheme | AuroraPreset,
+): string {
+  if ('kind' in t && t.kind === 'preset') {
+    const colors = t.colors ?? {};
+    const stopOf = (k: keyof typeof colors): string | undefined =>
+      colors[k] as string | undefined;
+    if (t.name === 'high-contrast') {
+      // The most honest rendering of "accessibilité forcée": pure
+      // black/white split (no color at all).
+      return 'linear-gradient(135deg, #FFFFFF 49%, #000000 51%)';
+    }
+    if (t.name === 'nocturne') {
+      // Nocturne = a DARK technical preset (styleOverride: dark) — the
+      // swatch is plain deep black, not the light palette it can't
+      // carry (it forces the dark canvas, 05 §5.5).
+      return '#000000';
+    }
+    // slate & any future preset: render the exact colors it declares.
+    const stops = [stopOf('primary'), stopOf('secondary'), stopOf('accent')]
+      .filter((s): s is string => Boolean(s));
+    if (stops.length >= 2) return `linear-gradient(120deg, ${stops.join(', ')})`;
+    if (stops.length === 1) return stops[0]!;
+    // No colors declared (high-contrast): fall through to plain black.
+    return '#000000';
+  }
+  const theme = t as AuroraTheme;
+  const gradient = gradientCSS(theme.gradient);
+  if (gradient) return gradient;
+  // No declared gradient → the flat palette: primary → secondary (or a
+  // single primary) — never a borrow from another theme (AD-13).
+  const stops = [theme.colors.primary, theme.colors.secondary]
+    .filter((s): s is string => Boolean(s));
+  return stops.length >= 2
+    ? `linear-gradient(120deg, ${stops.join(', ')})`
+    : stops[0] ?? theme.colors.primary;
 }
 
 /** The 8 G-M7 module rows (same ids as GATED_FEATURES / FEATURE_MODULES). */
@@ -88,6 +139,10 @@ export function SettingsPage() {
     setAuroraImageTheme,
     theme,
     setTheme,
+    projectsSort,
+    setProjectsSort,
+    projectsColumnOrder,
+    setProjectsColumnOrder,
   } = useUiStateStore();
   const { isEnabled, setFeature } = useUserFeatures();
   const navigate = useNavigate();
@@ -98,10 +153,14 @@ export function SettingsPage() {
   const [silence, setSilence] = useState<'never' | 'nights' | 'focus'>('focus');
 
   // S6 deep link (?section=modules — le CTA « Activer dans les Paramètres »):
-  // scroll to the modules card once mounted.
+  // scroll to the modules card once mounted. C5 (2026-10-08) : idem pour
+  // ?section=projects (le menu ⋮ de /projects pointe vers le Card des vues).
   useEffect(() => {
-    if (searchParams.get('section') === 'modules') {
-      document.getElementById('modules-section')?.scrollIntoView({ behavior: 'smooth' });
+    const section = searchParams.get('section');
+    if (section === 'modules' || section === 'projects') {
+      document
+        .getElementById(section === 'projects' ? 'projects-section' : 'modules-section')
+        ?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [searchParams]);
 
@@ -167,12 +226,15 @@ export function SettingsPage() {
             <CardHeader>
               <CardTitle>Thème</CardTitle>
               <CardDescription>
-                10 thèmes expressifs + 3 presets.
+                10 thèmes expressifs + 3 presets — séparés en « Dégradés »,
+                « Couleurs unies » et « Presets techniques ».
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="theme-grid" role="radiogroup" aria-label="Thème">
-                {(Object.keys(THEMES) as ExpressiveThemeName[]).map((name) => (
+              <div className="theme-grid" role="radiogroup" aria-label="Thème — dégradés">
+                {(Object.keys(THEMES) as ExpressiveThemeName[]).filter((n) =>
+                  GRADIENT_FAMILY.includes(n),
+                ).map((name) => (
                   <button
                     key={name}
                     type="button"
@@ -184,7 +246,7 @@ export function SettingsPage() {
                   >
                     <span
                       className="theme-swatch-dot"
-                      style={{ background: swatchGradient(THEMES[name]) }}
+                      style={{ background: swatchBackground(THEMES[name]) }}
                       aria-hidden
                     />
                     <span className="theme-swatch-name">
@@ -192,6 +254,32 @@ export function SettingsPage() {
                     </span>
                   </button>
                 ))}
+              </div>
+              <div className="theme-grid" role="radiogroup" aria-label="Thème — couleurs unies">
+                {(Object.keys(THEMES) as ExpressiveThemeName[]).filter(
+                  (n) => !GRADIENT_FAMILY.includes(n),
+                ).map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    role="radio"
+                    aria-checked={auroraTheme === name}
+                    className="theme-swatch"
+                    data-pressed={auroraTheme === name}
+                    onClick={() => setAuroraTheme(name)}
+                  >
+                    <span
+                      className="theme-swatch-dot"
+                      style={{ background: swatchBackground(THEMES[name]) }}
+                      aria-hidden
+                    />
+                    <span className="theme-swatch-name">
+                      {name.charAt(0).toUpperCase() + name.slice(1)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <div className="theme-grid" role="radiogroup" aria-label="Presets techniques">
                 {presets.map((name) => (
                   <button
                     key={name}
@@ -205,13 +293,15 @@ export function SettingsPage() {
                     <span
                       className="theme-swatch-dot"
                       style={{
-                        background: swatchGradient(
-                          PRESETS[name] as unknown as AuroraTheme,
-                        ),
+                        background: swatchBackground(PRESETS[name]),
                       }}
                       aria-hidden
                     />
-                    <span className="theme-swatch-name">{name}</span>
+                    <span className="theme-swatch-name">
+                      {name === 'high-contrast'
+                        ? 'High-contrast'
+                        : name.charAt(0).toUpperCase() + name.slice(1)}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -250,7 +340,12 @@ export function SettingsPage() {
                   <span className="theme-swatch-name">Aucun</span>
                 </button>
                 {IMAGE_THEMES.map((t) => {
-                  const file = resolveImageThemeFile(t.slug, 'portrait') ?? '';
+                  // The VIGNETTE is the landscape variant (the 512×286
+                  // `_paysage` files) cropped square (`object-fit: cover` in
+                  // data.css) — not the portrait crop that misread the
+                  // landscape illustration (batch 2026-10-B: 26 × P + 26 × L
+                  // all exist in /public/themes/).
+                  const file = resolveImageThemeFile(t.slug, 'landscape') ?? '';
                   const active = auroraImageTheme === t.slug;
                   return (
                     <button
@@ -316,6 +411,62 @@ export function SettingsPage() {
                   <Moon size={20} />
                   <span className="theme-swatch-name">Sombre</span>
                 </button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* C5 2026-10-08 : les réglages de l'affichage des vues
+              productivité (tri + ordre des colonnes kanban) — c'est
+              « là où on trouve tout » quand le menu ⋮ d'une page pointe
+              vers /settings?section=projects. Les clés sont stockées en
+              ui-state (cosmétique, AD-7) pour que la page les lise. */}
+          <Card id="projects-section">
+            <CardHeader>
+              <CardTitle>Vues des projets</CardTitle>
+              <CardDescription>
+                Le tri par défaut et l'ordre des colonnes du kanban —
+                réglages globaux retrouvés depuis le menu ⋮ de /projects.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="settings-prefs">
+              <div className="settings-field">
+                <span className="settings-field-label">Tri par défaut</span>
+                <Select
+                  value={projectsSort}
+                  onValueChange={(v) => setProjectsSort(v as typeof projectsSort)}
+                >
+                  <SelectTrigger aria-label="Tri par défaut des projets" className="w-full">
+                    <SelectValue placeholder="Tri par défaut" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="date">Date</SelectItem>
+                    <SelectItem value="progression">Progression</SelectItem>
+                    <SelectItem value="priorite">Priorité</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="settings-field">
+                <span className="settings-field-label">
+                  Ordre des colonnes du kanban
+                </span>
+                <Select
+                  value={projectsColumnOrder}
+                  onValueChange={(v) =>
+                    setProjectsColumnOrder(v as typeof projectsColumnOrder)
+                  }
+                >
+                  <SelectTrigger
+                    aria-label="Ordre des colonnes du kanban"
+                    className="w-full"
+                  >
+                    <SelectValue placeholder="Ordre des colonnes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="statut">Par statut</SelectItem>
+                    <SelectItem value="echeance">Par échéance</SelectItem>
+                    <SelectItem value="priorite">Par priorité</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>

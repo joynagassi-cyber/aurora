@@ -11,6 +11,7 @@
    only, pas de fond coloré derrière le logo transparent (S9 l.367–368). */
 [data-app-header] {
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
 }
 .app-brand-bar {
   display: flex;
@@ -51,6 +52,7 @@
   height: 56px;
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border-top: 1px solid var(--aurora-border);
   box-shadow: var(--aurora-shadow-card);
 }

@@ -10,10 +10,11 @@
  */
 import { describe, expect, it } from "vitest";
 import { THEMES } from "../src/themes";
+import { resolveImageThemeFile } from "../src/themes/image-themes";
 import {
   accentInk,
   contrastRatio,
-  resolveImageThemeFile,
+  hexLuminance,
   resolveToken,
 } from "../src/themes/resolve";
 
@@ -41,15 +42,11 @@ describe("style-aware theme resolution (05 §5.4 calibration)", () => {
       expect(resolveToken(name, "dark", "accent.primary")).toBe(t.colorsDark?.primary ?? t.colors.primary);
       // The dark surface is a DARK tint (lower luminance than the light chip).
       const darkSurface = t.colorsDark?.surface ?? t.colors.surface;
-      const hex = darkSurface.replace("#", "");
-      const lum = (r: number, g: number, b: number) => {
-        const f = (v: number) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
-        return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
-      };
-      const val = (shift: number) => Math.floor(hex.slice(shift, shift + 2), 16) / 255;
-      const L = lum(val(4), val(2), val(0));
-      // A light-canvas surface chip would be L > 0.55; the dark variant must be dark.
-      expect(L, `theme ${name} colorsDark.surface too bright`).toBeLessThan(0.55);
+      // A dark-canvas variant must be a DARK tint (lightness < 0.55):
+      // the light-canvas `surface` chip would be light (e.g. `#B8DFFF`
+      // ≈ 0.87) — the dark variant must not be.
+      const lum = hexLuminance(darkSurface);
+      expect(lum, `theme ${name} colorsDark.surface too bright (${darkSurface})`).toBeLessThan(0.55);
     }
   });
 

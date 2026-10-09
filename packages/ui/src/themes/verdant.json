@@ -13,6 +13,10 @@
     "accent": "#A8E2A2",
     "surface": "#12301F"
   },
+  "gradient": {
+    "angle": 120,
+    "stops": ["#247A55", "#42A96B", "#8CCF8A"]
+  },
   "gradients": "vert profond → menthe (canopée)",
   "illustrationMood": "végétation, canopée, nature vivante",
   "iconTreatment": "outline 1.5px, couleur #247A55",

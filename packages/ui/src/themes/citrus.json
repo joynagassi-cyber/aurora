@@ -13,6 +13,10 @@
     "accent": "#C9E65C",
     "surface": "#3A2A08"
   },
+  "gradient": {
+    "angle": 120,
+    "stops": ["#F28C28", "#F7C948", "#B7D83D"]
+  },
   "gradients": "orange → jaune → lime (fruits du soleil)",
   "illustrationMood": "agrumes, soleil, énergie",
   "iconTreatment": "outline 1.5px, couleur #F28C28 + accents lime",

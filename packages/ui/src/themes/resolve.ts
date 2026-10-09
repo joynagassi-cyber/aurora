@@ -30,6 +30,21 @@ import type {
   ThemeName,
 } from "./types";
 
+/**
+ * Render a theme-owned gradient (05 §5.4) as a CSS `linear-gradient()` —
+ * the CONSUMABLE version of the palette: `--aurora-theme-gradient`.
+ * Returns `""` (absent) when there are fewer than 2 stops — never a
+ * fake/plain-color fallback (AD-13 honest state): a theme without a
+ * usable gradient gets no `--aurora-theme-gradient` at all.
+ */
+export function gradientCSS(
+  g: AuroraTheme["gradient"],
+): string {
+  if (!g || g.stops.length < 2) return "";
+  const angle = g.angle ?? 120;
+  return `linear-gradient(${angle}deg, ${g.stops.join(", ")})`;
+}
+
 /** Preset names (05 §5.5) — a ThemeName may be a preset. */
 function presetNameOf(name: ThemeName): PresetName | undefined {
   return (Object.keys(PRESETS) as PresetName[]).includes(
@@ -39,7 +54,7 @@ function presetNameOf(name: ThemeName): PresetName | undefined {
     : undefined;
 }
 
-/** Token key space: accent.* (theme) + the neutral token names. */
+/** Token key space: accent.* (theme) + theme.gradient (05 §5.4) + neutral. */
 export type TokenKey =
   | "accent.primary"
   | "accent.secondary"
@@ -48,6 +63,7 @@ export type TokenKey =
   | "accent.on-primary"
   | "accent.focus-ring"
   | "accent.surface"
+  | "theme.gradient"
   | keyof (typeof NEUTRAL_STYLES)["light"];
 
 // ---- WCAG contrast helpers (05 §5.4 calibration, roadmap 10-07) ----
@@ -112,7 +128,7 @@ export function resolveToken(
   // adjustments) — in that case it acts as a preset on top of the
   // default theme, not as an expressive theme (05 §5.5).
   const themeEntry = THEMES[themeName as ExpressiveThemeName];
-  let theme: AuroraTheme =
+  const theme: AuroraTheme =
     themeEntry ?? { ...THEMES["aurora"] };
   let neutralStyle: NeutralStyle = style;
 
@@ -142,6 +158,13 @@ export function resolveToken(
     presetColors && Object.keys(presetColors).length > 0
       ? { ...styleAccents, ...(presetColors as Partial<typeof styleAccents>) }
       : styleAccents;
+  // The theme-owned CSS gradient (05 §5.4): consumed as
+  // `--aurora-theme-gradient` by the swatch preview + decorative
+  // surfaces. Presets carry no gradient of their own — they adjust the
+  // EXPRESSIVE theme's accents on top of it, so a preset keeps the
+  // underlying theme's gradient (the preset itself is not a universe,
+  // 05 §5.5).
+  const gradientValue = gradientCSS(theme.gradient);
   // on-primary = the readable ink over the resolved primary accent:
   // auto-picked between the style's ink and its opposite (WCAG, 05 §5.4.1).
   // Pure palettes (owner 10-07): dark opposite = #000000, light = #FFFFFF.
@@ -168,6 +191,14 @@ export function resolveToken(
   // Neutral tokens — style layer only (05 §5.3 rows 2–3).
   const neutralValue = (neutral as unknown as Record<string, string>)[tokenKey];
   if (neutralValue !== undefined) return neutralValue;
+
+  // Theme-owned gradient (05 §5.4): only the EXPRESSESSIVE theme layer
+  // defines it (presets are accent-only adjustments, 05 §5.5) — return it
+  // as-is, "" when the theme has no usable gradient (never a fake
+  // fallback, AD-13).
+  if (tokenKey === "theme.gradient") {
+    return gradientValue;
+  }
 
   // Fallback: default theme (aurora) — 05 §5.3 "défaut_du_thème_par_défaut".
   const defaultAccent = accentMap[tokenKey];
@@ -198,10 +229,14 @@ export function resolveThemeCSSVars(
     "accent.on-primary",
     "accent.focus-ring",
     "accent.surface",
+    "theme.gradient",
     ...(Object.keys(NEUTRAL_STYLES["light"]) as TokenKey[]),
   ];
   for (const key of keys) {
-    out[`--aurora-${key}`] = resolveToken(themeName, style, key, presetName);
+    const cssVarName = key === "theme.gradient"
+      ? "--aurora-theme-gradient"
+      : `--aurora-${key}`;
+    out[cssVarName] = resolveToken(themeName, style, key, presetName);
   }
 
   // Preset geometric overrides (05 §5.5 / §5.9): focus ring width + tap

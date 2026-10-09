@@ -68,6 +68,7 @@
   min-height: 320px;
   padding: 12px;
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   color: var(--aurora-text-primary);
@@ -200,6 +201,7 @@
   gap: 2px;
   padding: 4px;
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border-strong, var(--aurora-border));
   border-radius: 999px;
   box-shadow: var(--aurora-shadow-card);
@@ -245,6 +247,7 @@
   margin: 0 16px 12px;
   padding: 12px;
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
 }

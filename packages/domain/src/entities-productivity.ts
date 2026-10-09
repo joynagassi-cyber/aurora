@@ -126,6 +126,27 @@ export interface Routine {
   updatedAt: string;
 }
 
+/** Countdown event (PRD-CD-01, lot C 2026-10-08) — days until a date
+ *  (fête, anniversaire, date marquante). Local-only shape for now (the
+ *  mirror is not wired, AD-7) : the `Countdown` entity is declared here
+ *  so /countdown can render an honest empty + derived days-left without
+ *  inventing a second source of truth. */
+export interface Countdown {
+  id: string;
+  userId: string;
+  /** The kind of countdown (style, ref_109). */
+  kind: 'fete' | 'anniversaire' | 'date_anniversaire' | 'countdown';
+  title: string;
+  /** ISO 8601 target date — the days-left is DERIVED (targetDate - today),
+   *  never stored (AD-7: one source of truth). */
+  targetDate: string;
+  /** Optional user image behind the card (ref_109's "photo plein écran"
+   *  style). Never a fixed asset — honest: absent = no image. */
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Note {
   id: string;
   userId: string;

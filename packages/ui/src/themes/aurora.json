@@ -14,6 +14,10 @@
     "accent": "#9E8BFF",
     "surface": "#14324F"
   },
+  "gradient": {
+    "angle": 120,
+    "stops": ["#22C7D6", "#3678F6", "#7B61FF"]
+  },
   "gradients": "cyan → blue → violet",
   "illustrationMood": "ciel à l'aube, nuages légers, lueurs douces",
   "iconTreatment": "outline 1.5px, couleur #3678F6 + accents cyan",

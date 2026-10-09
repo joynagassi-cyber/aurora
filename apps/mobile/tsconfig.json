@@ -16,7 +16,19 @@
       "ES2022",
       "DOM",
       "DOM.Iterable"
-    ]
+    ],
+    /* @aurora/ui's package.json points `types` at `src/index.ts` (the live
+       SSoT, AD-15) — but a stale pre-built `packages/ui/dist/` (2026-10-06)
+       still sits on disk, and the `bundler` resolver can surface its
+       `dist/index.d.ts` through the node_modules symlink. The `paths`
+       override below forces resolution to the SOURCE `src/index.ts`
+       directly, so typecheck + build see the live catalog (the new
+       gradient/accentInk/resolveImageThemeFile exports, 05 §5.4 rework)
+       and never the lagging build artifact. */
+    "baseUrl": ".",
+    "paths": {
+      "@aurora/ui": ["../../packages/ui/src/index.ts"]
+    }
   },
   "include": [
     "src"

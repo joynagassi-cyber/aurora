@@ -68,6 +68,33 @@ export interface UiStateStore {
    * domain-entity cache).
    */
   agentResearchMode: 'off' | 'standard' | 'deep';
+  /**
+   * Per-page active in-page view (C5 2026-10-08) : the in-page Segmented
+   * control + the horizontal glide are BOTH bound to this one T4
+   * cosmetic-persistent key — the return always finds the same view
+   * (05 §3.4 l.743-746, non-surprise). Never entity data (AD-7).
+   */
+  projectsView: 'kanban' | 'rapports' | 'gantt' | 'timeline' | 'list';
+  /** The hidden side-panel revealed by the horizontal glide (C5) : open/closed. */
+  panelOpen: boolean;
+  /** C5 : « /settings?section=projects » — the global sort + kanban column order,
+   *  the last item of the ⋮ menu routes here (le réglage global, retrouvable
+   *  depuis chaque page). Cosmetic (AD-7).
+   *  NOTE : `projectsColumnOrder` est LE SEUL réglage « Kanban » persistant
+   *  (le tri par l'ordre des colonnes du board, 05 §4.3.1 l.1438) ; le TRI
+   *  de la Liste vit dans `projectsSort` (05 §4.3.1 l.1436-1437) — les deux
+   *  sont des réglages globaux distincts, jamais mélangés (05 §3.5 l.851 :
+   *  « les options sont persistantes par page, pas partagées »). */
+  projectsSort: 'date' | 'progression' | 'priorite';
+  projectsColumnOrder: 'statut' | 'echeance' | 'priorite';
+  /**
+   * Tri des tâches (C5.4 propagation, 10-08) : `echeance` (la date
+   * d'échéance, l'ordre le plus courant) · `priorite` (la priorité,
+   * l'ordre le plus « important ») · `titre` (alphabétique). T4
+   * cosmetic-persistent (le retour retrouve le même tri, 05 §3.4
+   * l.743-746). Jamais de données entités (AD-7).
+   */
+  tasksSort: 'echeance' | 'priorite' | 'titre';
 
   setActiveTab: (tab: TabId) => void;
   setTasksView: (view: UiStateStore['tasksView']) => void;
@@ -81,6 +108,15 @@ export interface UiStateStore {
   markKilled: (killed: boolean) => void;
   setOnboardingSeen: (seen: boolean) => void;
   setAgentResearchMode: (mode: UiStateStore['agentResearchMode']) => void;
+  /** C5 2026-10-08 : switch the in-page view (pager + glide share this). */
+  setProjectsView: (view: UiStateStore['projectsView']) => void;
+  /** C5 : reveal / hide the hidden side panel. */
+  setPanelOpen: (open: boolean) => void;
+  /** C5 : the global « /settings?section=projects » values (menu ⋮ last item). */
+  setProjectsSort: (sort: UiStateStore['projectsSort']) => void;
+  setProjectsColumnOrder: (order: UiStateStore['projectsColumnOrder']) => void;
+  /** C5.4 : the global « /settings?section=tasks » sort value (menu ⋮). */
+  setTasksSort: (sort: UiStateStore['tasksSort']) => void;
 }
 
 export const useUiStateStore = create<UiStateStore>()(
@@ -101,6 +137,13 @@ export const useUiStateStore = create<UiStateStore>()(
       // PRD-AI-06 (10-08) : préférence de recherche web par défaut « off »
       // (l'agent ne cherche sur le web que si l'utilisateur l'autorise).
       agentResearchMode: 'off',
+      projectsView: 'kanban',
+      panelOpen: false,
+      projectsSort: 'date',
+      projectsColumnOrder: 'statut',
+      // C5.4 (10-08) : le tri par défaut des tâches = l'échéance (l'ordre
+      // le plus courant, le retour retrouve le même tri).
+      tasksSort: 'echeance',
       setActiveTab: (activeTab) => set({ activeTab }),
       setTasksView: (tasksView) => set({ tasksView }),
       setProgressPeriod: (progressPeriod) => set({ progressPeriod }),
@@ -113,6 +156,11 @@ export const useUiStateStore = create<UiStateStore>()(
       markKilled: (killed) => set({ killed }),
       setOnboardingSeen: (onboardingSeen) => set({ onboardingSeen }),
       setAgentResearchMode: (agentResearchMode) => set({ agentResearchMode }),
+      setProjectsView: (projectsView) => set({ projectsView }),
+      setPanelOpen: (panelOpen) => set({ panelOpen }),
+      setProjectsSort: (projectsSort) => set({ projectsSort }),
+      setProjectsColumnOrder: (projectsColumnOrder) => set({ projectsColumnOrder }),
+      setTasksSort: (tasksSort) => set({ tasksSort }),
     }),
     {
       // ui-state only — never entity data (AD-7). localStorage bridge for
@@ -129,6 +177,11 @@ export const useUiStateStore = create<UiStateStore>()(
         auroraImageTheme: s.auroraImageTheme,
         onboardingSeen: s.onboardingSeen,
         agentResearchMode: s.agentResearchMode,
+        projectsView: s.projectsView,
+        panelOpen: s.panelOpen,
+        projectsSort: s.projectsSort,
+        projectsColumnOrder: s.projectsColumnOrder,
+        tasksSort: s.tasksSort,
       }),
     },
   ),

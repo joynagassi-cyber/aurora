@@ -27,6 +27,7 @@ export type {
   RenderCalendarEvent,
   CalendarViewName,
   CalendarViewProps,
+  DayCellContentArg,
   AgGridColumnDef,
   AgGridTableProps,
   NodeState,

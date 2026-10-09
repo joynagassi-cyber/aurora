@@ -69,10 +69,18 @@ export function CalendarView({
   conflictDetection = true,
   onEventClick,
   onEventDrop,
+  dayCellContent,
   loading,
   errorMessage,
   onRetry,
-  emptyMessage,
+  // `emptyMessage` (10-09) : le paramètre reste dans le contrat (retro-
+  // compatibilité des 5 états AD-13) mais le calendrier n'en a plus
+  // besoin à l'état vide : la grille s'affiche toujours vide (7
+  // colonnes × jours), le sélecteur de vue se superpose dessus —
+  // jamais un message factice qui masque la structure du calendrier
+  // (constat utilisateur 10-09). Conservé dans la signature, jamais
+  // rendu : préfixe `_` pour silencer TS6133 (variable jamais lue).
+  emptyMessage: _emptyMessage,
   className,
 }: CalendarViewProps & { className?: string }) {
   // The in-page SegmentedControl view switcher is owned by the PAGE
@@ -177,17 +185,22 @@ export function CalendarView({
             </button>
           ) : null}
         </div>
-      ) : events.length === 0 ? (
-        <div className="rounded-md border border-info bg-info-surface p-3 text-sm text-foreground">
-          {emptyMessage ?? "Aucun événement"}
-        </div>
       ) : null}
 
-      {(loading || !errorMessage || events.length > 0) && (
+      {/* La grille s'affiche TOUJOURS (état vide compris, 10-09) : le
+          calendrier respire à vide (7 colonnes × les jours), le
+          sélecteur de vue se superpose dessus. L'ancienne logique
+          masquait la grille quand `events.length === 0` et n'affichait
+          qu'un message « Aucun événement » — le calendrier lui-même
+          (la grille) manquait à l'état vide, ce qui cassait l'expectation
+          utilisateur (« le calendrier doit s'afficher, vide, et le
+          sélecteur se superposer dessus »). L'état vide honnête (AD-7)
+          reste porté par la grille elle-même (0 événement = 0 bloc),
+          jamais un message factice qui masque la structure. */}
+      {(loading || !errorMessage) && (
         <div
           className={cn(
             "rounded-md border border-border bg-card",
-            !loading && !errorMessage && events.length === 0 && "hidden",
           )}
         >
           {view === "yearGrid" ? (
@@ -204,6 +217,7 @@ export function CalendarView({
               eventOverlap={conflictDetection}
               eventDrop={handleEventDrop}
               eventClick={handleEventClick}
+              dayCellContent={dayCellContent}
               dayMinWidth={view === "threeDayGrid" ? 100 : undefined}
               headerToolbar={
                 mobile

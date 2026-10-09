@@ -13,6 +13,10 @@
     "accent": "#6FE8D4",
     "surface": "#0F3B38"
   },
+  "gradient": {
+    "angle": 120,
+    "stops": ["#007C91", "#18B7A0", "#50D8C0"]
+  },
   "gradients": "teal → turquoise → sable vert",
   "illustrationMood": "eau tropicale, vagues, reflets",
   "iconTreatment": "outline 1.5px, couleur #007C91 + accents turquoise",

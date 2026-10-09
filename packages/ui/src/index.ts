@@ -30,6 +30,7 @@ export {
   accentInk,
   contrastRatio,
   hexLuminance,
+  gradientCSS,
 } from "./themes/resolve";
 export {
   AuroraThemeProvider,
@@ -112,6 +113,7 @@ export type {
   RenderCalendarEvent,
   CalendarViewName,
   CalendarViewProps,
+  DayCellContentArg,
   AgGridColumnDef,
   AgGridTableProps,
 } from "./renderers/contracts";

@@ -355,6 +355,11 @@ export interface RenderCalendarEvent {
   /** Double red border when overlapping (FullCalendar eventOverlap). */
   conflicting?: boolean;
   allDay?: boolean;
+  /** C2.2 (10-08, ref_020/021) : le code d'accent du thème (AD-17 — le
+   *  code est consommé par la page, jamais une couleur brute) pour la
+   *  pastille sur la grille mois / année. Absent = la pastille ne se
+   *  dessine pas (le mirroir non câblé, AD-7 : jamais un point factice). */
+  accentCode?: "primary" | "secondary" | "punctual" | "neutral";
 }
 
 /**
@@ -370,6 +375,13 @@ export type CalendarViewName =
   | "yearGrid"
   | "listWeek";
 
+/** C2.2 (10-08) : l'argument du hook `dayCellContent` FullCalendar v6 —
+ *  ré-exporté depuis `@fullcalendar/core` pour que la page puisse
+ *  brancher le `CalendarDots` proprement (le type ne dépend que de
+ *  `@fullcalendar/core`, jamais d'un helper interne au composant). */
+import type { DayCellContentArg } from "@fullcalendar/core";
+export type { DayCellContentArg };
+
 export interface CalendarViewProps {
   events: RenderCalendarEvent[];
   initialView?: CalendarViewName;
@@ -381,6 +393,11 @@ export interface CalendarViewProps {
   conflictDetection?: boolean;
   onEventClick?: (event: RenderCalendarEvent) => void;
   onEventDrop?: (event: RenderCalendarEvent, start: string) => void;
+  /** C2.2 (10-08) : le hook FullCalendar `dayCellContent` (l'échappatoire
+   *  app-owned) — la page y branche le `CalendarDots` (les pastilles des
+   *  événements/tâches associées au jour, colorées par token d'accent).
+   *  Absent = FullCalendar utilise son renderer de cellule par défaut. */
+  dayCellContent?: (arg: DayCellContentArg) => React.ReactNode;
   /** AD-13 states: loading (skeleton) / error (callout + retry) /
    *  empty ("Aucun événement") / offline (last-known + badge). */
   loading?: boolean;

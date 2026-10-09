@@ -26,6 +26,11 @@
   min-height: var(--aurora-tap-target, 44px);
   padding: 10px 14px;
   background: var(--aurora-surface);
+  /* 10-09 lisage global : le token lissé `--aurora-surface-bg` (opaque
+     par défaut, mixed color translucide quand un thème image est actif).
+     Lèche : pas de glow, le lissage = le fond qui respire + la bordure
+     douce (ci-dessous), jamais un halo. */
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   box-shadow: var(--aurora-shadow-card);
@@ -36,8 +41,10 @@
 .task-row:hover {
   border-color: var(--aurora-accent-primary);
 }
-/* Right-edge chevron (pure-CSS 45° affordance, token border) — "tap → détail". */
-.task-row::after {
+/* Right-edge chevron (pure-CSS 45° affordance, token border) — "tap → détail".
+ * Suppressed on the daily-view rows (`--plain`): their check already makes the
+ * whole row a link to /tasks/:id, the chevron would just be noise (ref_056). */
+.task-row:not(.task-row--plain)::after {
   content: "";
   flex: none;
   width: 7px;
@@ -47,6 +54,22 @@
   border-right: 2px solid var(--aurora-text-muted);
   transform: rotate(45deg) translate(-1px, -1px);
   opacity: 0.7;
+}
+/* Daily-view rows sit inside a section's own list (no card chrome of their
+ * own — the section IS the surface, ref_056's flat rows). */
+.task-list--plain {
+  margin: 0 16px 0;
+  gap: 2px;
+}
+.task-list--plain .task-row--plain {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 8px 0;
+  min-height: var(--aurora-tap-target, 44px);
+}
+.task-list--plain .task-row--plain:hover {
+  background: var(--aurora-bg-subtle);
 }
 .task-row-title {
   flex: 1;
@@ -71,6 +94,88 @@
 .task-row-dot[data-status="in_progress"] {
   background: var(--aurora-accent-primary);
 }
+/* Checkable task row (ref_056 / ref_086 lot C 2026-10-08) — the round
+ * checkbox on the LEFT, not a status dot: it fills (GPU-only transform +
+ * opacity, AD-10) when the task is `done`, giving the day a visible sense
+ * of progress instead of a neutral list. `--plain` (daily view) drops the
+ * card chrome so the row reads as part of the section; the card variant
+ * (list view) keeps it. */
+.task-row-check {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--aurora-border-strong);
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  display: grid;
+  place-items: center;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+.task-row:hover .task-row-check {
+  border-color: var(--aurora-accent-primary);
+}
+.task-row-check[data-status="in_progress"] {
+  border-color: var(--aurora-accent-primary);
+  background: var(--aurora-accent-selected-surface);
+}
+.task-row-check[data-status="done"] {
+  border-color: var(--aurora-node-mastered);
+  background: var(--aurora-node-mastered);
+}
+/* The checkmark that fills in — only ever rendered for `done` rows; a
+ * 14px stroke inside a 22px box (visual center, no layout shift on toggle). */
+.task-row-check[data-status="done"]::after {
+  content: "";
+  width: 10px;
+  height: 5px;
+  border-left: 2px solid var(--aurora-surface);
+  border-bottom: 2px solid var(--aurora-surface);
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+.task-row.is-done .task-row-title {
+  text-decoration: line-through;
+  color: var(--aurora-text-disabled);
+}
+@media (prefers-reduced-motion: reduce) {
+  .task-row-check {
+    transition: none;
+  }
+}
+
+/* ---- Priority flag (ref_035, lot C 2026-10-08) -----------------------
+ * The 4-color priority ramp (rouge = urgent / vert = bien / jaune =
+ * attentif / gris = neutre) — a static `Flag` 16px on the LEFT of the
+ * check, colored with the FROZEN semantic states (05 §5.1 / AD-17 :
+ * never a raw hex, the theme redefines `--aurora-*` but the states
+ * stay fixed). No glow, no halo — the interface is clean.
+ */
+.task-row-flag {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.task-row-flag svg {
+  width: 16px;
+  height: 16px;
+}
+/* rouge = urgent (Q1, priority >= 4) */
+.task-row-flag--danger {
+  color: var(--aurora-danger);
+}
+/* vert = bien (Q2, priority === 3) */
+.task-row-flag--success {
+  color: var(--aurora-success);
+}
+/* jaune = attentif (Q3, priority === 2) */
+.task-row-flag--warning {
+  color: var(--aurora-warning);
+}
+/* gris = neutre (Q4, priority undefined / 0 / 1) */
+.task-row-flag--muted {
+  color: var(--aurora-text-muted);
+}
 
 /* ---- Daily « Aujourd'hui » view (PRD-1, PRD-TASK-01) ----------------
  * Sections En retard / Aujourd'hui / Mes habitudes / Terminées — dérivées
@@ -81,6 +186,57 @@
   flex-direction: column;
   gap: 14px;
   padding: 4px 0 12px;
+}
+
+/* ---- The day's "monument" band (ref_056, lot C 2026-10-08) -----------
+ * The day's headline counter floats ABOVE the sections, on the page's own
+ * halo (`aurora-halo-page`), not inside a KPI card — the reference's
+ * "big number, soft field" feel. The number is mono + huge (it is THE
+ * day, not a data tile); the secondary copy is quiet. No new data, only
+ * the same `overdue` / `today` / `done` counts the sections already
+ * derive (AD-7, no fake content). */
+.task-today-overview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 8px 16px 0;
+  padding: 16px 18px;
+  min-height: 84px;
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+}
+.task-today-overview-num {
+  font-size: 44px;
+  line-height: 1;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+  letter-spacing: -0.02em;
+}
+.task-today-overview-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.task-today-overview-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--aurora-text-secondary);
+}
+.task-today-overview-eyebrow svg {
+  color: var(--aurora-accent-primary);
+}
+.task-today-overdue-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--aurora-danger);
 }
 .task-today-section {
   display: flex;
@@ -148,6 +304,7 @@
   margin: 0 16px;
   padding: 10px 14px;
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   box-shadow: var(--aurora-shadow-card);
@@ -195,22 +352,70 @@
   }
 }
 
-/* ---- Eisenhower (G-L5 ratified, T4 under /tasks) -------------------- */
+/* ---- Eisenhower (G-L5 ratified, T4 under /tasks) ---------------------
+ * Lot C 2026-10-08 (ref_033 / ref_086) : la couleur ne décore plus, elle
+ * ORIENTE — chaque quadrant porte un liseré + un fond teinté (4% de la
+ * couleur sémantique sur le surface, jamais de valeur brute hors token,
+ * `color-mix` avec fallback AD-13) et un numéro mono (1–4) pour qu'on
+ * puisse les appeler "le 1", "le 2" à voix haute. Les 4 couleurs restent
+ * les sémantiques FROZENES de 05 §5.1 (danger / info / warning /
+ * border-strong) — un thème ne les redéfinit jamais. */
 .eisenhower {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding: 0 16px;
+  gap: 10px;
+  padding: 8px 16px 0;
 }
 .eisenhower-q {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  min-height: 96px;
+  min-height: 120px;
   padding: 10px;
   border-radius: var(--aurora-radius, 0.5rem);
   background: var(--aurora-surface);
+  /* 10-09 lisage global : le token lissé (opaque par défaut, translucide
+     quand un thème image est actif). Lèche : pas de glow. */
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
+  border-top-width: 3px;
+}
+/* Soft tinted fill (4% of the quadrant's state color) — honest
+ * degradation: a webview without `color-mix` just keeps the plain
+ * surface (the pre-rework look). */
+.eisenhower-q1 {
+  border-top-color: var(--aurora-danger);
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+}
+.eisenhower-q2 {
+  border-top-color: var(--aurora-info);
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+}
+.eisenhower-q3 {
+  border-top-color: var(--aurora-warning);
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+}
+.eisenhower-q4 {
+  border-top-color: var(--aurora-border-strong);
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+}
+@supports (color: color-mix(in srgb, red, blue)) {
+  .eisenhower-q1 {
+    background: color-mix(in srgb, var(--aurora-danger) 4%, var(--aurora-surface));
+  }
+  .eisenhower-q2 {
+    background: color-mix(in srgb, var(--aurora-info) 4%, var(--aurora-surface));
+  }
+  .eisenhower-q3 {
+    background: color-mix(in srgb, var(--aurora-warning) 4%, var(--aurora-surface));
+  }
+  .eisenhower-q4 {
+    background: color-mix(in srgb, var(--aurora-surface-alt) 60%, var(--aurora-surface));
+  }
 }
 .eisenhower-q .task-row {
   min-height: 38px;
@@ -218,27 +423,33 @@
   padding: 6px 8px;
 }
 .eisenhower-q-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: var(--aurora-text-muted);
+  color: var(--aurora-text-secondary);
+}
+.eisenhower-q-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--aurora-text-primary);
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px solid var(--aurora-border);
 }
 .eisenhower-q-empty {
   font-size: 12px;
   color: var(--aurora-text-disabled);
-}
-.eisenhower-q1 {
-  border-top: 3px solid var(--aurora-danger);
-}
-.eisenhower-q2 {
-  border-top: 3px solid var(--aurora-info);
-}
-.eisenhower-q3 {
-  border-top: 3px solid var(--aurora-warning);
-}
-.eisenhower-q4 {
-  border-top: 3px solid var(--aurora-border-strong);
 }
 
 /* ---- Task detail (/tasks/:id) --------------------------------------- */
@@ -343,6 +554,7 @@
 .stat-tile {
   padding: 14px 16px;
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   /* KPI = value first (05 §3.3): a 3px accent top edge marks the tile as
      the dashboard's live data (same premium language as the goal cards). */
@@ -371,6 +583,7 @@
 .cal-task-strip {
   padding: 12px;
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   box-shadow: var(--aurora-shadow-card);
@@ -441,6 +654,7 @@
   gap: 6px;
   padding: 14px 16px;
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   font-size: 14px;
@@ -495,7 +709,10 @@
   padding: 10px;
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
-  background: var(--aurora-surface);
+  /* Bg-subtle (not surface): a preset swatch can be near-black (nocturne)
+   * or a gray-ardor (slate) — it stays legible on either light or dark
+   * canvas without a hard border flip (05 §5.7, AD-13 honest state). */
+  background: var(--aurora-bg-subtle);
   cursor: pointer;
   min-height: var(--aurora-tap-target, 44px);
 }
@@ -530,6 +747,7 @@
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   cursor: pointer;
   min-height: var(--aurora-tap-target, 44px);
 }
@@ -540,7 +758,10 @@
 .image-theme-thumb {
   position: relative;
   width: 100%;
-  aspect-ratio: 9 / 16;
+  /* Square thumbnail cropped from the LANDSCAPE source file (512×286,
+   * `_paysage` variant, batch 2026-10-B): the portrait crop misread the
+   * landscape illustration (settings screen review, 2026-10-08). */
+  aspect-ratio: 1 / 1;
   border-radius: 6px;
   overflow: hidden;
   background: var(--aurora-bg-subtle);
@@ -593,10 +814,21 @@
   flex-direction: column;
   gap: 12px;
 }
+/* The current month, floating above the grid (ref_007 : "octobre" is the
+ * calendar's own headline, not something the user has to infer). */
+.cal-month-band {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--aurora-text-muted);
+}
 .cal-grid {
   margin: 12px 16px;
   padding: 12px;
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   box-shadow: var(--aurora-shadow-card);
@@ -641,6 +873,7 @@
   gap: 10px;
   padding: 12px;
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   box-shadow: var(--aurora-shadow-card);
@@ -692,6 +925,7 @@
 .inbox-item {
   padding: 10px 14px;
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   font-size: 14px;
@@ -715,6 +949,7 @@
   padding: 24px;
   text-align: center;
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
 }
@@ -757,6 +992,7 @@
   height: 70vh;
   min-height: 320px;
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   overflow: hidden;
@@ -786,6 +1022,7 @@
   flex-direction: column;
   gap: 10px;
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
 }
@@ -810,6 +1047,7 @@
   gap: 10px;
   padding: 12px 14px;
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   box-shadow: var(--aurora-shadow-card);
@@ -850,6 +1088,7 @@
   margin-top: 12px;
   padding: 12px 14px;
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   box-shadow: var(--aurora-shadow-card);
@@ -897,6 +1136,7 @@
   padding: 12px;
   min-height: var(--aurora-tap-target, 44px);
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   box-shadow: var(--aurora-shadow-card);
@@ -992,6 +1232,7 @@
   gap: 8px;
   padding: 16px;
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   box-shadow: var(--aurora-shadow-card);
@@ -1030,6 +1271,7 @@
   padding: 12px;
   min-height: var(--aurora-tap-target, 44px);
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   box-shadow: var(--aurora-shadow-card);
@@ -1089,6 +1331,228 @@
   }
 }
 
+/* ---- Habits daily check-in (ref_087, lot C 2026-10-08) --------------
+ * The day band (7-day strip, today highlighted) + the honest empty-state
+ * check-in rows + the week-follow-through grid (the weak/med/strong token
+ * ramp from 05 §2.1.2, consumed for the first time here). */
+.habits-day {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 0 12px;
+}
+.habits-day-band {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  padding: 6px;
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+}
+.habits-day-band-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--aurora-tap-target, 44px);
+  padding: 8px 2px;
+  border: 0;
+  border-radius: calc(var(--aurora-radius, 0.5rem) - 2px);
+  background: transparent;
+  color: var(--aurora-text-muted);
+  cursor: pointer;
+}
+.habits-day-band-cell.is-active {
+  background: var(--aurora-accent-selected-surface);
+  color: var(--aurora-accent-primary);
+}
+.habits-day-band-cell-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.habits-day-band-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--aurora-border-strong);
+  background: transparent;
+}
+.habits-day-band-cell.is-active .habits-day-band-dot {
+  border-color: var(--aurora-accent-primary);
+  background: var(--aurora-accent-primary);
+}
+/* The week-follow-through grid (ref_087/090) — the SAME `--aurora-habit-*`
+ * ramp the real check-in will consume; rendered here as a legend /
+ * preview, not as data (AD-7: no invented check-ins). */
+.habits-week-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+}
+.habits-week-grid-caption {
+  margin: 0;
+  font-size: 13px;
+  color: var(--aurora-text-secondary);
+}
+.habits-week-grid-caption em {
+  font-style: normal;
+  font-weight: 600;
+}
+.habits-week-grid-legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.habits-week-grid-swatch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--aurora-text-secondary);
+}
+.habits-week-grid-swatch-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+}
+.habits-week-grid-swatch--weak .habits-week-grid-swatch-dot {
+  background: var(--aurora-habit-weak);
+}
+.habits-week-grid-swatch--med .habits-week-grid-swatch-dot {
+  background: var(--aurora-habit-med);
+}
+.habits-week-grid-swatch--strong .habits-week-grid-swatch-dot {
+  background: var(--aurora-habit-strong);
+}
+.habits-week-grid-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.habits-week-grid-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.habits-week-grid-cell-fill {
+  width: 100%;
+  height: 34px;
+  border-radius: 4px;
+  background: var(--aurora-bg-subtle);
+}
+.habits-week-grid-cell-fill.is-today {
+  background: var(--aurora-habit-med);
+  box-shadow: 0 0 0 2px var(--aurora-accent-primary);
+}
+
+/* ---- Countdowns (PRD-CD-01, lot C 2026-10-08, ref_109/110/111/112) --
+ * The big number + the target date's own line (not a KPI tile): "J-X" is
+ * the card's identity, the image (when present) breathes behind it on a
+ * transparent surface (--aurora-surface-opacity, AD-13). */
+.countdown-page {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.countdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.countdown-card {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  min-height: 96px;
+  padding: 16px;
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+  overflow: hidden;
+}
+/* Image style (ref_109 "photo plein écran"): the image sits BEHIND the
+ * card's content on a translucent surface — the number stays readable
+ * (AD-13 honest degradation: no image → no layer, plain surface). */
+.countdown-card--image .countdown-card-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
+}
+.countdown-card[data-state="passed"] {
+  opacity: 0.6;
+}
+.countdown-card-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.countdown-card-num {
+  font-size: 40px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--aurora-accent-primary);
+}
+.countdown-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+}
+.countdown-card-target {
+  font-size: 12px;
+  color: var(--aurora-text-muted);
+}
+.countdown-empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 20px;
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+  font-size: 15px;
+  color: var(--aurora-text-primary);
+}
+.countdown-empty-card-icon {
+  color: var(--aurora-accent-primary);
+}
+.countdown-empty-card-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--aurora-text-muted);
+}
+.countdown-page-note {
+  font-size: 12px;
+  color: var(--aurora-text-muted);
+}
+
 /* ---- Projects: Kanban board + reports (PRD-4, lot 2026-10) -----------
  * Horizontal column board (PRD-PM-02/03) with a themed top band per
  * column (frozen semantic tokens, 05 §5.1) + the synthesis-report list
@@ -1114,6 +1578,7 @@
   flex: 0 0 240px;
   min-height: 160px;
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   box-shadow: var(--aurora-shadow-card);
@@ -1216,6 +1681,7 @@
   padding: 12px 14px;
   min-height: var(--aurora-tap-target, 44px);
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border: 1px solid var(--aurora-border);
   border-radius: var(--aurora-radius, 0.5rem);
   box-shadow: var(--aurora-shadow-card);
@@ -1261,4 +1727,2030 @@
 ion-content div[data-state],
 ion-content [data-artifact-id] {
   padding: 16px;
+}
+
+/* ==========================================================================
+   Routines (05 §4.3.6, doc `routines.md`, lot C v3 2026-10-08)
+   The ritual's surface: 1 ProgressBar + the ordered RoutineStep sequence.
+   Tokens only (AD-17): fill = L2 accent, track = bg-subtle, the checked
+   box + the complete state = frozen `success` (05 §5.1 l.2931 — a theme
+   never redefines a semantic state). One GPU width transition on the fill
+   (OQ-10 kept minimal), no count-up (règle 1 — the value IS).
+   ========================================================================== */
+.routines-page {
+  padding: 12px 16px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.routines-page > .page-purpose {
+  margin: 0;
+}
+.routines-page .segmented {
+  align-self: flex-start;
+}
+
+/* E4 — the routine card = ONE object containing its steps
+   (05 §3.6.12 l.1240-1242 : la routine est un objet, l'étape sa partie). */
+.routine-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius-lg, 0.75rem);
+  box-shadow: var(--aurora-shadow-card);
+}
+
+/* Callouts (05 §3.3 l.628-641) — the frozen semantic surfaces. The
+   warning MUST carry its action (l.634-635). The `--cta` pattern gives
+   each callout a ghost action link on the right. */
+.aurora-callout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: var(--aurora-radius, 0.5rem);
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--aurora-text-primary);
+}
+.aurora-callout--warning {
+  background: var(--aurora-warning-surface);
+  border: 1px solid var(--aurora-warning);
+}
+.aurora-callout--info {
+  background: var(--aurora-info-surface);
+  border: 1px solid var(--aurora-info);
+}
+.aurora-callout--success {
+  background: var(--aurora-success-surface);
+  border: 1px solid var(--aurora-success);
+}
+.aurora-callout-cta {
+  margin-left: auto;
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--aurora-text-secondary);
+  text-decoration: none;
+  padding: 8px 4px;
+  border-radius: var(--aurora-radius, 0.5rem);
+}
+.aurora-callout-cta:hover {
+  color: var(--aurora-accent-primary);
+}
+
+/* E3 — the completion bar (05 §3.3 l.553-570 : track always visible at 0%,
+   fill = L2 accent, `success` at 100%, % in JetBrains Mono xs WITHOUT any
+   count-up — the number IS, it does not "turn" (règle 1, 05 §2.6)). */
+.routine-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.routine-progress-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--aurora-bg-subtle);
+  overflow: hidden;
+}
+.routine-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--aurora-accent-primary);
+  transition: width 0.2s ease-out, background-color 0.2s ease-out;
+}
+.routine-progress[data-state="complete"] .routine-progress-fill {
+  background: var(--aurora-success);
+}
+.routine-progress-pct {
+  flex: none;
+  font-size: 12px;
+  color: var(--aurora-text-secondary);
+  min-width: 2.5em;
+  text-align: right;
+}
+.routine-progress[data-state="complete"] .routine-progress-pct {
+  color: var(--aurora-success);
+}
+
+/* E5 — RoutineStep (05 §3.6.12 l.1232-1242) : numéro JetBrains Mono +
+   Checkbox 44px + titre + durée Mono xs. One tap = local write (AD-7) —
+   the box fills with frozen `success` (05 §3.2 l.452-453), the row is
+   the whole 44px target (05 §3.3 l.522). */
+.routine-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.routine-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 6px 0;
+}
+.routine-step-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 52px;
+  min-height: var(--aurora-tap-target, 44px);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.routine-step-num {
+  font-size: 13px;
+  color: var(--aurora-text-muted);
+  min-width: 1.4em;
+  text-align: right;
+}
+.routine-step-box {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 8px;
+  border: 2px solid var(--aurora-border-strong);
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  display: grid;
+  place-items: center;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+.routine-step-box::after {
+  content: "";
+  width: 12px;
+  height: 7px;
+  border-left: 2px solid var(--aurora-accent-on-primary, #fff);
+  border-bottom: 2px solid var(--aurora-accent-on-primary, #fff);
+  transform: rotate(-45deg) translateY(-1px);
+  opacity: 0;
+}
+.routine-step-check.is-checked .routine-step-box {
+  border-color: var(--aurora-success);
+  background: var(--aurora-success);
+}
+.routine-step-check.is-checked .routine-step-box::after {
+  opacity: 1;
+}
+.routine-step-title {
+  flex: 1;
+  font-size: 15px;
+  color: var(--aurora-text-primary);
+}
+.routine-step-title.is-done {
+  color: var(--aurora-text-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+.routine-step-duration {
+  flex: none;
+  font-size: 12px;
+  color: var(--aurora-text-muted);
+}
+
+/* E9 — the honest EmptyState per family (05 §4.3.6 l.1844-1848). */
+.routines-empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 20px 16px;
+  background: var(--aurora-surface);
+  /* 10-09 lisage global : le token lissé (opaque par défaut, translucide
+     quand un thème image est actif). Lèche : pas de glow. */
+  background: var(--aurora-surface-bg);
+  border: 1px dashed var(--aurora-border-strong);
+  border-radius: var(--aurora-radius-lg, 0.75rem);
+}
+.routines-empty-card p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+}
+.routines-empty-card-icon {
+  color: var(--aurora-text-muted);
+  margin-bottom: 4px;
+}
+.routines-hint {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  color: var(--aurora-text-secondary) !important;
+  line-height: 1.45;
+}
+.routines-empty-card .aurora-btn {
+  margin-top: 8px;
+}
+
+/* The screen's supporting identity line (clock = anchor, timer = the
+   sequence's own tempo) — quiet, mono, never data. */
+.routines-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--aurora-text-muted);
+  margin-top: auto;
+  padding-top: 4px;
+}
+.routines-meta span {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .routine-progress-fill,
+  .routine-step-box {
+    transition: none;
+  }
+}
+
+/* ==========================================================================
+   Reviews (05 §4.5.1, docs `revues-jour/semaine/mois.md` + `retro-actions.md`,
+   lot C v3)
+   The period review = ONE Card posée (not a ListItem) with its 5 sections,
+   the shared time `Pager` (Jour | Semaine | Mois, 05 §3.4 l.737-750) and
+   the « À faire / Faite » status switch (2 segments ONLY — a cancelled
+   review = a historical `Callout info`, never a 3rd tab, l.2256-2263).
+   The « en retard » Callout is a LOCAL computation (OQ-4 close a, AD-7) —
+   it appears only when the previous period's review is genuinely absent.
+   ========================================================================== */
+.reviews-page {
+  padding: 12px 16px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.reviews-page > .page-purpose {
+  margin: 0;
+}
+.reviews-page .segmented {
+  align-self: flex-start;
+}
+
+/* The shared time Pager (05 §3.4 l.737-750) : SegmentedControl
+   (Jour | Semaine | Mois) + the period's own line in JetBrains Mono —
+   the anchor is data (never animated, règle 1). */
+.review-pager {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+.review-pager-period {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--aurora-text-secondary);
+  letter-spacing: 0.01em;
+}
+
+/* The review = ONE Card posée (05 §4.5.1 l.2264-2276) containing the
+   5 fixed sections (l.2277-2310). */
+.review-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px 16px;
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius-lg, 0.75rem);
+  box-shadow: var(--aurora-shadow-card);
+}
+.review-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.review-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--aurora-text-primary);
+  margin: 0;
+}
+.review-section-title small {
+  font-weight: 400;
+  color: var(--aurora-text-muted);
+  font-size: 11px;
+}
+
+/* Section 1 — Bilan des tâches : a BOUNDED read-only recap (the period's
+   volume < 20 rows, S8 l.304-307) → a semantic table (05 §3.6.1 l.880-882),
+   horizontally scrollable on mobile (l.882-883), sticky header, tabular
+   mono values. Columns: statut / titre / projet / « pourquoi ». */
+.review-bilan {
+  overflow-x: auto;
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+}
+.review-bilan table {
+  width: 100%;
+  min-width: 460px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.review-bilan th {
+  position: sticky;
+  top: 0;
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--aurora-text-muted);
+  background: var(--aurora-bg-subtle);
+  border-bottom: 1px solid var(--aurora-border);
+  white-space: nowrap;
+}
+.review-bilan td {
+  padding: 10px;
+  border-bottom: 1px solid var(--aurora-border);
+  color: var(--aurora-text-primary);
+  vertical-align: top;
+}
+.review-bilan tr:last-child td {
+  border-bottom: 0;
+}
+.review-bilan-why {
+  color: var(--aurora-text-secondary);
+  font-size: 12px;
+}
+/* The empty period's honest line (05 §3.6.1 l.888-890 : the DataTable
+   header stays, the Callout info is inline). */
+.review-bilan-empty {
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--aurora-text-secondary);
+  background: var(--aurora-info-surface);
+  border-top: 1px solid var(--aurora-info);
+}
+
+/* The status Badge (05 §4.5.1 l.2284-2287, 4 statuts) — text + colour,
+   never colour alone (05 §6.3 l.3329-3331). */
+.review-status {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.review-status--done {
+  background: var(--aurora-success-surface);
+  color: var(--aurora-success);
+}
+.review-status--postponed {
+  background: var(--aurora-accent-selected-surface);
+  color: var(--aurora-accent-primary);
+}
+.review-status--abandoned,
+.review-status--blocked {
+  background: var(--aurora-danger-surface);
+  color: var(--aurora-danger);
+}
+.review-status--planned {
+  background: var(--aurora-bg-subtle);
+  color: var(--aurora-text-secondary);
+}
+
+/* Section 2 — Analyse des causes : 3 cause-Chips (charge / fatigue /
+   blocage technique, l.2299-2310) : `bg-subtle` idle,
+   `primary-surface` selected (05 §3.3 l.537-540), target ≥ 44px. */
+.review-causes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.review-cause-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--aurora-tap-target, 44px);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--aurora-text-secondary);
+  background: var(--aurora-bg-subtle);
+  border: 1px solid var(--aurora-border);
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+.review-cause-chip.is-selected {
+  background: var(--aurora-accent-selected-surface);
+  border-color: var(--aurora-accent-primary);
+  color: var(--aurora-accent-primary);
+}
+
+/* The review's free-text fields (sections 2 & 5 : label au-dessus, 05
+   §3.2 l.414-416 ; erreur inline danger sous le champ). */
+.review-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.review-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--aurora-text-secondary);
+}
+.review-field textarea {
+  min-height: 72px;
+  padding: 10px 12px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--aurora-text-primary);
+  background: var(--aurora-bg-subtle);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  resize: vertical;
+  font-family: inherit;
+}
+.review-field textarea:focus {
+  outline: none;
+  border-color: var(--aurora-accent-primary);
+  box-shadow: 0 0 0 3px var(--aurora-accent-selected-surface);
+}
+
+/* Sections 3 & 4 — the ordered `RoutineStep` lists (l.2288-2294). The plan
+   rows (section 4) each carry the ghost CTA « En faire une tâche »
+   (l.2388-2397) — the review GENERATES tasks, never the inverse. */
+.review-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.review-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 4px 0;
+}
+.review-step-num {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 13px;
+  color: var(--aurora-text-muted);
+  min-width: 1.4em;
+  text-align: right;
+}
+.review-step-title {
+  flex: 1;
+  font-size: 14px;
+  color: var(--aurora-text-primary);
+}
+.review-step-tag {
+  flex: none;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--aurora-text-muted);
+}
+.review-step-cta {
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--aurora-text-secondary);
+  text-decoration: none;
+  padding: 8px 6px;
+  border-radius: var(--aurora-radius, 0.5rem);
+}
+.review-step-cta:hover {
+  color: var(--aurora-accent-primary);
+}
+
+/* The review's EmptyState (l.2336-2347) : the CTA CREATES the object
+   (05 §3.3 l.650) — a real action through the agent, never a dead button. */
+.reviews-empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 20px 16px;
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px dashed var(--aurora-border-strong);
+  border-radius: var(--aurora-radius-lg, 0.75rem);
+}
+.reviews-empty-card p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+}
+.reviews-empty-card-icon {
+  color: var(--aurora-text-muted);
+  margin-bottom: 4px;
+}
+.reviews-hint {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  color: var(--aurora-text-secondary) !important;
+  line-height: 1.45;
+}
+.reviews-empty-card .aurora-btn {
+  margin-top: 8px;
+}
+
+/* The « Faite » summary Callout (ui-libraries §6.1 l.198 « terminé »). */
+.review-done-note {
+  font-size: 13px;
+  color: var(--aurora-text-secondary);
+  margin: 0;
+}
+
+/* ==========================================================================
+   Retro-actions (WDS 06.3 + 05 §4.5.1, doc `retro-actions.md`, lot C v3)
+   The CLOSE of the retrospective: 3 compact cards —
+   1. Écarts documentés (jalons non atteints, `Badge danger`, frozen),
+   2. Actions correctives (the 2 BAC blocks as compact RoutineSteps),
+   3. Rythme posé (the next week's 7-day GanttRow, Option A close OQ-1).
+   ONE fixed CTA (AD-14) : « Planifier la semaine » → /calendar, posing
+   the 2 BAC blocks (local write, AD-7 — it stays actionable even in the
+   empty state). The GanttRow = data (règle 1 : never animated).
+   ========================================================================== */
+.retro-page {
+  padding: 12px 16px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.retro-page > .page-purpose {
+  margin: 0;
+}
+.retro-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius-lg, 0.75rem);
+  box-shadow: var(--aurora-shadow-card);
+}
+.retro-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--aurora-text-primary);
+  margin: 0;
+}
+.retro-card-hint {
+  font-size: 12px;
+  color: var(--aurora-text-muted);
+  margin: -4px 0 0;
+}
+
+/* Section 1 — a missed milestone (S-07) : the frozen `danger` Badge +
+   the milestone's own mono date. Tapping drills into the goal (the
+   milestone IS a goal, 05 §4.5.1 — PAGE_TRANSITION). */
+.retro-milestone {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--aurora-tap-target, 44px);
+  padding: 4px 0;
+  text-decoration: none;
+}
+.retro-milestone-title {
+  flex: 1;
+  font-size: 14px;
+  color: var(--aurora-text-primary);
+}
+.retro-milestone-date {
+  flex: none;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--aurora-text-muted);
+}
+
+/* Section 3 — the next week's compact rhythm (GanttRow, 05 §3.6) :
+   7 day cells + the BAC blocks as `primary` Badges inside their day.
+   Data only — no animation (règle 1). */
+.retro-gantt {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.retro-gantt-day {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  min-height: 64px;
+  padding: 6px 2px;
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  background: var(--aurora-bg-subtle);
+}
+.retro-gantt-day-label {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--aurora-text-muted);
+  text-transform: uppercase;
+}
+.retro-gantt-block {
+  width: 100%;
+  text-align: center;
+  padding: 4px 2px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: var(--aurora-accent-selected-surface);
+  color: var(--aurora-accent-primary);
+}
+.retro-gantt-block--routine {
+  background: transparent;
+  border: 1px solid var(--aurora-border);
+  color: var(--aurora-text-secondary);
+  font-weight: 600;
+}
+
+/* The fixed CTA (AD-14 : the ONLY action of the surface) — pinned above
+   the BottomNav, a local write that poses the 2 BAC blocks on /calendar. */
+.retro-cta {
+  margin-top: 4px;
+  width: 100%;
+}
+
+/* ==========================================================================
+   Projects C5 (2026-10-08) : les 3 vues réelles (Gantt / Chrono / Liste) +
+   le menu « ⋮ » en haut à droite + le panneau caché révélé par le
+   glissement horizontal.
+   Règles : SSoT 05 §3.5 l.843-854 (menu) · §3.6.4 (Gantt, liste de
+   GanttRow) · §3.6.3 (Chrono, frise narrative) · §4.3.1 (Liste, Card flat)
+   — tokens only (AD-17), la donnée ne s'anime jamais (règle 1), et
+   `prefers-reduced-motion` fige les transitions du panneau + du menu.
+   ========================================================================== */
+
+/* ---- Page header : IonTitle + menu « ⋮ » (05 §3.5, IC-02) ------------
+ * `.projects-header` replace le default IonHeader layout on /projects :
+ * le titre aligné à gauche, le menu ancré à droite (05 §3.5 l.845-847). */
+.projects-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  min-height: 56px;
+}
+/* Le menu se positionne dans le flux de la row (pas absolute) — l'Item
+   « Paramètres » est le débordement global (le réglage lié à la page,
+   05 §3.5 l.852-854 : « le dernier item … renvoie vers le réglage »). */
+.projects-header .page-options-menu {
+  position: static;
+  z-index: auto;
+}
+
+/* ---- Menu « ⋮ » (05 §3.5 l.843-854) -----------------------------------
+ * Icône `more` 20px (header) + overlay ancré à l'icône, max 6 items,
+ * 150ms ease-out (l'IC-03 du lot C5), tap backdrop / `back` ferment.
+ * Z-frozen = `--aurora-z-sheet` (le menu EST une sheet ancrée, 05 §3.5). */
+.page-options-menu {
+  position: relative;
+  z-index: var(--aurora-z-sheet);
+}
+.page-options-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--aurora-radius, 0.5rem);
+  color: var(--aurora-text-primary);
+  transition: background-color 0.15s ease;
+}
+.page-options-menu-trigger:hover {
+  background: var(--aurora-bg-subtle);
+}
+/* L'overlay + son scrim (le tap ferme — 05 §3.5 l.852). Le scrim est
+   DISCRET (le menu n'est pas un modal plein écran, c'est un dropdown). */
+.page-options-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0); /* le tap ferme, le fond ne s'obscurcit pas */
+  z-index: -1;
+}
+.page-options-menu-list {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  min-width: 220px;
+  padding: 4px;
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-float);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: page-options-menu-in 0.15s ease-out;
+  transform-origin: top right;
+}
+@keyframes page-options-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+/* Un item = ListItem 44px (05 §3.5 l.849) : icône 16px + label sm +
+   check d'« actif » (l'option courante, ex. le tri en cours). */
+.page-options-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--aurora-tap-target, 44px);
+  padding: 0 12px;
+  border-radius: var(--aurora-radius, 0.5rem);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--aurora-text-primary);
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+.page-options-menu-item:hover {
+  background: var(--aurora-bg-subtle);
+}
+.page-options-menu-item.is-active {
+  background: var(--aurora-accent-selected-surface);
+  color: var(--aurora-accent-primary);
+}
+/* Le check de droite (une item « active » porte sa coche — le tri actif,
+   la vue courante). La check n'est PAS un bouton : c'est un état. */
+.page-options-menu-check {
+  margin-left: auto;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  opacity: 0.9;
+}
+/* Une item « active » : sa coche passe à la couleur accent (le tri en
+   cours, la vue affichée). Le check est un ::after SVG, jamais un <i>. */
+.page-options-menu-item.is-active .page-options-menu-check {
+  opacity: 1;
+}
+.page-options-menu-item .page-options-menu-check {
+  /* le check hérite de la couleur du label (CSS `currentColor` via la
+     stroke du SVG) — la base est text-primary, is-active = accent. */
+  filter: brightness(0);
+}
+.page-options-menu-item.is-active .page-options-menu-check {
+  filter: brightness(0) saturate(100%) hue-rotate(190deg); /* accent-primary */
+}
+/* L'icône de l'item (ref_045 : chaque item de menu porte sa teinte
+   couleur — 5 teintes FROZEN, 05 §5.1 : accent/success/warning/danger/
+   info). L'icône est un span `aria-hidden` (le label fait le travail
+   a11y), la `currentColor` de Lucide est héritée du span (la teinte
+   est pilotée par le token, AD-17 : jamais une valeur brute). */
+.page-options-menu-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--aurora-text-muted);
+}
+.page-options-menu-item-icon svg {
+  flex: none;
+}
+.page-options-menu-item--icon-accent {
+  color: var(--aurora-accent-primary);
+}
+.page-options-menu-item--icon-success {
+  color: var(--aurora-success);
+}
+.page-options-menu-item--icon-warning {
+  color: var(--aurora-warning);
+}
+.page-options-menu-item--icon-danger {
+  color: var(--aurora-danger);
+}
+.page-options-menu-item--icon-info {
+  color: var(--aurora-info);
+}
+/* L'item active : l'icône passe à l'accent (la vue active / le tri actif
+   est signalé par la teinte accent, 05 §3.5 l.847). */
+.page-options-menu-item.is-active .page-options-menu-item-icon {
+  color: var(--aurora-accent-primary);
+}
+
+/* Reduced motion (05 §2.6 règle 2) : le menu s'ouvre sans scale, pas de
+   transition du backdrop. Le panneau (ci-dessous) fige sa transition. */
+@media (prefers-reduced-motion: reduce) {
+  .page-options-menu-list {
+    animation: none;
+  }
+  .page-options-menu-trigger,
+  .page-options-menu-item {
+    transition: none;
+  }
+  .projects-panel-slide {
+    transition: none !important;
+  }
+}
+
+/* ---- Le glissement horizontal → panneau latéral caché (C5) ---------
+ * La surface (`data-projects-view`) se déplace de `translateX(-Xpx)`
+ * au pointeur (le JS `useHorizontalSwiper` du page, `transform` GPU-only
+ * = règle 1 : la donnée ne s'anime JAMAIS, seul le conteneur glisse).
+ * Le panneau `.projects-panel-slide` EST la révélation : il est posé
+ * `absolute` derrière la surface, pleine hauteur, et la surface qui
+ * glisse à `translateX(-240px)` (max, cf. index.tsx) LE RÉVÈLE sur la
+ * moitié droite de l'écran. Jamais un overlay qui MASQUE — le panneau
+ * COEXISTE avec la vue active (le tirage = « glisser pour révéler »,
+ * 05 §3.6.15 l.1409-1411 : le panneau latéral se « glisse »). */
+.projects-surface {
+  /* Pas de overflow here — le glissement est porté par la surface elle-
+     même (transform). Le panneau vit EN DEHORS du flow (absolute). */
+  will-change: transform;
+}
+/* Le glissement actif : le `will-change` passe en `transform` pour
+   forcer la couche GPU pendant le geste (le translateX vit dans le
+   style inline du .tsx, jamais en transition — le geste EST le
+   déplacement, pas une animation). */
+.projects-surface.is-gliding {
+  will-change: transform;
+}
+/* L'anchor de position : le panneau est COACHANT (il reste affiché une
+   fois révélé — `panelOpen` est T4 cosmetic-persistent, le retour y
+   retrouve le panneau ouvert, 05 §3.6.15 l.1402). `absolute` relatif à
+   `ion-content` (le parent positionné) : pleine hauteur, à droite,
+   300px large (le 65% de la largeur écran sur les phones). Le slide
+   latéral EST le glissement (le panneau est révéré par le geste, pas
+   un overlay qui masque — le panneau COEXISTE avec la vue active). */
+.projects-panel-slide {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 300px;
+  max-width: 86vw; /* sur les grands pads, le panneau ne déborde pas */
+  z-index: var(--aurora-z-content);
+  overflow-y: auto;
+  background: var(--aurora-bg-subtle);
+  border-left: 1px solid var(--aurora-border);
+  box-shadow: var(--aurora-shadow-float);
+  /* La transition est COSMÉTIQUE (la donnée ne s'anime pas, règle 1) —
+     le panneau COEXISTE avec la vue, il ne « glisse » pas en tant
+     qu'élément. Le snap retour (0.28s ease-out) = le retour du panneau
+     vers la droite lors de la fermeture (le geste referme, l'axe
+     horizontal reste le seul trigger). */
+  transition: transform 0.28s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+/* L'intérieur du panneau : le détail du projet (ressources, 05 §4.3.2)
+   — la card + le CTA restent les seuls éléments, l'état vide honnête.
+   ref_045 : le panneau porte le **profil du projet** (nom + % + jalon
+   manqué mono danger) — l'aperçu du CTA « Générer la fiche » que le
+   panneau expose au glissement, sans re-coder une 2ᵉ fois la CTA de
+   la surface (AD-14 : le CTA est unique, le panneau le réutilise). */
+.projects-panel {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.projects-panel[data-projects-panel] {
+  min-height: 100%;
+}
+.projects-panel .page-hint {
+  margin: 4px 0 0;
+}
+/* La card profil (ref_045 : le nom du projet + le % + le jalon manqué
+   en rouge mono) — la surface est la même card flat de la Liste (le
+   panneau réutilise le pattern `.project-card`, jamais un chrome
+   distinct). */
+.projects-panel-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px solid var(--aurora-border);
+  border-left: 3px solid var(--aurora-danger);
+  border-radius: var(--aurora-radius-lg, 0.75rem);
+  box-shadow: var(--aurora-shadow-card);
+}
+/* La head : le nom (md-600) + le % mono xs à droite (le pattern de la
+   Liste, ref_045 : « Projet » + « 0% »). */
+.projects-panel-profile-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+.projects-panel-profile-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.projects-panel-profile-pct {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--aurora-text-muted);
+}
+/* La ProgressBar 8px (le pattern de la Liste, l.1440) : le fill = 0%
+   (le miroir n'est pas câblé, AD-7 — jamais un pourcentage factice),
+   le track = bg-subtle. */
+.projects-panel-profile-progress {
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--aurora-bg-subtle);
+  overflow: hidden;
+}
+.projects-panel-profile-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--aurora-danger); /* la state `bloque` (05 §5.1 FROZEN) */
+}
+/* Le jalon manqué (ref_056 : « Manquant 24/09 » en rouge mono) :
+   l'icône `Flag` 12px + la date `JetBrains Mono` xs — la state est
+   `danger` FROZEN (05 §5.1), la date est la donnée (05 §2.2 l.227-229). */
+.projects-panel-profile-missed {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--aurora-danger);
+}
+.projects-panel-profile-missed svg {
+  flex: none;
+}
+/* Le CTA (AD-14 : le CTA est unique, le panneau le réutilise — jamais
+   un CTA dupliqué). */
+.projects-panel-cta {
+  width: 100%;
+}
+
+/* ---- GANTT (05 §3.6.4, `timeline-gantt.md` OQ-01 option A : LISTE) ---
+ * Une tâche = UNE ligne 44px (05 §3.6.4 l.928) : le titre sm en
+ * ellipsis à gauche, la barre 8px proportionnelle au centre (sur l'axe
+ * de dates partagé, le Pager Jour|Semaine|Mois de l.219-231 du .tsx),
+ * le % mono xs à droite (l.932-935 : JetBrains Mono, jamais un
+ * count-up — règle 1). La barre est DATA (elle ne bouge pas, elle EST). */
+.gantt-view {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0 16px 24px;
+}
+/* L'axe de dates partagé (le Pager) : le control `Jour | Semaine | Mois`
+   (OQ-03 option A = présent) — le pattern `.segmented` existant, juste
+   centré et plus compact (l'axe n'est pas la vue, c'est le repère). */
+.gantt-axis {
+  display: inline-flex;
+  gap: 4px;
+  margin: 0;
+  padding: 4px;
+  background: var(--aurora-bg-subtle);
+  border-radius: 9999px;
+  width: fit-content;
+}
+/* Le libellé de période (ref_020/056 : le mono sous le Pager,
+   05 §3.4 l.737-750 : « le label central dates sm 600 JetBrains
+   Mono ») — la donnée courante, jamais animée (règle 1). */
+.gantt-period {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--aurora-text-muted);
+  text-align: center;
+  margin: 0;
+}
+/* Le marker de jalon manqué (ref_056 : « Manquant 24/09 » en rouge
+   dans la section « PROCHAINES ÉTAPES ») : l'icône `Flag` 12px +
+   la date mono, en `danger` FROZEN (05 §5.1). Le marker est à
+   gauche de la barre (le blocage est visible, 05 §3.6.4 l.941-944),
+   jamais caché dans un statut. */
+.gantt-row-missed {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--aurora-danger);
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.gantt-row-missed svg {
+  flex: none;
+}
+/* Les lignes GanttRow (05 §3.6.4 l.928-936) : UNE ligne = 1 tâche.
+   La grille : [titre flexible ellipsis | track flexible | % fixe 4ch].
+   Le track porte la barre (8px, proportionnelle, left/width en % du
+   0-100 partagé avec le Pager — le % EST la donnée, jamais animée). */
+.gantt-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gantt-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(80px, 1.6fr) 3ch;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 12px;
+  background: var(--aurora-surface);
+  /* 10-09 lisage global : le token lissé (opaque par défaut, translucide
+     quand un thème image est actif). Lèche : pas de glow. */
+  background: var(--aurora-surface-bg);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+}
+/* Le titre (sm, ellipsis — une tâche peut avoir un long nom, la ligne
+   reste 44px fixe, jamais 2 lignes, 05 §3.6.4 l.929). */
+.gantt-row-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+/* Le track de la barre (l'axe de dates pour CETTE tâche) : la bande
+   grise continue (bg-subtle), sur laquelle la barre glisse en %.
+   L'axe n'est PAS tracé en jours/semaines ici (OQ-05 option B : une
+   ligne par tâche, l'axe de dates = le Pager au-dessus, pas un
+   calibrage par colonne — le budget OQ-11 interdit la grille 2D). */
+.gantt-row-track {
+  position: relative;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--aurora-bg-subtle);
+  overflow: hidden;
+}
+/* La barre (le `ProgressBar` 8px de la ligne, 05 §3.6.4 l.930-931) :
+   `accent-primary` (en cours) · `success` (terminée) · `border-strong`
+   (à faire) · `danger` (bloquée) — les 4 états sémantiques FROZEN (05
+   §5.1 l.2931 : un thème ne redéfinit JAMAIS une state). La position
+   left/width vient du style inline du .tsx (la donnée — ne bouge pas,
+   ne s'anime pas, règle 1). */
+.gantt-row-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 9999px;
+}
+.gantt-row-bar--in_progress {
+  background: var(--aurora-accent-primary);
+}
+.gantt-row-bar--done {
+  background: var(--aurora-success);
+}
+.gantt-row-bar--todo {
+  background: var(--aurora-border-strong);
+}
+.gantt-row-bar--blocked {
+  background: var(--aurora-danger);
+}
+/* Le jalon manqué (S-07, 05 §3.6.4 l.941-944) : le marker à gauche du
+   titre (une barre orange ne suffit pas — l'attention doit SAUTER).
+   `.is-missed` est sur la ligne mère (cf. .tsx l.257) : elle redessine
+   le titre en `danger` + une barre danger (pas success/warning/info —
+   la state est FROZEN, AD-17, et le danger est « l'alerte que le
+   jalons s'est raté »). */
+.gantt-row.is-missed .gantt-row-title {
+  color: var(--aurora-danger);
+  font-weight: 700;
+}
+.gantt-row.is-missed .gantt-row-track {
+  background: var(--aurora-danger-surface);
+}
+/* Le % à droite (JetBrains Mono xs, 05 §3.6.4 l.932-935) : LA donnée,
+   jamais un count-up (règle 1, 05 §2.6 l.273). */
+.gantt-row-pct {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--aurora-text-secondary);
+  text-align: right;
+}
+/* L'état vide Gantt (OQ-09 option A, SSoT l.942-944) : l'icône seule,
+   le libellé honnête, le CTA reste (AD-14 : le CTA crée, jamais ne
+   propose de remplir la vue). */
+.gantt-empty-icon {
+  color: var(--aurora-text-muted);
+}
+/* Le CTA unique de la surface Gantt (OQ-08 option A : « Générer la
+   fiche ») — le seul bouton d'action de la vue (AD-14 : jamais une
+   proposition libre de l'agent ici). */
+.gantt-cta {
+  width: 100%;
+  margin-top: 2px;
+}
+
+/* ---- CHRONO (05 §3.6.3, vue narrative `Timeline`) -------------------
+ * La frise VERTICALE des événements PASSÉS du projet (jalons atteints,
+ * étapes terminées). DISTINCT du Gantt (la SSoT l.15 : « Chrono = ce
+ * qui s'est passé, Gantt = ce qui reste »). Chaque nœud = 1 event
+ * (date mono xs + libellé sm + Badge statut, 05 §3.6.3 l.914-924).
+ * ref_056 : la frise est DIVISÉE en 2 sections — « JALONS & RÉALISÉS »
+ * (ce qui s'est passé) et « PROCHAINES ÉTAPES » (ce qui reste, dont
+ * le jalon manqué en rouge) — les libellés de section sont en
+ * `JetBrains Mono` xs uppercase (la donnée technique, 05 §2.2 l.227-229). */
+.timeline-view {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 16px 24px;
+}
+/* Le pager de la frise (`.timeline-axis`) : centré sous le libellé
+   de période (le repère horizontal, jamais en coin, 05 §3.4 l.737-750). */
+.timeline-view .timeline-axis {
+  margin-left: auto;
+  margin-right: auto;
+}
+/* Le libellé de période (`.gantt-period`, partagé avec le Gantt) :
+   centré (le repère du pager, jamais en coin). */
+.timeline-view .gantt-period {
+  text-align: center;
+}
+/* La section de la frise (`.timeline-section`) : le libellé mono
+   uppercase + la frise horizontale (le `::before` trace l'axe
+   central, les nœuds alternent au-dessus / en-dessous). */
+.timeline-view .timeline-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0;
+}
+/* Une section de la frise (ref_056) : le libellé mono uppercase en
+   tête + l'ol des nœuds. Le gap 16px entre sections sépare visuellement
+   les 2 sections (l'axe vertical de chaque section est continu, jamais
+   cassé entre les sections — l'axe est le trait, les sections sont
+   les regroupements des nœuds dessus). */
+.timeline-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 12px;
+}
+.timeline-section:first-child {
+  padding-top: 0;
+}
+/* Le libellé de section (ref_056 : « JALONS & RÉALISÉS » / « PROCHAINES
+   ÉTAPES ») : JetBrains Mono xs uppercase (la donnée technique, jamais
+   un libellé free-style), letter-spacing pour la lecture mono. */
+.timeline-section-label {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--aurora-text-muted);
+  margin: 0 0 2px 10px;
+}
+.timeline-nodes {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 4px;
+  position: relative;
+}
+/* L'axe vertical (la frise) — le `::before` de la liste, pas un
+   élément de DOM par nœud (l'axe est UN trait continu, les nœuds
+   sont les points dessus). */
+.timeline-nodes::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 15px; /* aligné avec le centre du dot (12px width, cf. ci-dessous) */
+  width: 2px;
+  background: var(--aurora-border);
+}
+/* Un nœud = 1 event : le point sur l'axe + le body (date + titre) +
+   le Badge statut (05 §3.6.3 l.918-920). La ligne tient en UNE
+   hauteur (pas de wrap — le titre est ellipsis). */
+.timeline-node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 6px 8px 6px 0;
+}
+/* Le point sur l'axe (le nœud de la frise, 12px) — la couleur suit la
+   state de l'event (atteint = success, en_cours = warning, manque =
+   danger — les 3 états FROZEN, 05 §5.1). */
+.timeline-node-dot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-left: 10px; /* centre le dot SUR l'axe (::before left 15px) */
+  background: var(--aurora-text-muted);
+  border: 2px solid var(--aurora-surface);
+  z-index: 1;
+}
+/* La variante de couleur par statut (la state est sémantique, AD-17). */
+.timeline-node--atteint .timeline-node-dot {
+  background: var(--aurora-success);
+}
+.timeline-node--en_cours .timeline-node-dot {
+  background: var(--aurora-warning);
+}
+.timeline-node--manque .timeline-node-dot {
+  background: var(--aurora-danger);
+}
+/* Le body : la date (JetBrains Mono xs) AU-DESSUS du libellé (sm).
+   L'axe n'est pas tracé en heures ici — la date EST l'ancrage (le
+   nœud se place au jour, l'heure n'est jamais affichée, 05 §3.6.3
+   l.917 : « date = le JOUR, jamais l'heure »). */
+.timeline-node-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.timeline-node-date {
+  font-size: 11px;
+  color: var(--aurora-text-muted);
+}
+.timeline-node-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+/* Le Badge statut (05 §3.6.3 l.919-920 : le Badge est le MIRROR de la
+   state du nœud, jamais un libellé libre) — à droite du nœud. */
+.timeline-node-badge {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  line-height: 1.4;
+}
+.timeline-node-badge--atteint {
+  background: var(--aurora-success-surface);
+  color: var(--aurora-success);
+}
+.timeline-node-badge--en_cours {
+  background: var(--aurora-warning-surface);
+  color: var(--aurora-warning);
+}
+.timeline-node-badge--manque {
+  background: var(--aurora-danger-surface);
+  color: var(--aurora-danger);
+}
+/* L'état vide Chrono : l'icône seule + le libellé honnête (AD-7 : la
+   frise se remplit au fil du projet, jamais de date factice). */
+.timeline-empty-icon {
+  color: var(--aurora-text-muted);
+}
+
+/* ---- Timeline infographic (C5.5, 10-08, image « Timeline Infographics »)
+   La vue Chrono avec la ligne centrale horizontale + les nœuds alternés
+   au-dessus / en-dessous (pas une liste verticale). Chaque nœud = un
+   point coloré par **token d'accent** (AD-17 : jamais une valeur
+   brute, le thème pilote la couleur) + un titre qui reprend la teinte
+   du point + la date mono + le badge de statut.
+   Lèche (pas de glow, pas de halo, pas d'animation — règle 1, 05 §2.6).
+   L'axe est **flexible** (4 échelles : Jour / Semaine / Mois / Année) —
+   le changement d'échelle ne change pas la structure, il change la
+   période affichée (le libellé mono sous le Pager). */
+
+/* L'axe horizontal (la ligne centrale) — le `::before` de la liste,
+   pas un élément de DOM par nœud (l'axe est UN trait continu, les
+   nœuds sont les points dessus). 2px, `--aurora-border`. */
+.timeline-nodes--h {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  position: relative;
+  padding: 24px 0;
+  gap: 8px;
+}
+.timeline-nodes--h::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--aurora-border);
+  transform: translateY(-50%);
+}
+
+/* La variante horizontale reprend le style de base du nœud puis
+   change en colonne (le point reste au centre, le body + le badge
+   s'empilent de chaque côté de la ligne). */
+.timeline-nodes--h .timeline-node {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 4px 8px;
+  gap: 4px;
+}
+/* Le nœud au-dessus : le body est au-dessus du point (le badge
+   repasse sous le body, toujours). Le nœud en-dessous : le body est
+   en-dessous du point (ordre inversé : point, badge, body ? Non —
+   l'image référence : le titre + la date sont d'un seul côté de
+   l'axe, le badge de l'autre côté. Donc `column-reverse` pour up
+   (le body est AU-DESSUS), `column` normal pour down). */
+.timeline-node--up {
+  flex-direction: column-reverse;
+  padding-bottom: 12px;
+}
+.timeline-node--down {
+  flex-direction: column;
+  padding-top: 12px;
+}
+
+/* Le point sur l'axe (le nœud de la frise, 12px) — la couleur suit
+   la **teinte** du nœud (le token d'accent, AD-17 : jamais une valeur
+   brute, le thème pilote la couleur). */
+.timeline-nodes--h .timeline-node-dot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin: 0;
+  z-index: 1;
+}
+
+/* La couleur du point par **token d'accent** (les 4 teintes = les 4
+   accents du thème, AD-17 : jamais une valeur brute). Quand le thème
+   change, le point change. */
+.timeline-node--tone-primary .timeline-node-dot {
+  background: var(--aurora-accent-primary);
+}
+.timeline-node--tone-secondary .timeline-node-dot {
+  background: var(--aurora-accent-secondary);
+}
+.timeline-node--tone-punctual .timeline-node-dot {
+  background: var(--aurora-accent-punctual);
+}
+.timeline-node--tone-neutral .timeline-node-dot {
+  background: var(--aurora-border-strong);
+}
+
+/* Le titre reprend la teinte du point (le pattern de l'image :
+   « Sample Text » en rouge pour le point rouge, etc.) — le titre
+   est coloré par le même token que le dot. */
+.timeline-node--tone-primary .timeline-node-title {
+  color: var(--aurora-accent-primary);
+}
+.timeline-node--tone-secondary .timeline-node-title {
+  color: var(--aurora-accent-secondary);
+}
+.timeline-node--tone-punctual .timeline-node-title {
+  color: var(--aurora-accent-punctual);
+}
+.timeline-node--tone-neutral .timeline-node-title {
+  color: var(--aurora-text-primary);
+}
+
+/* La date mono xs (l'ancrage du nœud, jamais l'heure — 05 §3.6.3
+   l.917 : « date = le JOUR, jamais l'heure »). */
+.timeline-nodes--h .timeline-node-date {
+  font-size: 10px;
+}
+
+/* Le body : la date (JetBrains Mono xs) + le libellé (sm) — le
+   body reprend le flex column de base (la date au-dessus du titre,
+   le titre reprend la teinte du point). */
+.timeline-nodes--h .timeline-node-body {
+  min-width: 48px;
+  max-width: 72px;
+  gap: 2px;
+}
+
+/* Le badge de statut (le MIRROR de la state du nœud, jamais un
+   libellé libre, 05 §3.6.3 l.919-920) — compact en version
+   horizontale (la ligne tient en UNE hauteur, pas de wrap). */
+.timeline-nodes--h .timeline-node-badge {
+  font-size: 9px;
+  padding: 1px 6px;
+}
+
+/* Le pager de l'axe (05 §3.4 l.737-750, OQ-03 option A) — le 4ᵉ bouton
+   « Année » (C5.5) : le pattern `.segmented` repris en inliné (le
+   conteneur s'adapte au contenu, jamais pleine largeur sur la page). */
+.timeline-axis {
+  display: inline-flex;
+  gap: 4px;
+  margin: 0;
+  padding: 4px;
+  background: var(--aurora-bg-subtle);
+  border-radius: 9999px;
+  width: fit-content;
+}
+.timeline-axis .segmented-item {
+  flex: none;
+  min-height: 30px;
+  font-size: 12px;
+  padding: 0 10px;
+}
+
+/* ---- LISTE (SSoT 05 §4.3.1, `projets-liste.md` : Card flat) --------
+ * UN projet = UNE card (05 §4.3.1 l.1439 : « un projet = une Card,
+ * JAMAIS une ListItem ») : le titre md-600 + le % mono xs à droite,
+ * la `ProgressBar` 8px (l.1440), les 2 Badges (statut sémantique +
+ * jalon mono, l.1441), le `KeyValueList` compact (tâches totales/
+ * terminées, l.1442). Le tri (date/progression/priorité, l.1436-1437)
+ * vit dans le menu « ⋮ » (le tri n'est PAS une 3ᵉ row de la card).
+ * La card est COACHANTE (le % est un width, jamais un count-up,
+ * règle 1 : la donnée ne s'anime pas). */
+.list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 16px 96px; /* le 96px laisse passer le FAB (56px + 20px) */
+}
+/* La liste des cards (ul reset, gap 10px = le rythme des rows, 05 §3.3). */
+.project-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* La Card flat (05 §4.3.1 l.1439) — `border-radius` `--radius-lg`
+   (l'8px du Card SSoT), la surface opaque (jamais translucide ici —
+   la Liste n'est pas un panneau latéral, le 65% de l.1402 ne
+   s'applique pas). La state `--termine` passe la card en success
+   (le Bordre de gauche = la state, comme les bandeaux du kanban). */
+.project-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px solid var(--aurora-border);
+  border-left: 3px solid var(--aurora-border-strong);
+  border-radius: var(--aurora-radius-lg, 0.75rem);
+  box-shadow: var(--aurora-shadow-card);
+}
+/* La state de la card = le Bordre gauche (la state est FROZEN, AD-17 :
+   en_cours = accent, bloque = danger, termine = success — 05 §5.1). */
+.project-card--en_cours {
+  border-left-color: var(--aurora-accent-primary);
+}
+.project-card--bloque {
+  border-left-color: var(--aurora-danger);
+}
+.project-card--termine {
+  border-left-color: var(--aurora-success);
+}
+/* La head : le titre md-600 (l.1438 « le titre du projet, md 600 »)
+   + le % mono xs à droite (l.1440 « le % en JetBrains Mono xs »). */
+.project-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+.project-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.project-card-pct {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--aurora-text-muted);
+}
+/* La ProgressBar 8px (05 §4.3.1 l.1440 : « une ProgressBar de 8px,
+   le fill = accent, le track = bg-subtle ») — le width = la donnée,
+   ne s'anime jamais (règle 1). La state termine = success (le fill
+   change, l.1443 : « à 100% le fill passe en success »). */
+.project-card-progress {
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--aurora-bg-subtle);
+  overflow: hidden;
+}
+.project-card-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--aurora-accent-primary);
+}
+.project-card--termine .project-card-progress-fill {
+  background: var(--aurora-success);
+}
+/* Les 2 Badges (l.1441 : le Badge statut = sémantique (success/warning/
+   danger), le Badge jalon = le mono (la date du prochain jalon,
+   jamais en sémantique — c'est une donnée, pas une state)). */
+.project-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.project-card-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  line-height: 1.4;
+}
+.project-card-badge--en_cours {
+  background: var(--aurora-success-surface);
+  color: var(--aurora-success);
+}
+.project-card-badge--bloque {
+  background: var(--aurora-danger-surface);
+  color: var(--aurora-danger);
+}
+.project-card-badge--termine {
+  background: var(--aurora-success-surface);
+  color: var(--aurora-success);
+}
+/* Le jalon (la date du prochain jalon) : le Badge est en MONO (la
+   donnée est une date, jamais une state — la couleur est text-muted,
+   pas sémantique, l.1442). */
+.project-card-badge--milestone {
+  background: var(--aurora-bg-subtle);
+  color: var(--aurora-text-secondary);
+  font-weight: 500;
+}
+/* Le jalon manqué (ref_056 : « Manquant 24/09 » en rouge dans la
+   card `bloque` — la state est `danger` FROZEN (05 §5.1), la date est
+   la donnée (05 §2.2 l.227-229, `JetBrains Mono`). L'icône `Flag`
+   12px est à gauche du badge (le blocage est visible, pas caché
+   dans un statut). */
+.project-card-badge--missed {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--aurora-danger-surface);
+  color: var(--aurora-danger);
+  font-weight: 700;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+.project-card-badge--missed svg {
+  flex: none;
+}
+/* Le KeyValueList compact (l.1442 : « X/Y tâches ») : le mono xs à
+   gauche de la card, sous les badges (la donnée dérivée, jamais
+   animée — le compteur est une lecture, AD-7). */
+.project-card-kv {
+  font-size: 11px;
+  color: var(--aurora-text-muted);
+}
+/* L'état vide Liste : l'icône + le libellé honnête (AD-7 : aucun
+   projet factice — le CTA FAB reste, le CTA crée, jamais ne propose
+   de remplir la liste). */
+.list-empty-icon {
+  color: var(--aurora-text-muted);
+}
+
+/* ==========================================================================
+   C5.4 PROPAGATION — Tâches (2026-10-08)
+   Le pattern C5 (menu ⋮ + glissement → panneau latéral + icônes couleur
+   par item, ref_045) est RÉUTILISÉ TEL QUEL sur /tasks (le plan C5.4 :
+   « réutilisé tel quel pour /tasks (3 vues : Aujourd'hui → Liste →
+   Quadrants) et toute autre surface multi-vues »).
+   Les classes `.tasks-*` réutilisent le CSS `.projects-*` du C5 (le
+   panneau latéral, le glissement, le menu) — le pattern est partagé,
+   le contexte est propre à la page (le titre, les icônes, le CTA).
+   Tokens only (AD-17), la donnée ne s'anime jamais (règle 1), et
+   `prefers-reduced-motion` fige les transitions du panneau + du menu.
+   ========================================================================== */
+
+/* Le header de la page (titre + menu ⋮, 05 §3.5 l.843-854) — le
+   pattern `.projects-header` du C5, renommé pour le contexte tasks. */
+.tasks-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 56px;
+  padding: 0 12px;
+}
+.tasks-header .page-options-menu {
+  position: static;
+  z-index: auto;
+}
+
+/* Le glissement horizontal (05 §3.6.15 l.1402-1411, le pattern C5.3) :
+   la surface glisse en `translateX(-Xpx)` au pointeur, le panneau
+   `.tasks-panel-slide` est révélé sur la moitié droite de l'écran.
+   GPU-only (`will-change: transform`), jamais une layout animation
+   (règle 1, 05 §2.6 : la donnée ne s'anime jamais). */
+.tasks-surface {
+  will-change: transform;
+}
+.tasks-surface.is-gliding {
+  will-change: transform;
+}
+/* Le panneau latéral (le panneau caché révélé par le glissement) :
+   `absolute` derrière la surface, 300px (max 86vw), `--aurora-z-content`
+   (le panneau est derrière la surface, le z-order figé de `floating.css`
+   l.10-15). La transition est COSMÉTIQUE (le panneau reste monté,
+   jamais une animation de layout). */
+.tasks-panel-slide {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 300px;
+  max-width: 86vw;
+  z-index: var(--aurora-z-content);
+  overflow-y: auto;
+  background: var(--aurora-bg-subtle);
+  border-left: 1px solid var(--aurora-border);
+  box-shadow: var(--aurora-shadow-float);
+  transition: transform 0.28s cubic-bezier(0.33, 1, 0.68, 1);
+}
+.tasks-panel {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.tasks-panel[data-tasks-panel] {
+  min-height: 100%;
+}
+.tasks-panel .page-hint {
+  margin: 4px 0 0;
+}
+/* La card profil (ref_045 : le nom de la tâche + le % + le jalon manqué
+   en rouge mono) — la surface est la même card flat (le panneau réutilise
+   le pattern, jamais un chrome distinct). */
+.tasks-panel-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px solid var(--aurora-border);
+  border-left: 3px solid var(--aurora-danger);
+  border-radius: var(--aurora-radius-lg, 0.75rem);
+  box-shadow: var(--aurora-shadow-card);
+}
+.tasks-panel-profile-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+.tasks-panel-profile-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.tasks-panel-profile-pct {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--aurora-text-muted);
+}
+.tasks-panel-profile-progress {
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--aurora-bg-subtle);
+  overflow: hidden;
+}
+.tasks-panel-profile-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: var(--aurora-danger);
+}
+.tasks-panel-profile-missed {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--aurora-danger);
+}
+.tasks-panel-profile-missed svg {
+  flex: none;
+}
+.tasks-panel-cta {
+  width: 100%;
+}
+
+/* Reduced motion (05 §2.6 règle 2) : le menu + le panneau se figent. */
+@media (prefers-reduced-motion: reduce) {
+  .tasks-panel-slide {
+    transition: none !important;
+  }
+}
+
+/* ==========================================================================
+   C5.4 propagation /calendar (10-08) — le menu ⋮ (tri événements + mode
+   liste tâches) : le calendrier n'est PAS multi-vues glissable (un seul
+   moteur FullCalendar, pas de slides), donc le glissement horizontal ne
+   s'y applique PAS. Seuls le menu + le pattern header sont repris.
+   ========================================================================== */
+
+/* Le header de la page (titre + menu ⋮, 05 §3.5 l.843-854) — le
+   pattern `.tasks-header` du C5.4 /tasks, repris pour le contexte calendar. */
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 56px;
+  padding: 0 12px;
+}
+.cal-header .page-options-menu {
+  position: static;
+  z-index: auto;
+}
+
+/* La carte calendrier (lot C5.5, 10-08 → 10-09 lisage global) : la carte
+   consomme le token unifié `--aurora-surface-bg` (opaque par défaut,
+   mixed color translucide quand un thème image est actif — le bloc
+   « Surface (lissée, theme-reactive) » de tokens.css). Fallback opaque
+   d'abord (AD-13 honest degradation : l'ancien webview qui ne supporte
+   pas color-mix garde la surface canonique) puis le token lissé.
+   Lèche (pas de glow, pas de halo, pas de lumières — le lisage = le
+   contraste doux de la bordure translucide + le fond qui respire). */
+.cal-card {
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px solid color-mix(in srgb, var(--aurora-border-strong) 40%, transparent);
+  border-radius: 12px;
+  padding: 16px;
+}
+/* Le header de la page (titre + menu ⋮) — quand un thème image est
+   actif, le header reste translucide (le fond image respire derrière
+   le titre, jamais un header opaque qui « écrase » la carte). Lèche :
+   le lissage = le contraste doux du texte, jamais un glow. */
+html[data-aurora-image-theme] .cal-header {
+  background: color-mix(in srgb, var(--aurora-surface) 60%, transparent);
+  backdrop-filter: blur(8px);
+}
+/* La section « Tâches du mois » dans la carte (image #10) : le fond
+   reste la carte translucide (le bloc `.cal-task-list` est à
+   l'intérieur de `.cal-card`), la bordure du haut = le détail lisse
+   (1px, le même que la bordure de la carte, jamais un glow). */
+.cal-card .cal-task-list {
+  border-top: 1px solid color-mix(in srgb, var(--aurora-border) 50%, transparent);
+  padding: 12px 0 0;
+}
+
+/* ==========================================================================
+   C2.2 calendrier (10-08, ref_020/021 image #10) — le superposé de
+   pastilles + la section « Tâches du mois » sous la grille. Les
+   pastilles sont 4px (border-radius: 50%), 2px de gap, colorées par
+   le **token d'accent du thème** (AD-17 : color-mix(), jamais une
+   valeur brute — le thème pilote la couleur automatiquement).
+   Interface lèche (pas de glow, pas de halo, pas d'animation).
+   ========================================================================== */
+
+/* La cellule de jour de la grille (C2.2 10-08, hook `dayCellContent`)
+   : le numéro du jour (FullCalendar `dayNumber`) + les pastilles
+   (`CalendarDots`, sous le numéro). Le conteneur est un flex column
+   (le numéro en haut, les pastilles en bas, le 05 §3.6 lèche — pas
+   de glow, le gap 4px suffit). La date du jour (la donnée, jamais
+   animée, règle 1). */
+.cal-day-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 100%;
+  padding: 2px;
+}
+/* Le numéro du jour (le `dayNumber` FullCalendar, sm 600) — la donnée,
+   jamais un count-up (règle 1, 05 §2.6 l.273). */
+.cal-day-number {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+}
+/* Les pastilles (`CalendarDots`) — le style est porté par le composant
+   lui-même (`CALENDAR_DOTS_CSS` injecté par la page) : le conteneur
+   `.cal-dots` + les dots 4px + le compteur +N mono xs. Le conteneur
+   est un inline-flex (24×4px, 3 dots + 2px gap = 16px, le +N label
+   prend le reste, `JetBrains Mono` xs). */
+
+/* La section « Tâches du mois » (image #10) — sous la grille, le
+   titre + l'état vide honnête (AD-7 : le miroir non câblé). */
+.cal-task-list {
+  padding: 12px 16px;
+  border-top: 1px solid var(--aurora-border);
+}
+.cal-task-list-title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--aurora-text);
+}
+.cal-task-list .page-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--aurora-text-muted);
+  line-height: 1.5;
+}
+
+/* La bande d'aide de la vue année (image #9) — sous les 12
+   mini-mois, l'explication des pastilles par jour. */
+.cal-year-hint {
+  padding: 12px 16px;
+  border-top: 1px solid var(--aurora-border);
+}
+.cal-year-hint .page-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--aurora-text-muted);
+  line-height: 1.5;
+}
+
+/* Les pastilles (le composant `CalendarDots` de `ux/calendar-dots.tsx`)
+   — 4px, 2px gap, colorées par token d'accent (AD-17 : color-mix(),
+   jamais une valeur brute — le thème pilote la couleur automatiquement).
+   Lèche (pas de glow, pas de halo, pas d'animation — règle 1, 05 §2.6). */
+.cal-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 12px;
+}
+.cal-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  flex: none;
+}
+.cal-dots-overflow {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--aurora-text-muted);
+  margin-left: 1px;
+}
+
+/* ==========================================================================
+   C5.4 propagation /habits (10-08) — le menu ⋮ + le glissement horizontal
+   (3 vues glissables Jour / Actives / Catalogue) + le panneau latéral
+   caché révélé par le glissement.
+   ========================================================================== */
+
+/* Le header de la page (titre + menu ⋮, 05 §3.5 l.843-854) — le
+   pattern `.tasks-header` du C5.4 /tasks, repris pour le contexte habits. */
+.habits-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 56px;
+  padding: 0 12px;
+}
+.habits-header .page-options-menu {
+  position: static;
+  z-index: auto;
+}
+
+/* Le glissement horizontal (05 §3.6.15 l.1402-1411, le pattern C5.3) :
+   la surface glisse en `translateX(-Xpx)` au pointeur, le panneau
+   `.habits-panel-slide` est révélé sur la moitié droite de l'écran.
+   GPU-only (`will-change: transform`), jamais une layout animation
+   (règle 1, 05 §2.6 : la donnée ne s'anime jamais). */
+.habits-surface {
+  will-change: transform;
+}
+.habits-surface.is-gliding {
+  will-change: transform;
+}
+/* Le panneau latéral (le panneau caché révélé par le glissement) :
+   `absolute` derrière la surface, 300px (max 86vw), `--aurora-z-content`
+   (le panneau est derrière la surface, le z-order figé de `floating.css`
+   l.10-15). La transition est COSMÉTIQUE (le panneau reste monté,
+   jamais une animation de layout). */
+.habits-panel-slide {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 300px;
+  max-width: 86vw;
+  z-index: var(--aurora-z-content);
+  overflow-y: auto;
+  background: var(--aurora-bg-subtle);
+  border-left: 1px solid var(--aurora-border);
+  box-shadow: var(--aurora-shadow-float);
+  transition: transform 0.28s cubic-bezier(0.33, 1, 0.68, 1);
+}
+.habits-panel {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.habits-panel[data-habits-panel] {
+  min-height: 100%;
+}
+.habits-panel-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px solid var(--aurora-border);
+  border-left: 3px solid var(--aurora-danger);
+  border-radius: var(--aurora-radius-lg);
+}
+.habits-panel-profile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.habits-panel-profile-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--aurora-text);
+}
+.habits-panel-profile-pct {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--aurora-text-muted);
+}
+.habits-panel-profile-progress {
+  width: 100%;
+  height: 8px;
+  background: var(--aurora-border-strong);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.habits-panel-profile-progress-fill {
+  width: 0%;
+  height: 100%;
+  background: var(--aurora-danger);
+  border-radius: inherit;
+}
+.habits-panel-profile-missed {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--aurora-danger);
+}
+.habits-panel-profile-missed svg {
+  flex: none;
+}
+.habits-panel-cta {
+  width: 100%;
+}
+
+/* Reduced motion (05 §2.6 règle 2) : le menu + le panneau se figent. */
+@media (prefers-reduced-motion: reduce) {
+  .habits-panel-slide {
+    transition: none !important;
+  }
 }

@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Aurora — Audit ancrage couleurs thèmes image (B3)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 24px; background: #0f172a; color: #e2e8f0; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p.sub { margin: 0 0 20px; color: #94a3b8; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #1e293b; vertical-align: middle; }
+  th { color: #94a3b8; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  .img { width: 96px; height: 54px; object-fit: cover; border-radius: 6px; display: block; }
+  .chip { display: inline-block; width: 46px; height: 46px; border-radius: 8px; border: 2px solid #334155; vertical-align: middle; }
+  .hex { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12px; }
+  .ok { color: #4ade80; }
+  .warn { color: #facc15; }
+  .bad { color: #f87171; font-weight: 600; }
+  .note { color: #64748b; font-size: 12px; max-width: 340px; }
+  .err { color: #f87171; }
+  footer { margin-top: 20px; color: #64748b; font-size: 12px; }
+</style>
+</head>
+<body>
+<h1>Audit B3 — anchorColor vs couleur dominante effective</h1>
+<p class="sub">Couleur dominante = moyenne des pixels ayant la saturation la plus élevée du quart le plus saturé (downsampled 64×36, images paysage). Le « ΔE » est une distance ad hoc en hsl (ΔH + ΔS·0.5 + ΔL·0.5, unités °). Outil de dev uniquement — aucune dépendance prod.</p>
+<table id="tbl">
+  <thead>
+    <tr>
+      <th style="width:110px">Aperçu</th>
+      <th>Thème</th>
+      <th style="width:150px">Anchor (code)</th>
+      <th style="width:150px">Dominante mesurée</th>
+      <th style="width:90px">ΔE ad hoc</th>
+      <th>Verdict</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+<footer id="foot">Chargement…</footer>
+
+<script>
+  // SSoT = packages/ui/src/themes/image-themes.ts (copié ici — resynchroniser si le catalogue bouge)
+  const THEMES = [
+    ["new_york", "New York", "#2563EB"],
+    ["tokyo", "Tokyo", "#E23B45"],
+    ["paris", "Paris", "#3D6FD8"],
+    ["londres", "Londres", "#12A878"],
+    ["dubai", "Dubaï", "#19A7A8"],
+    ["sydney", "Sydney", "#00A9C7"],
+    ["printemps", "Printemps", "#68C27B"],
+    ["ete", "Été", "#19B8D8"],
+    ["automne", "Automne", "#C95B43"],
+    ["hiver", "Hiver", "#74A9E8"],
+    ["noel", "Noël", "#C92F50"],
+    ["paques", "Pâques", "#D987B5"],
+    ["nouvel_an", "Nouvel An", "#704CFF"],
+    ["fete", "Fête", "#F23DAA"],
+    ["paix", "Paix", "#78B29A"],
+    ["impressionnisme", "Impressionnisme", "#62B59F"],
+    ["jazz", "Jazz", "#7657D9"],
+    ["street_art", "Street Art", "#E83D7C"],
+    ["ballet", "Ballet", "#B69ADF"],
+    ["sculpture", "Sculpture", "#4E8BCE"],
+    ["volcans", "Volcans", "#D9473F"],
+    ["glacier", "Glacier", "#2CB9D4"],
+    ["dunes", "Dunes", "#C9A76B"],
+    ["jungle", "Jungle", "#22B36F"],
+    ["ponts", "Ponts", "#D8444B"],
+    ["afrique", "Afrique", "#C96F4A"],
+  ];
+
+  const IMG_BASE = "../apps/mobile/public/themes/"; // ou "../.stitch/images/" — le public/ est servi par le dev server
+  const DOWNSAMPLE = [96, 54]; // largeur x hauteur canvas (≈ 512×286 / 5.3)
+
+  function hexToRgb(h) {
+    const n = parseInt(h.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  function rgbToHex(r, g, b) {
+    return "#" + [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("").toUpperCase();
+  }
+  function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s;
+    const l = (max + min) / 2;
+    if (max === min) { h = 0; s = 0; }
+    else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        default: h = (r - g) / d + 4;
+      }
+      h *= 60;
+    }
+    return [h, s * 100, l * 100];
+  }
+  function hueDist(a, b) {
+    const d = Math.abs(a - b) % 360;
+    return d > 180 ? 360 - d : d;
+  }
+  function deltaEAdHoc(rgbA, rgbB) {
+    const ha = rgbToHsl(...rgbA), hb = rgbToHsl(...rgbB);
+    return hueDist(ha[0], hb[0]) + Math.abs(ha[1] - hb[1]) * 0.5 + Math.abs(ha[2] - hb[2]) * 0.5;
+  }
+
+  // Couleur dominante : moyenne du quart des pixels le plus saturé.
+  // On exclut les pixels quasi-gris (S < 8 %) et quasi-noirs/blancs
+  // (L < 8 % ou L > 95 %) qui sont du canvas neutre, pas de l'image.
+  function dominantColor(canvas) {
+    const { width: w, height: h } = canvas;
+    const data = canvas.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, w, h).data;
+    const px = [];
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      const [H, S, L] = rgbToHsl(r, g, b);
+      if (S < 8 || L < 8 || L > 95) continue;
+      px.push({ r, g, b, s: S });
+    }
+    if (px.length === 0) return null;
+    px.sort((a, b) => a.s - b.s);
+    const top = px.slice(Math.floor(px.length * 0.75)); // quart le plus saturé
+    const n = top.length;
+    const r = top.reduce((s, p) => s + p.r, 0) / n;
+    const g = top.reduce((s, p) => s + p.g, 0) / n;
+    const b = top.reduce((s, p) => s + p.b, 0) / n;
+    return [Math.round(r), Math.round(g), Math.round(b)];
+  }
+
+  async function measureImage(file) {
+    const url = IMG_BASE + file;
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error("load fail " + url)); img.src = url; });
+    const canvas = document.createElement("canvas");
+    canvas.width = DOWNSAMPLE[0]; canvas.height = DOWNSAMPLE[1];
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const dom = dominantColor(canvas);
+    return { url, dom };
+  }
+
+  function verdict(de) {
+    if (de < 12) return ["ok", "fidèle"];
+    if (de < 30) return ["warn", "à vérifier visuellement"];
+    return ["bad", "écart — corriger anchorColor"];
+  }
+
+  (async () => {
+    const tbody = document.querySelector("#tbl tbody");
+    const foot = document.getElementById("foot");
+    let ok = 0, warn = 0, bad = 0, fail = 0;
+    for (const [slug, label, anchor] of THEMES) {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td><img class="img" alt="${label}" /></td>
+        <td>${label} <span class="hex">(${slug})</span></td>
+        <td><span class="chip" data-anchor style="background:${anchor}"></span> <span class="hex">${anchor}</span></td>
+        <td><span class="hex">…</span></td>
+        <td class="hex">…</td>
+        <td>…</td>`;
+      tbody.appendChild(row);
+      const [ar, ag, ab] = hexToRgb(anchor);
+      row.querySelector(".chip").style.background = anchor;
+      row.querySelector(".chip[data-anchor]").dataset.anchor = anchor;
+      row.querySelector("td img").src = IMG_BASE + slug + "_paysage.png";
+      try {
+        const { url, dom } = await measureImage(slug + "_paysage.png");
+        if (!dom) throw new Error("pas de pixel chromatique détecté");
+        const hex = rgbToHex(...dom);
+        const de = deltaEAdHoc([ar, ag, ab], dom);
+        const [cls, txt] = verdict(de);
+        row.querySelectorAll("td")[3].innerHTML = `<span class="chip" style="background:${hex};border-color:#475569"></span> <span class="hex">${hex}</span>`;
+        row.querySelectorAll("td")[4].textContent = de.toFixed(1);
+        const vcell = row.querySelectorAll("td")[5];
+        vcell.innerHTML = `<span class="${cls}">${txt}</span> <span class="note">(ΔE ad hoc = ΔH + 0.5·ΔS + 0.5·ΔL)</span>`;
+        if (cls === "ok") ok++; else if (cls === "warn") warn++; else bad++;
+      } catch (e) {
+        const cells = row.querySelectorAll("td");
+        cells[3].textContent = "—";
+        cells[4].textContent = "—";
+        cells[5].innerHTML = `<span class="err">erreur : ${e.message}</span>`;
+        fail++;
+      }
+    }
+    foot.textContent = `Résumé : ${ok} fidèle · ${warn} à vérifier · ${bad} à corriger · ${fail} erreur(s) — ${ok + warn + bad} mesures/26. Les cases « à corriger » → mettre à jour l'anchorColor dans packages/ui/src/themes/image-themes.ts (SSoT .stitch/prompts_v4.md), pas les images.`;
+  })();
+</script>
+</body>
+</html>

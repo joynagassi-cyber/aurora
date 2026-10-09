@@ -67,10 +67,13 @@ export const REVEAL_TRANSITION = {
  * (emotion-design §3: NodePulse, 1.5s breath, scale 1→1.04→1).
  * Secondary nodes stay static; reduced-motion = static highlight.
  */
-export const NODE_PULSE = {
+export const NODE_PULSE: {
+  animate: { scale: number[] };
+  transition: { duration: number; ease: 'easeInOut' };
+} = {
   animate: { scale: [1, 1.04, 1] },
-  transition: { duration: 1.5, ease: 'easeInOut' as const },
-} as const;
+  transition: { duration: 1.5, ease: 'easeInOut' },
+};
 
 /**
  * Skeleton load-pulse (05 §3.3: opacity 0.6→1 over 1.2s, easeInOut —

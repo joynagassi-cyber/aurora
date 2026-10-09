@@ -13,6 +13,10 @@
     "accent": "#E8C088",
     "surface": "#3A2417"
   },
+  "gradient": {
+    "angle": 120,
+    "stops": ["#D8AE72", "#C9823B", "#B85C38"]
+  },
   "gradients": "sable → ocre → terracotta (strates de terre)",
   "illustrationMood": "argile, strates de terre, matiere vive",
   "iconTreatment": "outline 1.5px, couleur #B85C38",

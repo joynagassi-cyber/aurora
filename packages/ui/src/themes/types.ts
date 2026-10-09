@@ -106,7 +106,21 @@ export interface AuroraTheme {
     accent?: string;
     surface?: string;
   };
-  /** Theme-owned gradient (05 §5.4: "propriétaire du thème"). */
+  /**
+   * Theme-owned gradient (05 §5.4: "propriétaire du thème") — the
+   * CONSUMABLE, code-ready version: angle + hex stops (used by
+   * `resolveThemeCSSVars` to emit `--aurora-theme-gradient`, the swatch
+   * preview on the settings screen, and any decorative surface). This is
+   * the source of truth for the CSS value; `gradients` below stays a free
+   * descriptive string (documentation / mood), never parsed by code.
+   */
+  gradient?: {
+    /** Angle in CSS degrees (default 120 when omitted). */
+    angle?: number;
+    /** 2+ hex stops, the theme's own palette (05 §5.4.1) — no re-invented colors. */
+    stops: string[];
+  };
+  /** Theme-owned gradient (05 §5.4: "propriétaire du thème") — descriptive. */
   gradients: string;
   illustrationMood: string;
   iconTreatment: string;

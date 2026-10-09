@@ -13,6 +13,10 @@
     "accent": "#A8DDEB",
     "surface": "#1C2E3B"
   },
+  "gradient": {
+    "angle": 120,
+    "stops": ["#8DC7D9", "#4A8C6A", "#2E5C8A"]
+  },
   "gradients": "glacier → lichen → argent",
   "illustrationMood": "paysage nordique, glace, forêts de pins",
   "iconTreatment": "outline 1.5px, couleur #2E5C8A",

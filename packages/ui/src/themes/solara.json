@@ -13,6 +13,10 @@
     "accent": "#F5825A",
     "surface": "#3A2A10"
   },
+  "gradient": {
+    "angle": 120,
+    "stops": ["#F0B83F", "#D99A24", "#E86F42"]
+  },
   "gradients": "or → ambre → corail (golden hour)",
   "illustrationMood": "golden hour, soleil, lumières dorées",
   "iconTreatment": "outline 1.5px, couleur #D99A24",

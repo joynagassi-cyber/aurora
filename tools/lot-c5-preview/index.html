@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="fr" data-aurora-style="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=360" />
+<title>Aurora 2 — Lot C5 : Projets · Gantt / Chrono / Liste · Menu ⋮ · Glissement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ---- Tokens (05 §2, AD-17) — dark = Nocturne preset (OQ-16 WDS) ---- */
+:root {
+  --aurora-bg: #000000;
+  --aurora-bg-subtle: #0a0a0a;
+  --aurora-surface: #121212;
+  --aurora-surface-alt: #1c1c1c;
+  --aurora-border: #2a2a2a;
+  --aurora-border-strong: #3a3a3a;
+  --aurora-text-primary: #f5f5f5;
+  --aurora-text-secondary: #b9babc;
+  --aurora-text-muted: #6b6b6b;
+  --aurora-success: #10b981;
+  --aurora-success-surface: #0d2a22;
+  --aurora-warning: #f59e0b;
+  --aurora-warning-surface: #2a1d05;
+  --aurora-danger: #ef4444;
+  --aurora-danger-surface: #2a0f0f;
+  --aurora-info: #0ea5e9;
+  --aurora-info-surface: #0a1f2e;
+  --aurora-accent-primary: #3678f6;
+  --aurora-accent-on-primary: #ffffff;
+  --aurora-accent-selected-surface: #16233d;
+  --aurora-radius: 0.5rem;
+  --aurora-radius-lg: 0.75rem;
+  --aurora-shadow-card: 0 1px 3px rgba(0,0,0,0.5);
+  --aurora-shadow-float: 0 8px 24px rgba(0,0,0,0.6);
+  --aurora-tap-target: 44px;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #1a1a1a;
+  font-family: "Inter", system-ui, sans-serif;
+  color: var(--aurora-text-primary);
+  padding: 32px;
+}
+.mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+h1 { font-size: 20px; margin: 0 0 4px; }
+.subtitle { color: var(--aurora-text-muted); font-size: 13px; margin: 0 0 24px; }
+.phone-row { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
+.phone {
+  width: 360px;
+  min-height: 640px;
+  background: var(--aurora-bg);
+  border: 1px solid var(--aurora-border);
+  border-radius: 32px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  position: relative;
+}
+.phone-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--aurora-border);
+  gap: 10px;
+}
+.phone-header h2 { font-size: 17px; font-weight: 700; margin: 0; }
+.phone-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--aurora-text-muted); }
+.phone-body { flex: 1; overflow-y: auto; padding: 14px 16px 96px; display: flex; flex-direction: column; gap: 14px; }
+.page-purpose { margin: 0; font-size: 13px; color: var(--aurora-text-secondary); line-height: 1.4; }
+
+/* ---- Menu ⋮ (05 §3.5, C5) ---- */
+.page-options-menu { position: relative; z-index: 30; }
+.page-options-menu-trigger {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px;
+  border-radius: var(--aurora-radius);
+  background: transparent;
+  color: var(--aurora-text-primary);
+  border: 0; cursor: pointer;
+}
+.page-options-menu-trigger svg { width: 20px; height: 20px; }
+.page-options-menu-list {
+  position: absolute; top: 100%; right: 0;
+  margin-top: 4px; min-width: 220px;
+  padding: 4px; background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border); border-radius: var(--aurora-radius);
+  box-shadow: var(--aurora-shadow-float);
+  display: none; flex-direction: column; gap: 2px;
+}
+.page-options-menu.is-open .page-options-menu-list { display: flex; }
+.page-options-menu-item {
+  display: flex; align-items: center; gap: 10px;
+  min-height: 44px; padding: 0 12px;
+  border-radius: var(--aurora-radius);
+  font-size: 13px; font-weight: 500;
+  color: var(--aurora-text-primary);
+  background: transparent; border: 0; cursor: pointer;
+  text-decoration: none;
+}
+.page-options-menu-item svg { width: 16px; height: 16px; flex: none; color: var(--aurora-text-muted); }
+.page-options-menu-item.is-active {
+  background: var(--aurora-accent-selected-surface); color: var(--aurora-accent-primary);
+}
+.page-options-menu-item.is-active svg { color: var(--aurora-accent-primary); }
+.page-options-menu-item .page-options-menu-check {
+  margin-left: auto; width: 16px; height: 16px;
+}
+.page-options-menu-item:hover { background: var(--aurora-bg-subtle); }
+.page-options-menu-item.is-active:hover { background: var(--aurora-accent-selected-surface); }
+
+/* ---- Segmented (05 §3.4) ---- */
+.segmented {
+  display: inline-flex; gap: 4px; padding: 4px;
+  background: var(--aurora-bg-subtle); border: 1px solid var(--aurora-border);
+  border-radius: 9999px;
+}
+.segmented-item {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 32px; padding: 4px 12px; border: 0; border-radius: 9999px;
+  background: transparent; color: var(--aurora-text-secondary);
+  font: 600 13px "Inter"; cursor: pointer;
+}
+.segmented-item.active { background: var(--aurora-surface); color: var(--aurora-text-primary); box-shadow: var(--aurora-shadow-card); }
+.segmented--compact { margin: 0; }
+.segmented--compact .segmented-item { min-height: 28px; padding: 2px 10px; font-size: 12px; }
+
+/* Buttons / FAB / callouts */
+.aurora-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 0 18px; border-radius: var(--aurora-radius);
+  font: 600 14px "Inter"; text-decoration: none; border: 0; cursor: pointer;
+}
+.aurora-btn--primary { background: var(--aurora-accent-primary); color: var(--aurora-accent-on-primary); }
+.aurora-fab {
+  position: absolute; right: 20px; bottom: 20px;
+  width: 56px; height: 56px; display: grid; place-items: center;
+  border-radius: 16px; background: var(--aurora-accent-primary); color: var(--aurora-accent-on-primary);
+  box-shadow: var(--aurora-shadow-float); border: 0; cursor: pointer;
+  z-index: 10;
+}
+.aurora-fab svg { width: 24px; height: 24px; }
+
+/* Generic empty (AD-7) */
+.empty-card {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 20px; border-radius: var(--aurora-radius);
+  border: 1px dashed var(--aurora-border); color: var(--aurora-text-secondary);
+  font-size: 14px; text-align: center;
+}
+.empty-card svg { color: var(--aurora-text-muted); }
+.empty-card p { margin: 0; }
+.empty-hint { font-size: 12px !important; color: var(--aurora-text-muted) !important; line-height: 1.45; font-weight: 400 !important; }
+
+/* ---- GANTT (05 §3.6.4, OQ-01 option A : liste de GanttRow) ---- */
+.gantt-view { display: flex; flex-direction: column; gap: 14px; }
+.gantt-axis { width: fit-content; }
+.gantt-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.gantt-row {
+  display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(80px, 1.6fr) 3ch;
+  align-items: center; gap: 10px;
+  min-height: 44px; padding: 8px 12px;
+  background: var(--aurora-surface); border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius); box-shadow: var(--aurora-shadow-card);
+}
+.gantt-row-title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.gantt-row-track { position: relative; height: 8px; border-radius: 9999px; background: var(--aurora-bg-subtle); overflow: hidden; }
+.gantt-row-bar { position: absolute; top: 0; bottom: 0; border-radius: 9999px; }
+.gantt-row-bar--in_progress { background: var(--aurora-accent-primary); }
+.gantt-row-bar--done { background: var(--aurora-success); }
+.gantt-row-bar--todo { background: var(--aurora-border-strong); }
+.gantt-row-bar--blocked { background: var(--aurora-danger); }
+.gantt-row.is-missed .gantt-row-title { color: var(--aurora-danger); font-weight: 700; }
+.gantt-row.is-missed .gantt-row-track { background: var(--aurora-danger-surface); }
+.gantt-row-pct { font-size: 11px; font-weight: 700; color: var(--aurora-text-secondary); text-align: right; }
+
+/* ---- CHRONO (05 §3.6.3 : vue narrative) ---- */
+.timeline-view { display: flex; flex-direction: column; gap: 4px; }
+.timeline-nodes { list-style: none; margin: 0; padding: 0 0 0 4px; position: relative; display: flex; flex-direction: column; }
+.timeline-nodes::before {
+  content: ""; position: absolute; top: 8px; bottom: 8px; left: 15px;
+  width: 2px; background: var(--aurora-border);
+}
+.timeline-node { position: relative; display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 8px 6px 0; }
+.timeline-node-dot {
+  flex: none; width: 12px; height: 12px; border-radius: 50%;
+  margin-left: 10px; background: var(--aurora-text-muted);
+  border: 2px solid var(--aurora-surface); z-index: 1;
+}
+.timeline-node--atteint .timeline-node-dot { background: var(--aurora-success); }
+.timeline-node--en_cours .timeline-node-dot { background: var(--aurora-warning); }
+.timeline-node--manque .timeline-node-dot { background: var(--aurora-danger); }
+.timeline-node-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.timeline-node-date { font-size: 11px; color: var(--aurora-text-muted); }
+.timeline-node-title { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.timeline-node-badge {
+  flex: none; font-size: 11px; font-weight: 700; padding: 2px 8px;
+  border-radius: 9999px; line-height: 1.4;
+}
+.timeline-node-badge--atteint { background: var(--aurora-success-surface); color: var(--aurora-success); }
+.timeline-node-badge--en_cours { background: var(--aurora-warning-surface); color: var(--aurora-warning); }
+.timeline-node-badge--manque { background: var(--aurora-danger-surface); color: var(--aurora-danger); }
+
+/* ---- LISTE (05 §4.3.1 : Card flat) ---- */
+.list-view { display: flex; flex-direction: column; gap: 10px; }
+.project-cards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.project-card {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 14px 16px;
+  background: var(--aurora-surface); border: 1px solid var(--aurora-border);
+  border-left: 3px solid var(--aurora-border-strong);
+  border-radius: var(--aurora-radius-lg); box-shadow: var(--aurora-shadow-card);
+}
+.project-card--en_cours { border-left-color: var(--aurora-accent-primary); }
+.project-card--bloque { border-left-color: var(--aurora-danger); }
+.project-card--termine { border-left-color: var(--aurora-success); }
+.project-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; }
+.project-card-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.project-card-pct { flex: none; font-size: 11px; font-weight: 700; color: var(--aurora-text-muted); }
+.project-card-progress { height: 8px; border-radius: 9999px; background: var(--aurora-bg-subtle); overflow: hidden; }
+.project-card-progress-fill { height: 100%; border-radius: 9999px; background: var(--aurora-accent-primary); }
+.project-card--termine .project-card-progress-fill { background: var(--aurora-success); }
+.project-card-badges { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.project-card-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 9999px; line-height: 1.4; }
+.project-card-badge--en_cours { background: var(--aurora-success-surface); color: var(--aurora-success); }
+.project-card-badge--bloque { background: var(--aurora-danger-surface); color: var(--aurora-danger); }
+.project-card-badge--termine { background: var(--aurora-success-surface); color: var(--aurora-success); }
+.project-card-badge--milestone { background: var(--aurora-bg-subtle); color: var(--aurora-text-secondary); font-weight: 500; }
+.project-card-kv { font-size: 11px; color: var(--aurora-text-muted); }
+
+/* ---- Panneau latéral (glissement horizontal, 05 §3.6.15) ---- */
+.projects-panel-slide {
+  position: absolute; top: 0; right: 0; bottom: 0;
+  width: 300px; max-width: 86vw;
+  background: var(--aurora-bg-subtle);
+  border-left: 1px solid var(--aurora-border);
+  box-shadow: var(--aurora-shadow-float);
+  padding: 16px; overflow-y: auto;
+}
+.projects-panel-slide .panel-heading { font-size: 13px; font-weight: 700; margin: 0 0 10px; }
+.projects-panel-slide .panel-row {
+  display: flex; align-items: center; gap: 10px;
+  min-height: 44px; padding: 8px 0;
+  border-bottom: 1px solid var(--aurora-border);
+}
+.projects-panel-slide .panel-row:last-child { border-bottom: 0; }
+.projects-panel-slide .panel-row-label { font-size: 12px; color: var(--aurora-text-muted); }
+.projects-panel-slide .panel-row-value { font-size: 13px; font-weight: 600; margin-left: auto; }
+
+.section-divider { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--aurora-text-muted); margin: 6px 0 -4px; }
+.guide { max-width: 560px; margin: 28px auto 0; font-size: 13px; color: var(--aurora-text-secondary); line-height: 1.5; }
+.guide h2 { font-size: 14px; margin: 18px 0 8px; color: var(--aurora-text-primary); }
+</style>
+</head>
+<body>
+<h1>Aurora 2 — Lot C5 : Projets · 3 vues réelles + menu ⋮ + glissement</h1>
+<p class="subtitle">Prévisualisation statique (Nocturne) · /projects : Gantt (05 §3.6.4) · Chrono (05 §3.6.3) · Liste (05 §4.3.1) + menu ⋮ (05 §3.5) + panneau latéral révélé par le glissement (05 §3.6.15)</p>
+
+<div class="phone-row">
+
+<!-- ============ 1. GANTT (OQ-01 option A : liste de GanttRow) ============ -->
+<div class="phone" id="p-gantt">
+  <div class="phone-header">
+    <div style="display:flex;align-items:center;gap:10px;min-width:0"><span class="phone-label">/projects · gantt</span><h2>Projets</h2></div>
+    <div class="page-options-menu" id="m1">
+      <button class="page-options-menu-trigger" aria-label="Options de la page Projets">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+      </button>
+      <div class="page-options-menu-list">
+        <button class="page-options-menu-item is-active">Trier par date</button>
+        <button class="page-options-menu-item">Trier par progression</button>
+        <button class="page-options-menu-item">Trier par priorité</button>
+        <button class="page-options-menu-item">Gantt</button>
+        <button class="page-options-menu-item">Paramètres</button>
+      </div>
+    </div>
+  </div>
+  <div class="phone-body">
+    <p class="page-purpose">Tes grands objectifs, découpés en projets, jalons et étapes.</p>
+    <div class="segmented" role="tablist">
+      <button class="segmented-item">Kanban</button>
+      <button class="segmented-item">Rapports</button>
+      <button class="segmented-item active">Gantt</button>
+      <button class="segmented-item">Chrono</button>
+      <button class="segmented-item">Liste</button>
+    </div>
+
+    <div class="gantt-view">
+      <div class="gantt-axis segmented segmented--compact" role="tablist" aria-label="Axe de dates">
+        <button class="segmented-item">Jour</button>
+        <button class="segmented-item active">Semaine</button>
+        <button class="segmented-item">Mois</button>
+      </div>
+      <ol class="gantt-rows">
+        <li class="gantt-row">
+          <span class="gantt-row-title">Sprint 3 : auth + tokens</span>
+          <div class="gantt-row-track"><div class="gantt-row-bar gantt-row-bar--in_progress" style="left:30%;width:40%"></div></div>
+          <span class="gantt-row-pct mono">55%</span>
+        </li>
+        <li class="gantt-row">
+          <span class="gantt-row-title">Maquettes v2</span>
+          <div class="gantt-row-track"><div class="gantt-row-bar gantt-row-bar--done" style="left:0%;width:100%"></div></div>
+          <span class="gantt-row-pct mono">100%</span>
+        </li>
+        <li class="gantt-row is-missed">
+          <span class="gantt-row-title">Jalon : revue design 28/09</span>
+          <div class="gantt-row-track"><div class="gantt-row-bar gantt-row-bar--blocked" style="left:50%;width:20%"></div></div>
+          <span class="gantt-row-pct mono">20%</span>
+        </li>
+        <li class="gantt-row">
+          <span class="gantt-row-title">Recette mobile</span>
+          <div class="gantt-row-track"><div class="gantt-row-bar gantt-row-bar--todo" style="left:70%;width:25%"></div></div>
+          <span class="gantt-row-pct mono">0%</span>
+        </li>
+      </ol>
+      <button class="aurora-btn aurora-btn--primary" style="width:100%">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v2m0 14v2M5.6 5.6l1.4 1.4m10 10 1.4 1.4M3 12h2m14 0h2"/></svg>
+        Générer la fiche
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 2. CHRONO (vue narrative, 05 §3.6.3) ============ -->
+<div class="phone" id="p-chrono">
+  <div class="phone-header">
+    <div style="display:flex;align-items:center;gap:10px;min-width:0"><span class="phone-label">/projects · chrono</span><h2>Projets</h2></div>
+    <div class="page-options-menu">
+      <button class="page-options-menu-trigger" aria-label="Options de la page Projets">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+      </button>
+      <div class="page-options-menu-list">
+        <button class="page-options-menu-item">Chrono</button>
+      </div>
+    </div>
+  </div>
+  <div class="phone-body">
+    <p class="page-purpose">Ce qui s'est passé — jalons atteints, étapes bouclées.</p>
+    <div class="segmented" role="tablist">
+      <button class="segmented-item">Kanban</button>
+      <button class="segmented-item">Rapports</button>
+      <button class="segmented-item">Gantt</button>
+      <button class="segmented-item active">Chrono</button>
+      <button class="segmented-item">Liste</button>
+    </div>
+
+    <div class="timeline-view">
+      <ol class="timeline-nodes">
+        <li class="timeline-node timeline-node--atteint">
+          <span class="timeline-node-dot"></span>
+          <div class="timeline-node-body">
+            <span class="timeline-node-date mono">12/09/2026</span>
+            <span class="timeline-node-title">Kickoff + découpage en jalons</span>
+          </div>
+          <span class="timeline-node-badge timeline-node-badge--atteint">Atteint</span>
+        </li>
+        <li class="timeline-node timeline-node--atteint">
+          <span class="timeline-node-dot"></span>
+          <div class="timeline-node-body">
+            <span class="timeline-node-date mono">28/09/2026</span>
+            <span class="timeline-node-title">Maquettes v2 livrées</span>
+          </div>
+          <span class="timeline-node-badge timeline-node-badge--atteint">Atteint</span>
+        </li>
+        <li class="timeline-node timeline-node--en_cours">
+          <span class="timeline-node-dot"></span>
+          <div class="timeline-node-body">
+            <span class="timeline-node-date mono">08/10/2026</span>
+            <span class="timeline-node-title">Sprint 3 en cours</span>
+          </div>
+          <span class="timeline-node-badge timeline-node-badge--en_cours">En cours</span>
+        </li>
+        <li class="timeline-node timeline-node--manque">
+          <span class="timeline-node-dot"></span>
+          <div class="timeline-node-body">
+            <span class="timeline-node-date mono">02/10/2026</span>
+            <span class="timeline-node-title">Revue design</span>
+          </div>
+          <span class="timeline-node-badge timeline-node-badge--manque">Manqué</span>
+        </li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 3. LISTE (05 §4.3.1 : Card flat + FAB) ============ -->
+<div class="phone" id="p-liste">
+  <div class="phone-header">
+    <div style="display:flex;align-items:center;gap:10px;min-width:0"><span class="phone-label">/projects · liste</span><h2>Projets</h2></div>
+    <div class="page-options-menu">
+      <button class="page-options-menu-trigger" aria-label="Options de la page Projets">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+      </button>
+      <div class="page-options-menu-list">
+        <button class="page-options-menu-item is-active">Liste</button>
+      </div>
+    </div>
+  </div>
+  <div class="phone-body">
+    <p class="page-purpose">Chaque projet en une carte : avancement, jalon, tâches.</p>
+    <div class="segmented" role="tablist">
+      <button class="segmented-item">Kanban</button>
+      <button class="segmented-item">Rapports</button>
+      <button class="segmented-item">Gantt</button>
+      <button class="segmented-item">Chrono</button>
+      <button class="segmented-item active">Liste</button>
+    </div>
+
+    <div class="list-view">
+      <ul class="project-cards">
+        <li class="project-card project-card--en_cours">
+          <div class="project-card-head">
+            <span class="project-card-title">ML Mastery — chapitre 5</span>
+            <span class="project-card-pct mono">62%</span>
+          </div>
+          <div class="project-card-progress"><div class="project-card-progress-fill" style="width:62%"></div></div>
+          <div class="project-card-badges">
+            <span class="project-card-badge project-card-badge--en_cours">En cours</span>
+            <span class="project-card-badge project-card-badge--milestone mono">Jalon : 24/10</span>
+          </div>
+          <span class="project-card-kv mono">7/12 tâches</span>
+        </li>
+        <li class="project-card project-card--bloque">
+          <div class="project-card-head">
+            <span class="project-card-title">Portfolio v3</span>
+            <span class="project-card-pct mono">30%</span>
+          </div>
+          <div class="project-card-progress"><div class="project-card-progress-fill" style="width:30%"></div></div>
+          <div class="project-card-badges">
+            <span class="project-card-badge project-card-badge--bloque">Bloqué</span>
+            <span class="project-card-badge project-card-badge--milestone mono">Jalon : 15/10</span>
+          </div>
+          <span class="project-card-kv mono">3/10 tâches</span>
+        </li>
+        <li class="project-card project-card--termine">
+          <div class="project-card-head">
+            <span class="project-card-title">Refonte tokens DS</span>
+            <span class="project-card-pct mono">100%</span>
+          </div>
+          <div class="project-card-progress"><div class="project-card-progress-fill" style="width:100%"></div></div>
+          <div class="project-card-badges">
+            <span class="project-card-badge project-card-badge--termine">Terminé</span>
+            <span class="project-card-badge project-card-badge--milestone mono">Jalon : 08/10</span>
+          </div>
+          <span class="project-card-kv mono">18/18 tâches</span>
+        </li>
+      </ul>
+      <button class="aurora-fab" aria-label="Nouveau projet">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ============ 4. Menu ⋮ ouvert (état « ouvert ») ============ -->
+<div class="phone-row" style="margin-top:32px">
+<div class="phone" id="p-menu" style="min-height:480px">
+  <div class="phone-header">
+    <div style="display:flex;align-items:center;gap:10px;min-width:0"><span class="phone-label">menu ⋮ · ouvert</span><h2>Projets</h2></div>
+    <div class="page-options-menu is-open">
+      <button class="page-options-menu-trigger" aria-label="Options de la page Projets">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+      </button>
+      <div class="page-options-menu-list">
+        <button class="page-options-menu-item is-active">Trier par date</button>
+        <button class="page-options-menu-item">Trier par progression</button>
+        <button class="page-options-menu-item">Trier par priorité</button>
+        <button class="page-options-menu-item">Kanban</button>
+        <button class="page-options-menu-item">Paramètres</button>
+      </div>
+    </div>
+  </div>
+  <div class="phone-body">
+    <p class="page-purpose">Menu ⋮ en haut à droite : 3 items de tri + bascule de vue + « Paramètres » (le dernier, vers /settings?section=projects).</p>
+    <div class="empty-card">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2 2"/></svg>
+      <p>Hybride : page ancrée + global</p>
+      <p class="empty-hint">Les 5 items ci-dessus (tri + vue + paramètres). Le « Paramètres » déborde vers la section globale du réglage — c'est le débordement « tout se retrouve » (05 §3.5).</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 5. Panneau latéral révélé (glissement) ============ -->
+<div class="phone" id="p-panneau" style="min-height:480px">
+  <div class="phone-header">
+    <div style="display:flex;align-items:center;gap:10px;min-width:0"><span class="phone-label">glissement → panneau révélé</span><h2>Projets</h2></div>
+    <div class="page-options-menu">
+      <button class="page-options-menu-trigger" aria-label="Options de la page Projets">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+      </button>
+      <div class="page-options-menu-list"></div>
+    </div>
+  </div>
+  <div class="phone-body" style="padding-right:300px">
+    <p class="page-purpose">La vue principale, déplacée à gauche — le panneau latéral se révèle à droite (300px, 65% du 360px).</p>
+    <div class="segmented" role="tablist">
+      <button class="segmented-item active">Kanban</button>
+      <button class="segmented-item">Gantt</button>
+      <button class="segmented-item">Liste</button>
+    </div>
+    <div class="empty-card">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg>
+      <p>Vue décalée au glissement</p>
+      <p class="empty-hint">translateX(-240px) pendant le geste, le panneau révélé reste ouvert une fois relâché (T4, non-surprise au retour).</p>
+    </div>
+    <div class="projects-panel-slide" style="left:auto;transform:translateX(0)">
+      <p class="panel-heading">Détail du projet</p>
+      <div class="panel-row"><span class="panel-row-label">Responsable</span><span class="panel-row-value">JOY-py-arch</span></div>
+      <div class="panel-row"><span class="panel-row-label">Échéance</span><span class="panel-row-value mono">24/10/2026</span></div>
+      <div class="panel-row"><span class="panel-row-label">Statut</span><span class="panel-row-value">En cours</span></div>
+      <div class="panel-row"><span class="panel-row-label">Ressources</span><span class="panel-row-value">2</span></div>
+      <div class="panel-row"><span class="panel-row-label">Décisions</span><span class="panel-row-value">3</span></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ============ 6. États vides honnêtes (AD-7, miroir non câblé) ============ -->
+<div class="phone-row" style="margin-top:32px">
+<div class="phone" style="min-height:360px">
+  <div class="phone-header"><span class="phone-label">gantt · vide</span><h2>Gantt</h2></div>
+  <div class="phone-body">
+    <div class="gantt-view">
+      <div class="gantt-axis segmented segmented--compact" role="tablist">
+        <button class="segmented-item">Jour</button>
+        <button class="segmented-item active">Semaine</button>
+        <button class="segmented-item">Mois</button>
+      </div>
+      <div class="empty-card">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/></svg>
+        <p>Aucun planifié sur la période</p>
+        <p class="empty-hint">Le plan d'ouverture apparaît dès que ton premier projet est créé.</p>
+        <button class="aurora-btn aurora-btn--primary" style="width:100%;margin-top:8px">Créer un projet</button>
+      </div>
+      <button class="aurora-btn aurora-btn--primary" style="width:100%">Générer la fiche</button>
+    </div>
+  </div>
+</div>
+
+<div class="phone" style="min-height:360px">
+  <div class="phone-header"><span class="phone-label">chrono · vide</span><h2>Chrono</h2></div>
+  <div class="phone-body">
+    <div class="timeline-view">
+      <div class="empty-card">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        <p>Aucun événement passé</p>
+        <p class="empty-hint">La frise se remplit au fil de ton projet.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="phone" style="min-height:360px">
+  <div class="phone-header"><span class="phone-label">liste · vide</span><h2>Liste</h2></div>
+  <div class="phone-body">
+    <div class="list-view">
+      <div class="empty-card">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        <p>Aucun projet pour l'instant</p>
+        <p class="empty-hint">Un projet commence par un objectif.</p>
+      </div>
+      <button class="aurora-fab" aria-label="Nouveau projet">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="guide">
+  <h2>Ce que vérifie ce checkpoint</h2>
+  <p><strong>3 vues réelles</strong> (05 SSoT) : Gantt = liste de GanttRow 44px (pas grille 2D, OQ-01 option A, budget OQ-11) · Chrono = frise verticale narrative (distincte du Gantt, 05 §3.6.3) · Liste = Card flat + 2 badges + FAB (05 §4.3.1). Toutes en état vide honnête (AD-7, miroir non câblé) + CTA agent réels (jamais de donnée factice).</p>
+  <p><strong>Menu ⋮</strong> (05 §3.5) : icône more 20px en haut à droite, overlay ancré, max 6 items, 150ms ease-out, tap fermant. Hybride = 3 tris + bascule vue + « Paramètres » (le débordement global, /settings?section=projects).</p>
+  <p><strong>Glissement horizontal</strong> (05 §3.6.15) : tire à gauche → la surface se décale (GPU-only, translateX), le panneau latéral (300px) se révèle à droite. Release sous le seuil = snap retour. Panneau « coachant » = il reste ouvert au retour (T4 non-surprise). Reduced-motion : le glissement est désactivé, le tap seul ouvre/ferme.</p>
+  <p style="color:var(--aurora-text-muted)">Typecheck 4 fichiers C5 : 0 erreur · Tests @aurora/ui : 49/49 passés · Lint : en cours · graphify update : à faire.</p>
+</div>
+
+</body>
+</html>

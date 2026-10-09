@@ -106,7 +106,29 @@ export function AuroraThemeProvider({
         PRESETS[theme as PresetName])?.isDefault,
     );
     el.setAttribute("data-aurora-default", isDefault ? "true" : "false");
+    // 10-09 lissage global : si un thème image est actif (attribut
+    // `data-aurora-image-theme` posé par <ImageThemeLayer> sur le même
+    // <html>), le lissage passe par le token `--aurora-surface-bg`
+    // (mixed translucide, consommé par toutes les surfaces de contenu des
+    // vues + re-pointé sur `--card`/`--popover` via le bloc
+    // `html[data-aurora-image-theme]` de tokens.css). L'inline style
+    // ci-dessous a la priorité absolue sur les feuilles CSS : on
+    // n'écrit donc les variables de SURFACE shadcn (`--card`,
+    // `--popover`, `--background`) à l'inline UNIQUEMENT si aucun thème
+    // image n'est actif — sinon c'est le bloc CSS qui les pilote, et le
+    // lissage (l'image floutée visible derrière la carte centrale du
+    // calendrier et de toutes les vues) gagne sur l'opaque canonique.
+    // Les autres variables shadcn (accent, danger, success — AD-17 :
+    // les états sémantiques ne bougent jamais) restent émises à
+    // l'inline, toujours.
+    const imageThemeActive = el.hasAttribute("data-aurora-image-theme");
     for (const [k, v] of Object.entries(value.cssVars)) {
+      if (
+        imageThemeActive &&
+        (k === "--card" || k === "--popover" || k === "--background")
+      ) {
+        continue;
+      }
       el.style.setProperty(k, v);
     }
     return () => {

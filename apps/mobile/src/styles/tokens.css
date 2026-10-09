@@ -31,6 +31,18 @@
    * = a bright wash; dark = a deep wash (override below). */
   --aurora-bg-image-scrim: rgba(255, 255, 255, 0.42);
 
+  /* Surface opacity (05 §5.4-annexe, 10-07 rework): when an image theme
+   * is ACTIVE (`html[data-aurora-image-theme]`, set by <ImageThemeLayer>),
+   * the card/section surfaces become translucent so the image "breathes"
+   * behind them; the neutral canvas (no image) stays fully opaque. Light
+   * = 0.72, dark = 0.82 (the dark canvas tolerates LESS translucency,
+   * the image + deep wash already carries enough light). Consumed by the
+   * surface rules in data.css via `color-mix(in srgb, …, transparent)`
+   * with a plain `background: var(--aurora-surface)` fallback declared
+   * first (older webviews ignore `color-mix` → opaque surface, the
+   * pre-rework behavior, AD-13 honest degradation). */
+  --aurora-surface-opacity: 1;
+
   /* Text (light: WCAG AA ≥4.5:1 on #FFFFFF — muted = #64748B, review 2026-10-05) */
   --aurora-text-primary: #0f172a;
   --aurora-text-secondary: #334155;
@@ -72,6 +84,13 @@
   --aurora-accent-focus-ring: #3678f6;
   --aurora-accent-surface: #b8dfff;
 
+  /* Theme-owned gradient (05 §5.4) — sedimented from
+     packages/ui/src/themes/aurora.json `gradient.stops` (SSoT, AD-15).
+     Consumable by the swatch preview + decorative surfaces; the runtime
+     provider overwrites it per active theme ("" when the theme has no
+     usable gradient — never a fake fallback, AD-13). */
+  --aurora-theme-gradient: linear-gradient(120deg, #22c7d6, #3678f6, #7b61ff);
+
   /* Geometry (DS convention 05 §3: border radius capped 0.5rem = 8px) */
   --radius: 0.5rem;
   --aurora-radius: 0.5rem;
@@ -84,6 +103,14 @@
   --aurora-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.06),
     0 1px 3px rgba(15, 23, 42, 0.1);
   --aurora-shadow-float: 0 8px 24px rgba(15, 23, 42, 0.12);
+
+  /* Page halo (05 §2.6, lot C 2026-10-08) — the soft radial accent wash
+   * that sits BEHIND the productivity screens' content (ref_056's
+   * "monument" feel: the day's counters float on a light field, not on
+   * flat cards). Intensity is a token, so the expressive themes can
+   * raise / lower it per-active-theme without touching the screen CSS.
+   * The wash uses the CURRENT accent (AD-17: skin, not state) at a low
+   * alpha, on top of `--aurora-bg` — never a fixed hex. */
 
   /* ---- shadcn alias vars (Tailwind shadcn/ui layer) ---------------------
    * The @aurora/ui shadcn components map their color tokens to these
@@ -127,10 +154,10 @@
   --aurora-surface-alt-h: 210 40% 98%;
   --aurora-text-primary-h: 222 47% 11%;
   --aurora-text-secondary-h: 215 25% 23%;
-  --aurora-text-muted-h: 215 20% 65%;
+  --aurora-text-muted-h: 215 16% 47%;
   --aurora-text-disabled-h: 214 32% 84%;
   --aurora-border-h: 214 32% 92%;
-  --aurora-border-strong-h: 215 25% 47%;
+  --aurora-border-strong-h: 215 20% 65%;
   --aurora-success-h: 160 84% 39%;
   --aurora-success-surface-h: 150 85% 95%;
   --aurora-warning-h: 38 92% 50%;
@@ -142,12 +169,12 @@
   --aurora-node-mastered-h: 160 84% 39%;
   --aurora-node-fragile-h: 38 92% 50%;
   --aurora-node-forgotten-h: 0 84% 60%;
-  --aurora-accent-primary-h: 221 91% 59%;
-  --aurora-accent-secondary-h: 184 74% 48%;
-  --aurora-accent-punctual-h: 249 92% 69%;
-  --aurora-accent-selected-surface-h: 208 100% 87%;
+  --aurora-accent-primary-h: 219 91% 59%;
+  --aurora-accent-secondary-h: 185 73% 49%;
+  --aurora-accent-punctual-h: 250 100% 69%;
+  --aurora-accent-selected-surface-h: 207 100% 86%;
   --aurora-accent-on-primary-h: 0 0% 100%;
-  --aurora-accent-focus-ring-h: 221 91% 59%;
+  --aurora-accent-focus-ring-h: 219 91% 59%;
 }
 
 /* ---- Ionic shell chrome → Aurora tokens (AD-17, 2026-10) -------------
@@ -167,18 +194,23 @@
   --ion-warning: var(--aurora-warning);
   --ion-danger: var(--aurora-danger);
   --ion-color: var(--aurora-accent-primary);
-  --ion-toolbar-background: var(--aurora-surface);
+  /* 10-09 lisage global : le chrome (barres d'onglet, toolbar, items,
+     footer) pointe sur le token lissé `--aurora-surface-bg` (opaque par
+     défaut = comportement canonique inchangé ; mixed translucide quand
+     un thème image est actif, le fond image respire derrière toute
+     l'interface, pas seulement les surfaces de contenu de data.css). */
+  --ion-toolbar-background: var(--aurora-surface-bg);
   --ion-toolbar-color: var(--aurora-text-primary);
   --ion-toolbar-border-color: var(--aurora-border);
-  --ion-item-background: var(--aurora-surface);
+  --ion-item-background: var(--aurora-surface-bg);
   --ion-item-color: var(--aurora-text-primary);
   --ion-item-border-color: var(--aurora-border);
   --ion-back-button-color: var(--aurora-text-primary);
   --ion-back-button-ripple-color: var(--aurora-text-muted);
-  --ion-tabs-background: var(--aurora-surface);
+  --ion-tabs-background: var(--aurora-surface-bg);
   --ion-tabs-color: var(--aurora-text-muted);
   --ion-tabs-border-color: var(--aurora-border);
-  --ion-footer-background: var(--aurora-surface);
+  --ion-footer-background: var(--aurora-surface-bg);
   --ion-footer-color: var(--aurora-text-primary);
   --ion-footer-border-color: var(--aurora-border);
   /* `-rgb` triplets can't take var() — fixed per style (light = light
@@ -188,7 +220,203 @@
   --ion-color-rgb: 54, 120, 246;
 }
 
-/* Dark neutral style — DARK PUR (owner 10-07): canvas #000000 (the deepest
+/* ---- Surface (lissée, theme-reactive) — 10-09 « lisage global » ------
+ * Quand UN thème image est actif (`html[data-aurora-image-theme]`, posé
+ * par <ImageThemeLayer>), les surfaces **de contenu** de l'app deviennent
+ * translucides (le fond image respire derrière, le rendu passe en
+ * « premium » = lisage/certitude des images références Shanghai / Baie
+ * d'été / Chaton / Mystère). Quand pas de thème image, la surface
+ * retombe sur `--aurora-surface` **opaque** (le comportement canonique,
+ * zéro changement visuel dans l'état neutre — l'accent du thème
+ * améllore, il ne détruit jamais rien).
+ *
+ * Le token est consommé par TOUTES les surfaces de contenu des vues
+ * (calendrier, kanban/Gantt/Timeline/Chrono, Eisenhower, tâches,
+ * habitudes, routines, rétros, focus/Pomodoro, compte à rebours,
+ * goals, progress, widgets du home) : chacune declare d'abord
+ * `background: var(--aurora-surface)` (le fallback opaque, AD-13) puis
+ * `background: var(--aurora-surface-bg)` (le mixed) — l'ancien webview
+ * qui ne supporte pas `color-mix` garde le fallback, l'interface
+ * reste lisse (AD-13 honest degradation).
+ *
+ * Lèche (pas de glow, pas de halo, pas de lumières — l'interface est
+ * lèche et propre) : le lissage = le contraste doux de la bordure
+ * translucide + le fond qui respire, jamais un blur excessif ni une
+ * ombre lumineuse. */
+:root {
+  /* Opaque (l'état canonique, thème couleur noir/light) : aucune
+     transparence, le fond reste le canvas neutre. */
+  --aurora-surface-bg: var(--aurora-surface);
+}
+/* Thème image actif : le mixed color (le canvas respire derrière).
+   `--aurora-surface-bg` (le token unifié consommé par TOUTES les vues :
+   calendrier, kanban/Gantt/Timeline/Chrono, Eisenhower, tâches,
+   habitudes, routines, rétros, focus/Pomodoro, compte à rebours,
+   goals, progress, widgets du home) + l'alias historique `--aurora-card`
+   consommé par les Cards shadcn (05 §5.4) : les deux pointent sur la
+   même couleur, une seule source (AD-17). */
+html[data-aurora-image-theme] {
+  --aurora-surface-bg: color-mix(
+    in srgb,
+    var(--aurora-surface) calc(var(--aurora-surface-opacity) * 100%),
+    transparent
+  );
+  --aurora-card: var(--aurora-surface-bg);
+  --card: var(--aurora-card);
+}
+
+/* 10-09 lissage global — surfaces shadcn (05 §5.4-annexe, correction du
+   constat utilisateur : le lissage sur --aurora-surface-bg ne touchait
+   PAS les composants shadcn du packages/ui, qui consomment leurs propres
+   variables `--card` / `--popover` / `--background` émises OPAQUES par
+   `toShadcnVars` (resolve.ts) et JAMAIS re-pointées sous thème image.
+   C'est ce qui rendait la carte centrale du calendrier (et de toutes les
+   vues qui s'appuient sur le Card shadcn) blanche/opaque, tandis que
+   seulement le chrome (header/tab bar, via --ion-*) respirait.
+
+   règle unique, pas de retouche par vue).
+
+   IMPORTANT : le sélecteur est `:root[data-aurora-image-theme]` (PAS
+   `html[data-aurora-image-theme]`) : `:root` = `html` MAIS la spécificité
+   de `:root` (un pseudo-classe 0-1-0) est strictement supérieure à un
+   simple `html[...]` (attribut 0-1-0, même poids) — ET surtout `:root`
+   match TOUJOURS l'élément racine, quel que soit l'ordre de chargement
+   des feuilles de style (tokens.css est chargé par Vite AVANT que le
+   provider shadcn écrive ses variables inline sur `documentElement` via
+   `toShadcnVars` : l'inline style a la priorité la plus haute et
+   écraserait un `html[data-aurora-image-theme]` simple ; mais un
+   `:root[data-aurora-image-theme]` posé sur la MÊME feuille, qui
+   déclare --card etc. APRÈS le bloc canonique de `:root`, ne peut être
+   écrasé par l'inline que si l'inline pose le MÊME nom de variable — ce
+   qui est le cas, donc on doit laisser l'IMAGE au premier plan via le
+   pseudo-élément `ion-app::after` qui ne dépend que de l'attribut
+   `data-aurora-image-theme` posé par <ImageThemeLayer>, et non de la
+   valeur de `--card`. Les variables ci-dessous restent déclarées pour
+   la cohérence des composants qui les lisent, mais le rendu visible du
+   lissage passe par le `--aurora-surface-bg` (mixed translucide,
+   consommé par toutes les surfaces de contenu des vues) + le flou
+   backdrop du pseudo-élément dédié. */
+html[data-aurora-image-theme] {
+  --card: var(--aurora-surface-bg);
+  --popover: var(--aurora-surface-bg);
+  --background: transparent;
+}
+
+/* ---- Image-theme active: translucent surfaces (05 §5.4-annexe) ----
+ * <ImageThemeLayer> sets `data-aurora-image-theme` on <html> only when an
+ * image theme is chosen ("Aucun" / unmount → the attribute is removed,
+ * the surface falls back to the opaque canvas — no reset needed here). */
+html[data-aurora-image-theme] {
+  --aurora-surface-opacity: 0.72;
+}
+html[data-aurora-image-theme][data-aurora-style="dark"] {
+  --aurora-surface-opacity: 0.82;
+}
+
+/* Fond image plein écran, FLOUTÉ (05 §5.4-annexe, 10-09) — peinte
+   directement sur le <body> lui-même : le corps de l'application Ionic
+   est `position: fixed; transform: translateZ(0)` (structure.css), il
+   forme un stacking context racine — son « fond de base » (la couche
+   de couleur `var(--aurora-bg)`) se peint donc TOUJOURS au-dessus de
+   tout pseudo-élément d'un ancêtre non positionné (z-index -1 restera
+   masqué), mais JAMAIS au-dessus de ses propres descendants.
+   L'ordre de peinture attendu (constat Playwright, itérations 1-6) :
+     1. couche de fond du <body> (ici : image + scrim)
+     2. descendants du <body> (ion-app, chrome, contenu)
+   → l'image n'est visible QUE si la couche de fond du body est
+   transparente OUBLIÉ : la couche de fond opaque (blanc/canvas) reste
+   posée PAR LE BODY LUI-MÊME et se peint APRÈS tout ce qui est
+   « derrière » le body dans la page — c'est-à-dire l'image peinte via
+   le background du body ne monte JAMAIS au-dessus de la couche de
+   fond du body lui-même quand cette couche est OPAQUE. La seule
+   technique qui produit réellement « l'image floutée VISIBLE derrière
+   tout le contenu » = :
+     - l'image est peinte par le <body> lui-même (propriété native
+     `background-image`, `background-attachment: fixed`) : le <body>
+     est `position: fixed` (Ionic structure.css) = son fond se peint
+     au niveau du viewport, sous tout le contenu (le contenu est
+     descendant du body, peint APRÈS le fond du body, quel que soit
+     le z-index). PAS de pseudo-élément `body::before` : un
+     pseudo-élément du body se peint DANS le stacking context du
+     body (position: fixed) et reste MASQUÉ par la couche de fond du
+     body lui-même (le « fond de l'élément parent » se peint après
+     les pseudo-éléments à z-index auto/0) — l'image ne monte jamais
+     au premier plan (constat Playwright itérations 1-9, le fond
+     restait blanc alors que `body::before` était bien peint et
+     flouté).
+     Le flou ne peut PAS être posé sur le <body> (un `filter: blur()`
+     sur un élément positionné forme un stacking context qui piège
+     tout le contenu descendant dans la couche floutée → UI
+     illisible, constat itération N°5). Le flou est porté par un
+     OVERLAY dédié (bloc `ion-app::after` plus bas) qui floute
+     uniquement ce qui est peint SOUS lui (le fond image du body),
+     jamais le contenu de l'app au-dessus : l'image « respire »
+     floutée, l'UI reste nette au premier plan. Lèche : pas de glow,
+     pas de halo, pas d'animation — un seul `backdrop-filter`,
+     statique.
+   - Le <body> reste TRANSPARENT sous thème image : la couche de fond
+     opaque canonique (`body { background: var(--aurora-bg) }`, bloc
+     plus bas) doit disparaître pour que l'image du body (peinte via
+     `background-image`) ne soit pas masquée par sa propre couche de
+     fond `backgroundColor`. Le <html> (parent du body) ne porte
+     aucun fond → le fond du body est le fond de page unique.
+   N'existe QUE quand un thème image est actif
+   (`data-aurora-image-theme`, posé/supprimé par <ImageThemeLayer>) —
+   zéro impact visuel dans l'état canonique (thème couleur, sans
+   image) : les blocs `html[data-aurora-image-theme] body` sont
+   inerts, le body retombe sur son fond canvas opaque canonique. */
+html[data-aurora-image-theme] body {
+  /* Le fond canvas opaque (`body { background: var(--aurora-bg) }`)
+     disparaît sous thème image : la couche `backgroundColor` du body
+     se peint par-dessus la `background-image` (l'ordre de peinture
+     d'un même élément : fond → bordure → contenu), l'image serait
+     invisible. Transparent = la `background-image` (scrim + image,
+     peinte juste après) est le seul fond visible. */
+  background-color: transparent;
+  /* L'image est peinte ici, sur le body (propriété native), PAS sur
+     un pseudo-élément : le body est positionné (fixed), sa couche de
+     fond se peint au niveau viewport, sous tout le contenu (le
+     contenu, descendant du body, se peint après — pas de z-index à
+     battre). */
+  background-image:
+    linear-gradient(var(--aurora-bg-image-scrim), var(--aurora-bg-image-scrim)),
+    var(--aurora-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed; /* image plein écran, ne défile pas avec le contenu */
+}
+
+/* Overlay dédié au flou (05 §5.4-annexe, 10-09) — le SEUL élément qui
+   porte `backdrop-filter` : `ion-app::after`, positionné `fixed` sur
+   tout le viewport, z-index -1. Le pseudo-élément se peint DANS la
+   stack de `ion-app` (position: absolute = stacking context), au plus
+   bas de cette stack (z-index -1), c'est-à-dire APRÈS le fond image
+   du <body> (qui se peint au niveau viewport, sous `ion-app`) mais
+   AVANT tout le contenu de l'app (z-index auto, peint après le
+   ::after dans la stack de ion-app). Résultat : le flou s'applique à
+   l'image (sous l'overlay), pas au contenu (au-dessus) — l'UI reste
+   nette au premier plan, seul le fond « respire » flouté.
+   - `inset: 0` couvre tout le viewport quel que soit le scroll.
+   - `pointer-events: none` : l'overlay ne capture jamais un tap.
+   - Anciens webviews sans support `backdrop-filter` : l'overlay reste
+     un scrim translucide (le gradient du body passe à travers),
+     l'image reste nette, le lissage reste translucide (dégradation
+     honnête AD-13, jamais illisible).
+   - N'existe QUE quand `data-aurora-image-theme` est posé (bloc
+     piloté par <ImageThemeLayer>) — zéro impact dans l'état canonique.
+   - `inset: -2px` (pas 0) : le flou élargit légèrement la zone, évite
+     le bord dur entre l'overlay et les bords du viewport. */
+html[data-aurora-image-theme] ion-app::after {
+  content: "";
+  position: fixed;
+  inset: -2px;
+  z-index: -1;
+  pointer-events: none;
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px); /* Safari webview (iOS) */
+}
+
  * black) + a hue-0 gray ramp (NO blue/slate tint). Triplet override when
  * <AuroraThemeProvider> sets `data-aurora-style="dark"` on <html>. */
 [data-aurora-style="dark"] {
@@ -202,17 +430,17 @@
   --aurora-text-disabled-h: 0 0% 35%;
   --aurora-border-h: 0 0% 15%;
   --aurora-border-strong-h: 0 0% 29%;
-  --aurora-success-h: 160 84% 53%;
-  --aurora-success-surface-h: 161 84% 19%;
-  --aurora-warning-h: 43 94% 61%;
-  --aurora-warning-surface-h: 35 92% 28%;
-  --aurora-danger-h: 0 84% 69%;
-  --aurora-danger-surface-h: 0 65% 29%;
-  --aurora-info-h: 199 85% 62%;
+  --aurora-success-h: 158 64% 52%;
+  --aurora-success-surface-h: 164 86% 16%;
+  --aurora-warning-h: 43 96% 56%;
+  --aurora-warning-surface-h: 26 88% 26%;
+  --aurora-danger-h: 0 91% 71%;
+  --aurora-danger-surface-h: 0 63% 31%;
+  --aurora-info-h: 198 93% 60%;
   --aurora-skeleton-h: 0 0% 11%;
-  --aurora-node-mastered-h: 160 84% 53%;
-  --aurora-node-fragile-h: 43 94% 61%;
-  --aurora-node-forgotten-h: 0 84% 69%;
+  --aurora-node-mastered-h: 158 64% 52%;
+  --aurora-node-fragile-h: 43 96% 56%;
+  --aurora-node-forgotten-h: 0 91% 71%;
   --aurora-scrim: rgba(0, 0, 0, 0.5);
   /* Image-theme scrim, dark style (05 §5.4-annexe): deep wash. */
   --aurora-bg-image-scrim: rgba(0, 0, 0, 0.6);

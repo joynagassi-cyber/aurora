@@ -50,6 +50,7 @@
   max-height: 80vh;
   padding: 16px 16px calc(24px + env(safe-area-inset-bottom));
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border-radius: 16px 16px 0 0;
   box-shadow: var(--aurora-shadow-float);
   display: flex;
@@ -102,6 +103,7 @@
   max-width: 360px;
   padding: 16px;
   background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
   border-radius: var(--aurora-radius, 0.5rem);
   box-shadow: var(--aurora-shadow-float);
 }

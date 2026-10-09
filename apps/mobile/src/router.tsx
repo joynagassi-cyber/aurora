@@ -43,12 +43,17 @@ import { ArtifactPage } from './pages/artifacts';
 import { AgentPage } from './pages/agent';
 import { AgentConversationsPage } from './pages/agent/conversations';
 import { AgentCapacitesPage } from './pages/agent/capacites';
+import { AgentBibliothequePage } from './pages/agent/bibliotheque';
 import { CanvasPage } from './pages/canvas';
 import { SlideAscentPage } from './pages/ascent';
 import { SettingsPage } from './pages/settings';
 import { NotFoundPage } from './pages/not-found';
 import { SkillsPage } from './pages/skills';
 import { HabitsPage } from './pages/habits';
+import { RoutinesPage } from './pages/routines';
+import { ReviewsPage } from './pages/reviews';
+import { RetroActionsPage } from './pages/retro';
+import { CountdownsPage } from './pages/countdown';
 import { IntegrationsPage } from './pages/integrations';
 import { LoginPage } from './pages/login';
 import { OnboardingPage } from './pages/onboarding';
@@ -75,6 +80,8 @@ export const appRouter: AppRouter = createBrowserRouter([
       // /agent/* keeps the agent tab active via ShellTabBar's prefix rule).
       { path: '/agent/conversations', element: <AgentConversationsPage /> },
       { path: '/agent/capacites', element: <AgentCapacitesPage /> },
+      // PRD-AI-05 (10-08) : the library (files / media import surface).
+      { path: '/agent/bibliotheque', element: <AgentBibliothequePage /> },
       // Canvas (0022): dedicated session-editing surface — blocs TipTap,
       // commentaires, bascule md ⇄ HTML. 'new' = creation mode (Task 6).
       // G-M7: gated (creation mode opens over the module home).
@@ -112,9 +119,23 @@ export const appRouter: AppRouter = createBrowserRouter([
       // --- Projects family view ---
       { path: '/projects', element: <ProjectsPage /> },
 
-      // --- Habits family view (PRD-1 §4.5) — daily check-in + gallery.
-      //     Ungated (core productivity domain entity), like /projects. ---
+      // --- Habits + routines family views (PRD-1 §4.5, 05 §4.3.5–§4.3.6) —
+      //     daily check-in + gallery; routines = temporal anchors. Ungated
+      //     (core productivity domain entities, like /projects). ---
       { path: '/habits', element: <HabitsPage /> },
+      { path: '/routines', element: <RoutinesPage /> },
+
+      // --- Reviews family (05 §4.5.1, WDS 06.1/06.3 — lot C v3 2026-10-08) :
+      //     the period review (Jour|Semaine|Mois shared Pager) + the
+      //     post-retrospective closure (retro-actions, the « Faite » state).
+      //     Ungated local-first mirrors (AD-7, offline-capable). ---
+      { path: '/reviews', element: <ReviewsPage /> },
+      { path: '/retro', element: <RetroActionsPage /> },
+
+      // --- Countdowns (PRD-CD-01, lot C 2026-10-08) — days-to-a-date.
+      //     Ungated like /habits (local-only domain entity, no mirror
+      //     wired yet → honest empty state, AD-7). ---
+      { path: '/countdown', element: <CountdownsPage /> },
 
       // --- Discovery feed (G-M7 gated) ---
       { path: '/discovery', element: <FeatureGate feature="discovery"><DiscoveryPage /></FeatureGate> },
@@ -142,9 +163,9 @@ export const appRouter: AppRouter = createBrowserRouter([
 ]);
 
 export type AppRoute = '/home' | '/tasks' | '/learn' | '/progress' | '/agent'
-  | '/agent/conversations' | '/agent/capacites'
+  | '/agent/conversations' | '/agent/capacites' | '/agent/bibliotheque'
   | '/tasks/:id' | '/learn/:id' | '/progress/:id' | '/knowledge' | '/knowledge/:nodeId'
   | '/artifacts/:id' | '/inbox' | '/settings' | '/goals' | '/goals/:id'
-  | '/goals/:id/features/:fid' | '/goals/:id/ascent' | '/focus' | '/calendar' | '/projects' | '/habits' | '/discovery'
+  | '/goals/:id/features/:fid' | '/goals/:id/ascent' | '/focus' | '/calendar' | '/projects' | '/habits' | '/routines' | '/reviews' | '/retro' | '/countdown' | '/discovery'
   | '/skills' | '/integrations' | '/login' | '/onboarding'
   | '/canvas/:id';

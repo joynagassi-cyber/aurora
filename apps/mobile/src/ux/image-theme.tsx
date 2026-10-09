@@ -57,7 +57,6 @@ export function ImageThemeLayer() {
 
   useEffect(() => {
     const doc = document.documentElement;
-    const body = document.body;
     const orientation = landscape ? 'landscape' : 'portrait';
     const entry = imageTheme !== 'none' ? getImageTheme(imageTheme) : undefined;
     const file = entry ? resolveImageThemeFile(entry.slug, orientation) : undefined;
@@ -66,9 +65,6 @@ export function ImageThemeLayer() {
       // 'none' / unknown slug: the color theme regains full control.
       for (const v of LAYER_VARS) doc.style.removeProperty(v);
       delete doc.dataset.auroraImageTheme;
-      body.style.backgroundImage = '';
-      body.style.backgroundSize = '';
-      body.style.backgroundAttachment = '';
       return;
     }
 
@@ -87,19 +83,20 @@ export function ImageThemeLayer() {
     // Readable ink over the anchor accent (WCAG auto-pick, 05 §5.4.1).
     doc.style.setProperty('--aurora-accent-on-primary', accentInk(anchor, styleInk, oppositeInk));
 
-    // The image IS the canvas: scrim (token) + image, behind the content.
-    body.style.backgroundImage =
-      'linear-gradient(var(--aurora-bg-image-scrim), var(--aurora-bg-image-scrim)), var(--aurora-bg-image)';
-    body.style.backgroundSize = '100% 100%, cover';
-    body.style.backgroundPosition = 'center, center';
-    body.style.backgroundAttachment = 'fixed, fixed';
+    // The image IS the canvas: painted by the CSS pseudo-element
+    // `html[data-aurora-image-theme]::before` (tokens.css) — NOT the body
+    // background. A body-level `background-attachment: fixed` is
+    // unreliable in Ionic/Capacitor webviews (the image stayed confined /
+    // missing behind the content, only the chrome seemed to change). The
+    // `fixed` pseudo-element on <html> is standard-painted, covers the full
+    // viewport regardless of scroll height, and carries the same
+    // readability scrim (--aurora-bg-image-scrim). It activates ONLY while
+    // `data-aurora-image-theme` is present, so 'none' / unknown slug = the
+    // pseudo-element disappears with the attribute (no manual reset needed).
 
     return () => {
       for (const v of LAYER_VARS) doc.style.removeProperty(v);
       delete doc.dataset.auroraImageTheme;
-      body.style.backgroundImage = '';
-      body.style.backgroundSize = '';
-      body.style.backgroundAttachment = '';
     };
   }, [imageTheme, landscape, style]);
 
