@@ -5,6 +5,18 @@
    transitions 150–250 ms GPU-only (couleurs/opacity — jamais de layout).
    ============================================================================= */
 
+/* ── Focus actif : le chrome est RETIRÉ pendant la session (05 §4.4.2 —
+   « pas de TopBar, BottomNav masqué »). <FocusThemeAdapter> pose
+   `data-aurora-focus-mode="on"` sur <html> tant que
+   `ui-state.focusActive` est vrai (ux/theme-adapter.tsx) : la barre de
+   marque et la barre d'onglets disparaissent, l'écran Focus reste
+   l'unique surface. Le header DE PAGE (titre + bouton « Terminer la
+   session ») reste — c'est le contrôle de sortie de la session. */
+html[data-aurora-focus-mode="on"] [data-app-header],
+html[data-aurora-focus-mode="on"] ion-footer {
+  display: none;
+}
+
 /* ── Global app header (ui-libraries §9.1 l.380) : la marque COLOREE sans
    fond porte TOUJOURS le header (owner decision 2026-09-27). Slim brand
    bar au-dessus du header de page : logo in-app 20px + wordmark. Tokens

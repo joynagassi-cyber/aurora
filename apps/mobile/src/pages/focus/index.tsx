@@ -13,10 +13,12 @@
  *  - Pomodoro: 25-30 min work + 5 min pause, repeating
  *  - Chrono: user sets an end time + picks a focus sound (concentration)
  */
-import { IonButton, IonButtons, IonContent, IonHeader, IonTitle } from '@ionic/react';
+import { IonButton, IonButtons, IonContent, IonHeader, IonTitle, IonToolbar } from '@ionic/react';
 import { Timer, Play, Square, ListX, ShieldCheck, Music, AlarmClock } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useUiStateStore } from '../../state/ui-state';
+import { useMobileData } from '../../query/context';
+import { createAppFocusService } from '../../lib/focus-service';
 import {
   FOCUS_SOUNDS,
   FOCUS_SOUND_THEMES,
@@ -131,14 +133,20 @@ export function FocusPage({ service, onSession }: FocusPageProps) {
   return (
     <>
       <IonHeader>
-        <IonButtons slot="start">
-          {focusActive && service && (
-            <IonButton fill="clear" onClick={() => void stop()} aria-label="Terminer la session">
-              <Square size={18} />
-            </IonButton>
-          )}
-        </IonButtons>
-        <IonTitle>Focus</IonTitle>
+        {/* Le header du shell n'est pas une barre d'outils : hors IonToolbar,
+            Ionic pose `hidden` sur le conteneur `IonButtons` (le contrôle
+            « Terminer la session » devenait invisible — on ne pouvait pas
+            sortir d'une session démarrée). */}
+        <IonToolbar>
+          <IonButtons slot="start">
+            {focusActive && service && (
+              <IonButton fill="clear" onClick={() => void stop()} aria-label="Terminer la session">
+                <Square size={18} />
+              </IonButton>
+            )}
+          </IonButtons>
+          <IonTitle>Focus</IonTitle>
+        </IonToolbar>
       </IonHeader>
       <IonContent>
         <div
@@ -413,4 +421,23 @@ export function FocusPage({ service, onSession }: FocusPageProps) {
       </IonContent>
     </>
   );
+}
+
+/**
+ * Route wrapper (router.tsx /focus): builds the app-layer service from
+ * the local store (`lib/focus-service.ts`) and injects it — the screen's
+ * `service` prop stays the single seam (testable without the bridge,
+ * AD-1). Without a local store (test harness / no boot provider) the
+ * page keeps its honest `service = null` disabled CTA.
+ *
+ * `useMemo` keeps ONE service instance per store: it owns the live timer
+ * state, a re-created instance would lose a running session.
+ */
+export function FocusRoute() {
+  const { store } = useMobileData();
+  const service = useMemo(
+    () => (store ? createAppFocusService(store) : null),
+    [store],
+  );
+  return <FocusPage service={service} />;
 }

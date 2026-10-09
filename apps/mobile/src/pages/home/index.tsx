@@ -51,6 +51,7 @@ function Slot({
   flags,
   emptyCta,
   emptyCtaHref,
+  emptyMessage,
   skeleton,
   children,
 }: {
@@ -61,13 +62,20 @@ function Slot({
   emptyCta?: string;
   /** destination du CTA empty-state (navigable, sinon le CTA est inerte). */
   emptyCtaHref?: string;
+  /** message contextuel du slot à vide (sinon « Aucune donnée »). */
+  emptyMessage?: string;
   /** shape-feature du chargement (prévisualise la forme du slot). */
   skeleton?: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
 }) {
-  const mergedFlags =
-    emptyCta || emptyCtaHref
-      ? { ...flags, ...(emptyCta ? { emptyCta } : {}), ...(emptyCtaHref ? { emptyCtaHref } : {}) }
+  const mergedFlags: UxStateFlags =
+    emptyCta || emptyCtaHref || emptyMessage
+      ? {
+          ...flags,
+          ...(emptyCta ? { emptyCta } : {}),
+          ...(emptyCtaHref ? { emptyCtaHref } : {}),
+          ...(emptyMessage ? { emptyMessage } : {}),
+        }
       : flags;
   return (
     <section data-slot={slot} className="aurora-slot">
@@ -179,12 +187,11 @@ export function HomePage() {
           title="Révisions dues"
           state={emptyState}
           flags={flags}
+          emptyMessage="Aucune révision due."
           emptyCta="Reprendre l'étude"
           emptyCtaHref="/learn"
           skeleton={<SlotSkeleton />}
-        >
-          <p>Aucune révision due.</p>
-        </Slot>
+        />
 
         {/* AD-14 slot 4: coach-suggestion (Agent). */}
         <Slot
@@ -192,12 +199,11 @@ export function HomePage() {
           title="Suggestion de Coach"
           state={emptyState}
           flags={flags}
+          emptyMessage="Aucune suggestion pour l'instant."
           emptyCta="Demande à Aurora"
           emptyCtaHref="/agent"
           skeleton={<SlotSkeleton />}
-        >
-          <p>Aucune suggestion pour l'instant.</p>
-        </Slot>
+        />
 
         {/* AD-14 slot 5: today-agenda (Calendar). */}
         <Slot
@@ -205,12 +211,11 @@ export function HomePage() {
           title="Aujourd'hui"
           state={emptyState}
           flags={flags}
+          emptyMessage="Aucun agenda aujourd'hui."
           emptyCta="Ouvrir le calendrier"
           emptyCtaHref="/calendar"
           skeleton={<SlotSkeleton />}
-        >
-          <p>Aucun agenda aujourd'hui.</p>
-        </Slot>
+        />
 
         {/* AD-14 slot 6: immediate-focus (Focus). */}
         <Slot
@@ -218,12 +223,11 @@ export function HomePage() {
           title="Focus immédiat"
           state={emptyState}
           flags={flags}
+          emptyMessage="Prêt à vous concentrer ?"
           emptyCta="Démarrer une session"
           emptyCtaHref="/focus"
           skeleton={<SlotSkeleton />}
-        >
-          <p>Prêt à vous concentrer ?</p>
-        </Slot>
+        />
 
         {/* AD-14 slot 7: next-actions — the most urgent active tasks. */}
         <Slot

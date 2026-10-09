@@ -37,6 +37,11 @@ export interface UxStateFlags {
   /** CTA for the `empty` state — defaults to "Demande à Aurora" (agent). */
   emptyCta?: string;
   /**
+   * Message contextual de l'état `empty` (le libellé du cas vide de
+   * l'écran) — defaults to the generic "Aucune donnée" when absent.
+   */
+  emptyMessage?: string;
+  /**
    * Where the empty-state CTA routes (e.g. "/agent?intent=…"). Rendered as
    * an `<a>`; when absent the CTA is a plain button (no navigation).
    */
@@ -121,7 +126,7 @@ export function UxStates({
     case 'empty':
       return (
         <div data-ux="empty">
-          <p>Aucune donnée</p>
+          <p>{flags.emptyMessage ?? 'Aucune donnée'}</p>
           {flags.emptyCtaHref ? (
             <a
               type="button"

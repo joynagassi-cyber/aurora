@@ -43,6 +43,7 @@ import './styles/integrations.css';
 import './styles/auth.css';
 import './styles/onboarding.css';
 import './styles/shell.css';
+import './styles/dynamic-theme.css';
 
 import { AuroraApp } from './app';
 import { FocusThemeAdapter } from './ux/theme-adapter';

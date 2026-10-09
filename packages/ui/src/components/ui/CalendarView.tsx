@@ -13,6 +13,12 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
 import interactionPlugin from "@fullcalendar/interaction";
+// Locale FR (05 §2.5 microcopy : l'app est française) — sans lui
+// FullCalendar rend ses libellés par défaut en anglais (« today »,
+// « Previous week », en-têtes « Sun 10/4 », titre « Oct 4 – 10, 2026 »)
+// dans une interface entièrement française. Le fichier de locale porte
+// aussi la semaine française (`week.dow = 1`, lundi premier jour).
+import frLocale from "@fullcalendar/core/locales/fr";
 import type {
   EventInput,
   EventClickArg,
@@ -208,6 +214,7 @@ export function CalendarView({
           ) : (
             <FullCalendar
               plugins={plugins}
+              locale={frLocale}
               events={fcEvents}
               initialView={fcView}
               height={height}

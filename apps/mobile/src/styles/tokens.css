@@ -417,6 +417,7 @@ html[data-aurora-image-theme] ion-app::after {
   -webkit-backdrop-filter: blur(40px); /* Safari webview (iOS) */
 }
 
+/* Dark neutral style — DARK PUR (owner 10-07): canvas #000000 (the deepest
  * black) + a hue-0 gray ramp (NO blue/slate tint). Triplet override when
  * <AuroraThemeProvider> sets `data-aurora-style="dark"` on <html>. */
 [data-aurora-style="dark"] {
