@@ -795,6 +795,23 @@ export class DefaultCapabilityRegistry {
         destructive: false,
         requiresConfirmation: false,
       },
+      // G13 (discovery-vault plan 2026-10-10, Lot 3) : lecture READ-ONLY
+      // du vault de veille (VAULT.md évolutif + manifest append-only).
+      // Le chat-agent réutilise les recherches archivées (stratégie de
+      // caching) au lieu de relancer le même search. AD-7 : Discovery
+      // reste le seul reader/writer de son vault ; le kernel n'y accède
+      // que via la commande typée `discovery.vault_read`. Pas de write
+      // scope, pas de job, sans confirmation (lecture légère).
+      {
+        id: 'discovery.vault.read',
+        tool: 'discovery_vault_read',
+        description:
+          "Lire le vault de veille d'un domaine (VAULT.md + manifest append-only). READ-ONLY : pas de write scope, pas de job, sans confirmation. Le module Discovery lit sa propre table `discovery_vault` (0025) via le port `VaultStore.read` — le chat-agent réutilise les recherches archivées (caching), ne relance jamais le même search (AD-7).",
+        writeScopes: [],
+        readScopes: ['discovery:read'],
+        destructive: false,
+        requiresConfirmation: false,
+      },
     ];
     for (const b of base) {
       this.register({

@@ -86,6 +86,16 @@ SELECT id, user_id, title, question, why_now, factual_summary, sources, kind,
        updated_at
 FROM discovery_items;
 
+-- Discovery vault scope (owner Discovery, 0025, discovery-vault plan
+-- 2026-10-10 Lot 2) : le vault de veille par (user, domaine) — VAULT.md
+-- évolutif + manifest append-only. Écrit UNIQUEMENT par le job research
+-- (AD-7) ; le relay le lit sous RLS (0025 : policies user_isolation +
+-- service_role, FORCE RLS). Pas de cross-module JOIN (F-03).
+CREATE OR REPLACE VIEW v_discovery_vault_scope WITH (security_invoker = on) AS
+SELECT id, user_id, domaine, vault_md, vault_hash, runs_manifest,
+       storage_prefix, created_at, updated_at
+FROM discovery_vault;
+
 -- Artifact scope (owner Artifact) — metadata + r2_key ONLY (files in R2)
 CREATE OR REPLACE VIEW v_artifact_scope WITH (security_invoker = on) AS
 SELECT id, user_id, kind, title, mime_type, r2_key, size_bytes,
@@ -119,6 +129,6 @@ FROM user_goals;
 -- service_role may read every scope view (the relay); RLS still bounds rows.
 GRANT SELECT ON v_identity_scope, v_productivity_scope, v_learning_scope,
                  v_knowledge_scope, v_progress_scope, v_discovery_scope,
-                 v_artifact_scope, v_integrations_scope, v_ascent_scope,
-                 v_user_goals_scope
+                 v_discovery_vault_scope, v_artifact_scope, v_integrations_scope,
+                 v_ascent_scope, v_user_goals_scope
   TO service_role;

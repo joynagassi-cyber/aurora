@@ -12,7 +12,7 @@
  */
 import { QueryClient } from '@tanstack/react-query';
 import type { LocalQueryRepository, LocalFilter } from '@aurora/data';
-import type { AscentLearningIR, GoalProject, Task } from '@aurora/domain';
+import type { AscentLearningIR, GoalProject, Task, Automation, VeilleVault } from '@aurora/domain';
 import { markFirstLocalReadSeen } from '../hooks/use-killed';
 import type { AgentClient } from '../lib/agent-client';
 import type { CanvasClient } from '../lib/canvas-client';
@@ -25,6 +25,19 @@ export interface MobileDataProvider {
   tasks: LocalQueryRepository<Task>;
   /** Ascent local mirror (wave 3): the read-only `ascent_paths` table. */
   ascent?: LocalQueryRepository<AscentLearningIR>;
+  /**
+   * Discovery vault local mirror (discovery-vault plan 2026-10-10, Lot 4,
+   * read-only AD-7): the `discovery_vault` table — the evolving VAULT.md
+   * + append-only manifest the Discovery card renders offline.
+   */
+  discoveryVault?: LocalQueryRepository<VeilleVault>;
+  /**
+   * Automations local mirror (discovery-vault plan 2026-10-10, Lot 4,
+   * read-only AD-7): the `automations` table — a veille program is a
+   * `jobKind:'research'` automation (title/subtitle source for the card).
+   * The write side is the Integrations module (G2/G3), not Discovery.
+   */
+  automations?: LocalQueryRepository<Automation>;
   /**
    * The device-side agent client (AD-3: publishable scope only). Present
    * when the shell has Supabase env values — the /agent page enqueues
@@ -84,6 +97,14 @@ export const qk = {
     all: () => ['ascent'] as const,
     list: (userId?: string) => [...qk.ascent.all(), 'list', userId ?? 'me'] as const,
   },
+  // Discovery vault + automations (discovery-vault plan 2026-10-10, Lot 4,
+  // AD-7 read side): the card lists the veille programs (research
+  // automations) and joins the evolving vault manifest offline.
+  discovery: {
+    all: () => ['discovery'] as const,
+    programs: () => [...qk.discovery.all(), 'programs'] as const,
+    vaults: () => [...qk.discovery.all(), 'vaults'] as const,
+  },
   // agent_runs mirror (AD-7 read side, 0008): per-run polling while
   // the kernel job is in flight (02 §4 / F-09).
   agent: {
@@ -123,6 +144,9 @@ export function createMobileQueryClient(provider: MobileDataProvider): QueryClie
       client.invalidateQueries({ queryKey: qk.task.all() });
       // A2: the Ascent local mirror invalidates on the ascent_paths watch.
       client.invalidateQueries({ queryKey: qk.ascent.all() });
+      // Discovery card (Lot 4): the programs + vaults invalidate on the
+      // automations + discovery_vault watches (AD-7 local reads, 03 S5.8).
+      client.invalidateQueries({ queryKey: qk.discovery.all() });
     });
   }
 
@@ -196,11 +220,19 @@ export function mobileDataProviderFrom(
   const ascent = provider.ascent
     ? withFirstLocalReadSignal(provider.ascent)
     : undefined;
+  // Discovery card (Lot 4): the two read-only mirrors (discovery_vault +
+  // automations). They are honest empty states when absent (the card
+  // degrades to its empty CTA, AD-7) — no first-local-read signal wrap.
+  const discoveryVault = provider.discoveryVault;
+  const automations = provider.automations;
   return {
     goals,
     tasks,
     // A2: expose the Ascent local-mirror repo (snake→camel-mapped, AD-15).
     ascent,
+    // Discovery card (Lot 4): expose the vault + programs read-only mirrors.
+    discoveryVault,
+    automations,
     // AD-3: the publishable-scope agent client (kernel enqueue + mirror read).
     agent,
     // AD-3: the publishable-scope integrations client (Composio v3.1
@@ -226,6 +258,10 @@ export function mobileDataProviderFrom(
       provider.store().watch({ entity: 'semantic_nodes' }, () => invalidate());
       provider.store().watch({ entity: 'semantic_edges' }, () => invalidate());
       provider.store().watch({ entity: 'node_state' }, () => invalidate());
+      // Discovery card (Lot 4): the vault manifest + program (automations)
+      // downstream batches invalidate the discovery query key (AD-7, 03 S5.8).
+      provider.store().watch({ entity: 'discovery_vault' }, () => invalidate());
+      provider.store().watch({ entity: 'automations' }, () => invalidate());
     },
   };
 }

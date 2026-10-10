@@ -183,6 +183,11 @@ export {
   inboxCapture,
   inboxTriage,
   ascentRead,
+  // G13 (discovery-vault plan 2026-10-10, Lot 3) : lecture READ-ONLY du
+  // vault de veille (VAULT.md + manifest) — le chat-agent réutilise les
+  // recherches archivées (caching), AD-7 : Discovery est le seul
+  // reader/writer de son vault.
+  discoveryVaultRead,
   isJobKind,
 } from './tools.ts';
 

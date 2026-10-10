@@ -26,10 +26,9 @@ describe('Calendrier — rendu visuel (Dynamic Theming)', () => {
     cy.screenshot('02-calendrier-image-2');
   });
 
-  it('affiche la timeline et la bottom nav locale', () => {
-    cy.get('.cal-timeline').should('be.visible');
-    cy.get('.cal-timeline-line').should('be.visible');
-    cy.get('.cal-dynamic-tabbar').should('be.visible');
+  it('affiche la section Aujourd\'hui et le FAB', () => {
+    cy.get('.cal-card').should('exist');
+    cy.get('ion-fab-button').should('be.visible');
     cy.screenshot('03-calendrier-timeline-fab');
   });
 });

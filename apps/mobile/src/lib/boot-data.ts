@@ -21,8 +21,10 @@ import {
   type LocalStore,
   type PowerSyncClientEngine,
 } from '@aurora/data';
-import type { AscentLearningIR, GoalProject, Task } from '@aurora/domain';
+import type { AscentLearningIR, GoalProject, Task, Automation, VeilleVault } from '@aurora/domain';
 import { createAscentRepo } from './ascent-repo';
+import { createAutomationsRepo } from './automations-repo';
+import { createDiscoveryVaultRepo } from './discovery-vault-repo';
 
 /**
  * The `LocalStore`-backed provider the shell boots (03 S8.1). One per
@@ -37,6 +39,19 @@ export interface AuroraDataProvider {
   tasks: LocalQueryRepository<Task>;
   /** Ascent local mirror (wave 3, read-only AD-7/AD-12): `ascent_paths`. */
   ascent: LocalQueryRepository<AscentLearningIR>;
+  /**
+   * Discovery vault local mirror (discovery-vault plan 2026-10-10, Lot 4,
+   * read-only AD-7): `discovery_vault` (the evolving VAULT.md + the
+   * append-only run manifest — the SSoT the card renders offline).
+   */
+  discoveryVault?: LocalQueryRepository<VeilleVault>;
+  /**
+   * Automations local mirror (discovery-vault plan 2026-10-10, Lot 4,
+   * read-only AD-7): `automations` (the veille program = a
+   * `jobKind:'research'` automation whose name/cron feed the card title
+   * + subtitle).
+   */
+  automations?: LocalQueryRepository<Automation>;
   /** the upsync queue (03 S5.1 — the command repository's write side). */
   upsync: UpsyncQueue;
   /** the production engine (`@powersync/capacitor`), null before init. */
@@ -108,11 +123,17 @@ export function createAuroraDataProvider(env: AuroraDataEnv): AuroraDataProvider
   const tasks = new SqliteQueryRepository<Task>(bridge, 'tasks');
   // A2: the Ascent local-mirror repo (snake→camel + JSON.parse, confined here).
   const ascent = createAscentRepo(bridge);
+  // Discovery-vault (Lot 4): the two read-only mirrors the card renders
+  // offline (VAULT.md + manifest, and the research automation program).
+  const discoveryVault = createDiscoveryVaultRepo(bridge);
+  const automations = createAutomationsRepo(bridge);
 
   return {
     goals,
     tasks,
     ascent,
+    discoveryVault,
+    automations,
     upsync,
     engine,
 
@@ -147,6 +168,15 @@ export function createAuroraDataProvider(env: AuroraDataEnv): AuroraDataProvider
       // node_state / semantic_bridges / source_refs, read-only AD-7 —
       // the `embedding` column is NOT mirrored, 0004 §4.2 / AD-12).
       await engine.addScope('knowledge');
+      // Discovery local-mirror stream (discovery_items + discovery_vault,
+      // read-only AD-7, discovery-vault plan 2026-10-10 Lot 4): the card
+      // renders the evolving VAULT.md + manifest offline.
+      await engine.addScope('discovery');
+      // Integrations local-mirror stream (automations, read-only AD-7 —
+      // the Discovery card's program title/subtitle come from a
+      // jobKind:'research' automation; the write side is the
+      // Integrations module via G2/G3 typed commands).
+      await engine.addScope('integrations');
       // Bind the engine's reactive row stream into the bridge cache (03
       // S5.2.2) so repository reads stay live without a poll; the UI's
       // QueryClient invalidation rides on this channel (03 S5.8).
@@ -158,6 +188,10 @@ export function createAuroraDataProvider(env: AuroraDataEnv): AuroraDataProvider
       void bridge.bindEngineWatch('semantic_nodes');
       void bridge.bindEngineWatch('semantic_edges');
       void bridge.bindEngineWatch('node_state');
+      // Discovery vault + programs (AD-7, Lot 4): the card re-renders on
+      // the vault manifest + automation program downstream batches.
+      void bridge.bindEngineWatch('discovery_vault');
+      void bridge.bindEngineWatch('automations');
     },
 
     async dispose(clear = false): Promise<void> {

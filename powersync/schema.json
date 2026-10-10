@@ -36,6 +36,12 @@
       "sql": "SELECT * FROM v_discovery_scope"
     },
     {
+      "name": "discovery_vault",
+      "ownerModule": "Discovery",
+      "type": "custom",
+      "sql": "SELECT * FROM v_discovery_vault_scope"
+    },
+    {
       "name": "artifact",
       "ownerModule": "Artifact",
       "type": "custom",
@@ -82,7 +88,7 @@
     "progress": [
       "skill_states", "progress_snapshots"
     ],
-    "discovery": ["discovery_items", "gaps"],
+    "discovery": ["discovery_items", "gaps", "discovery_vault"],
     "artifact": ["artifacts"],
     "integrations": ["automations"],
     "identity": ["user_context"],

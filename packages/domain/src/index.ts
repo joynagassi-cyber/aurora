@@ -39,6 +39,9 @@ export * from './entities-engineering';
 // ---- Ascent (wave 3, W3-E2, AD-15) ----
 export * from './ascent';
 
+// ---- Vault (Discovery, AD-15 additive, discovery-vault plan 2026-10-10) ----
+export * from './vault';
+
 // ---- Jobs (AD-8) ----
 export * from './jobs';
 

@@ -353,105 +353,18 @@
 }
 
 /* ---- Eisenhower (G-L5 ratified, T4 under /tasks) ---------------------
- * Lot C 2026-10-08 (ref_033 / ref_086) : la couleur ne décore plus, elle
- * ORIENTE — chaque quadrant porte un liseré + un fond teinté (4% de la
- * couleur sémantique sur le surface, jamais de valeur brute hors token,
- * `color-mix` avec fallback AD-13) et un numéro mono (1–4) pour qu'on
- * puisse les appeler "le 1", "le 2" à voix haute. Les 4 couleurs restent
- * les sémantiques FROZENES de 05 §5.1 (danger / info / warning /
- * border-strong) — un thème ne les redéfinit jamais. */
-.eisenhower {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 8px 16px 0;
-}
-.eisenhower-q {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-height: 120px;
-  padding: 10px;
-  border-radius: var(--aurora-radius, 0.5rem);
-  background: var(--aurora-surface);
-  /* 10-09 lisage global : le token lissé (opaque par défaut, translucide
-     quand un thème image est actif). Lèche : pas de glow. */
-  background: var(--aurora-surface-bg);
-  border: 1px solid var(--aurora-border);
-  border-top-width: 3px;
-}
-/* Soft tinted fill (4% of the quadrant's state color) — honest
- * degradation: a webview without `color-mix` just keeps the plain
- * surface (the pre-rework look). */
-.eisenhower-q1 {
-  border-top-color: var(--aurora-danger);
-  background: var(--aurora-surface);
-  background: var(--aurora-surface-bg);
-}
-.eisenhower-q2 {
-  border-top-color: var(--aurora-info);
-  background: var(--aurora-surface);
-  background: var(--aurora-surface-bg);
-}
-.eisenhower-q3 {
-  border-top-color: var(--aurora-warning);
-  background: var(--aurora-surface);
-  background: var(--aurora-surface-bg);
-}
-.eisenhower-q4 {
-  border-top-color: var(--aurora-border-strong);
-  background: var(--aurora-surface);
-  background: var(--aurora-surface-bg);
-}
-@supports (color: color-mix(in srgb, red, blue)) {
-  .eisenhower-q1 {
-    background: color-mix(in srgb, var(--aurora-danger) 4%, var(--aurora-surface));
-  }
-  .eisenhower-q2 {
-    background: color-mix(in srgb, var(--aurora-info) 4%, var(--aurora-surface));
-  }
-  .eisenhower-q3 {
-    background: color-mix(in srgb, var(--aurora-warning) 4%, var(--aurora-surface));
-  }
-  .eisenhower-q4 {
-    background: color-mix(in srgb, var(--aurora-surface-alt) 60%, var(--aurora-surface));
-  }
-}
-.eisenhower-q .task-row {
-  min-height: 38px;
-  font-size: 13px;
-  padding: 6px 8px;
-}
-.eisenhower-q-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: var(--aurora-text-secondary);
-}
-.eisenhower-q-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  flex: none;
-  border-radius: 50%;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--aurora-text-primary);
-  background: var(--aurora-surface);
-  background: var(--aurora-surface-bg);
-  border: 1px solid var(--aurora-border);
-}
-.eisenhower-q-empty {
-  font-size: 12px;
-  color: var(--aurora-text-disabled);
-}
-
+ * PROMPT 8 (REDESIGN VALIDÉ 2026-10-10) : la matrice a été refondue
+ * — l'ancienne grille `.eisenhower` (liserés colorés 3px + fond teinté
+ * `color-mix` par quadrant, ref_033/ref_086 lot C) est SUPPRIMÉE.
+ * Le nouveau design (le composant `EisenhowerView.tsx`, vues
+ * `pages/tasks`) : repère orthonormé central + les 4 quadrants
+ * `.ei-q*` (l'en-tête porte le SEUL gradient coloré), les cartes de
+ * tâches SANS barre latérale ni fond teinté (le fond translucide
+ * `rgba(0,0,0,0.35)`, jamais une couleur du quadrant sur la carte —
+ * Phase 3 : les couleurs sont confquées à l'en-tête + au repère
+ * `var(--dynamic-accent)`). Les anciennes classes `.eisenhower*` ne
+ * sont plus consommées par aucune vue (le `data-state="success"` du
+ * conteneur de la page reste, le CSS de l'ancienne grille est mort). */
 /* ---- Task detail (/tasks/:id) --------------------------------------- */
 [data-task-detail] {
   padding: 12px 16px;
@@ -1102,6 +1015,263 @@
   flex: 1;
 }
 
+/* ---- Discovery — programs de veille (discovery-vault plan 2026-10-10,
+   Lot 4) : la CARTE d'un programme de veille (une Automation research)
+   titre + sous-titre, stats (sources dernier run + delta + pertinence)
+   + menu 3 points + lien vers le document de synthèse.
+   Tokens only (AD-17 / AD-10) : var(--aurora-*) uniquement, zéro hex. */
+.veille-programs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.veille-program-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+}
+.veille-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.veille-card-titles {
+  flex: 1;
+  min-width: 0;
+}
+.veille-card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--aurora-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.veille-card-subtitle {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--aurora-text-secondary);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* le menu 3 points (AD-7 READ-ONLY surface — les mutations s'ouvrent
+   sur l'agent). Tap ≥ 44 px (05 §2.6). */
+.veille-card-menu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  flex: 0 0 auto;
+  border: none;
+  border-radius: var(--aurora-radius, 0.5rem);
+  background: transparent;
+  color: var(--aurora-text-secondary);
+  cursor: pointer;
+}
+.veille-card-menu:hover {
+  background: var(--aurora-surface-hover, var(--aurora-surface));
+}
+.veille-card-menu-destructive {
+  color: var(--aurora-danger, var(--aurora-text-primary));
+}
+.veille-card-menu-destructive[data-menu-item="true"] {
+  color: var(--aurora-danger, var(--aurora-text-primary));
+}
+/* stats : sources du dernier run + delta "ce jour" + verdict pertinence */
+.veille-card-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.veille-card-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--aurora-text-secondary);
+  background: var(--aurora-surface);
+  border: 1px solid var(--aurora-border);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+.veille-card-stat svg {
+  color: var(--aurora-accent-primary);
+}
+.veille-card-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.veille-card-delta--up {
+  color: var(--aurora-success, var(--aurora-accent-primary));
+}
+.veille-card-delta--down {
+  color: var(--aurora-warning, var(--aurora-text-secondary));
+}
+.veille-card-delta--flat {
+  color: var(--aurora-text-tertiary, var(--aurora-text-secondary));
+}
+.veille-card-relevance--high {
+  color: var(--aurora-success, var(--aurora-accent-primary));
+}
+.veille-card-relevance--mid {
+  color: var(--aurora-text-secondary);
+}
+.veille-card-relevance--low {
+  color: var(--aurora-warning, var(--aurora-text-secondary));
+}
+.veille-card-relevance--muted {
+  color: var(--aurora-text-tertiary, var(--aurora-text-secondary));
+}
+/* Le SSoT document (VAULT.md) du programme, rendu « style Notion »
+   dans la carte (Lot 4.1) — le document évolutif que l'élève consulte
+   page par page (le SSoT, pas un lien externe vers l'agent).
+   Le contenu TipTap est une surface de LECTURE (editable: false),
+   `markdownToHtml` (@aurora/ui) porte le rendu HTML (AD-16b). */
+.vault-md-view {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+}
+/* L'en-tête « Document de synthèse » (le titre du contenu). */
+.vault-md-view .vault-md-view-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--aurora-text-tertiary, var(--aurora-text-secondary));
+}
+/* Le contenu TipTap LECTURE (ProseMirror `.tiptap` en `.vault-md-view`) :
+   le rendu « style Notion » — les titres sont compacts (une carte n'est
+   PAS un plan de frappe), les listes + citations sont lisibles, le
+   contenu est DÉFILABLE (le VAULT.md évolue, la carte le porte). */
+.vault-md-view .tiptap {
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 4px 8px 8px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--aurora-text-primary);
+  scroll-behavior: smooth;
+}
+/* Le contenu est non-éditable (le SSoT est écrit par le run, AD-7) :
+   les styles ProseMirror focus/cursor ne s'appliquent PAS en lecture. */
+.vault-md-view .tiptap:focus,
+.vault-md-view .tiptap:focus-visible {
+  outline: none;
+  border-color: var(--aurora-border);
+}
+.vault-md-view .tiptap h1,
+.vault-md-view .tiptap h2,
+.vault-md-view .tiptap h3,
+.vault-md-view .tiptap h4 {
+  color: var(--aurora-text-primary);
+  margin: 10px 0 4px;
+  line-height: 1.25;
+}
+.vault-md-view .tiptap h1 { font-size: 17px; }
+.vault-md-view .tiptap h2 { font-size: 15px; }
+.vault-md-view .tiptap h3 { font-size: 14px; }
+.vault-md-view .tiptap h4 { font-size: 13px; }
+.vault-md-view .tiptap p {
+  margin: 4px 0;
+}
+.vault-md-view .tiptap ul,
+.vault-md-view .tiptap ol {
+  margin: 6px 0;
+  padding-left: 20px;
+}
+.vault-md-view .tiptap li {
+  margin: 2px 0;
+}
+.vault-md-view .tiptap blockquote {
+  margin: 8px 0;
+  padding: 4px 0 4px 10px;
+  border-left: 2px solid var(--aurora-border);
+  color: var(--aurora-text-secondary);
+}
+.vault-md-view .tiptap a {
+  color: var(--aurora-accent-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+/* L'état vide (AD-13) : premier run en attente, le document n'existe pas.
+   Un placeholder honnête, jamais un rendu factice. */
+.vault-md-empty {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px dashed var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  font-size: 13px;
+  color: var(--aurora-text-tertiary, var(--aurora-text-secondary));
+}
+.vault-md-empty svg {
+  color: var(--aurora-text-tertiary, var(--aurora-text-secondary));
+}
+/* la bannière de synthèse globale (le document unique des vaults) */
+.veille-synthesis {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: var(--aurora-surface);
+  background: var(--aurora-surface-bg);
+  border: 1px solid var(--aurora-border);
+  border-radius: var(--aurora-radius, 0.5rem);
+  box-shadow: var(--aurora-shadow-card);
+  color: var(--aurora-text-secondary);
+  font-size: 14px;
+}
+.veille-synthesis svg {
+  color: var(--aurora-accent-primary);
+}
+.veille-synthesis span {
+  flex: 1;
+}
+
+/* skeleton (AD-13) : la carte de veille en chargement prévisualise sa FORME
+   (titre + sous-titre + rangée de stats), pas un placeholder générique.
+   On compose les primitives shell.css (`.sk` base animée + `.sk-card` forme)
+   avec les classes réelles `.veille-card-head` / `.veille-card-stats` : le
+   squelette EST le layout de la carte, les blocs `.sk` y apportent le
+   shimmer. Zéro nouveau sélecteur de forme = zéro dérive visuelle. */
+.sk.veille-program-card .veille-card-head,
+.sk.veille-program-card .veille-card-stats {
+  gap: 8px;
+}
+/* Le rendu TipTap du SSoT (Lot 4.1) : le skeleton prévisualise aussi
+   le bloc `.vault-md-view` (le même layout que le rendu réel) — la
+   base `.sk` porte le pulse (AD-13 : le chargement prévisse la FORME,
+   pas un placeholder générique). La carte skeleton porte `.sk
+   .vault-md-view` (les deux classes sont sur le même <div>). */
+.sk .vault-md-view .sk-lines {
+  gap: 6px;
+}
+
 /* ---- Learning (05 §4.6–4.9) ---------------------------------------- */
 [data-learn-home] {
   padding: 0 16px 16px;
@@ -1557,112 +1727,17 @@
  * Horizontal column board (PRD-PM-02/03) with a themed top band per
  * column (frozen semantic tokens, 05 §5.1) + the synthesis-report list
  * (PRD-PM-01). Tokens only (AD-17), radius ≤ 8 px, tap ≥ 44 px. */
-/* Kanban board : a horizontal scroller track of fixed-width columns
- * (PRD-PM-02 : « colonnes côte à côte à défilement horizontal »). The
- * `data-board` attr and `.projects-board` class live on the SAME
- * element — one definition, no duplication. */
-.projects-board {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
-  padding: 0 16px;
-  margin-bottom: 14px;
-}
-.projects-board .projects-col {
-  scroll-snap-align: start;
-}
-.projects-col {
-  display: inline-flex;
-  flex-direction: column;
-  flex: 0 0 240px;
-  min-height: 160px;
-  background: var(--aurora-surface);
-  background: var(--aurora-surface-bg);
-  border: 1px solid var(--aurora-border);
-  border-radius: var(--aurora-radius, 0.5rem);
-  box-shadow: var(--aurora-shadow-card);
-  overflow: hidden;
-}
-/* The themed column band (PRD-PM-03 « bandeau coloré ») — a 3px semantic
- * top edge per column state (the premium language of the KPI tiles /
- * goal cards). WCAG-safe: the title stays on the neutral surface, only
- * the band carries the state color (theme-independent, 05 §5.1). */
-.projects-col-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--aurora-border);
-}
-.projects-col--info {
-  border-top: 3px solid var(--aurora-info);
-}
-.projects-col--accent {
-  border-top: 3px solid var(--aurora-accent-primary);
-}
-.projects-col--warning {
-  border-top: 3px solid var(--aurora-warning);
-}
-.projects-col--success {
-  border-top: 3px solid var(--aurora-success);
-}
-.projects-col-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--aurora-text-primary);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-/* Counter pill on the column header (monospace, AD-7 = derived count). */
-.projects-col-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  padding: 1px 7px;
-  border-radius: 9999px;
-  background: rgba(0, 0, 0, 0.18);
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 11px;
-  font-weight: 700;
-}
-/* Column body: the add-card affordance (routes to the agent — a real
- * action, never a dead control). */
-.projects-col-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px;
-}
-.projects-col-add {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: var(--aurora-tap-target, 44px);
-  padding: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--aurora-accent-primary);
-  background: var(--aurora-accent-selected-surface);
-  border: 1px dashed var(--aurora-accent-primary);
-  border-radius: var(--aurora-radius, 0.5rem);
-}
-/* The primary « Créer un projet » CTA, OUTSIDE the scroller track. */
-.projects-create-wrap {
-  padding: 0 16px 16px;
-}
-.projects-create {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-}
+/* Kanban (PROMPT 11, 2026-10-10 — REDESIGNÉ monochrome + zoomable) :
+ *   l'ancienne vue colorée (`.projects-board` / `.projects-col`,
+ *   bandeau sémantique 3px par colonne, PRD-PM-03) est SUBLUÉE par
+ *   le composant dédié `apps/mobile/src/pages/projects/views/
+ *   KanbanView.tsx` (le layout mono-chrome : les 4 colonnes en
+ *   niveaux de gris + le slider de zoom, la variable CSS `--zoom`
+ *   qui pilote la largeur des colonnes / le padding des cartes / la
+ *   taille du texte en temps réel, les 4 en-têtes = la SEULE partie
+ *   colorée de la vue, les 4 gradients fixés par le prompt). Le CSS
+ *   dédié vit dedans (le template literal `KANBAN_VIEW_CSS`), plus
+ *   ici — le style est scoped au composant, ZÉRO duplication. */
 /* Reports list (PRD-PM-01) : report rows = dot + title + description,
  * each routes to the agent intent that GENERATES the report. */
 .projects-reports {
@@ -2713,169 +2788,15 @@ ion-content [data-artifact-id] {
   width: 100%;
 }
 
-/* ---- GANTT (05 §3.6.4, `timeline-gantt.md` OQ-01 option A : LISTE) ---
- * Une tâche = UNE ligne 44px (05 §3.6.4 l.928) : le titre sm en
- * ellipsis à gauche, la barre 8px proportionnelle au centre (sur l'axe
- * de dates partagé, le Pager Jour|Semaine|Mois de l.219-231 du .tsx),
- * le % mono xs à droite (l.932-935 : JetBrains Mono, jamais un
- * count-up — règle 1). La barre est DATA (elle ne bouge pas, elle EST). */
-.gantt-view {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 0 16px 24px;
-}
-/* L'axe de dates partagé (le Pager) : le control `Jour | Semaine | Mois`
-   (OQ-03 option A = présent) — le pattern `.segmented` existant, juste
-   centré et plus compact (l'axe n'est pas la vue, c'est le repère). */
-.gantt-axis {
-  display: inline-flex;
-  gap: 4px;
-  margin: 0;
-  padding: 4px;
-  background: var(--aurora-bg-subtle);
-  border-radius: 9999px;
-  width: fit-content;
-}
-/* Le libellé de période (ref_020/056 : le mono sous le Pager,
-   05 §3.4 l.737-750 : « le label central dates sm 600 JetBrains
-   Mono ») — la donnée courante, jamais animée (règle 1). */
-.gantt-period {
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--aurora-text-muted);
-  text-align: center;
-  margin: 0;
-}
-/* Le marker de jalon manqué (ref_056 : « Manquant 24/09 » en rouge
-   dans la section « PROCHAINES ÉTAPES ») : l'icône `Flag` 12px +
-   la date mono, en `danger` FROZEN (05 §5.1). Le marker est à
-   gauche de la barre (le blocage est visible, 05 §3.6.4 l.941-944),
-   jamais caché dans un statut. */
-.gantt-row-missed {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--aurora-danger);
-  margin-left: 6px;
-  vertical-align: middle;
-}
-.gantt-row-missed svg {
-  flex: none;
-}
-/* Les lignes GanttRow (05 §3.6.4 l.928-936) : UNE ligne = 1 tâche.
-   La grille : [titre flexible ellipsis | track flexible | % fixe 4ch].
-   Le track porte la barre (8px, proportionnelle, left/width en % du
-   0-100 partagé avec le Pager — le % EST la donnée, jamais animée). */
-.gantt-rows {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.gantt-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(80px, 1.6fr) 3ch;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  padding: 8px 12px;
-  background: var(--aurora-surface);
-  /* 10-09 lisage global : le token lissé (opaque par défaut, translucide
-     quand un thème image est actif). Lèche : pas de glow. */
-  background: var(--aurora-surface-bg);
-  border: 1px solid var(--aurora-border);
-  border-radius: var(--aurora-radius, 0.5rem);
-  box-shadow: var(--aurora-shadow-card);
-}
-/* Le titre (sm, ellipsis — une tâche peut avoir un long nom, la ligne
-   reste 44px fixe, jamais 2 lignes, 05 §3.6.4 l.929). */
-.gantt-row-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--aurora-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
-/* Le track de la barre (l'axe de dates pour CETTE tâche) : la bande
-   grise continue (bg-subtle), sur laquelle la barre glisse en %.
-   L'axe n'est PAS tracé en jours/semaines ici (OQ-05 option B : une
-   ligne par tâche, l'axe de dates = le Pager au-dessus, pas un
-   calibrage par colonne — le budget OQ-11 interdit la grille 2D). */
-.gantt-row-track {
-  position: relative;
-  height: 8px;
-  border-radius: 9999px;
-  background: var(--aurora-bg-subtle);
-  overflow: hidden;
-}
-/* La barre (le `ProgressBar` 8px de la ligne, 05 §3.6.4 l.930-931) :
-   `accent-primary` (en cours) · `success` (terminée) · `border-strong`
-   (à faire) · `danger` (bloquée) — les 4 états sémantiques FROZEN (05
-   §5.1 l.2931 : un thème ne redéfinit JAMAIS une state). La position
-   left/width vient du style inline du .tsx (la donnée — ne bouge pas,
-   ne s'anime pas, règle 1). */
-.gantt-row-bar {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  border-radius: 9999px;
-}
-.gantt-row-bar--in_progress {
-  background: var(--aurora-accent-primary);
-}
-.gantt-row-bar--done {
-  background: var(--aurora-success);
-}
-.gantt-row-bar--todo {
-  background: var(--aurora-border-strong);
-}
-.gantt-row-bar--blocked {
-  background: var(--aurora-danger);
-}
-/* Le jalon manqué (S-07, 05 §3.6.4 l.941-944) : le marker à gauche du
-   titre (une barre orange ne suffit pas — l'attention doit SAUTER).
-   `.is-missed` est sur la ligne mère (cf. .tsx l.257) : elle redessine
-   le titre en `danger` + une barre danger (pas success/warning/info —
-   la state est FROZEN, AD-17, et le danger est « l'alerte que le
-   jalons s'est raté »). */
-.gantt-row.is-missed .gantt-row-title {
-  color: var(--aurora-danger);
-  font-weight: 700;
-}
-.gantt-row.is-missed .gantt-row-track {
-  background: var(--aurora-danger-surface);
-}
-/* Le % à droite (JetBrains Mono xs, 05 §3.6.4 l.932-935) : LA donnée,
-   jamais un count-up (règle 1, 05 §2.6 l.273). */
-.gantt-row-pct {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--aurora-text-secondary);
-  text-align: right;
-}
-/* L'état vide Gantt (OQ-09 option A, SSoT l.942-944) : l'icône seule,
-   le libellé honnête, le CTA reste (AD-14 : le CTA crée, jamais ne
-   propose de remplir la vue). */
-.gantt-empty-icon {
-  color: var(--aurora-text-muted);
-}
-/* Le CTA unique de la surface Gantt (OQ-08 option A : « Générer la
-   fiche ») — le seul bouton d'action de la vue (AD-14 : jamais une
-   proposition libre de l'agent ici). */
-.gantt-cta {
-  width: 100%;
-  margin-top: 2px;
-}
+/* ---- GANTT (PROMPT 9, 2026-10-10 — REDESIGNÉ génie civil) ----------
+ * L'ancienne liste `.gantt-*` (une ligne 44px par tâche, 05 §3.6.4
+ * OQ-01 option A) est SUBLUÉE par le composant dédié
+ * `apps/mobile/src/pages/projects/views/GanttView.tsx` (le layout pro
+ * : sidebar WBS 280px + chart 2 niveaux, le chemin critique en danger,
+ * les jalons en diamants, la ligne « aujourd'hui », la baseline, les
+ * pastilles ressources, les filtres, la légende et la vue d'ensemble
+ * flottante). Le CSS dédié vit dedans (le template literal
+ * `GANTT_VIEW_CSS`), plus ici — le style est scoped au composant. */
 
 /* ---- CHRONO (05 §3.6.3, vue narrative `Timeline`) -------------------
  * La frise VERTICALE des événements PASSÉS du projet (jalons atteints,
@@ -2898,8 +2819,8 @@ ion-content [data-artifact-id] {
   margin-left: auto;
   margin-right: auto;
 }
-/* Le libellé de période (`.gantt-period`, partagé avec le Gantt) :
-   centré (le repère du pager, jamais en coin). */
+/* Le libellé de période (`.timeline-period`, le mono sous le Pager
+   partagé) : centré (le repère du pager, jamais en coin). */
 .timeline-view .gantt-period {
   text-align: center;
 }
@@ -3552,26 +3473,6 @@ html[data-aurora-image-theme] .cal-header {
    Interface lèche (pas de glow, pas de halo, pas d'animation).
    ========================================================================== */
 
-/* La cellule de jour de la grille (C2.2 10-08, hook `dayCellContent`)
-   : le numéro du jour (FullCalendar `dayNumber`) + les pastilles
-   (`CalendarDots`, sous le numéro). Le conteneur est un flex column
-   (le numéro en haut, les pastilles en bas, le 05 §3.6 lèche — pas
-   de glow, le gap 4px suffit). La date du jour (la donnée, jamais
-   animée, règle 1). */
-.cal-day-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-height: 100%;
-  padding: 2px;
-}
-/* Le numéro du jour (le `dayNumber` FullCalendar, sm 600) — la donnée,
-   jamais un count-up (règle 1, 05 §2.6 l.273). */
-.cal-day-number {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--aurora-text-primary);
-}
 /* Les pastilles (`CalendarDots`) — le style est porté par le composant
    lui-même (`CALENDAR_DOTS_CSS` injecté par la page) : le conteneur
    `.cal-dots` + les dots 4px + le compteur +N mono xs. Le conteneur

@@ -41,6 +41,7 @@ import {
   type PageOptionItem,
 } from '../../ux/page-options-menu';
 import { useHorizontalSwiper } from '../../ux/use-horizontal-swiper';
+import { EisenhowerView } from './views/EisenhowerView';
 
 /** Statuts tâches → libellé simple (zéro jargon, roadmap 10-07). */
 const TASK_STATUS_FR: Record<string, string> = {
@@ -393,18 +394,9 @@ export function TasksPage() {
         ? ({ status: 'empty' } as const)
         : ({ status: 'success', data: list } as const);
 
-  // Eisenhower: 4 quadrants (do-now / schedule / delegate / drop).
-  const quadrant = (t: Task) => {
-    const urgent = Boolean(t.dueAt);
-    const important = t.priority !== undefined && t.priority >= 4;
-    if (urgent && important) return 'q1';
-    if (!urgent && important) return 'q2';
-    if (urgent && !important) return 'q3';
-    return 'q4';
-  };
-  const q = { q1: [] as Task[], q2: [] as Task[], q3: [] as Task[], q4: [] as Task[] };
-  for (const t of list) q[quadrant(t)].push(t);
-
+  // Eisenhower (PROMPT 8, REDESIGN VALIDÉ) : le groupage en 4
+  // quadrants est porté par `EisenhowerView` (le `quadrantOf` interne)
+  // — la page pilote la donnée, la vue pilote le rendu.
   return (
     <>
       <IonHeader>
@@ -454,30 +446,17 @@ export function TasksPage() {
             {view === 'today' ? (
               <TodayView tasks={list} />
             ) : view === 'eisenhower' ? (
-              <div className="eisenhower" data-state="success">
-                {(
-                  [
-                    ['q1', 'Urgent · Important'],
-                    ['q2', 'Important'],
-                    ['q3', 'Urgent'],
-                    ['q4', 'Négliger'],
-                  ] as const
-                ).map(([key, label], i) => (
-                  <div key={key} className={`eisenhower-q eisenhower-${key}`}>
-                    <span className="eisenhower-q-title">
-                      <span className="eisenhower-q-num mono" aria-hidden>
-                        {i + 1}
-                      </span>
-                      {label}
-                    </span>
-                    {q[key].length === 0 ? (
-                      <p className="eisenhower-q-empty">Vide</p>
-                    ) : (
-                      q[key].map((t) => <TaskRow key={t.id} task={t} />)
-                    )}
-                  </div>
-                ))}
-              </div>
+              /* PROMPT 8 (REDESIGN VALIDÉ) : la matrice EISENHOWER
+                 refondue — le wrapper `.ei-wrap` (axe Y + matrice 2×2
+                 + axe X), le repère orthonormé central (la ligne + le
+                 point `var(--dynamic-accent)`), les 4 en-têtes de
+                 quadrant (le SEUL bloc coloré), les cartes SANS
+                 couleur (le fond translucide neutre, le contour
+                 quasi-invisible), la barre de filtres du haut
+                 (« Toutes »/« Aujourd'hui »/« En retard »/
+                 « Sans date ») — le filtre est un état LOCAL de la
+                 vue, jamais une mutation du miroir (AD-7). */
+              <EisenhowerView tasks={list} />
             ) : (
               <div className="task-list" data-state="success">
                 {list.map((t) => (

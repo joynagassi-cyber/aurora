@@ -4,8 +4,12 @@
  * + DYNAMIC THEMING (10-09).
  *
  * AD-7: events + tasks come from le miroir local (non câblé → état
- * vide honnête, jamais de données factices). Le moteur FullCalendar
- * est monté via le contrat `CalendarView` de `@aurora/ui`.
+ * vide honnête, jamais de données factices). Les 6 vues in-page
+ * (Liste / Année / Mois / Semaine / 3 Jours / Jour) sont 100 %
+ * div CSS Grid (10-09) — le moteur FullCalendar n'est plus monté
+ * par cette page depuis la refactorisation `YearView` (l'année
+ * passe par `YearView`, le mois par `MonthView`, la semaine/
+ * 3 jours par `MultiDayView`, le jour par `DayView`).
  *
  * DYNAMIC THEMING (10-09) : l'utilisateur choisit une image de fond
  * parmi le catalogue (`/themes/<file>.png`), le hook `useDynamicTheme`
@@ -47,14 +51,8 @@
  */
 import { IonContent, IonFab, IonFabButton, IonHeader, IonTitle } from "@ionic/react";
 import { useState, useEffect } from "react";
-import type { ReactNode } from "react";
-import { CalendarView } from "@aurora/ui";
-import type {
-  CalendarViewName,
-  RenderCalendarEvent,
-} from "@aurora/ui";
-import type { DayCellContentArg } from "@aurora/ui";
-import { Clock, Plus } from "lucide-react";
+import type { CalendarViewName, RenderCalendarEvent } from "@aurora/ui";
+import { Plus } from "lucide-react";
 import { UxStates, type UxStateFlags } from "../../ux-states";
 import { useOnlineStatus } from "../../hooks/use-online";
 import { useUiStateStore } from "../../state/ui-state";
@@ -63,21 +61,26 @@ import {
   settingsItem,
   type PageOptionItem,
 } from "../../ux/page-options-menu";
-import { CalendarDots, CALENDAR_DOTS_CSS } from "../../ux/calendar-dots";
 import {
   useDynamicTheme,
   applyDynamicThemeVariables,
   clearDynamicThemeVariables,
 } from "../../hooks/useDynamicTheme";
+import { DayView } from "./views/DayView";
+import { MultiDayView } from "./views/MultiDayView";
+import { MonthView } from "./views/MonthView";
+import { YearView } from "./views/YearView";
 
 // (Le bloc `void null as never as typeof _IonContent;` était un
 //  vestige d'alias d'imports plus haut — retiré, les imports sont les
 //  vrais, `@ionic/react`, jamais `ionicons/icons` qui n'existe pas.)
 /**
  * Les 6 vues in-page du pattern d'inspiration (2026-10-03) :
- * Liste (agenda list) · Année · Mois · Semaine · 3 Jours · Jour.
- * `yearGrid` et `threeDayGrid` sont les 2 vues nouvelles (année =
- * render natif mini-mois, 3 jours = grille semaine à 3 colonnes).
+ * Liste (agenda list) · Année (12 mini-mois) · Mois (grille
+ * 7 colonnes) · Semaine (grille 7 jours) · 3 Jours (grille
+ * 3 jours) · Jour (frise horaire 1 colonne). `yearGrid` et
+ * `threeDayGrid` sont les 2 vues nouvelles (année = render
+ * natif mini-mois, 3 jours = grille semaine à 3 colonnes).
  */
 type CalendarPageView = CalendarViewName | "yearGrid" | "threeDayGrid";
 
@@ -90,47 +93,21 @@ const CALENDAR_VIEWS: [CalendarPageView, string][] = [
   ["timeGridDay", "Jour"],
 ];
 
-/** Les 7 jours de la semaine, lundi en premier (05 §2.5 : fr). */
-const DOW: string[] = ["L", "M", "M", "J", "V", "S", "D"];
-
 /**
- * Construit les cellules du mois courant (grille standard 7 colonnes).
- * Les cellules « hors du mois courant » portent `.faded` (la teinte
- * grise système `--ion-color-medium`, jamais un hex fixe).
- * AD-7 : les pastilles viennent des `events` (miroir non câblé → 0
- * pastille, jamais un point factice, cf. `CalendarDots`).
+ * Les 5 teintes de la timeline de liste (.tl-dot-*) — le code de
+ * teinte est consommé par la page, jamais une couleur brute (AD-17).
+ * blue/green/orange/red/purple : les variables Ionic sémantiques
+ * canoniques (--ion-color-*), le fallback canonique (AD-13 honest
+ * degradation) reste lisible en thème neutre.
  */
-function buildMonthCells(): { number: number; faded: boolean; inMonth: boolean; iso: string | null }[] {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDay = new Date(year, month, 1).getDay();
-  const padBefore = firstDay === 0 ? 6 : firstDay - 1; // lundi = 1ʳᵉ colonne
-  const padAfter = (7 - ((padBefore + daysInMonth) % 7)) % 7;
-  const prevMonthDays = new Date(year, month, 0).getDate();
-  const cells: { number: number; faded: boolean; inMonth: boolean; iso: string | null }[] = [];
-  for (let i = 0; i < padBefore; i++) {
-    cells.push({ number: prevMonthDays - padBefore + i + 1, faded: true, inMonth: false, iso: null });
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    cells.push({ number: d, faded: false, inMonth: true, iso });
-  }
-  for (let i = 0; i < padAfter; i++) {
-    cells.push({ number: i + 1, faded: true, inMonth: false, iso: null });
-  }
-  return cells;
-}
-
-/** Les codes `blockType` connus (agent-prompts Phase 2.3) → la teinte
- *  sémantique FROZEN (05 §5.1, AD-17 : jamais une valeur brute). */
-const BLOCK_TONE: Record<string, "primary" | "success" | "warning"> = {
-  etude: "success",
-  focus: "warning",
-  projet: "primary",
-  hydratation: "primary",
+const TL_TONE: Record<string, "blue" | "green" | "orange" | "red" | "purple"> = {
+  etude: "green",
+  focus: "orange",
+  projet: "blue",
+  hydratation: "blue",
 };
+
+const TL_TONE_FALLBACK: "blue" | "green" | "orange" | "red" | "purple" = "blue";
 
 /** Le catalogue d'images disponibles (servies via `/themes/<file>.png`,
  *  même origine que l'app — le canvas reste non-tainted, l'extraction
@@ -159,7 +136,6 @@ type LocalTabId = (typeof LOCAL_TABS)[number]["id"];
 
 export function CalendarPage() {
   const [view, setView] = useState<CalendarPageView>("dayGridMonth");
-  const [cells] = useState(() => buildMonthCells());
   // AD-13 (6 états) : le calendrier lit le local (AD-7) — hors ligne il
   // reste lisible (last-known), tué l'app = reconnexion + resync.
   const killed = useUiStateStore((s) => s.killed);
@@ -238,24 +214,6 @@ export function CalendarPage() {
   // n'est PAS repoussée — le switch d'onglet est local, 05 §3.4).
   const [activeLocalTab, setActiveLocalTab] = useState<LocalTabId>("calendar");
 
-  /**
-   * C2.2 : le superposé de pastilles SUR la cellule de la grille (le
-   * hook FullCalendar `dayCellContent`, 05 §3.4 l.750 : le contenu de
-   * la cellule reste contrôlé par la page, jamais par le composant).
-   * Quand le mirroir n'est pas câblé (AD-7), `events` est vide → PAS
-   * une seule pastille (le composant est honnête). */
-  const renderDayCell = (arg: DayCellContentArg): ReactNode => {
-    const codes: import("../../ux/calendar-dots").AccentCode[] = events
-      .filter((ev) => ev.start?.startsWith(arg.dateStr.slice(0, 10)))
-      .map((ev) => ev.accentCode ?? "primary");
-    return (
-      <div className="cal-day-cell">
-        <span className="cal-day-number">{arg.dayNumber}</span>
-        <CalendarDots codes={codes} ariaLabel={`${arg.dayNumber} : ${codes.length} événement(s)`} />
-      </div>
-    );
-  };
-
   /* Le mois courant en français (ref_007 : « octobre », jamais un numéro
    * nu) — dérivé de la date du jour, jamais inventé. */
   const currentMonthLabel = new Date().toLocaleDateString("fr-FR", {
@@ -263,24 +221,15 @@ export function CalendarPage() {
     year: "numeric",
   });
 
-  /* Le strip « Aujourd'hui » (la timeline verticale d'événements).
+  /* Le strip « Aujourd'hui » (la timeline de liste, vue listWeek).
      AD-7 : le miroir non câblé n'affiche rien ici non plus ; la
-     morphologie d'une carte d'événement (horaire + titre + icône
-     d'horloge alignée à droite, ex. « Boire de l'eau ») est documentée
-     dans le CALENDAR_CSS (`.cal-tl-card`). */
+     morphologie d'une carte d'événement est documentée dans le
+     CALENDAR_CSS (.tl-card). */
   const todayLabel = new Date().toLocaleDateString("fr-FR", {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
-
-  // La date « aujourd'hui » (la seule donnée réelle de la page, AD-7 :
-  // le miroir non câblé → jamais un événement factice, la pastille
-  // n'apparaît que sur le jour courant lui-même, pas sur d'autres
-  // jours inventés).
-  const now = new Date();
-  const todayDay = now.getDate();
-  const todayIso = now.toISOString().slice(0, 10);
 
   return (
     <>
@@ -354,114 +303,113 @@ export function CalendarPage() {
               ))}
             </div>
 
-            {/* La grille du calendrier : 7 colonnes × les jours, 100 %
-                div (interdiction IonList/IonItem/IonGrid, 10-09).
-                `yearGrid` / les autres vues = le moteur FullCalendar
-                (`CalendarView`) ; la grille standard (`.cal-dynamic-grid`)
-                est 100 % div CSS Grid, pilotée par les variables
-                dynamiques injectées par le hook. */}
+            {/* La grille du mois (vue « Mois », `dayGridMonth`) : le
+                composant `MonthView` (le grid 7 colonnes des jours,
+                les pastilles de tâches colorées, le disque accent
+                dynamique sur « aujourd'hui ») — 100 % div CSS Grid,
+                jamais IonGrid/IonRow/IonCol (10-09). Le moteur
+                FullCalendar (`CalendarView`) est réservé aux vues
+                restantes (l'année) ; cette grille standard est
+                pilotée par les variables dynamiques du hook. */}
             {view === "dayGridMonth" && (
-              <div className="cal-card cal-grid-card" aria-label="Grille du mois">
-                <div className="cal-dynamic-dow" aria-hidden>
-                  {DOW.map((letter, i) => (
-                    <span key={i}>{letter}</span>
-                  ))}
-                </div>
-                <div className="cal-dynamic-grid">
-                  {cells.map((c, i) => {
-                    // La date active : LE jour courant (la seule donnée
-                    // réelle de la page) — jamais une date inventée.
-                    const isActive = !c.faded && c.number === todayDay;
-                    // Les pastilles (le pseudo-élément `::after` du CSS,
-                    // `data-has-event`) : le miroir non câblé (AD-7) →
-                    // jamais un point factice ; seule la date
-                    // « aujourd'hui » porte la pastille (le signal de
-                    // « c'est le jour », jamais « il y a N événements »
-                    // inventé).
-                    const hasEvent = c.iso !== null && c.iso === todayIso;
-                    return (
-                      <div
-                        key={i}
-                        className={`cal-cell cal-dynamic-day${c.faded ? " faded" : ""}`}
-                        data-muted={c.faded || undefined}
-                        data-active={isActive || undefined}
-                        data-has-event={hasEvent || undefined}
-                        data-date={c.iso ?? undefined}
-                      >
-                        <span className="cal-day-number">{c.number}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-                {/* Les pastilles des jours qui ont du contenu (AD-7 : le
-                    mirroir non câblé → 0 pastille, jamais un point factice). */}
-                <style>{CALENDAR_DOTS_CSS}</style>
-              </div>
+              <MonthView events={events} monthLabel={currentMonthLabel} rootClassName="cal-month-view" />
             )}
 
-            {view !== "dayGridMonth" && (
-              <CalendarView
-                key={view}
-                events={events}
-                initialView={
-                  view === "threeDayGrid" ? "timeGridWeek" : view === "yearGrid" ? "dayGridMonth" : view
-                }
-                mobile
-                height={view === "yearGrid" ? 380 : 420}
-                emptyMessage="Aucun événement — planifie un bloc."
-                dayCellContent={
-                  view === "timeGridWeek" || view === "timeGridDay"
-                    ? renderDayCell
-                    : undefined
-                }
-              />
+            {/* La frise horaire 1 colonne (vue « Jour », `timeGridDay`) :
+                le composant `DayView` (`.cal-day-grid` 44px/1fr, les
+                labels d'heures à gauche, le slot à droite avec les
+                événements absolus + la ligne « maintenant ») — 100 %
+                variables, le fond image respire derrière. JAMAIS un
+                second composant de frise de jour (la règle « pas 2
+                composants faisant la même chose »). */}
+            {view === "timeGridDay" && (
+              <DayView events={events} dateLabel={todayLabel} rootClassName="cal-day-view" />
             )}
 
-            {/* La timeline (Chronologie) : ligne verticale continue en
-                absolute (left: 84px), points colorés par les variables
-                dynamiques (l'accent extrait de l'image), cartes
-                semi-transparents (backdrop-filter) — le fond image
-                respire derrière (05 §5.4-annexe + Dynamic Theming). */}
-            <section className="cal-card cal-timeline" aria-label="Aujourd'hui">
-              <h3 className="cal-section-title">
-                Aujourd'hui
-                <span className="cal-timeline-date">{todayLabel}</span>
-              </h3>
-              <div className="cal-timeline-body">
-                <div className="cal-timeline-line" aria-hidden />
-                {/* AD-7 : le miroir non câblé → la timeline est vide,
-                    jamais une carte factice rendue. La morphologie d'une
-                    carte est documentée dans le CALENDAR_CSS ci-dessous
-                    (`.cal-tl-card`). */}
-                {events.length === 0 ? (
-                  <p className="cal-timeline-empty">
-                    Aucun événement aujourd'hui.
-                  </p>
-                ) : (
-                  events.map((ev) => {
-                    const start = new Date(ev.start);
-                    return (
-                      <div key={ev.id} className="cal-tl-row">
-                        <span
-                          className={`cal-tl-dot cal-tl-dot--${BLOCK_TONE[ev.blockType ?? ""] ?? "primary"}`}
-                          aria-hidden
-                        />
-                        <div className="cal-tl-card">
-                          <div className="cal-tl-card-main">
-                            <span className="cal-tl-time">{start.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
-                            <span className="cal-tl-label">{ev.title}</span>
+            {/* Les frises multi-jours (3 Jours / 7 Jours, le
+                composant partagé `MultiDayView` — le prop `days`
+                pilote la grille, ZÉRO duplication avec un
+                WeekView séparé). */}
+            {view === "threeDayGrid" && (
+              <MultiDayView days={3} events={events} />
+            )}
+            {view === "timeGridWeek" && (
+              <MultiDayView days={7} events={events} />
+            )}
+
+            {/* La vue « Année » (`yearGrid`) : le composant `YearView`
+                (les 12 mini-mois en 3 colonnes, les jours ayant
+                l'événement en `.has-ev`, l'aujourd'hui en
+                `.today`) — 100 % div/span CSS Grid, jamais le
+                moteur FullCalendar qui n'est plus monté ici. Le
+                calendrier est piloté par les variables dynamiques
+                du hook (Dynamic Theming, 10-09). */}
+            {view === "yearGrid" && (
+              <YearView events={events} rootClassName="cal-year-view" />
+            )}
+
+            {/* La timeline de liste (vue « Liste ») : le scroll conteneur
+                (.tl-scroll), les groupes par date (.tl-group : le header
+                .tl-group-date + le conteneur .tl-items dont la ::before
+                est la ligne verticale continue), les items (.tl-item :
+                le point .tl-dot + la carte .tl-card). 100 % div,
+                couleurs 100 % variables — le fond image respire derrière
+                (Dynamic Theming, 10-09). */}
+            {view === "listWeek" && (
+              <section className="cal-card" aria-label="Liste">
+                <div className="tl-scroll">
+                  <div className="tl-group">
+                    <div className="tl-group-date">Aujourd'hui · {todayLabel}</div>
+                    <div className="tl-items">
+                      {/* AD-7 : le miroir non câblé → la timeline est vide,
+                          jamais une carte factice rendue. */}
+                      {events.length === 0 ? (
+                        <div className="tl-item">
+                          <div className="tl-card">
+                            <div className="tl-card-title">Aucun événement aujourd'hui</div>
+                            <div className="tl-card-desc">Planifie un bloc ou une tâche avec le bouton « + ».</div>
                           </div>
-                          {/* L'icône d'horloge (timeOutline, `Clock` lucide)
-                              s'aligne à droite de la carte pour les
-                              événements de durée (ex. « Boire de l'eau »). */}
-                          <Clock size={16} aria-label="Durée" className="cal-tl-card-icon" />
                         </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </section>
+                      ) : (
+                        events.map((ev) => {
+                          const tone = TL_TONE[ev.blockType ?? ""] ?? TL_TONE_FALLBACK;
+                          const start = new Date(ev.start);
+                          return (
+                            <div key={ev.id} className="tl-item">
+                              <div className={`tl-dot tl-dot-${tone}`} aria-hidden />
+                              <div className="tl-card">
+                                <div className="tl-card-head">
+                                  <span className="tl-card-title">{ev.title}</span>
+                                  <span className="tl-card-time">
+                                    {start.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                                  </span>
+                                </div>
+                                {ev.end && (
+                                  <div className="tl-card-desc">
+                                    Fin à{" "}
+                                    {new Date(ev.end).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                                  </div>
+                                )}
+                                {ev.conflicting && (
+                                  <div className="tl-card-tags">
+                                    <span className="tl-tag warn">Conflit</span>
+                                  </div>
+                                )}
+                                {ev.focusSession && (
+                                  <div className="tl-card-tags">
+                                    <span className="tl-tag done">Focus</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
 
             {/* Le strip « Tâches du mois » sous la grille (C2.2, ref_020) :
                 le miroir non câblé (AD-7) → l'état vide honnête + le CTA. */}
@@ -524,194 +472,145 @@ export function CalendarPage() {
   );
 }
 
-/* ── Calendrier (grille + timeline) — 100 % variables de thème ──────────
-   · Grille : display:grid, 7 colonnes, text-align:center ; les dates
-     grisées = `.faded` (color: var(--ion-color-medium) — le grey
-     « inactif » du thème, JAMAIS un #000/…/#1c1c1e en dur).
-   · Les pastilles sous les jours du mois = pseudo-élément `::after`
-     centré, couleur var(--dynamic-accent) (l'accent extrait de l'image
-     par le hook, le fallback `--ion-text-color` quand aucune image n'est
-     sélectionnée — AD-13 honest degradation).
-   · Timeline : la ligne verticale continue = un div absolu à gauche
-     (left:84px, top:20px, bottom:0, width:1px) qui masque les dots ;
-     les dots sont les pastilles colorées (variables dynamiques,
-     fallbacks canoniques) avec un ring qui « perc[e] » la ligne.
-   · Cartes d'événements + menu déroulant : fond semi-transparent
-     (`--glass-bg`, dérivé du thème ou de l'image) + backdrop-filter
-     (blur) → le fond image respire à travers (05 §5.4-annexe).        */
+/* ── Calendrier (frise de liste + timeline) — 100 % variables de thème ──
+   · Les vues grille (mois / année) sont portées par les composants
+     dédiés (MonthView.tsx / CalendarView FullCalendar) — ce bloc
+     ne couvre que la frise de liste (.tl-*) et le menu déroulant.
+   · Timeline de liste : le scroll conteneur (.tl-scroll), les groupes
+     par date (.tl-group), les items (.tl-item : le point .tl-dot +
+     la carte .tl-card) — 100 % variables, le fond image respire
+     derrière (Dynamic Theming, 10-09).
+   · Cartes + menu déroulant : fond semi-transparent (`--glass-bg`,
+     dérivé du thème ou de l'image) + backdrop-filter (blur) → le
+     fond image respire à travers (05 §5.4-annexe).                 */
 export const CALENDAR_CSS = `
-/* — Grille du mois (7 colonnes, centré) — */
-.cal-grid-card .cal-dynamic-dow,
-.cal-grid-card .cal-dynamic-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  text-align: center;
+/* — Timeline de liste (vue « Liste », .tl-*) —
+   Le scroll conteneur (.tl-scroll), le groupe par date (.tl-group :
+   le header .tl-group-date + le conteneur .tl-items dont la ::before
+   est la ligne verticale continue), les items (.tl-item : le point
+   .tl-dot + la carte .tl-card). 100 % variables, le fond image
+   respire derrière (Dynamic Theming, 10-09). */
+.tl-scroll {
+  height: 100%;
+  overflow-y: auto;
+  padding: 10px 16px 100px;
 }
-.cal-grid-card .cal-dynamic-dow span {
-  padding: 6px 0;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-muted, var(--ion-color-medium, var(--aurora-text-muted)));
-}
-.cal-grid-card .cal-dynamic-grid {
-  gap: 4px;
-}
-.cal-grid-card .cal-dynamic-day {
-  position: relative;
-  aspect-ratio: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  background: transparent;
-}
-/* Les dates grisées (hors du mois courant) : opacité réduite, jamais un
-   hex de gris inventé. */
-.cal-grid-card .cal-dynamic-day[data-muted] {
-  opacity: 0.4;
-}
-.cal-grid-card .cal-dynamic-day .cal-day-number {
+.tl-group-date {
   font-size: 13px;
-  font-weight: 500;
-  color: var(--text-main, var(--ion-text-color, var(--aurora-text-primary)));
+  font-weight: 600;
+  color: var(--text-main);
+  padding: 10px 0 4px;
+  position: relative;
 }
-/* La date active : le fond accent = --dynamic-accent (la couleur extraite
-   de l'image par le hook, le fallback --ion-color-primary quand aucune
-   image n'est choisie) + le texte passe en blanc, la date active est un
-   disque (border-radius 50%), pas un carré arrondi. */
-.cal-grid-card .cal-dynamic-day[data-active] {
-  background: var(--dynamic-accent, var(--ion-color-primary, var(--aurora-accent-primary)));
-  border-radius: 50%;
-}
-.cal-grid-card .cal-dynamic-day[data-active] .cal-day-number {
-  color: var(--ion-contrast-color, #fff);
-}
-/* Les points sous les dates (il y a du contenu ce jour) : pseudo-
-   élément ::after centré sous le chiffre, couleur = l'accent dynamique,
-   jamais une valeur brute. */
-.cal-grid-card .cal-dynamic-day[data-has-event]::after {
+/* La ligne horizontale qui sépare le header du groupe (1px,
+   --text-muted très atténué, jamais un hex de gris en dur). */
+.tl-group-date::after {
   content: "";
   position: absolute;
-  bottom: 4px;
-  left: 50%;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  transform: translateX(-50%);
-  background: var(--dynamic-accent, var(--ion-text-color, var(--aurora-text-primary)));
-}
-.cal-grid-card .cal-dynamic-day[data-active][data-has-event]::after {
-  background: var(--ion-contrast-color, #fff);
-}
-
-/* — La timeline (Aujourd'hui) — */
-.cal-timeline {
-  position: relative;
-}
-.cal-timeline .cal-section-title {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-main, var(--ion-text-color, var(--aurora-text-primary)));
-}
-.cal-timeline .cal-timeline-date {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-muted, var(--ion-color-medium, var(--aurora-text-muted)));
-}
-.cal-timeline .cal-timeline-body {
-  position: relative;
-  padding: 12px 0 4px;
-}
-/* La ligne verticale continue : un div absolu à gauche qui monte de bas en
-   haut, teinte = --text-muted (jamais un gris fixe) qui masque les dots. */
-.cal-timeline .cal-timeline-line {
-  position: absolute;
-  left: 84px;
-  top: 20px;
+  left: 0;
+  right: 0;
   bottom: 0;
-  width: 1px;
-  background-color: var(--text-muted, var(--ion-color-medium, var(--aurora-border-strong)));
-  opacity: 0.3;
+  height: 1px;
+  background: var(--text-muted);
+  opacity: 0.08;
 }
-.cal-timeline .cal-timeline-empty {
-  padding: 8px 0 8px 120px;
-  font-size: 13px;
-  color: var(--text-muted, var(--ion-color-medium, var(--aurora-text-muted)));
-}
-/* Chaque ligne d'événement : le dot à gauche (aligné sur la ligne), la
-   carte à droite. */
-.cal-timeline .cal-tl-row {
+/* Le conteneur des items : l'indent (22px) laisse passer la ligne
+   verticale (7px, 1px, --text-muted, opacité 0.1) qui continue du
+   premier au dernier item (bottom: -18px fait déborder sur le
+   prochain groupe). */
+.tl-items {
+  padding-left: 22px;
   position: relative;
-  display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 8px;
-  align-items: center;
+}
+.tl-items::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 8px;
+  bottom: -18px;
+  width: 1px;
+  background: var(--text-muted);
+  opacity: 0.1;
+}
+/* Chaque item : le point en absolu (left: -19px relatif au conteneur
+   .tl-items indented à 22px : le point tombe sur la ligne 7px),
+   la carte à droite. Le point "perce" la ligne (le ring passe par
+   le fond du conteneur, jamais une couleur en dur). */
+.tl-item {
+  position: relative;
   padding: 8px 0;
 }
-/* Les dots colorés (variables dynamiques : l'accent extrait de l'image) —
-   le ring (border --glass-bg) les fait percer la ligne verticale en les
-   calant sur le fond « verre » du thème. */
-.cal-timeline .cal-tl-dot {
+.tl-dot {
   position: absolute;
-  left: 78px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 12px;
-  height: 12px;
+  left: -19px;
+  top: 14px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  border: 3px solid var(--glass-bg, var(--ion-background-color, var(--aurora-bg)));
-  z-index: 1;
+  border: 2px solid var(--ion-background-color);
 }
-.cal-timeline .cal-tl-dot--primary  { background: var(--dynamic-accent, var(--ion-color-primary, var(--aurora-accent-primary))); }
-.cal-timeline .cal-tl-dot--warning  { background: var(--ion-color-warning, var(--aurora-warning)); }
-.cal-timeline .cal-tl-dot--success  { background: var(--ion-color-success, var(--aurora-success)); }
+/* Les 5 teintes de la liste (AD-17 : les variables sémantiques
+   canoniques, jamais une valeur brute). */
+.tl-dot-blue   { background: var(--ion-color-primary); }
+.tl-dot-green  { background: var(--ion-color-success); }
+.tl-dot-orange { background: var(--ion-color-warning); }
+.tl-dot-red    { background: var(--ion-color-danger); }
+.tl-dot-purple { background: var(--ion-color-tertiary); }
 
-/* Les cartes d'événements : fond « verre » (--glass-bg, dérivé du thème ou
-   de l'image) + le flou backdrop qui laisse le fond image respirer
-   derrière. Les heures + le titre à gauche, l'icône (ex. l'horloge de
-   « Boire de l'eau ») alignée à droite. Le texte consomme --text-main,
-   jamais une valeur brute. */
-.cal-tl-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 16px;
+/* La carte d'événement (le fond "verre" : --glass-bg + backdrop
+   blur, la bordure --glass-border, le texte --text-main/--text-muted
+   - le fond image respire derrière, 05 §5.4-annexe). */
+.tl-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
   border-radius: 10px;
-  background: var(--glass-bg, var(--ion-card-background, var(--ion-color-light, var(--aurora-surface-bg))));
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--glass-border, var(--ion-toolbar-border-color, var(--aurora-border)));
-  color: var(--text-main, var(--ion-text-color, var(--aurora-text-primary)));
+  padding: 10px 12px;
 }
-.cal-tl-card-main {
+.tl-card-head {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
 }
-.cal-tl-time {
+.tl-card-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-main);
+}
+.tl-card-time {
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
-  color: var(--text-muted, var(--ion-color-medium, var(--aurora-text-muted)));
-}
-.cal-tl-label {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--text-main, var(--ion-text-color, var(--aurora-text-primary)));
-}
-/* L'icône d'horloge (timeOutline), alignée à droite de la carte, teinte
-   --text-muted, jamais une couleur fixe. */
-.cal-tl-card-icon {
+  color: var(--text-muted);
   flex: none;
-  color: var(--text-muted, var(--ion-color-medium, var(--aurora-text-muted)));
 }
+.tl-card-desc {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+/* Les tags (fond pastel translucide : le seul cas autorisé de
+   rgba(…) par la règle "pastilles pastel des événements"). */
+.tl-card-tags {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tl-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-main);
+  background: rgba(10, 132, 255, 0.2);
+}
+.tl-tag.warn { background: rgba(255, 159, 10, 0.2); }
+.tl-tag.done { background: rgba(48, 209, 88, 0.2); }
 
 /* — Le menu déroulant (options « ⋮ ») — fond « verre » + le flou backdrop
    (le fond image respire à travers, 05 §5.4-annexe). L'élément actif

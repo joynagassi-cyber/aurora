@@ -189,6 +189,9 @@ importers:
       '@aurora/domain':
         specifier: workspace:*
         version: link:../domain
+      '@aurora/integrations':
+        specifier: workspace:*
+        version: link:../integrations
 
   packages/domain: {}
 

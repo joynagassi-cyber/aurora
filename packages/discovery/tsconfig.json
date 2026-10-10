@@ -10,7 +10,8 @@
     "src"
   ],
   "exclude": [
-    "dist"
+    "dist",
+    "../integrations"
   ],
   "references": [
     {

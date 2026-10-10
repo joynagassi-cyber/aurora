@@ -583,6 +583,37 @@ export const ascentRead: KernelTool = tool({
   execute: async (input) => ({ ok: true, command: 'ascent.read', payload: input }),
 });
 
+/**
+ * G13 — discovery.vault_read : lire le vault de veille (VAULT.md + manifest
+ * append-only) d'un domaine (Lot 3, discovery-vault plan 2026-10-10).
+ *
+ * READ-ONLY : le kernel émet la commande typed `discovery.vault_read` ; le
+ * module Discovery (kernel-integration.ts) lit sa propre table
+ * `discovery_vault` (0025) via le port `VaultStore.read` — pas de write
+ * scope, pas de job, sans confirmation. Le chat-agent réutilise ainsi les
+ * recherches archivées au lieu de relancer le même search (stratégie de
+ * caching, AD-7 : Discovery reste le seul reader/writer de son vault ;
+ * le kernel n'y accède que via la commande typée).
+ *
+ * `vaultDomaine` : le domaine de veille (ex. 'structures', 'genie-civil-sol').
+ * `runId` : optionnel — quand présent, le lecteur retourne le rapport
+ * d'UN run précis (la lecture append-only `VaultStore.readRun`) plutôt que
+ * le document évolutif complet.
+ */
+export const discoveryVaultRead: KernelTool = tool({
+  description:
+    "Lire le vault de veille d'un domaine (VAULT.md évolutif + manifest append-only). READ-ONLY : pas de write scope, pas de job, sans confirmation. Le module Discovery (kernel-integration.ts) lit sa propre table `discovery_vault` (0025) via le port `VaultStore.read` — le chat-agent réutilise les recherches archivées au lieu de relancer le même search (stratégie de caching, AD-7). Le payload porte userId (injecté par le kernel, AD-7 : l'EF ne fait jamais confiance au body).",
+  inputSchema: z.object({
+    /** le domaine de veille (ex. 'structures', 'genie-civil-sol') */
+    vaultDomaine: z.string(),
+    /** optionnel : lire UN run précis (rapport append-only) plutôt que le doc complet */
+    runId: z.string().optional(),
+    /** l'identité du user courant (portée par le kernel, AD-7). */
+    userId: z.string().optional(),
+  }),
+  execute: async (input) => ({ ok: true, command: 'discovery.vault_read', payload: input }),
+});
+
 // ---------------------------------------------------------------------------
 // Feature-agentability-matrix.md — the remaining agentable families.
 //
@@ -1517,6 +1548,13 @@ export const KERNEL_TOOLS = {
   inbox_capture: inboxCapture,
   inbox_triage: inboxTriage,
   ascent_read: ascentRead,
+  // G13 (discovery-vault plan 2026-10-10, Lot 3) : lecture READ-ONLY du
+  // vault de veille (VAULT.md + manifest append-only) — le chat-agent
+  // réutilise les recherches archivées (stratégie de caching) au lieu
+  // de relancer le même search (AD-7 : Discovery est le seul
+  // reader/writer de son vault, le kernel n'y accède que via la
+  // commande typée `discovery.vault_read`).
+  discovery_vault_read: discoveryVaultRead,
 };
 
 export type KernelToolId = keyof typeof KERNEL_TOOLS;

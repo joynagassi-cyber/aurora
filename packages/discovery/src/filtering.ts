@@ -10,15 +10,15 @@
  * Not actionable → stored as `not_actionable_currently` (NOT deleted).
  * Undecidable → `UNCERTAINTY` (ADR S13.7), user decides.
  */
-import type { Skill, SkillState, Gap } from '@aurora/domain';
+import type { Skill, SkillState, Gap, DiscoveryProfile } from '@aurora/domain';
 import type { ResearchResult } from './research-provider.ts';
 
 /** The structured, data-driven context the filter reads (UserContext-derived).
  *  All fields optional: the engine is generic, data is per-user. */
 export interface DiscoveryFilterContext {
-  /** active disciplines (UserContext.disciplines) */
+  /** active disciplines (UserContext.discoveryProfile.disciplines) */
   disciplines: string[];
-  /** region identifier (UserContext.region, e.g. 'benin') */
+  /** region identifier (UserContext.discoveryProfile.region, e.g. 'benin') */
   region?: string;
   /** target profession (e.g. 'bureau_etudes') */
   professionalTarget?: string;
@@ -28,6 +28,38 @@ export interface DiscoveryFilterContext {
   examinationPeriod?: boolean;
   /** tools known to be available on the user's infrastructure */
   availableTools?: string[];
+}
+
+/**
+ * Maps the user's discovery profile (UserContext.discoveryProfile,
+ * AD-15 SSoT shape `DiscoveryProfile` in packages/domain) to the
+ * engine's `DiscoveryFilterContext`. Pure, per-user.
+ *
+ * Only the fields that EXIST on both sides are induced — nothing is
+ * invented: `disciplines` is required on the profile (absent → `[]`,
+ * AD-1 degradation, the filter still runs with an empty discipline
+ * set instead of throwing). `region` / `professionalTarget` /
+ * `budget` (profile `budgetConstraint`) map 1:1. `examinationPeriod`
+ * and `availableTools` are NOT on the typed profile (open ADR S13.1
+ * signals, not part of the `DiscoveryProfile` SSoT yet) — they stay
+ * unset here and remain available to callers that build the context
+ * by hand.
+ */
+export function buildFilterCtx(
+  profile: DiscoveryProfile,
+): DiscoveryFilterContext {
+  const disciplines = Array.isArray(profile.disciplines)
+    ? profile.disciplines
+    : [];
+  const ctx: DiscoveryFilterContext = { disciplines };
+  if (typeof profile.region === 'string') ctx.region = profile.region;
+  if (typeof profile.professionalTarget === 'string') {
+    ctx.professionalTarget = profile.professionalTarget;
+  }
+  if (typeof profile.budgetConstraint === 'string') {
+    ctx.budget = profile.budgetConstraint;
+  }
+  return ctx;
 }
 
 /** The verdict of a filter step (S5 result semantics). */

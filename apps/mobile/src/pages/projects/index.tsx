@@ -5,26 +5,27 @@
  * reveals a hidden detail panel; a « ⋮ » menu lives in the top-right
  * corner (per-page + global settings overflow).
  *
- *   · Kanban (PRD-PM-02/03) : horizontal column board (À planifier /
- *     À faire / En cours / Terminé) with per-column header (name +
- *     counter + « + Ajouter une carte »). Columns are themed (bande
- *     colorée, PRD-PM-03). Cards = honest empty (the projects mirror
- *     is not wired, AD-7) — every affordance routes to a REAL action
- *     (the agent creates projects/cards), never a dead control.
+ *   · Kanban (PROMPT 11, 2026-10-10 — REDESIGNÉ monochrome +
+ *     zoomable, `views/KanbanView.tsx`) : les 4 colonnes + le slider
+ *     de zoom (la variable CSS `--zoom`, l'état local du composant),
+ *     les en-têtes = la SEULE partie colorée de la vue (les 4
+ *     gradients fixés par le prompt), les cartes en mono-chrome
+ *     (niveaux de gris, ZÉRO couleur de priorité) — le miroir
+ *     projets (AD-7) : les compteurs restent 0, l'affordance « +
+ *     Ajouter une carte » reste l'action réelle, jamais une carte
+ *     factice.
  *   · Rapports (PRD-PM-01) : the synthesis-report list (9 original
  *     reports, French names — the reference's brand names are never
  *     reproduced). A report row generates the report THROUGH the
  *     agent (intent pré-rempli) — the agent computes, the page never
  *     invents numbers (AD-7).
- *   · Gantt (05 §3.6.4, `timeline-gantt.md` OQ-01 option A = LISTE de
- *     `GanttRow`, pas une grille 2D interactive — budget OQ-11) : one
- *     task = one 44px row (titre sm ellipsis + barre 8px proportionnelle
- *     sur axe de dates partagé + % `JetBrains Mono` xs à droite) ; barre
- *     `accent-primary` (en cours) / `success` (terminée) /
- *     `border-strong` (à faire) / `danger-surface` + icône gauche
- *     (bloquée) ; jalons non atteints en `danger` ; axe = le `Pager`
- *     Jour|Semaine|Mois (05 §3.4 l.737-750, OQ-03 option A = présent) ;
- *     CTA unique « Générer la fiche » (AD-14, OQ-08 option A).
+ *   · Gantt (PROMPT 9, 2026-10-10 — REDESIGNÉ génie civil) : le
+ *     composant dédié `views/GanttView.tsx` (le layout pro : la
+ *     sidebar WBS 280px + la chart 2 niveaux, le chemin critique en
+ *     danger, les jalons en diamants, la ligne « aujourd'hui », la
+ *     baseline, les pastilles ressources, les filtres, la légende et
+ *     la vue d'ensemble flottante — la forme de layout attendue pour
+ *     les ingénieurs, jamais un rendu « simple » de liste).
  *   · Chrono (05 §3.6.3 = vue narrative `Timeline`, DISTINCTE du Gantt
  *     §3.6.4) : frise verticale des événements PASSÉS du projet (jalons
  *     atteints, étapes terminées) — chaque nœud = date `JetBrains Mono`
@@ -59,15 +60,11 @@
  */
 import { IonContent, IonHeader, IonTitle } from '@ionic/react';
 import {
-  useState,
-} from 'react';
-import {
   AlignCenter,
   AlignLeft,
   Flag,
   CalendarRange,
   ClipboardList,
-  GanttChart,
   ListTree,
   Plus,
   Signal,
@@ -78,6 +75,10 @@ import {
 import { useUiStateStore } from '../../state/ui-state';
 import { PageOptionsMenu, settingsItem, type PageOptionItem } from '../../ux/page-options-menu';
 import { useHorizontalSwiper } from '../../ux/use-horizontal-swiper';
+import { GanttView } from './views/GanttView';
+import { TimelineView as TimelineViewGrouped, TLItem } from './views/TimelineView';
+import { KanbanView } from './views/KanbanView';
+import type { ProjectCard } from './shared';
 
 /** The in-page views (T4 — the router does NOT know about these). */
 type ProjectView = 'kanban' | 'rapports' | 'gantt' | 'timeline' | 'list';
@@ -94,45 +95,6 @@ const VIEWS_SWITCHABLE: Array<[ProjectView, string]> = [
   ['rapports', 'Rapports'],
   ['gantt', 'Gantt'],
   ['timeline', 'Chrono'],
-];
-
-/**
- * The kanban columns (PRD-PM-03 : bandeau coloré par colonne). The
- * colored band uses the FROZEN semantic tokens (05 §5.1 — theme
- * independent): planifier = info, faire = accent, cours = warning,
- * terminé = success. Counters are DERIVED (the mirror is empty → 0,
- * AD-7 honest, never a fake number).
- */
-const BOARD_COLUMNS: Array<{
-  id: string;
-  label: string;
-  band: 'info' | 'accent' | 'warning' | 'success';
-  addIntent: string;
-}> = [
-  {
-    id: 'planifier',
-    label: 'À planifier',
-    band: 'info',
-    addIntent: "Ajoute une carte « définir la prochaine étape » dans ma colonne « À planifier » de mon projet.",
-  },
-  {
-    id: 'faire',
-    label: 'À faire',
-    band: 'accent',
-    addIntent: 'Ajoute une carte dans ma colonne « À faire » de mon projet.',
-  },
-  {
-    id: 'en-cours',
-    label: 'En cours',
-    band: 'warning',
-    addIntent: "Déplace une carte de « À faire » vers « En cours » dans mon projet.",
-  },
-  {
-    id: 'termine',
-    label: 'Terminé',
-    band: 'success',
-    addIntent: "Résume les cartes terminées de mon projet dans ma colonne « Terminé ».",
-  },
 ];
 
 /**
@@ -155,111 +117,15 @@ const REPORTS: Array<{ id: string; label: string; desc: string; intent: string }
 ];
 
 /**
- * Gantt (05 §3.6.4, `timeline-gantt.md`) — a task's own GanttRow
- * (ONE row, 44px : titre sm + barre 8px proportionnelle + % mono xs).
- * The status drives the bar's FROZEN semantic color (05 §5.1 : jamais
- * redéfini par thème).
- */
-interface GanttTask {
-  id: string;
-  title: string;
-  /** 0-100, the task's own completion (data — never animated, règle 1). */
-  percent: number;
-  status: 'todo' | 'in_progress' | 'done' | 'blocked';
-  /** The bar's [start, end] on a 0-100 axis (proportional, 05 §3.6.4 l.928-936). */
-  span: [number, number];
-  /** A missed milestone inherited from S-07 (marqué en `danger`, 05 §3.6.4 l.941-945). */
-  milestoneMissed?: boolean;
-  /**
-   * The missed milestone's date (ref_056 : « Manquant 24/09 » en rouge
-   * dans la section « PROCHAINES ÉTAPES ») — le libellé mono xs affiché
-   * à gauche de la barre (le marker d'alerte, 05 §3.6.4 l.944).
-   */
-  missedLabel?: string;
-}
-
-/**
- * Chrono (05 §3.6.3 = vue narrative, `timeline-gantt.md` l.15 : « ce
- * qui s'est passé » vs le Gantt « ce qui reste ») : ONE past event,
- * a node on the vertical frise (date mono + libellé + statut badge).
- */
-interface TimelineEvent {
-  id: string;
-  /** `JetBrains Mono` xs — la date est TOUJOURS mono (05 §2.2 l.227-229). */
-  date: string;
-  title: string;
-  status: 'atteint' | 'en_cours' | 'manque';
-  /**
-   * The event's section (ref_056 : « JALONS & RÉALISÉS » / « PROCHAINES
-   * ÉTAPES ») — the 2 sections of the frise, jamais 1 section unique.
-   */
-  section: 'realises' | 'prochaines';
-  /**
-   * C5.5 (10-08, image « Timeline Infographics ») : la **teinte du
-   * nœud** (le grand cercle coloré + le titre qui la reprend).
-   * AD-17 : c'est un **token d'accent du thème** (`primary` /
-   * `secondary` / `punctual` / `neutral`), jamais une valeur brute —
-   * quand le thème change, le cercle change automatiquement (le thème
-   * pilote les variables, le code ne hardcode jamais).
-   */
-  tone?: 'primary' | 'secondary' | 'punctual' | 'neutral';
-}
-
-/**
- * Liste (SSoT 05 §4.3.1, `projets-liste.md`) : a project's `Card flat`
- * (objet riche : % progression + prochain jalon + tâches totales/
- * terminées — JAMAIS une `ListItem`, 05 §4.3.1 l.1439).
- */
-interface ProjectCard {
-  id: string;
-  title: string;
-  percent: number;
-  status: 'en_cours' | 'bloque' | 'termine';
-  nextMilestone: string;
-  tasksTotal: number;
-  tasksDone: number;
-  /**
-   * Le jalon raté (ref_056 : « Manquant 24/09 » en rouge, la date
-   * mono) — affiché dans la card quand le statut est `bloque` (l'alerte
-   * que la donnée a passé son échéance — la state est FROZEN `danger`,
-   * 05 §5.1, la date est la donnée, 05 §2.2 l.227-229).
-   */
-  missedMilestone?: string;
-}
-
-/**
  * The local mirrors (not wired yet, AD-7) — every view ships its
  * honest empty state + a REAL create CTA (the agent is the single
  * writer, AD-7/F-03). When the projects repo wires, these become the
- * `MobileDataProvider` reads.
+ * `MobileDataProvider` reads. Le type de carte projet (le SEUL type
+ * partagé, `ProjectCard`, 05 §4.3.1 `Card flat`) vit dans
+ * `shared.ts` (PROMPT 10 — le `TLItem`/la vue groupée en consomment
+ * un et un seul, ZÉRO duplication).
  */
-const GANTT_TASKS: GanttTask[] = [];
-const TIMELINE_EVENTS: TimelineEvent[] = [];
 const PROJECT_CARDS: ProjectCard[] = [];
-
-/**
- * The axis period (05 §3.4 l.737-750 Pager, OQ-03 option A = présent).
- * Chaque option porte sa propre `label` + un `periodLabel` (la période
- * courante affichée sous le Pager, `JetBrains Mono` xs, 05 §3.6.4
- * l.932-935 — la donnée, qui ne bouge pas). La période est une
- * **chaîne fixe** par option (miroir non câblé, AD-7 : « 2026 » =
- * l'année courante, pas un range factice).
- *
- * C5.5 (10-08) : 4 échelles (Jour / Semaine / Mois / Année) — le Gantt
- * ET la Timeline sont **flexibles** sur les 4 granularités (l'image
- * « 2024 » = la vue Année, 12 mini-mois ; l'image « August, 2024 » =
- * la vue Mois avec la liste des tâches sous la grille).
- */
-const AXIS_PERIODS: Array<{
-  id: 'jour' | 'semaine' | 'mois' | 'annee';
-  label: string;
-  periodLabel: string;
-}> = [
-  { id: 'jour', label: 'Jour', periodLabel: '12 oct. 2026' },
-  { id: 'semaine', label: 'Semaine', periodLabel: '5 – 11 oct. 2026' },
-  { id: 'mois', label: 'Mois', periodLabel: 'octobre 2026' },
-  { id: 'annee', label: 'Année', periodLabel: '2026' },
-];
 
 /** The hidden side panel revealed by the horizontal glide (C5) — the
  *  project's own detail (ressources, 05 §4.3.2) until wired ; AD-7
@@ -306,242 +172,20 @@ function ProjectsPanel() {
   );
 }
 
-/** The Gantt view (05 §3.6.4, `timeline-gantt.md` OQ-01 option A). */
-function GanttView() {
-  const [axis, setAxis] = useState<'jour' | 'semaine' | 'mois' | 'annee'>('semaine');
-  const period = AXIS_PERIODS.find((p) => p.id === axis)!;
-
-  return (
-    <div data-gantt className="gantt-view gantt-view--h">
-      {/* OQ-03 option A : le `Pager` = l'axe de dates partagé (stable au
-          rechargement, 05 §3.6.4 l.941 ; JetBrains Mono xs, 05 §3.6.4 l.932-935).
-          Reduced-motion (règle 2, 05 §2.6) : le basculement reste au tap
-          (le basculement n'est PAS le glissement — le glissement est la
-          surface, pas l'axe de dates, qui est un control tap classique). */}
-      <div className="gantt-axis" role="tablist" aria-label="Axe de dates">
-        {AXIS_PERIODS.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            role="tab"
-            aria-selected={axis === p.id}
-            className={axis === p.id ? 'segmented-item active' : 'segmented-item'}
-            onClick={() => setAxis(p.id)}
-          >
-            {p.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Le libellé de période (ref_020/056 : le mono sous le Pager,
-          05 §3.4 l.737-750 : « le label central dates sm 600
-          JetBrains Mono ») — la donnée courante, ne bouge jamais
-          (règle 1) ; quand l'option change, le libellé change. */}
-      <p className="gantt-period mono" aria-hidden>
-        {period.periodLabel}
-      </p>
-
-      {GANTT_TASKS.length === 0 ? (
-        /* OQ-09 option A (SSoT 05 §3.6.4 l.942-944) : le libellé honnête. */
-        <div data-state="empty">
-          <GanttChart size={28} aria-hidden className="gantt-empty-icon" />
-          <p>Aucun planifié sur la période</p>
-          <p className="page-hint">
-            Le plan d'ouverture (tâches + jalons + barres) apparaît dès que
-            ton premier projet est créé.
-          </p>
-          <a
-            className="aurora-btn aurora-btn--primary aurora-tap"
-            href="/agent?intent=G%C3%A8ne%20mon%20premier%20projet%20:%20aide-moi%20%C3%A0%20le%20nommer%2C%20%C3%A0%20poser%20ses%20jalons%20et%20son%20plan%20d%27ouverture"
-          >
-            Créer un projet
-          </a>
-        </div>
-      ) : (
-        <ol className="gantt-rows" aria-label="Plan d'ouverture">
-          {GANTT_TASKS.map((task) => {
-            const barClass = `gantt-row-bar gantt-row-bar--${task.status}`;
-            return (
-              <li
-                key={task.id}
-                className={`gantt-row${task.milestoneMissed ? ' is-missed' : ''}`}
-                aria-label={`Tâche ${task.title} : ${task.percent}% complété, statut ${task.status}`}
-              >
-                <span className="gantt-row-title">
-                  {task.title}
-                  {task.milestoneMissed && task.missedLabel ? (
-                    /* ref_056 : le marker de jalon manqué (05 §3.6.4
-                       l.941-944 « le blocage est visible, pas seulement
-                       dans le statut ») : le `Flag` 16px + la date mono
-                       danger à gauche de la barre (l'attention saute). */
-                    <span className="gantt-row-missed mono">
-                      <Flag size={12} aria-hidden /> {task.missedLabel}
-                    </span>
-                  ) : null}
-                </span>
-                <div className="gantt-row-track" aria-hidden>
-                  <div className={barClass} style={{ left: `${task.span[0]}%`, width: `${task.span[1] - task.span[0]}%` }} />
-                </div>
-                <span className="gantt-row-pct mono">{task.percent}%</span>
-              </li>
-            );
-          })}
-        </ol>
-      )}
-
-      {/* CTA unique (AD-14, OQ-08 option A) : le seul CTA d'action de la
-          surface — jamais une proposition libre de l'agent. */}
-      <a
-        className="aurora-btn aurora-btn--primary aurora-tap gantt-cta"
-        href="/agent?intent=G%C3%A8n%C3%A8re%20ma%20fiche%20:%20la%20premi%C3%A8re%20t%C3%A2che%20de%20mon%20plan%20d%27ouverture"
-      >
-        <Sparkles size={16} aria-hidden /> Générer la fiche
-      </a>
-    </div>
-  );
-}
-
-/** The Chrono view (05 §3.6.3 = vue narrative).
- *
- *  ref_056 : la frise est DIVISÉE en 2 sections — « JALONS & RÉALISÉS »
- *  (ce qui s'est passé : les jalons atteints, les étapes terminées) et
- *  « PROCHAINES ÉTAPES » (ce qui reste : les jalons non atteints, dont
- *  le « Manquant 24/09 » en rouge). Les 2 libellés de section sont en
- *  `JetBrains Mono` xs uppercase (la donnée technique, 05 §2.2 l.227-229),
- *  jamais un libellé free-style.
- */
 /**
- * La vue Chrono (05 §3.6.3 = vue narrative `Timeline`) — C5.5 (10-08,
- * image « Timeline Infographics ») : la frise est une **ligne centrale
- * horizontale** avec des **nœuds alternés au-dessus / en-dessous** (pas
- * une liste verticale). Chaque nœud = un **grand cercle coloré par
- * token d'accent** (AD-17 : jamais une valeur brute, le thème pilote
- * la couleur) + un **titre qui reprend la teinte du cercle** + une
- * **description mono** + un **badge de statut** (05 §5.1 FROZEN).
+ * La vue Chrono (PROMPT 10, 2026-10-10 — la vue chronologique GROUPÉE
+ * par date, `views/TimelineView.tsx`) : la même carte projet que la vue
+ * Liste (le `TLItem` partagé — ZÉRO duplication), regroupée par JOUR
+ * avec des séparateurs de date bien visibles (le header
+ * `.tl-group-date` + sa ligne 1px `--glass-border` en ::after, le
+ * conteneur `.tl-items` dont la ::before trace la ligne verticale
+ * continue). L'ancienne frise à nœuds alternés (C5.5, « Timeline
+ * Infographics ») est SUBLUÉE par cette vue groupée.
  *
- * L'axe est **flexible** (4 échelles : Jour / Semaine / Mois / Année)
- * — l'image « 2024 » = la vue Année (12 mini-mois), l'image
- * « August, 2024 » = la vue Mois (grille + liste des tâches).
- *
- * AD-7 (miroir non câblé) : l'état vide reste honnête — quand il n'y
- * a aucun événement, la frise affiche le **libellé de période**
- * (la donnée courante, `JetBrains Mono` xs) + le message « Aucun
- * événement sur la période » + le CTA agent (le planificateur).
+ * AD-7 (miroir non câblé) : l'état vide reste honnête — quand il n'y a
+ * aucun projet, un seul groupe + le CTA planificateur (jamais un
+ * groupe factice).
  */
-function TimelineView() {
-  const [axis, setAxis] = useState<'jour' | 'semaine' | 'mois' | 'annee'>('mois');
-  const period = AXIS_PERIODS.find((p) => p.id === axis)!;
-  const realisees = TIMELINE_EVENTS.filter((ev) => ev.section === 'realises');
-  const prochaines = TIMELINE_EVENTS.filter((ev) => ev.section === 'prochaines');
-
-  return (
-    <div data-timeline className="timeline-view">
-      {/* L'axe (05 §3.4 l.737-750 Pager, OQ-03 option A = présent) :
-          4 échelles flexibles (Jour / Semaine / Mois / Année) — le
-          changement d'échelle **ne change pas la structure de la frise**
-          (les nœuds restent alternés, la ligne centrale reste), il
-          change la **période affichée** (le libellé mono sous le Pager).
-          La donnée ne s'anime jamais (règle 1, 05 §2.6) — le tap seul
-          bascule. */}
-      <div className="timeline-axis" role="tablist" aria-label="Axe de dates">
-        {AXIS_PERIODS.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            role="tab"
-            aria-selected={axis === p.id}
-            className={axis === p.id ? 'segmented-item segmented-item--active' : 'segmented-item'}
-            onClick={() => setAxis(p.id)}
-          >
-            {p.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Le libellé de période (ref_020/056 : le mono sous le Pager,
-          05 §3.4 l.737-750 : « le label central dates sm 600
-          JetBrains Mono ») — la donnée courante, ne bouge jamais
-          (règle 1) ; quand l'échelle change, le libellé change. */}
-      <p className="gantt-period mono" aria-hidden>
-        {period.periodLabel}
-      </p>
-
-      {TIMELINE_EVENTS.length === 0 ? (
-        <div data-state="empty">
-          <Timer size={28} aria-hidden className="timeline-empty-icon" />
-          <p>Aucun événement sur la période</p>
-          <p className="page-hint">
-            La frise chronologique (jalons atteints, étapes terminées)
-            se remplit au fil de ton projet.
-          </p>
-          <a
-            className="aurora-btn aurora-btn--primary aurora-tap"
-            href="/agent?intent=G%C3%A8n%C3%A8re%20ma%20frise%20chronologique%20:%20la%20premi%C3%A8re%20%C3%A9tape%20de%20mon%20projet"
-          >
-            Planifier
-          </a>
-        </div>
-      ) : (
-        <>
-          {/* Section 1 (ref_056 : « JALONS & RÉALISÉS ») — la frise
-              des événements passés, l'axe vertical est continu. */}
-          {realisees.length > 0 && (
-            <section className="timeline-section">
-              <p className="timeline-section-label mono" aria-hidden>
-                Jalons &amp; réalisés
-              </p>
-              <ol className="timeline-nodes timeline-nodes--h" aria-label="Jalons et événements réalisés">
-                {realisees.map((ev, i) => (
-                  <li
-                    key={ev.id}
-                    className={`timeline-node timeline-node--${ev.status} timeline-node--${i % 2 === 0 ? 'up' : 'down'}${ev.tone ? ` timeline-node--tone-${ev.tone}` : ''}`}
-                  >
-                    <span className="timeline-node-dot" aria-hidden />
-                    <div className="timeline-node-body">
-                      <span className="timeline-node-title">{ev.title}</span>
-                      <span className="timeline-node-date mono">{ev.date}</span>
-                    </div>
-                    <span className={`timeline-node-badge timeline-node-badge--${ev.status}`}>
-                      {ev.status === 'atteint' ? 'Atteint' : 'En cours'}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            </section>
-          )}
-
-          {/* Section 2 (ref_056 : « PROCHAINES ÉTAPES ») — les jalons
-              restants, dont le « Manquant 24/09 » en danger (05 §5.1
-              FROZEN). L'axe de la 2ᵉ section démarre au 1er nœud. */}
-          {prochaines.length > 0 && (
-            <section className="timeline-section">
-              <p className="timeline-section-label mono" aria-hidden>
-                Prochaines étapes
-              </p>
-              <ol className="timeline-nodes timeline-nodes--h" aria-label="Prochaines étapes et jalons restants">
-                {prochaines.map((ev, i) => (
-                  <li
-                    key={ev.id}
-                    className={`timeline-node timeline-node--${ev.status} timeline-node--${i % 2 === 0 ? 'up' : 'down'}${ev.tone ? ` timeline-node--tone-${ev.tone}` : ''}`}
-                  >
-                    <span className="timeline-node-dot" aria-hidden />
-                    <div className="timeline-node-body">
-                      <span className="timeline-node-title">{ev.title}</span>
-                      <span className="timeline-node-date mono">{ev.date}</span>
-                    </div>
-                    <span className={`timeline-node-badge timeline-node-badge--${ev.status}`}>
-                      {ev.status === 'manque' ? 'Manquant' : 'À venir'}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            </section>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
 
 /** The Liste view (SSoT 05 §4.3.1, `projets-liste.md` : `Card flat`).
  *
@@ -560,39 +204,14 @@ function ListView() {
           <p className="page-hint">Un projet commence par un objectif.</p>
         </div>
       ) : (
-        <ul className="project-cards" aria-label="Projets">
+        /* La vue PLATE (PROMPT 10) — le `TLItem` partagé, jamais une
+           carte redessinée ici (ZÉRO duplication avec la vue groupée
+           `TimelineViewGrouped`, PHASE 3 du prompt) : chaque item se
+           lit `showDateSeparator: false` (la ligne horizontale du
+           séparateur de date n'apparaît QUE dans la vue groupée). */
+        <ul className="tl-items project-cards" aria-label="Projets">
           {PROJECT_CARDS.map((p) => (
-            <li key={p.id} className={`project-card project-card--${p.status}`}>
-              <div className="project-card-head">
-                <span className="project-card-title">{p.title}</span>
-                <span className="project-card-pct mono">{p.percent}%</span>
-              </div>
-              <div className="project-card-progress">
-                <div
-                  className="project-card-progress-fill"
-                  style={{ width: `${p.percent}%` }}
-                />
-              </div>
-              <div className="project-card-badges">
-                <span className={`project-card-badge project-card-badge--${p.status}`}>
-                  {p.status === 'termine' ? 'Terminé' : p.status === 'bloque' ? 'Bloqué' : 'En cours'}
-                </span>
-                <span className="project-card-badge project-card-badge--milestone mono">
-                  Jalon : {p.nextMilestone}
-                </span>
-                {p.status === 'bloque' && p.missedMilestone ? (
-                  /* ref_056 : le marker « Manquant 24/09 » — le jalon
-                     qui a raté son échéance (la state `danger` FROZEN,
-                     la date `JetBrains Mono` — la donnée, 05 §2.2). */
-                  <span className="project-card-badge project-card-badge--missed mono">
-                    <Flag size={12} aria-hidden /> {p.missedMilestone}
-                  </span>
-                ) : null}
-              </div>
-              <span className="project-card-kv mono">
-                {p.tasksDone}/{p.tasksTotal} tâches
-              </span>
-            </li>
+            <TLItem key={p.id} card={p} showDateSeparator={false} />
           ))}
         </ul>
       )}
@@ -724,42 +343,16 @@ export function ProjectsPage() {
             ))}
           </div>
 
-          {/* Kanban board (PRD-PM-02/03) : the column structure ships
-              NOW; cards come from the mirror when wired (AD-7: the
-              per-column empty is honest, the add affordance routes to
-              the agent — a real action, never a dead control). */}
-          {view === 'kanban' && (
-            <>
-              <div data-board className="projects-board">
-                {BOARD_COLUMNS.map((col) => (
-                  <section key={col.id} className={`projects-col projects-col--${col.band}`}>
-                    <header className="projects-col-header">
-                      <span className="projects-col-title">
-                        {col.label}
-                        <span className="projects-col-count">0</span>
-                      </span>
-                    </header>
-                    <div className="projects-col-body">
-                      <a
-                        className="projects-col-add aurora-tap"
-                        href={`/agent?intent=${encodeURIComponent(col.addIntent)}`}
-                      >
-                        + Ajouter une carte
-                      </a>
-                    </div>
-                  </section>
-                ))}
-              </div>
-              <div className="projects-create-wrap">
-                <a
-                  className="projects-create aurora-btn aurora-btn--primary aurora-tap"
-                  href="/agent?intent=Crée%20mon%20projet%20:%20aide-moi%20à%20le%20nommer%2C%20à%20poser%20ses%20jalons%20et%20ses%20premieres%20cartes%20kanban"
-                >
-                  Créer un projet
-                </a>
-              </div>
-            </>
-          )}
+          {/* Kanban (PROMPT 11, 2026-10-10 — REDESIGNÉ monochrome +
+              zoomable, le composant dédié `views/KanbanView.tsx`) :
+              les 4 colonnes + le slider de zoom (la variable CSS
+              `--zoom`), les en-têtes = la SEULE partie colorée de la
+              vue (les 4 gradients du prompt), les cartes mono-chrome
+              (niveaux de gris fixés par le prompt, ZÉRO couleur de
+              priorité). Le miroir projets (AD-7) : les compteurs
+              restent 0, l'affordance « + Ajouter une carte » reste
+              l'action réelle — jamais une carte factice. */}
+          {view === 'kanban' && <KanbanView />}
 
           {/* Reports (PRD-PM-01) : the 9 synthesis reports, each row
               pre-fills the agent intent that GENERATES it on the user's
@@ -786,7 +379,7 @@ export function ProjectsPage() {
           )}
 
           {view === 'gantt' && <GanttView />}
-          {view === 'timeline' && <TimelineView />}
+          {view === 'timeline' && <TimelineViewGrouped />}
           {view === 'list' && <ListView />}
         </div>
 

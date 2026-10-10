@@ -16,6 +16,7 @@
  * `job_queue.result` / `job_logs`, which are Job-system-owned tables).
  */
 import { ok, err, ulid } from "../_shared/envelope.ts";
+import type { UserContext } from "../../../packages/domain/src/index.ts";
 import { PRODUCTIVITY_JOB_HANDLERS } from "../../../packages/productivity/src/jobs.ts";
 import {
   PROGRESS_JOB_HANDLERS,
@@ -36,7 +37,23 @@ import {
 // 'integrations' / jobKind 'notification' pour le push OneSignal
 // (AD-1 : le vendor reste dans l'adapter, le module Discovery
 // ne l'appelle jamais).
-import { DISCOVERY_JOB_HANDLERS } from "../../../packages/discovery/src/jobs.ts";
+//
+// LOT 1 (discovery-vault plan 2026-10-10) : le handler discovery est
+// RECONSTRUIT côté dispatcher (buildDiscoveryHandlers, ci-dessous)
+// avec les seams env-gated (createResearchProvider + resolveUserContext)
+// — la table statique `DISCOVERY_JOB_HANDLERS` du module Discovery est
+// conservée (export + tests) mais PLUS enregistrée ici : module-load
+// n'a pas d'env (AD-3), le provider figé y serait offline pour toujours.
+//
+// Pattern d'imports par fichier (identique à PRODUCTIVITY/PROGRESS/
+// SCIENTIFIC/INTEGRATIONS ci-dessous) : le builder + le provider
+// factory sont importés au fichier source (pas à la racine du
+// package) pour rester dans la zone résolvable par le bundler EF.
+import { buildDiscoveryResearchHandler } from "../../../packages/discovery/src/jobs.ts";
+import { createVaultStoreRest } from "../../../packages/discovery/src/vault-store-rest.ts";
+import {
+  createResearchProvider,
+} from "../../../packages/integrations/src/research-provider.ts";
 import { SCIENTIFIC_JOB_HANDLERS } from "../../../packages/scientific-engine/src/jobs.ts";
 import { INTEGRATIONS_JOB_HANDLERS } from "../../../packages/integrations/src/automations.ts";
 import { buildAgentRunHandler } from "../../../packages/agent/src/jobs.ts";
@@ -98,6 +115,99 @@ export function registerHandlers(handlers: RegisteredHandler[]): void {
   }
 }
 
+/**
+ * LOT 1 (discovery-vault plan 2026-10-10) — the dispatcher-side
+ * discovery handler.
+ *
+ * The module table `DISCOVERY_JOB_HANDLERS` is a static fallback
+ * (empty filterCtx, `createResearchProvider()` at module-load); the
+ * dispatcher RE-BUILDS the handler here so the seams that need env
+ * (AD-3: server-only) are wired at DEPLOYMENT time, not module-load:
+ *
+ *   - provider: `createResearchProvider()` — Exa/Tavily/You.com keys
+ *     are read from the EF env (the module-load in packages/discovery
+ *     has no env, so its static instance would be frozen offline —
+ *     never acceptable).
+ *   - resolveUserContext: reads `user_context` via REST
+ *     (service_role, `restHeaders()`) so the user's REAL
+ *     `discoveryProfile` (G-D14 fields: disciplines, region,
+ *     professionalTarget, budgetConstraint) drives the filter per
+ *     user. Absent row / absent profile → the handler degrades to
+ *     `{ disciplines: [] }` (AD-1: never a rupture).
+ *
+ * Routing is unaffected: the re-built handler keeps the same
+ * (jobKind, module) key ('research', 'discovery') — other modules
+ * registering 'research' (progress, productivity) are NOT touched.
+ *
+ * NOTE (live schema check 2026-10-10): `user_context` is RLS FORCE
+ * with the service_role policy still bound by `user_id = auth.uid()`
+ * (migration 0001, no live migration superseding it). A service_role
+ * REST read therefore returns the user's row only when that user's
+ * JWT claim is carried by the request; without a valid claim the row
+ * is invisible and `resolveUserContext` degrades to null (AD-1: the
+ * job still completes with the empty filterCtx). When the 0002-style
+ * per-user service_role policy lands for `user_context`, this seam
+ * needs no change.
+ */
+function buildDiscoveryHandlers() {
+  // Absent SUPABASE_URL / SERVICE_ROLE_KEY → the resolver is a
+  // documented no-op (returns null) — the handler falls back to the
+  // static empty filterCtx (AD-1 degradation, AD-8 no data loss).
+  const resolveUserContext = async (
+    userId: string,
+  ): Promise<UserContext | null> => {
+    if (!SUPABASE_URL || !SERVICE_ROLE_KEY) return null;
+    // The PostgREST user_id filter runs in the database (Story 1.3
+    // pattern, fn-agent-bootstrap `selUser`): one row per user, no
+    // full-table transfer.
+    const qs = `select=user_id,theme,theme_style,coaching_prefs,discovery_profile&user_id=eq.${encodeURIComponent(
+      userId,
+    )}`;
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/user_context?${qs}`, {
+      headers: restHeaders(),
+    }).catch(() => null);
+    if (!res || !res.ok) return null;
+    const rows = (await res.json()) as Array<Record<string, unknown>>;
+    const row = rows[0];
+    if (!row) return null;
+    const out: Record<string, unknown> = {
+      userId: String(row.user_id ?? ''),
+      theme: String(row.theme ?? 'aurora'),
+      themeStyle: String(row.theme_style ?? 'light'),
+      coachCadence: 'normal',
+      createdAt: '',
+      updatedAt: '',
+    };
+    // The `discovery_profile` jsonb column is NOT in the live schema
+    // yet (wave-0 `user_context` predates G-D14); when present it
+    // maps 1:1 to the `DiscoveryProfile` SSoT shape (AD-15).
+    if (row.discovery_profile !== undefined && row.discovery_profile !== null) {
+      out.discoveryProfile = row.discovery_profile;
+    }
+    return out as unknown as UserContext;
+  };
+
+  // LOT 2 (discovery-vault plan 2026-10-10) : le `vaultStore` REST est
+  // injecté UNIQUEMENT quand l'env est configuré (AD-3 : les clés
+  // service_role restent server-only). Absent env → `vaultStore` reste
+  // undefined → le handler dégrade à "run se termine sans vault"
+  // (AD-1, jamais une rupture du job). Le vault (discovery_vault, 0025)
+  // est écrit UNiquement par ce handler (AD-7 single-writer).
+  const vaultStore =
+    SUPABASE_URL && SERVICE_ROLE_KEY
+      ? createVaultStoreRest({ supabaseUrl: SUPABASE_URL, serviceRoleKey: SERVICE_ROLE_KEY })
+      : undefined;
+
+  return [
+    buildDiscoveryResearchHandler({
+      filterCtx: { disciplines: [] },
+      provider: createResearchProvider(),
+      resolveUserContext,
+      vaultStore,
+    }),
+  ];
+}
+
 /** The full global switch, wired at import time (chevauchement rule:
  *  this file is the ONLY place the wiring lives; module packages
  *  provide their handler tables). Unroutable jobs stay pending
@@ -107,7 +217,7 @@ wireGlobalJobSwitch();
 function wireGlobalJobSwitch(): void {
   registerHandlers([
     ...PRODUCTIVITY_JOB_HANDLERS,
-    ...DISCOVERY_JOB_HANDLERS,
+    ...buildDiscoveryHandlers(),
     ...PROGRESS_JOB_HANDLERS,
     PROGRESS_FSRS_TICK_HANDLER,
     PROGRESS_COURSE_IMPORT_HANDLER,

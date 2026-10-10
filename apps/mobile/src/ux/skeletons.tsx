@@ -75,31 +75,50 @@ export function SlotSkeleton({ rows = 2 }: { rows?: number }) {
 }
 
 /**
- * Skeleton de la vue "Quadrants" (/tasks, G-L5) : grille 2×2 réutilisant
- * les classes VRAIES de `.eisenhower` — les liserés supérieurs colorés
- * (danger/info/warning/border-strong) sont donc déjà les bons.
+ * Skeleton de la vue "Quadrants" (/tasks, G-L5) : la matrice
+ * EISENHOWER REDESIGNÉE (PROMPT 8, 2026-10-10) — le wrapper
+ * `.ei-wrap` (l'axe Y à gauche, la matrice 2×2 au centre, l'axe X
+ * en dessous) + les 4 en-têtes de quadrant `.ei-q-header` (le SEUL
+ * bloc coloré du redesign, le gradient de la teinte du quadrant) +
+ * les cartes SANS couleur (le fond translucide neutre, le contour
+ * quasi-invisible). L'ancienne grille `.eisenhower*` (liserés 3px
+ * colorés + fond teinté `color-mix`) n'existe plus, ce skeleton
+ * reproduit la FORME réelle de la nouvelle matrice (règle AD-13 :
+ * le skeleton prévisse le layout, jamais un placeholder générique).
  */
 export function EisenhowerSkeleton() {
   const quadrants = ['q1', 'q2', 'q3', 'q4'] as const;
   return (
-    <div data-skeleton="eisenhower" aria-hidden className="eisenhower">
-      {quadrants.map((key) => (
-        <div key={key} className={`eisenhower-q eisenhower-${key}`}>
+    <div data-skeleton="eisenhower" aria-hidden className="eisenhower-view">
+      <div className="ei-wrap">
+        <div className="ei-axis-y" aria-hidden>
           <span className="sk sk-line sk-line-t3" />
-          <div className="sk sk-row">
-            <div className="sk sk-dot" />
-            <div className="sk-lines">
-              <SkLine w="t4" />
-            </div>
-          </div>
-          <div className="sk sk-row">
-            <div className="sk sk-dot" />
-            <div className="sk-lines">
-              <SkLine w="t5" />
-            </div>
-          </div>
         </div>
-      ))}
+        <div className="ei-grid">
+          {quadrants.map((key) => (
+            <div key={key} className={`ei-q ei-${key}`}>
+              <div className="ei-q-header">
+                <SkLine w="t3" />
+              </div>
+              <div className="sk sk-row">
+                <div className="sk sk-dot" />
+                <div className="sk-lines">
+                  <SkLine w="t4" />
+                </div>
+              </div>
+              <div className="sk sk-row">
+                <div className="sk sk-dot" />
+                <div className="sk-lines">
+                  <SkLine w="t5" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="ei-axis-x" aria-hidden>
+          <SkLine w="t3" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -153,6 +172,50 @@ export function GoalDashboardSkeleton() {
         </div>
         <SkLine w="t4" />
       </div>
+    </div>
+  );
+}
+
+/**
+ * Skeleton de la carte de veille (discovery-vault plan 2026-10-10, Lot 4,
+ * AD-13) : la forme de `.veille-program-card` (`.sk-card` de shell.css).
+ * Titre de programme + sous-titre (l'action configurée), un chip de
+ * "sources ce jour" + delta, un verdict de pertinence, le menu 3
+ * points (`.sk-dot`) ET le rendu TipTap du SSoT `vaultMd` (Lot 4.1)
+ * prévisualisé par un bloc de contenu (`.vault-md-view`). Le skeleton
+ * prévisse la FORME réelle de la carte (règle AD-13 : jamais un
+ * placeholder générique).
+ */
+export function VeilleProgramSkeleton({ count = 2 }: { count?: number }) {
+  return (
+    <div data-skeleton="veille-program" aria-hidden className="veille-programs">
+      {Array.from({ length: count }, (_, i) => (
+        <div key={i} className="sk sk-card veille-program-card">
+          <div className="sk-card-head">
+            <div className="sk-lines">
+              <div className="sk sk-line sk-line-t3" />
+              <div className="sk sk-line sk-line-t5" />
+            </div>
+            <div className="sk sk-dot" />
+          </div>
+          <div className="sk veille-card-stats">
+            <div className="sk sk-chip" />
+            <div className="sk sk-chip" />
+            <div className="sk sk-chip" />
+          </div>
+          {/* Lot 4.1 : le rendu TipTap du VAULT.md dans la carte — le
+              skeleton prévisse ce bloc de contenu `.vault-md-view` (le
+              même layout que le rendu réel, pas un placeholder générique). */}
+          <div className="sk vault-md-view">
+            <div className="sk-lines">
+              <SkLine w="t3" />
+              <SkLine w="t4" />
+              <SkLine w="t5" />
+              <SkLine w="t4" />
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

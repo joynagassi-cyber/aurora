@@ -94,9 +94,18 @@ streams:
   # Le flux Discovery ne les référence pas ici. (Ancien texte de ce bloc :
   # « divergence connue, à trancher au wave 2 » — tranché : la version de
   # `gaps` dans le flux progress est opérationnelle depuis ce deploiement.)
+  #
+  # 0025 (discovery-vault plan 2026-10-10 Lot 2) : le vault de veille
+  # `discovery_vault` (VAULT.md évolutif + manifest append-only, écrit
+  # UNIQUEMENT par le job research — AD-7) est exposé par le flux
+  # Discovery à ses côtés : la page Discovery (Lot 4) + le chat-agent
+  # (Lot 3) le lisent offline. Même owner, même module — pas de flux
+  # cross-module.
   discovery:
     auto_subscribe: true
-    query: SELECT * FROM discovery_items WHERE user_id = auth.user_id()
+    queries:
+      - SELECT * FROM discovery_items WHERE user_id = auth.user_id()
+      - SELECT * FROM discovery_vault WHERE user_id = auth.user_id()
 
   # --- Artifact (owner Artifact) — métadonnées + r2_key UNIQUEMENT ---------
   artifact:
